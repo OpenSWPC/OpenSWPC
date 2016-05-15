@@ -1,0 +1,14 @@
+#!/bin/csh
+#$ -jc G                       # Job Class
+#$ -ac n=432                   # Total Core
+#$ -ac P=2                     # Core/Node (2 for MPI/OpenMP Hybrid)
+#$ -ac T=12                    # OpenMP thread (12 for MPI/OpenMP Hybrid)
+#$ -cwd                        # Execute at the current directory
+#$ -j y                        # Combine stderr & stdout
+#$ -o swpc_out_W.txt           # Output filename
+#$ -N SWPC                     # Job name
+
+source ${TMP}/hybrid-mpi-$JOB_ID/env.csh
+mpiexec_mpt -np ${TOTAL_PROCS} omplace -nt ${OMP_NUM_THREADS} \
+    ./bin/swpc_3d.x -i example/input_eic_W.inf
+
