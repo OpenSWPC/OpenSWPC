@@ -1,0 +1,17 @@
+#                                                                            -*- mode:sh -*-
+# source.N.dat
+#
+# Example seismic source data with llmwdc format
+
+# Lines starting from '#' and blank line will be omitted.
+# Please choose one of the following format, and remove (or comment out) the remaining. 
+
+# Multiple line of the source will be treated as multiple sources.
+# This maybe useful when one incorporate kinematic finite-sized fault.
+
+#
+# format 'llmwdc': lon/lat, moment magnitude, double couple angles
+#
+#     lon     lat     z   tbeg  trise    mag   strike    dip   rake
+# --------------------------------------------------------------------------------------------
+ 141.2653 36.1083 43.18      0    6.0    7.8       26     49     89

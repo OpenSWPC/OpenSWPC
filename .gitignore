@@ -1,28 +1,59 @@
 # Compiled Object files
-*.slo
-*.lo
 *.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
 
 # Fortran module files
 *.mod
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
+# Compiler information output files
+*.L       # SX
+*.optrpt  # intel
 
 # Executables
-*.exe
-*.out
-*.app
+*.x
+
+# Compiled Static libraries
+*.a
+
+# Program Input/Output
+in/*
+out/*
+*.snp
+*.sac
+*.ps
+*.tim
+*.ppm
+*.png
+*.cpt
+*.mpg
+*.mp4
+*.ps
+*.nc
+fort.*
+.gmt*
+gmt.*
+a.out
+
+# Emacs backup files
+*~
+\#*
+.\#*
+
+# Temporary
+*tmp*
+
+# Mac
+.DS_Store
+
+# model files
+dataset/vmodel/*.lst
+dataset/station/*.stlst
+*.grd
+*.zip
+*.csv
+
+# non-repository
+src/swpc_1d
+bin/branch.sh
+
+# archives
+archives/*
