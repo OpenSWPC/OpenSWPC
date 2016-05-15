@@ -1,0 +1,72 @@
+#                                                                            -*- mode:sh -*-
+# source.dat
+#
+# seismic source data; there are 8 different formats by
+# (x-y|lon-lat) x (seismic moment|moment magnitude) x (moment tensor|strike-rake-dip)
+#
+# Lines starting from '#' and blank line will be omitted.
+# Please choose one of the following format, and remove (or comment out) the remaining.
+#
+# Multiple line of the source will be treated as multiple sources.
+# This maybe useful when one incorporate kinematic finite-sized fault.
+
+#
+# format 'xym0ij': xy, seismic moment, moment tensor
+#
+#    x     y     z  tbeg  trise     mo      mxx      myy      mzz      myz      mxz      mxy
+# --------------------------------------------------------------------------------------------
+   0.0    0.0  2.0   0.1    4.0  1.e15  0.57735  0.57735  0.57735      0.0      0.0      0.0
+
+#
+# format 'xym0dc': xy, seismic moment, double couple angles
+#
+#    x     y     z  tbeg  trise     mo   strike    dip   rake
+# --------------------------------------------------------------------------------------------
+#  0.0    0.0  2.0   0.1    4.0  1.e15      0.0   45.0   90.0
+
+
+#
+# format 'xymwij': xy, moment magnitude, moment tensor
+#
+#    x     y     z  tbeg  trise    mag      mxx      myy      mzz      myz      mxz      mxy
+# --------------------------------------------------------------------------------------------
+#  0.0    0.0  2.0   0.1    4.0    5.0  0.57735  0.57735  0.57735      0.0      0.0      0.0
+
+
+#
+# format 'xymwdc': xy, moment magnitude, double couple angles
+#
+#    x     y     z  tbeg  trise    mag   strike    dip   rake
+# --------------------------------------------------------------------------------------------
+#  0.0    0.0  2.0   0.1    4.0    5.0      0.0   45.0   90.0
+
+
+#
+# format 'llm0ij': lon/lat, seismic moment, moment tensor
+#
+#   lon   lat    z  tbeg  trise     mo      mxx      myy      mzz      myz      mxz      mxy
+# --------------------------------------------------------------------------------------------
+# 139.76  35.72  10.0   0.1    4.0  1.e15  0.57735  0.57735  0.57735      0.0      0.0      0.0
+
+#
+# format 'llm0dc': lon/lat, seismic moment, double couple angles
+#
+#   lon   lat    z  tbeg  trise     mo   strike    dip   rake
+# --------------------------------------------------------------------------------------------
+# 139.7  35.7  2.0   0.1    4.0  1.e15      0.0   45.0   90.0
+
+
+#
+# format 'llmwij': lon/lat, moment magnitude, moment tensor
+#
+#   lon   lat    z  tbeg  trise    mag      mxx      myy      mzz      myz      mxz      mxy
+# --------------------------------------------------------------------------------------------
+# 139.7  35.7  2.0   0.1    4.0    5.0  0.57735  0.57735  0.57735      0.0      0.0      0.0
+
+
+#
+# format 'llmwdc': lon/lat, moment magnitude, double couple angles
+#
+#   lon   lat    z  tbeg  trise    mag   strike    dip   rake
+# --------------------------------------------------------------------------------------------
+# 139.76  35.72  10.0   0.1    4.0    5.0      0.0   45.0   90.0
