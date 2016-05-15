@@ -32,7 +32,7 @@ The author request that the user cite (at least one of) the following papers in 
 
 (2) Furumura, T. and L. Chen (2005),
     Parallel simulation of strong ground motions during recent and historical
-    damaginge earthquakes in Tokyo, Japan,
+    damaging earthquakes in Tokyo, Japan,
     Parallel Computing, 31, 149-165.
 
 (3) Furumura, T. Hayakawa, M. Nakamura, K. Koketsu, and T. Baba (2008),
