@@ -81,16 +81,15 @@ ifeq ($(arch),eic)
 endif
 
 ##
-## Fujitsu FX10 & K-computer, not tested enough
+## Fujitsu FX10, FX100 & K-computer
 ##
-ifeq ($(arch),fx10)
+ifeq ($(arch),fx)
   FC      = gfortran
-  FFLAGS  = -O3
+  FFLAGS  = -O3 -I../include
   NCFLAG  = -D_NETCDF
   NCLIB   = -L$(HOME)/local/lib
   NCINC   = -I$(HOME)/local/include
   NETCDF  = -lnetcdf
-
 endif
 
 ##

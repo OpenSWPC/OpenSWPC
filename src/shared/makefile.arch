@@ -89,12 +89,12 @@ endif
 ##
 ## Fujitsu FX10, FX100 & K-computer
 ##
-ifeq ($(arch),fx10)
+ifeq ($(arch),fx)
   FC      = mpifrtpx
-  FFLAGS  = -O3 -Kfast -Kopenmp,parallel -Kstriping -Kprefetch_infer -Ksimd=2 -Kocl -D_FX
+  FFLAGS  = -O3 -Kfast -Kopenmp,parallel -Kstriping -Kprefetch_infer -Ksimd=2 -Kocl -D_FX -I../include -Qt
   NCFLAG  = -D_NETCDF
-  NCLIB   = -L$(HOME)/local/lib
-  NCINC   = -I$(HOME)/local/include
+  NCLIB   = -L$(HOME)/xlocal/lib
+  NCINC   = -I$(HOME)/xlocal/include
   NETCDF  = -lnetcdf
 endif
 
