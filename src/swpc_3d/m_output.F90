@@ -1048,7 +1048,7 @@ subroutine write_nc_header( hdr, ns1, ns2, xs1, xs2 )
   real(SP), intent(in) :: xs1(ns1), xs2(ns2)
   integer :: i
   !! --
-
+#ifdef _NETCDF
   if( hdr % coordinate == 'yz' ) then
     call nc_chk( nf90_def_dim( hdr%io, 'y', nys, hdr%did_x1 ) )
     call nc_chk( nf90_def_dim( hdr%io, 'z', nzs, hdr%did_x2 ) )
@@ -1153,7 +1153,7 @@ subroutine write_nc_header( hdr, ns1, ns2, xs1, xs2 )
   call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'clat', clat ) )
   call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'phi',  phi  ) )
 
-
+#endif
 
 end subroutine write_nc_header
 !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -1364,6 +1364,7 @@ subroutine write_reduce_array2d_r_nc( it, vid, nx1, nx2, hdr, array )
   integer :: count(3)
   integer :: start(3)
 
+#ifdef _NETCDF
   !! prepare send buffer
   sbuf = reshape( array, shape(sbuf) )
 
@@ -1382,7 +1383,7 @@ subroutine write_reduce_array2d_r_nc( it, vid, nx1, nx2, hdr, array )
     call nc_chk( nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)) )
     call nc_chk( nf90_enddef( hdr%io ) )
   end if
-
+#endif
 
 end subroutine write_reduce_array2d_r_nc
 !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -2546,6 +2547,7 @@ subroutine output__restart( io )
 #endif
   else
 
+#ifdef _NETCDF
     if( yz_ps%sw .and. myid == yz_ps%ionode ) then
       call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.yz.ps.nc', NF90_WRITE, yz_ps%io ) )
     end if
@@ -2607,7 +2609,7 @@ subroutine output__restart( io )
     if( ob_u%sw .and. myid == ob_u%ionode ) then
       call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.ob.u.nc', NF90_WRITE, ob_u%io ) )
     end if
-
+#endif
   end if
 
 end subroutine output__restart
@@ -2616,12 +2618,16 @@ end subroutine output__restart
 subroutine close_nc( hdr )
   type(snp), intent(in) :: hdr
   integer :: vid
+
+#ifdef _NETCDF
   call nc_chk( nf90_redef( hdr%io ) )
   do vid = 1, hdr%nsnp
     call nc_chk( nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)) )
   end do
   call nc_chk( nf90_enddef( hdr%io ) )
   call nc_chk( nf90_close( hdr%io ) )
+#endif
+
 end subroutine close_nc
 
 

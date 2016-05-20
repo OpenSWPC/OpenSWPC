@@ -322,7 +322,7 @@ contains
 
       integer :: i, j, k
       real :: vp, vs, gamma
-      real, parameter :: V_DYNAMIC_RANGE = 0.25 ! ratio between maximum and minimum velocity
+      real, parameter :: V_DYNAMIC_RANGE = 0.4 ! ratio between maximum and minimum velocity
       real :: vmin_pml
 
       vmin_pml = vmax * V_DYNAMIC_RANGE
@@ -366,7 +366,7 @@ contains
 
     end subroutine stabilize_absorber
     !! ------------------------------------------------------------------------------------------------------------------------ !!
-    
+
 
     !! ------------------------------------------------------------------------------------------------------------------------ !!
     !! free surface & ocean bottom boundaries

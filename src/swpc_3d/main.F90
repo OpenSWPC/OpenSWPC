@@ -103,6 +103,9 @@ program SWPC_3D
 
   close( io_prm )
 
+#ifdef _FX
+  call fipp_start()  !! performance measurement
+#endif
   !! mainloop
   do it = it0, nt
 
@@ -131,6 +134,10 @@ program SWPC_3D
 
 
   end do
+#ifdef _FX
+  call fipp_stop()  !! performance measurement
+#endif
+
   call green__export()
   call output__export_wav()
   call output__closefiles()
