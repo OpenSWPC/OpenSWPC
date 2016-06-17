@@ -178,7 +178,6 @@ contains
     end do
 
 
-
     !!
     !! Define visco-elastic medium by tau-method
     !!

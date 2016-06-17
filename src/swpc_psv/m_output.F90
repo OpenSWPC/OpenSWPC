@@ -932,6 +932,7 @@ contains
 
     buf(:,:,:) = 0.0
 
+    !$omp parallel do private( ii, kk, i, k, div, rot )
     do ii = is0, is1
        do kk= ks0, ks1
           k = kk * kdec - kdec/2
@@ -943,7 +944,8 @@ contains
 
        end do
     end do
-
+    !$omp end parallel do
+    
     !! dx, dz have km unit. correction for 1e3 factor.
     buf =  buf * UC * M0 * 1e-3
 
@@ -970,6 +972,7 @@ contains
 
     buf(:,:,:) = 0.0
 
+    !$omp parallel do private( ii, kk, i, k )
     do ii = is0, is1
        do kk= ks0, ks1
           k = kk * kdec - kdec/2
@@ -979,7 +982,8 @@ contains
           buf(ii,kk,2) = Vz(k,i) * UC * M0
 
        end do
-    end do
+     end do
+     !$omp end parallel do
 
 
     if( snp_format == 'native' ) then
@@ -1001,6 +1005,7 @@ contains
     integer :: ii, kk
     !! --
 
+    !$omp parallel do private(ii,kk,i,k)
     do ii = is0, is1
        do kk= ks0, ks1
           k = kk * kdec - kdec/2
@@ -1010,7 +1015,8 @@ contains
           buf_u(ii,kk,2) = buf_u(ii,kk,2) + Vz(k,i) * UC * M0 * dt
 
        end do
-    end do
+     end do
+     !$omp end parallel do
 
     if( mod( it-1, ntdec_s ) == 0 ) then
 
@@ -1039,39 +1045,45 @@ contains
     if( .not. sw_wav ) return
 
     call pwatch__on( "output__write_wav" )
-
-
+    
+    
     if( it == 1 ) then
-       allocate( ux(nst), uz(nst) )
-       ux(:) = 0.0
-       uz(:) = 0.0
+      allocate( ux(nst), uz(nst) )
+      ux(:) = 0.0
+      uz(:) = 0.0
     end if
 
     !! integrate waveform
     if( sw_wav_u ) then
-       do i=1, nst
-          ux(i) = ux(i) + Vx( kst(i), ist(i) ) * dt
-          uz(i) = uz(i) - Vz( kst(i), ist(i) ) * dt ! vertical: positive upward for output
-       end do
+      !$omp parallel do private(i)
+      do i=1, nst
+        ux(i) = ux(i) + Vx( kst(i), ist(i) ) * dt
+        uz(i) = uz(i) - Vz( kst(i), ist(i) ) * dt ! vertical: positive upward for output
+      end do
+      !$omp end parallel do
     end if
 
 
     !! output
     if( mod( it-1, ntdec_w ) == 0 ) then
-       itw = (it-1)/ntdec_w + 1
-       if( sw_wav_v ) then
-          do i=1, nst
-             vxst(itw,i) =   Vx( kst(i), ist(i) ) * M0 * UC * 1e9 !! [nm/s]
-             vzst(itw,i) = - Vz( kst(i), ist(i) ) * M0 * UC * 1e9 !! [nm/s]
-          end do
-       end if
+      itw = (it-1)/ntdec_w + 1
+      if( sw_wav_v ) then
+        !$omp parallel do private(i)
+        do i=1, nst
+          vxst(itw,i) =   Vx( kst(i), ist(i) ) * M0 * UC * 1e9 !! [nm/s]
+          vzst(itw,i) = - Vz( kst(i), ist(i) ) * M0 * UC * 1e9 !! [nm/s]
+        end do
+        !$omp end parallel do
+      end if
 
-       if( sw_wav_u ) then
-          do i=1, nst
-             uxst(itw,i) = ux(i) * M0 * UC * 1e9                          !! [nm]
-             uzst(itw,i) = uz(i) * M0 * UC * 1e9                          !! [nm]
-          end do
-       end if
+      if( sw_wav_u ) then
+        !$omp parallel do private(i)
+        do i=1, nst
+          uxst(itw,i) = ux(i) * M0 * UC * 1e9                          !! [nm]
+          uzst(itw,i) = uz(i) * M0 * UC * 1e9                          !! [nm]
+        end do
+        !$omp end parallel do
+      end if
     end if
 
     call pwatch__off( "output__write_wav" )

@@ -2192,7 +2192,7 @@ subroutine output__store_wav(it)
 
   !! integrate waveform
   if( sw_wav_u ) then
-    !$omp parallel do
+    !$omp parallel do private(i)
     do i=1, nst
       ux(i) = ux(i) + ( Vx( kst(i), ist(i), jst(i) ) + Vx( kst(i),   ist(i)-1, jst(i)   ) ) * 0.5 * dt
       uy(i) = uy(i) + ( Vy( kst(i), ist(i), jst(i) ) + Vy( kst(i),   ist(i)  , jst(i)-1 ) ) * 0.5 * dt
@@ -2206,7 +2206,7 @@ subroutine output__store_wav(it)
   if( mod( it-1, ntdec_w ) == 0 ) then
     itw = (it-1)/ntdec_w + 1
     if( sw_wav_v ) then
-      !$omp parallel do
+      !$omp parallel do private(i)
       do i=1, nst
         vxst(itw,i) =  ( Vx( kst(i), ist(i), jst(i) ) + Vx( kst(i)  , ist(i)-1, jst(i)   ) )*0.5 * M0 * UC * 1e9 !! [nm/s]
         vyst(itw,i) =  ( Vy( kst(i), ist(i), jst(i) ) + Vy( kst(i)  , ist(i)  , jst(i)-1 ) )*0.5 * M0 * UC * 1e9 !! [nm/s]
@@ -2216,7 +2216,7 @@ subroutine output__store_wav(it)
     end if
 
     if( sw_wav_u ) then
-      !$omp parallel do
+      !$omp parallel do private(i)
       do i=1, nst
         uxst(itw,i) = ux(i) * M0 * UC * 1e9                          !! [nm]
         uyst(itw,i) = uy(i) * M0 * UC * 1e9                          !! [nm]
