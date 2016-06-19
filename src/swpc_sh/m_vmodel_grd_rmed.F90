@@ -215,6 +215,7 @@ contains
        !! size
        call assert( nf90_inquire_dimension( ncid, 1, len=nlon ) == NF90_NOERR )
        call assert( nf90_inquire_dimension( ncid, 2, len=nlat ) == NF90_NOERR )
+       allocate( lon(nlon), lat(nlat) )
        allocate( grddep(nlon,nlat) )
 
        !! read
