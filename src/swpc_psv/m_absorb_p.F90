@@ -462,7 +462,7 @@ contains
     real(SP) :: R0 !! reflection coefficient
     real(SP), save :: d0, a0, b0
     integer, parameter :: pd = 1
-    integer, parameter :: pa = 2
+    integer, parameter :: pa = 1
     integer, parameter :: pb = 2
     real(SP), parameter :: cp = 6.0 !! assumed P-wave velocity
     real :: d, a, b, xx
