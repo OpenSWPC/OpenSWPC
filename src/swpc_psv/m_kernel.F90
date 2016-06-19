@@ -39,9 +39,6 @@ module m_kernel
   real(MP)              :: r20x, r20z
   real(SP), allocatable :: c1(:), c2(:)
 
-  real(MP), allocatable :: dxSxx(:), dzSxz(:), dxSxz(:), dzSzz(:)
-  real(MP), allocatable :: dxVx(:), dxVz(:), dzVx(:), dzVz(:)
-
 contains
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -109,6 +106,7 @@ contains
     
     integer :: i, k
     real(SP) :: bx, bz ! buoyancy
+    real(MP) :: dxSxx(kbeg:kend), dxSxz(kbeg:kend), dzSxz(kbeg:kend), dzSzz(kbeg:kend)
     !! ----
     
     call pwatch__on("kernel__update_vel")
@@ -244,6 +242,7 @@ contains
     real(SP) :: Rxx_n, Rzz_n, Rxz_n
     real(SP) :: f_Rxx, f_Rzz, f_Rxz
     real(SP) :: epsl = epsilon(1.0)
+    real(MP) :: dxVx(kbeg:kend), dxVz(kbeg:kend), dzVx(kbeg:kend), dzVz(kbeg:kend)
     !! ----
 
     call pwatch__on("kernel__update_stress")
@@ -533,12 +532,6 @@ contains
        allocate( Rxz( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) )
        allocate( c1(1:nm), c2(1:nm) )
     end if
-
-    allocate( dxSxx(kbeg:kend), dzSxz(kbeg:kend) )
-    allocate( dxSxz(kbeg:kend), dzSzz(kbeg:kend) )
-    allocate( dxVx(kbeg:kend),  dzVx(kbeg:kend) )
-    allocate( dxVz(kbeg:kend),  dzVz(kbeg:kend) )
-
 
 
   end subroutine memory_allocate
