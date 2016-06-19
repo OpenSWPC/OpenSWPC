@@ -262,7 +262,7 @@ contains
     !! Time-marching
     !!
     !$omp parallel &
-    !$omp private(i, k, gxe, gze, dxVy, dzVy, nnn, pnn, npn, muxy, muyz )
+    !$omp private(i, k, gxe0, gze0, dxVy, dzVy, nnn, pnn, npn, muxy, muyz )
     !$omp do schedule(dynamic)
     do i=ibeg, iend
       
