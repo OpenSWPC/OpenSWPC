@@ -85,7 +85,7 @@ contains
     if( myid == terminal_output_node ) then
 
        write(STDERR,*)
-       write(STDERR,'(A,I8,A,I4)') "  Grid Size               : ", nx, " x ", nz
+       write(STDERR,'(A,I8,A,I6)') "  Grid Size               : ", nx, " x ", nz
        write(STDERR,'(A,I15    )') "  MPI Partitioning        : ", nproc_x
        write(STDERR,'(A,F15.3,A)') "  Total Memory Size       : ", mem_all,  "  [GiB]"
        write(STDERR,'(A,F15.3,A)') "  Node Memory Size        : ", mem_node, "  [GiB]"
