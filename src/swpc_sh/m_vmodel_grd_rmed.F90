@@ -78,8 +78,8 @@ contains
     logical :: is_exist
     real(SP) :: cc, dh, vmin, vmax, rhomin
     logical  :: is_vmax_over, is_vmin_under, is_rhomin_under
-    integer :: ncid, ndim, nvar, vid
-    character(80) :: vname
+    integer :: ncid, ndim, nvar, xid, yid, zid
+    character(80) :: xname, yname, zname
     !! ----
 
     call readini( io_prm, 'fn_grdlst_rmed', fn_grdlst, '' )
