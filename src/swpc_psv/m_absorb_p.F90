@@ -59,9 +59,6 @@ module m_absorb_p
   real(SP), allocatable :: axSxz(:,:), azSzz(:,:)
 
   real(SP) :: r20x, r20y, r20z
-
-  real(SP), allocatable :: dxSxx(:), dzSxz(:), dxSxz(:), dzSzz(:)
-  real(SP), allocatable :: dxVx(:), dxVz(:), dzVx(:), dzVz(:)
   integer :: kbeg_min
 
 contains
@@ -95,14 +92,18 @@ contains
 
     hx = na * dx
     hz = na * dz
+    !$omp parallel do private(i)
     do i=ibeg, iend
        call damping_profile( xc(i),              hx, xbeg, xend, gxc(:,i) )
        call damping_profile( xc(i)+real(dx)/2.0, hx, xbeg, xend, gxe(:,i) )
     end do
+    !$omp end parallel do
+    !$omp parallel do private(k)
     do k=kbeg, kend
        call damping_profile( zc(k),              hz, zbeg, zend, gzc(:,k) )
        call damping_profile( zc(k)+real(dz)/2.0, hz, zbeg, zend, gze(:,k) )
-    end do
+     end do
+     !$omp end parallel do
 
     !!
     !! PML region definition
@@ -129,13 +130,6 @@ contains
     axSxz( kbeg_min:kend, ibeg:iend ) = 0.0
     azSzz( kbeg_min:kend, ibeg:iend ) = 0.0
 
-    !! derivatives
-
-    allocate( dxSxx(kbeg_min:kend), dzSxz(kbeg_min:kend) )
-    allocate( dxSxz(kbeg_min:kend), dzSzz(kbeg_min:kend) )
-    allocate( dxVx(kbeg_min:kend),  dzVx(kbeg_min:kend) )
-    allocate( dxVz(kbeg_min:kend),  dzVz(kbeg_min:kend) )
-
 
     idum = io_prm
 
@@ -152,6 +146,7 @@ contains
     integer :: i, k
     real(SP) :: gxc0(4), gxe0(4), gzc0(4), gze0(4)
     real(SP) :: bx, bz
+    real(MP) :: dxSxx(kbeg_min:kend), dzSxz(kbeg_min:kend), dxSxz(kbeg_min:kend), dzSzz(kbeg_min:kend)
     !! ----
 
     !!
@@ -226,12 +221,12 @@ contains
         !! Velocity Updates
         !!
         Vx(k,i) = Vx(k,i) &
-            + bx * ( gxe0(1) * dxSxx(k)   + gzc0(1) * dzSxz(k)       &
-            + gxe0(2) * axSxx(k,i) + gzc0(2) * azSxz(k,i)  ) * dt
+                + bx * ( gxe0(1) * dxSxx(k)   + gzc0(1) * dzSxz(k)       &
+                + gxe0(2) * axSxx(k,i) + gzc0(2) * azSxz(k,i)  ) * dt
 
         Vz(k,i) = Vz(k,i) &
-            + bz * ( gxc0(1) * dxSxz(k)     + gze0(1) * dzSzz(k)       &
-            + gxc0(2) * axSxz(k,i) + gze0(2) * azSzz(k,i)  ) * dt
+                + bz * ( gxc0(1) * dxSxz(k)     + gze0(1) * dzSzz(k)       &
+                + gxc0(2) * axSxz(k,i) + gze0(2) * azSzz(k,i)  ) * dt
 
 
         !!
@@ -263,6 +258,8 @@ contains
     real(SP) :: nnn, pnn, npn, ppn
     real(SP) :: muxz
     real(SP) :: epsl = epsilon(1.0)
+    real(MP) :: dxVx(kbeg_min:kend),  dzVx(kbeg_min:kend),  dxVz(kbeg_min:kend),  dzVz(kbeg_min:kend) 
+
     !! ----
 
     !!
@@ -447,11 +444,6 @@ contains
     read(io) azSxz(kbeg_min:kend,ibeg:iend)
     read(io) axSxz(kbeg_min:kend,ibeg:iend)
     read(io) azSzz(kbeg_min:kend,ibeg:iend)
-
-    allocate( dxSxx(kbeg:kend), dzSxz(kbeg:kend) )
-    allocate( dxSxz(kbeg:kend), dzSzz(kbeg:kend) )
-    allocate( dxVx(kbeg:kend),  dzVx(kbeg:kend) )
-    allocate( dxVz(kbeg:kend),  dzVz(kbeg:kend) )
 
   end subroutine absorb_p__restart
   !! --------------------------------------------------------------------------------------------------------------------------- !!
