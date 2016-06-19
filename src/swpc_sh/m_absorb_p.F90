@@ -58,8 +58,6 @@ module m_absorb_p
 
   real(SP) :: r20x, r20z
 
-  real(SP), allocatable :: dxSxy(:), dzSyz(:)
-  real(SP), allocatable :: dxVy(:), dzVy(:)
   integer :: kbeg_min
 
 contains
@@ -94,14 +92,19 @@ contains
 
     hx = na * dx
     hz = na * dz
+
+    !$omp parallel do private(i)
     do i=ibeg, iend
-       call damping_profile( xc(i),              hx, xbeg, xend, gxc(:,i) )
-       call damping_profile( xc(i)+real(dx)/2.0, hx, xbeg, xend, gxe(:,i) )
+      call damping_profile( xc(i),              hx, xbeg, xend, gxc(:,i) )
+      call damping_profile( xc(i)+real(dx)/2.0, hx, xbeg, xend, gxe(:,i) )
     end do
+    !$omp end parallel do
+    !$omp parallel do private(k)
     do k=kbeg, kend
-       call damping_profile( zc(k),              hz, zbeg, zend, gzc(:,k) )
-       call damping_profile( zc(k)+real(dz)/2.0, hz, zbeg, zend, gze(:,k) )
+      call damping_profile( zc(k),              hz, zbeg, zend, gzc(:,k) )
+      call damping_profile( zc(k)+real(dz)/2.0, hz, zbeg, zend, gze(:,k) )
     end do
+    !$omp end parallel do
 
     !!
     !! PML region definition
@@ -119,11 +122,6 @@ contains
     axSxy( kbeg_min:kend, ibeg:iend ) = 0.0
     azSyz( kbeg_min:kend, ibeg:iend ) = 0.0
 
-    !! derivatives
-
-    allocate( dxSxy(kbeg_min:kend), dzSyz(kbeg_min:kend) )
-    allocate( dxVy(kbeg_min:kend),  dzVy(kbeg_min:kend) )
-
     idum = io_prm
 
 
@@ -140,71 +138,86 @@ contains
     integer :: i, k
     real(SP) :: gxc0(4), gzc0(4)
     real(SP) :: by
+    real(MP) :: dzSyz(kbeg:kend), dxSxy(kbeg:kend)
     !! ----
 
     !!
     !! Horizontal zero-derivative boundary (for plane wave mode)
     !!
     if( pw_mode ) then
-       if( idx == 0 ) then
-          do k=kbeg_a(1), kend
-             Syz(k,0) = 2 * Syz(k,1) - Syz(k,2)
-             Sxy(k,0) = 2 * Sxy(k,1) - Sxy(k,2)
-          end do
-       end if
-
-       if( idx == nproc_x -1 ) then
-          do k=kbeg_a(nx), kend
-             Syz(k,nx+1) = 2 * Syz(k,nx) - Syz(k,nx-1)
-             Sxy(k,nx+1) = 2 * Sxy(k,nx) - Sxy(k,nx-1)
-          end do
-       end if
+      if( idx == 0 ) then
+        !$omp parallel private(k)
+        !$omp do schedule(dynamic)
+        do k=kbeg_a(1), kend
+          Syz(k,0) = 2 * Syz(k,1) - Syz(k,2)
+          Sxy(k,0) = 2 * Sxy(k,1) - Sxy(k,2)
+        end do
+        !$omp end do nowait
+        !$omp end parallel
+      end if
+      
+      if( idx == nproc_x -1 ) then
+        !$omp parallel private(k)
+        !$omp do schedule(dynamic)
+        do k=kbeg_a(nx), kend
+          Syz(k,nx+1) = 2 * Syz(k,nx) - Syz(k,nx-1)
+          Sxy(k,nx+1) = 2 * Sxy(k,nx) - Sxy(k,nx-1)
+        end do
+        !$omp end do nowait
+        !$omp end parallel
+      end if
     end if
-
+    
     !!
     !! time-marching
     !!
+    !$omp parallel &
+    !$omp private( gxc0, gzc0, dzSyz, dxSxy, by, i, k )
+    !$omp do schedule(dynamic)
     do i=ibeg, iend
 
-       gxc0(1:4) = gxc(1:4,i)
+      gxc0(1:4) = gxc(1:4,i)
 
-       !!
-       !! Derivatives
-       !!
-       do k=kbeg_a(i), kend
+      !!
+      !! Derivatives
+      !!
+      do k=kbeg_a(i), kend
 
-          dzSyz(k) = (  Syz(k  ,i ) - Syz(k-1,i   )  ) * r20z
-          dxSxy(k) = (  Sxy(k  ,i ) - Sxy(k  ,i-1 )  ) * r20x
+        dzSyz(k) = (  Syz(k  ,i ) - Syz(k-1,i   )  ) * r20z
+        dxSxy(k) = (  Sxy(k  ,i ) - Sxy(k  ,i-1 )  ) * r20x
 
-       end do
+      end do
 
 
 
-       !!
-       !! update velocity
-       !!
-       do k=kbeg_a(i), kend
+      !!
+      !! update velocity
+      !!
+      do k=kbeg_a(i), kend
 
-          gzc0(1:4) = gzc(1:4,k)
+        gzc0(1:4) = gzc(1:4,k)
 
-          !!
-          !! Velocity Updates
-          !!
-          by = 1.0 /  rho(k,i)
+        !!
+        !! Velocity Updates
+        !!
+        by = 1.0 /  rho(k,i)
 
-          Vy(k,i) = Vy(k,i) &
-                    + by * ( gxc0(1) * dxSxy(k)   + gzc0(1) * dzSyz(k)       &
-                           + gxc0(2) * axSxy(k,i) + gzc0(2) * azSyz(k,i)  ) * dt
+        Vy(k,i) = Vy(k,i) &
+            + by * ( gxc0(1) * dxSxy(k)   + gzc0(1) * dzSyz(k)       &
+            + gxc0(2) * axSxy(k,i) + gzc0(2) * azSyz(k,i)  ) * dt
 
-          !!
-          !! ADE updates
-          !!
+        !!
+        !! ADE updates
+        !!
+        axSxy(k,i) = gxc0(3) * axSxy(k,i) + gxc0(4) * dxSxy(k) * dt
+        azSyz(k,i) = gzc0(3) * azSyz(k,i) + gzc0(4) * dzSyz(k) * dt
 
-          axSxy(k,i) = gxc0(3) * axSxy(k,i) + gxc0(4) * dxSxy(k) * dt
-          azSyz(k,i) = gzc0(3) * azSyz(k,i) + gzc0(4) * dzSyz(k) * dt
-
-       end do
+      end do
     end do
+    !$omp end do nowait
+    !$omp end parallel
+
+    !$omp barrier
 
   end subroutine absorb_p__update_vel
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -217,69 +230,84 @@ contains
     real(SP) :: nnn, pnn, npn
     real(SP) :: muxy, muyz
     real(SP) :: epsl = epsilon(1.0)
-
+    real(MP) :: dxVy(kbeg:kend), dzVy(kbeg:kend)
     !! ----
 
     !!
     !! Horizontal zero-derivative boundary (for plane wave mode)
     !!
     if( pw_mode ) then
-       if( idx == 0 ) then
-          do k=kbeg_a(1), kend
-             Vy(k,0) = 2* Vy(k,1)-Vy(k,2)
-          end do
-       end if
-
-       if( idx == nproc_x -1 ) then
-          do k=kbeg_a(nx), kend
-             Vy(k,nx+1) = 2 * Vy(k,nx) - Vy(k,nx-1)
-          end do
-       end if
+      if( idx == 0 ) then
+        !$omp parallel private(k)
+        !$omp do schedule(dynamic)
+        do k=kbeg_a(1), kend
+          Vy(k,0) = 2* Vy(k,1)-Vy(k,2)
+        end do
+        !$omp end do nowait
+        !$omp end parallel
+      end if
+      
+      if( idx == nproc_x -1 ) then
+        !$omp parallel private(k)
+        !$omp do schedule(dynamic)
+        do k=kbeg_a(nx), kend
+          Vy(k,nx+1) = 2 * Vy(k,nx) - Vy(k,nx-1)
+        end do
+        !$omp end do nowait
+        !$omp end parallel
+      end if
     end if
-
+    
     !!
     !! Time-marching
     !!
+    !$omp parallel &
+    !$omp private(i, k, gxe, gze, dxVy, dzVy, nnn, pnn, npn, muxy, muyz )
+    !$omp do schedule(dynamic)
     do i=ibeg, iend
+      
+      gxe0(1:4) = gxe(1:4,i)
 
-       gxe0(1:4) = gxe(1:4,i)
+      !!
+      !! Derivatives
+      !!
+      do k=kbeg_a(i), kend
 
-       !!
-       !! Derivatives
-       !!
-       do k=kbeg_a(i), kend
+        dxVy(k) = (  Vy(k  ,i+1) - Vy(k,i)  ) * r20x
+        dzVy(k) = (  Vy(k+1,i  ) - Vy(k,i)  ) * r20z
 
-          dxVy(k) = (  Vy(k  ,i+1) - Vy(k,i)  ) * r20x
-          dzVy(k) = (  Vy(k+1,i  ) - Vy(k,i)  ) * r20z
-
-       end do
-
-
-       !!
-       !! Update Shear Stress
-       !!
-       do k=kbeg_a(i), kend
-
-          gze0(1:4) = gze(1:4,k)
+      end do
 
 
-          !!
-          !! effective rigidity for shear stress components
-          !!
+      !!
+      !! Update Shear Stress
+      !!
+      do k=kbeg_a(i), kend
 
-          nnn = mu (k  ,i )
-          pnn = mu (k+1,i )
-          npn = mu (k,  i+1)
-          muxy = 2*nnn*npn / ( nnn + npn + epsl )
-          muyz = 2*nnn*pnn / ( nnn + pnn + epsl )
+        gze0(1:4) = gze(1:4,k)
 
-          axVy(k,i) = gxe0(3) * axVy(k,i) + gxe0(4) * dxVy(k) * dt
-          azVy(k,i) = gze0(3) * azVy(k,i) + gze0(4) * dzVy(k) * dt
-          Syz(k,i) = Syz(k,i) + muyz* ( gze0(1) * dzVy(k) + gze0(2) * azVy(k,i) ) * dt
-          Sxy(k,i) = Sxy(k,i) + muxy* ( gxe0(1) * dxVy(k) + gxe0(2) * axVy(k,i) ) * dt
 
-       end do
+        !!
+        !! effective rigidity for shear stress components
+        !!
+
+        nnn = mu (k  ,i )
+        pnn = mu (k+1,i )
+        npn = mu (k,  i+1)
+        muxy = 2*nnn*npn / ( nnn + npn + epsl )
+        muyz = 2*nnn*pnn / ( nnn + pnn + epsl )
+
+        axVy(k,i) = gxe0(3) * axVy(k,i) + gxe0(4) * dxVy(k) * dt
+        azVy(k,i) = gze0(3) * azVy(k,i) + gze0(4) * dzVy(k) * dt
+        Syz(k,i) = Syz(k,i) + muyz* ( gze0(1) * dzVy(k) + gze0(2) * azVy(k,i) ) * dt
+        Sxy(k,i) = Sxy(k,i) + muxy* ( gxe0(1) * dxVy(k) + gxe0(2) * axVy(k,i) ) * dt
+
+      end do
     end do
+    !$omp end do nowait
+    !$omp end parallel
+
+    !$omp barrier
 
 
   end subroutine absorb_p__update_stress
@@ -335,9 +363,6 @@ contains
 
     read(io) axSxy(kbeg_min:kend,ibeg:iend)
     read(io) azSyz(kbeg_min:kend,ibeg:iend)
-
-    allocate( dxSxy(kbeg:kend), dzSyz(kbeg:kend) )
-    allocate( dxVy(kbeg:kend),  dzVy(kbeg:kend) )
 
   end subroutine absorb_p__restart
   !! --------------------------------------------------------------------------------------------------------------------------- !!
