@@ -72,41 +72,46 @@ contains
     !! Absorbing area definition
     !!
     allocate( kbeg_a(ibeg:iend) )
+
     do i=ibeg, iend
-       if( i<= na .or. nx-na+1 <= i ) then
-          kbeg_a(i) = kbeg
-       else
-          kbeg_a(i) = kend-na+1
-       end if
+      if( i<= na .or. nx-na+1 <= i ) then
+        kbeg_a(i) = kbeg
+      else
+        kbeg_a(i) = kend-na+1
+      end if
     end do
 
     !!
     !! Calculate attenuator based on distance
     !!
+    !$omp parallel do private(i)
     do i=ibeg, iend
-       if( i <= na ) then
-          gx_c(i) = exp( - alpha * ( 1.0 -  (   i2x(i, 0.0, real(dx)) )          / Lx )**2 )
-          gx_b(i) = exp( - alpha * ( 1.0 -  ( ( i2x(i, 0.0, real(dx)) + real(dx)/2 ) ) / Lx )**2 )
-       else if( i >= nx-na+1 ) then
-          gx_c(i) = exp( - alpha * ( 1.0 -  (   i2x(i, Nx*real(dx), -real(dx)) + real(dx)/2     ) / Lx )**2 )
-          gx_b(i) = exp( - alpha * ( 1.0 -  ( ( i2x(i, Nx*real(dx), -real(dx))         ) ) / Lx )**2 )
-       else
-          gx_c(i) = 1.0
-          gx_b(i) = 1.0
-       end if
+      if( i <= na ) then
+        gx_c(i) = exp( - alpha * ( 1.0 -  (   i2x(i, 0.0, real(dx)) )          / Lx )**2 )
+        gx_b(i) = exp( - alpha * ( 1.0 -  ( ( i2x(i, 0.0, real(dx)) + real(dx)/2 ) ) / Lx )**2 )
+      else if( i >= nx-na+1 ) then
+        gx_c(i) = exp( - alpha * ( 1.0 -  (   i2x(i, Nx*real(dx), -real(dx)) + real(dx)/2     ) / Lx )**2 )
+        gx_b(i) = exp( - alpha * ( 1.0 -  ( ( i2x(i, Nx*real(dx), -real(dx))         ) ) / Lx )**2 )
+      else
+        gx_c(i) = 1.0
+        gx_b(i) = 1.0
+      end if
     end do
+    !$omp end parallel do
+    !$omp parallel do private(k)
     do k=kbeg, kend
-       if( k <= na ) then
-          gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, 0.0, real(dz)) )          / Lz )**2 )
-          gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, 0.0, real(dz)) + real(dz)/2 ) ) / Lz )**2 )
-       else if( k >= nz-na+1 ) then
-          gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, Nz*real(dz), -real(dz))  + real(dz)/2  ) / Lz )**2 )
-          gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, Nz*real(dz), -real(dz))  ) ) / Lz )**2 )
-       else
-          gz_c(k) = 1.0
-          gz_b(k) = 1.0
-       end if
+      if( k <= na ) then
+        gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, 0.0, real(dz)) )          / Lz )**2 )
+        gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, 0.0, real(dz)) + real(dz)/2 ) ) / Lz )**2 )
+      else if( k >= nz-na+1 ) then
+        gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, Nz*real(dz), -real(dz))  + real(dz)/2  ) / Lz )**2 )
+        gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, Nz*real(dz), -real(dz))  ) ) / Lz )**2 )
+      else
+        gz_c(k) = 1.0
+        gz_b(k) = 1.0
+      end if
     end do
+    !$omp end parallel do
 
     !! dummy
     io0 = io_prm
@@ -119,12 +124,14 @@ contains
 
     integer :: i, k
 
+    !$omp parallel do private(i,k)
     do i=ibeg_k, iend_k
-       do k=kbeg_a(i), kend
-          Syz(k,i) = Syz(k,i) * gx_c(i) * gz_b(k)
-          Sxy(k,i) = Sxy(k,i) * gx_b(i) * gz_c(k)
-       end do
+      do k=kbeg_a(i), kend
+        Syz(k,i) = Syz(k,i) * gx_c(i) * gz_b(k)
+        Sxy(k,i) = Sxy(k,i) * gx_b(i) * gz_c(k)
+      end do
     end do
+    !$omp end parallel do
 
   end subroutine absorb_c__update_stress
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -134,12 +141,14 @@ contains
 
     integer :: i, k
 
+    !$omp parallel do private(i,k)
     do i=ibeg_k, iend_k
-       do k=kbeg_a(i), kend
-          Vy(k,i) = Vy(k,i) * gx_c(i) * gz_c(k)
-       end do
+      do k=kbeg_a(i), kend
+        Vy(k,i) = Vy(k,i) * gx_c(i) * gz_c(k)
+      end do
     end do
-
+    !$omp end parallel do
+    
   end subroutine absorb_c__update_vel
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
