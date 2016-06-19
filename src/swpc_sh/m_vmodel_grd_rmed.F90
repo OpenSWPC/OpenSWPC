@@ -219,9 +219,15 @@ contains
        allocate( grddep(nlon,nlat) )
 
        !! read
-       call assert( nf90_inquire_variable( ncid, 3, vname ) == NF90_NOERR )
-       call assert( nf90_inq_varid( ncid, vname, vid )      == NF90_NOERR )
-       call assert( nf90_get_var( ncid, vid, grddep )       == NF90_NOERR )
+       call assert( nf90_inquire_variable( ncid, 1, xname ) == NF90_NOERR )
+       call assert( nf90_inquire_variable( ncid, 2, yname ) == NF90_NOERR )
+       call assert( nf90_inquire_variable( ncid, 3, zname ) == NF90_NOERR )
+       call assert( nf90_inq_varid( ncid, xname, xid )      == NF90_NOERR )
+       call assert( nf90_inq_varid( ncid, yname, yid )      == NF90_NOERR )
+       call assert( nf90_inq_varid( ncid, zname, zid )      == NF90_NOERR )
+       call assert( nf90_get_var( ncid, xid, lon )          == NF90_NOERR )
+       call assert( nf90_get_var( ncid, yid, lat )          == NF90_NOERR )
+       call assert( nf90_get_var( ncid, zid, grddep )       == NF90_NOERR )
 
        call assert( nf90_close( ncid ) == NF90_NOERR )
 
