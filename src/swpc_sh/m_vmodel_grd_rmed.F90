@@ -78,8 +78,8 @@ contains
     logical :: is_exist
     real(SP) :: cc, dh, vmin, vmax, rhomin
     logical  :: is_vmax_over, is_vmin_under, is_rhomin_under
-    integer :: ncid, ndim, nvar, vid
-    character(80) :: vname
+    integer :: ncid, ndim, nvar, xid, yid, zid
+    character(80) :: xname, yname, zname
     !! ----
 
     call readini( io_prm, 'fn_grdlst_rmed', fn_grdlst, '' )
@@ -215,12 +215,19 @@ contains
        !! size
        call assert( nf90_inquire_dimension( ncid, 1, len=nlon ) == NF90_NOERR )
        call assert( nf90_inquire_dimension( ncid, 2, len=nlat ) == NF90_NOERR )
+       allocate( lon(nlon), lat(nlat) )
        allocate( grddep(nlon,nlat) )
 
        !! read
-       call assert( nf90_inquire_variable( ncid, 3, vname ) == NF90_NOERR )
-       call assert( nf90_inq_varid( ncid, vname, vid )      == NF90_NOERR )
-       call assert( nf90_get_var( ncid, vid, grddep )       == NF90_NOERR )
+       call assert( nf90_inquire_variable( ncid, 1, xname ) == NF90_NOERR )
+       call assert( nf90_inquire_variable( ncid, 2, yname ) == NF90_NOERR )
+       call assert( nf90_inquire_variable( ncid, 3, zname ) == NF90_NOERR )
+       call assert( nf90_inq_varid( ncid, xname, xid )      == NF90_NOERR )
+       call assert( nf90_inq_varid( ncid, yname, yid )      == NF90_NOERR )
+       call assert( nf90_inq_varid( ncid, zname, zid )      == NF90_NOERR )
+       call assert( nf90_get_var( ncid, xid, lon )          == NF90_NOERR )
+       call assert( nf90_get_var( ncid, yid, lat )          == NF90_NOERR )
+       call assert( nf90_get_var( ncid, zid, grddep )       == NF90_NOERR )
 
        call assert( nf90_close( ncid ) == NF90_NOERR )
 

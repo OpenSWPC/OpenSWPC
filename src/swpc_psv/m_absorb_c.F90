@@ -72,31 +72,35 @@ contains
     !!
     !! Calculate attenuator based on distance
     !!
+    !$omp parallel do private(i)
     do i=ibeg, iend
-       if( i <= na ) then
-          gx_c(i) = exp( - alpha * ( 1.0 -  (   i2x(i, 0.0, real(dx)) )          / Lx )**2 )
-          gx_b(i) = exp( - alpha * ( 1.0 -  ( ( i2x(i, 0.0, real(dx)) + real(dx)/2 ) ) / Lx )**2 )
-       else if( i >= nx-na+1 ) then
-          gx_c(i) = exp( - alpha * ( 1.0 -  (   i2x(i, Nx*real(dx), -real(dx)) + real(dx)/2     ) / Lx )**2 )
-          gx_b(i) = exp( - alpha * ( 1.0 -  ( ( i2x(i, Nx*real(dx), -real(dx))                ) ) / Lx )**2 )
-       else
-          gx_c(i) = 1.0
-          gx_b(i) = 1.0
-       end if
+      if( i <= na ) then
+        gx_c(i) = exp( - alpha * ( 1.0 -  (   i2x(i, 0.0, real(dx)) )          / Lx )**2 )
+        gx_b(i) = exp( - alpha * ( 1.0 -  ( ( i2x(i, 0.0, real(dx)) + real(dx)/2 ) ) / Lx )**2 )
+      else if( i >= nx-na+1 ) then
+        gx_c(i) = exp( - alpha * ( 1.0 -  (   i2x(i, Nx*real(dx), -real(dx)) + real(dx)/2     ) / Lx )**2 )
+        gx_b(i) = exp( - alpha * ( 1.0 -  ( ( i2x(i, Nx*real(dx), -real(dx))                ) ) / Lx )**2 )
+      else
+        gx_c(i) = 1.0
+        gx_b(i) = 1.0
+      end if
     end do
+    !$omp end parallel do
 
+    !$omp parallel do private(k)
     do k=kbeg, kend
-       if( k <= na ) then
-          gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, 0.0, real(dz)) )          / Lz )**2 )
-          gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, 0.0, real(dz)) + real(dz)/2 ) ) / Lz )**2 )
-       else if( k >= nz-na+1 ) then
-          gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, Nz*real(dz), -real(dz))  + real(dz)/2  ) / Lz )**2 )
-          gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, Nz*real(dz), -real(dz))  ) ) / Lz )**2 )
-       else
-          gz_c(k) = 1.0
-          gz_b(k) = 1.0
-       end if
+      if( k <= na ) then
+        gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, 0.0, real(dz)) )          / Lz )**2 )
+        gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, 0.0, real(dz)) + real(dz)/2 ) ) / Lz )**2 )
+      else if( k >= nz-na+1 ) then
+        gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, Nz*real(dz), -real(dz))  + real(dz)/2  ) / Lz )**2 )
+        gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, Nz*real(dz), -real(dz))  ) ) / Lz )**2 )
+      else
+        gz_c(k) = 1.0
+        gz_b(k) = 1.0
+      end if
     end do
+    !$omp end parallel do
 
     !! do nothing with io_prm
     io0 = io_prm
@@ -109,15 +113,20 @@ contains
 
     integer :: i, k
     real(SP) :: gc, gb
+    
+    !$omp parallel private(i,k,gc,gb)
+    !$omp do schedule(dynamic)
     do i=ibeg_k, iend_k
-       do k=kbeg_a(i), kend
-          gc = gx_c(i) * gz_c(k)
-          gb = gx_b(i) * gz_b(k)
-          Sxx(k,i) = Sxx(k,i) * gc
-          Szz(k,i) = Szz(k,i) * gc
-          Sxz(k,i) = Sxz(k,i) * gb
-       end do
+      do k=kbeg_a(i), kend
+        gc = gx_c(i) * gz_c(k)
+        gb = gx_b(i) * gz_b(k)
+        Sxx(k,i) = Sxx(k,i) * gc
+        Szz(k,i) = Szz(k,i) * gc
+        Sxz(k,i) = Sxz(k,i) * gb
+      end do
     end do
+    !$omp end do 
+    !$omp end parallel
 
   end subroutine absorb_c__update_stress
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -126,13 +135,17 @@ contains
   subroutine absorb_c__update_vel
 
     integer :: i, k
-
+    
+    !$omp parallel private(i,k)
+    !$omp do schedule(dynamic)
     do i=ibeg_k, iend_k
-       do k=kbeg_a(i), kend
-          Vx(k,i) = Vx(k,i) * gx_b(i) * gz_c(k)
-          Vz(k,i) = Vz(k,i) * gx_c(i) * gz_b(k)
-       end do
+      do k=kbeg_a(i), kend
+        Vx(k,i) = Vx(k,i) * gx_b(i) * gz_c(k)
+        Vz(k,i) = Vz(k,i) * gx_c(i) * gz_b(k)
+      end do
     end do
+    !$omp end do
+    !$omp end parallel
 
   end subroutine absorb_c__update_vel
   !! --------------------------------------------------------------------------------------------------------------------------- !!

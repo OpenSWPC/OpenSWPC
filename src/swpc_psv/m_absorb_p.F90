@@ -59,9 +59,6 @@ module m_absorb_p
   real(SP), allocatable :: axSxz(:,:), azSzz(:,:)
 
   real(SP) :: r20x, r20y, r20z
-
-  real(SP), allocatable :: dxSxx(:), dzSxz(:), dxSxz(:), dzSzz(:)
-  real(SP), allocatable :: dxVx(:), dxVz(:), dzVx(:), dzVz(:)
   integer :: kbeg_min
 
 contains
@@ -82,29 +79,6 @@ contains
     !! ----
 
     !!
-    !! read parameters
-    !!
-
-    !!
-    !! Interior Kernel region
-    !!
-
-    !! initial value
-    ibeg_k = ibeg
-    iend_k = iend
-    kbeg_k = kbeg
-    kend_k = nz-na
-
-    if      ( iend <= na      ) then; ibeg_k = iend+1;  ! no kernel integration
-    else if ( ibeg <= na      ) then; ibeg_k = na+1  ;  ! pertial kernel
-    end if
-
-    if      ( ibeg >= nx-na+1 ) then; iend_k = ibeg-1;  ! no kernel integartion
-    else if ( iend >= nx-na+1 ) then; iend_k = nx-na;
-    end if
-
-
-    !!
     !! derivative coefficient
     !!
     r20x = 1.0 / dx
@@ -118,14 +92,18 @@ contains
 
     hx = na * dx
     hz = na * dz
+    !$omp parallel do private(i)
     do i=ibeg, iend
        call damping_profile( xc(i),              hx, xbeg, xend, gxc(:,i) )
        call damping_profile( xc(i)+real(dx)/2.0, hx, xbeg, xend, gxe(:,i) )
     end do
+    !$omp end parallel do
+    !$omp parallel do private(k)
     do k=kbeg, kend
        call damping_profile( zc(k),              hz, zbeg, zend, gzc(:,k) )
        call damping_profile( zc(k)+real(dz)/2.0, hz, zbeg, zend, gze(:,k) )
-    end do
+     end do
+     !$omp end parallel do
 
     !!
     !! PML region definition
@@ -152,13 +130,6 @@ contains
     axSxz( kbeg_min:kend, ibeg:iend ) = 0.0
     azSzz( kbeg_min:kend, ibeg:iend ) = 0.0
 
-    !! derivatives
-
-    allocate( dxSxx(kbeg_min:kend), dzSxz(kbeg_min:kend) )
-    allocate( dxSxz(kbeg_min:kend), dzSzz(kbeg_min:kend) )
-    allocate( dxVx(kbeg_min:kend),  dzVx(kbeg_min:kend) )
-    allocate( dxVz(kbeg_min:kend),  dzVz(kbeg_min:kend) )
-
 
     idum = io_prm
 
@@ -175,86 +146,104 @@ contains
     integer :: i, k
     real(SP) :: gxc0(4), gxe0(4), gzc0(4), gze0(4)
     real(SP) :: bx, bz
+    real(MP) :: dxSxx(kbeg_min:kend), dzSxz(kbeg_min:kend), dxSxz(kbeg_min:kend), dzSzz(kbeg_min:kend)
     !! ----
 
     !!
     !! Horizontal zero-derivative boundary (for plane wave mode)
     !!
     if( pw_mode ) then
-       if( idx == 0 ) then
-          do k=kbeg_a(1), kend
-             Sxx(k,0) = 2 * Sxx(k,1) - Sxx(k,2)
-             Szz(k,0) = 2 * Szz(k,1) - Szz(k,2)
-             Sxz(k,0) = 2 * Sxz(k,1) - Sxz(k,2)
-          end do
-       end if
-
-       if( idx == nproc_x -1 ) then
-          do k=kbeg_a(nx), kend
-             Sxx(k,nx+1) = 2 * Sxx(k,nx) - Sxx(k,nx-1)
-             Szz(k,nx+1) = 2 * Szz(k,nx) - Szz(k,nx-1)
-             Sxz(k,nx+1) = 2 * Sxz(k,nx) - Sxz(k,nx-1)
-          end do
-       end if
+      if( idx == 0 ) then
+        !$omp parallel private(k)
+        !$omp do schedule(dynamic)
+        do k=kbeg_a(1), kend
+          Sxx(k,0) = 2 * Sxx(k,1) - Sxx(k,2)
+          Szz(k,0) = 2 * Szz(k,1) - Szz(k,2)
+          Sxz(k,0) = 2 * Sxz(k,1) - Sxz(k,2)
+        end do
+        !$omp end do nowait
+        !$omp end parallel
+      end if
+      
+      if( idx == nproc_x -1 ) then
+        !$omp parallel private(k)
+        !$omp do schedule(dynamic)
+        do k=kbeg_a(nx), kend
+          Sxx(k,nx+1) = 2 * Sxx(k,nx) - Sxx(k,nx-1)
+          Szz(k,nx+1) = 2 * Szz(k,nx) - Szz(k,nx-1)
+          Sxz(k,nx+1) = 2 * Sxz(k,nx) - Sxz(k,nx-1)
+        end do
+        !$omp end do nowait
+        !$omp end parallel        
+      end if
     end if
-
-
+    
+    
     !!
     !! time-marching
     !!
+    !$omp parallel &
+    !$omp private( dxSxx, dzSzz, dxSxz, dzSxz ) &
+    !$omp private( gxc0, gxe0, gzc0, gze0 ) &
+    !$omp private( i, k )
+    !$omp do &
+    !$omp schedule(dynamic)
     do i=ibeg, iend
+      
+      gxc0(1:4) = gxc(1:4,i)
+      gxe0(1:4) = gxe(1:4,i)
 
-       gxc0(1:4) = gxc(1:4,i)
-       gxe0(1:4) = gxe(1:4,i)
+      !!
+      !! Derivatives
+      !!
+      do k=kbeg_a(i), kend
 
-       !!
-       !! Derivatives
-       !!
-       do k=kbeg_a(i), kend
+        dxSxx(k) = (  Sxx(k  ,i+1) - Sxx(k  ,i  )  ) * r20x
+        dzSzz(k) = (  Szz(k+1,i  ) - Szz(k  ,i  )  ) * r20z
+        dxSxz(k) = (  Sxz(k  ,i  ) - Sxz(k  ,i-1)  ) * r20x
+        dzSxz(k) = (  Sxz(k  ,i  ) - Sxz(k-1,i  )  ) * r20z
 
-          dxSxx(k) = (  Sxx(k  ,i+1) - Sxx(k  ,i  )  ) * r20x
-          dzSzz(k) = (  Szz(k+1,i  ) - Szz(k  ,i  )  ) * r20z
-          dxSxz(k) = (  Sxz(k  ,i  ) - Sxz(k  ,i-1)  ) * r20x
-          dzSxz(k) = (  Sxz(k  ,i  ) - Sxz(k-1,i  )  ) * r20z
-
-       end do
-
-
-       !!
-       !! update velocity
-       !!
-       do k=kbeg_a(i), kend
-
-          gzc0(1:4) = gzc(1:4,k)
-          gze0(1:4) = gze(1:4,k)
-
-          bx = 2.0 / ( rho(k,i) + rho(k,i+1) )
-          bz = 2.0 / ( rho(k,i) + rho(k+1,i) )
-
-          !!
-          !! Velocity Updates
-          !!
-          Vx(k,i) = Vx(k,i) &
-                  + bx * ( gxe0(1) * dxSxx(k)   + gzc0(1) * dzSxz(k)       &
-                         + gxe0(2) * axSxx(k,i) + gzc0(2) * azSxz(k,i)  ) * dt
-
-          Vz(k,i) = Vz(k,i) &
-                  + bz * ( gxc0(1) * dxSxz(k)     + gze0(1) * dzSzz(k)       &
-                         + gxc0(2) * axSxz(k,i) + gze0(2) * azSzz(k,i)  ) * dt
+      end do
 
 
-          !!
-          !! ADE updates
-          !!
+      !!
+      !! update velocity
+      !!
+      do k=kbeg_a(i), kend
 
-          axSxx(k,i) = gxe0(3) * axSxx(k,i) + gxe0(4) * dxSxx(k) * dt
-          azSxz(k,i) = gzc0(3) * azSxz(k,i) + gzc0(4) * dzSxz(k) * dt
-          axSxz(k,i) = gxc0(3) * axSxz(k,i) + gxc0(4) * dxSxz(k) * dt
-          azSzz(k,i) = gze0(3) * azSzz(k,i) + gze0(4) * dzSzz(k) * dt
+        gzc0(1:4) = gzc(1:4,k)
+        gze0(1:4) = gze(1:4,k)
 
-       end do
+        bx = 2.0 / ( rho(k,i) + rho(k,i+1) )
+        bz = 2.0 / ( rho(k,i) + rho(k+1,i) )
+
+        !!
+        !! Velocity Updates
+        !!
+        Vx(k,i) = Vx(k,i) &
+                + bx * ( gxe0(1) * dxSxx(k)   + gzc0(1) * dzSxz(k)       &
+                + gxe0(2) * axSxx(k,i) + gzc0(2) * azSxz(k,i)  ) * dt
+
+        Vz(k,i) = Vz(k,i) &
+                + bz * ( gxc0(1) * dxSxz(k)     + gze0(1) * dzSzz(k)       &
+                + gxc0(2) * axSxz(k,i) + gze0(2) * azSzz(k,i)  ) * dt
+
+
+        !!
+        !! ADE updates
+        !!
+
+        axSxx(k,i) = gxe0(3) * axSxx(k,i) + gxe0(4) * dxSxx(k) * dt
+        azSxz(k,i) = gzc0(3) * azSxz(k,i) + gzc0(4) * dzSxz(k) * dt
+        axSxz(k,i) = gxc0(3) * axSxz(k,i) + gxc0(4) * dxSxz(k) * dt
+        azSzz(k,i) = gze0(3) * azSzz(k,i) + gze0(4) * dzSzz(k) * dt
+
+      end do
     end do
+    !$omp end do nowait
+    !$omp end parallel
 
+    !$omp barrier
 
   end subroutine absorb_p__update_vel
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -269,30 +258,49 @@ contains
     real(SP) :: nnn, pnn, npn, ppn
     real(SP) :: muxz
     real(SP) :: epsl = epsilon(1.0)
+    real(MP) :: dxVx(kbeg_min:kend),  dzVx(kbeg_min:kend),  dxVz(kbeg_min:kend),  dzVz(kbeg_min:kend) 
+
     !! ----
 
     !!
     !! Horizontal zero-derivative boundary (for plane wave mode)
     !!
     if( pw_mode ) then
-       if( idx == 0 ) then
-          do k=kbeg_a(1), kend
-             Vx(k,0) = 2* Vx(k,1)-Vx(k,2)
-             Vz(k,0) = 2* Vz(k,1)-Vz(k,2)
-          end do
-       end if
-
-       if( idx == nproc_x -1 ) then
-          do k=kbeg_a(nx), kend
-             Vx(k,nx+1) = 2 * Vx(k,nx) - Vx(k,nx-1)
-             Vz(k,nx+1) = 2 * Vz(k,nx) - Vz(k,nx-1)
-          end do
-       end if
+      if( idx == 0 ) then
+        !$omp parallel private(k)
+        !$omp do schedule(dynamic)
+        do k=kbeg_a(1), kend
+          Vx(k,0) = 2* Vx(k,1)-Vx(k,2)
+          Vz(k,0) = 2* Vz(k,1)-Vz(k,2)
+        end do
+        !$omp end do nowait
+        !$omp end parallel
+      end if
+      
+      if( idx == nproc_x -1 ) then
+        !$omp parallel private(k)
+        !$omp do schedule(dynamic)
+        do k=kbeg_a(nx), kend
+          Vx(k,nx+1) = 2 * Vx(k,nx) - Vx(k,nx-1)
+          Vz(k,nx+1) = 2 * Vz(k,nx) - Vz(k,nx-1)
+        end do
+        !$omp end do nowait
+        !$omp end parallel
+      end if
     end if
-
+    
     !!
     !! Time-marching
     !!
+    !$omp parallel &
+    !$omp private( gxc0, gxe0, gzc0, gze0 ) &
+    !$omp private( dxVx, dxVz, dzVx, dzVz ) &
+    !$omp private( lam2mu_R, lam_R ) &
+    !$omp private( dxVx_ade, dzVz_ade ) &
+    !$omp private( i,k ) &
+    !$omp private( nnn, pnn, npn, ppn, muxz ) 
+    !$omp do &
+    !$omp schedule(dynamic)
     do i=ibeg, iend
 
        gxc0(1:4) = gxc(1:4,i)
@@ -363,6 +371,10 @@ contains
 
        end do
     end do
+    !$omp end do nowait
+    !$omp end parallel
+
+    !$omp barrier
 
 
   end subroutine absorb_p__update_stress
@@ -433,11 +445,6 @@ contains
     read(io) axSxz(kbeg_min:kend,ibeg:iend)
     read(io) azSzz(kbeg_min:kend,ibeg:iend)
 
-    allocate( dxSxx(kbeg:kend), dzSxz(kbeg:kend) )
-    allocate( dxSxz(kbeg:kend), dzSzz(kbeg:kend) )
-    allocate( dxVx(kbeg:kend),  dzVx(kbeg:kend) )
-    allocate( dxVz(kbeg:kend),  dzVz(kbeg:kend) )
-
   end subroutine absorb_p__restart
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -455,7 +462,7 @@ contains
     real(SP) :: R0 !! reflection coefficient
     real(SP), save :: d0, a0, b0
     integer, parameter :: pd = 1
-    integer, parameter :: pa = 2
+    integer, parameter :: pa = 1
     integer, parameter :: pb = 2
     real(SP), parameter :: cp = 6.0 !! assumed P-wave velocity
     real :: d, a, b, xx

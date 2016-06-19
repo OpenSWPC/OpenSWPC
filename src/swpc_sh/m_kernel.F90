@@ -40,9 +40,6 @@ module m_kernel
   real(MP)              :: r20x, r20z
   real(SP), allocatable :: c1(:), c2(:)
 
-  real(MP), allocatable :: dxSxy(:), dzSyz(:)
-  real(MP), allocatable :: dxVy(:), dzVy(:)
-
 contains
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -107,47 +104,65 @@ contains
 
     integer :: i, k
     real(SP) :: by ! buoyancy
+    real(MP) :: dzSyz(kbeg:kend), dxSxy(kbeg:kend)
     !! ----
 
     call pwatch__on("kernel__update_vel")
 
-
+    !$omp parallel &
+    !$omp private(dzSyz, dxSxy, i, k, by) 
+    !$omp do &
+#ifdef _ES
+    !$omp schedule(static)
+#else
+    !$omp schedule(static,1)
+#endif    
     do i=ibeg_k, iend_k
 
-       !! derivateives
-       do k=kbeg_k, kend_k
-          dzSyz(k) = (  Syz(k  ,i  ) - Syz(k-1,i  )  ) * r40z  -  (  Syz(k+1,i  ) - Syz(k-2,i  )  ) * r41z
-          dxSxy(k) = (  Sxy(k  ,i  ) - Sxy(k  ,i-1)  ) * r40x  -  (  Sxy(k  ,i+1) - Sxy(k  ,i-2)  ) * r41x
-       end do
+      !! derivateives
+      do k=kbeg_k, kend_k
+        dzSyz(k) = (  Syz(k  ,i  ) - Syz(k-1,i  )  ) * r40z  -  (  Syz(k+1,i  ) - Syz(k-2,i  )  ) * r41z
+        dxSxy(k) = (  Sxy(k  ,i  ) - Sxy(k  ,i-1)  ) * r40x  -  (  Sxy(k  ,i+1) - Sxy(k  ,i-2)  ) * r41x
+      end do
 
-       !! surfaces
-       do k=kfs_top(i), kfs_bot(i)
-          dzSyz(k) = (  Syz(k  ,i  ) - Syz(k-1,i  )  ) * r20z
-          dxSxy(k) = (  Sxy(k  ,i  ) - Sxy(k  ,i-1)  ) * r20x
-       end do
+      !! surfaces
+#ifdef _ES
+      !CDIR NOVECTOR
+#endif
+      do k=kfs_top(i), kfs_bot(i)
+        dzSyz(k) = (  Syz(k  ,i  ) - Syz(k-1,i  )  ) * r20z
+        dxSxy(k) = (  Sxy(k  ,i  ) - Sxy(k  ,i-1)  ) * r20x
+      end do
 
-       do k=kob_top(i), kob_bot(i)
-          dzSyz(k) = (  Syz(k  ,i  ) - Syz(k-1,i  )  ) * r20z
-          dxSxy(k) = (  Sxy(k  ,i  ) - Sxy(k  ,i-1)  ) * r20x
-       end do
+#ifdef _ES
+      !CDIR NOVECTOR
+#endif
+      do k=kob_top(i), kob_bot(i)
+        dzSyz(k) = (  Syz(k  ,i  ) - Syz(k-1,i  )  ) * r20z
+        dxSxy(k) = (  Sxy(k  ,i  ) - Sxy(k  ,i-1)  ) * r20x
+      end do
 
-       !!
-       !! update velocity
-       !!
-       do k=kbeg_k, kend_k
+      !!
+      !! update velocity
+      !!
+      do k=kbeg_k, kend_k
 
-          !!
-          !! effective buoyancy
-          !!
-          by = 1.0 /  rho(k,i)
+        !!
+        !! effective buoyancy
+        !!
+        by = 1.0 /  rho(k,i)
 
-          !!
-          !! update velocity
-          !!
-          Vy(k,i) =  Vy(k,i) + by * ( dxSxy(k) + dzSyz(k) ) * dt
+        !!
+        !! update velocity
+        !!
+        Vy(k,i) =  Vy(k,i) + by * ( dxSxy(k) + dzSyz(k) ) * dt
 
-       end do
+      end do
     end do
+    !$omp end do nowait
+    !$omp end parallel
+
+    !$omp barrier
 
     call pwatch__off("kernel__update_vel")
 
@@ -174,93 +189,112 @@ contains
     real(SP) :: Ryz_n, Rxy_n
     real(SP) :: f_Rxy, f_Ryz
     real(SP) :: epsl = epsilon(1.0)
+    real(MP) :: dxVy(kbeg:kend), dzVy(kbeg:kend)
     !! ----
 
     call pwatch__on("kernel__update_stress")
 
 
+    !$omp parallel  &
+    !$omp private( dxVy, dzVy, nnn, pnn, npn, mu_yz, mu_xy, taus1, taus_plus1, f_Ryz, f_Rxy, Ryz_o, Rxy_o, Ryz_n, Rxy_n )
+    !$omp do &
+#ifdef _ES
+    !$omp schedule(static)
+#else
+    !$omp schedule(static,1)
+#endif
     do i=ibeg_k, iend_k
 
-       !!
-       !! Derivatives
-       !!
-       do k=kbeg_k, kend_k
+      !!
+      !! Derivatives
+      !!
+      do k=kbeg_k, kend_k
 
-          dxVy(k) = (  Vy(k  ,i+1) - Vy(k  ,i  )  ) * r40x  -  (  Vy(k  ,i+2) - Vy(k  ,i-1)  ) * r41x
-          dzVy(k) = (  Vy(k+1,i  ) - Vy(k  ,i  )  ) * r40z  -  (  Vy(k+2,i  ) - Vy(k-1,i  )  ) * r41z
+        dxVy(k) = (  Vy(k  ,i+1) - Vy(k  ,i  )  ) * r40x  -  (  Vy(k  ,i+2) - Vy(k  ,i-1)  ) * r41x
+        dzVy(k) = (  Vy(k+1,i  ) - Vy(k  ,i  )  ) * r40z  -  (  Vy(k+2,i  ) - Vy(k-1,i  )  ) * r41z
 
-       end do
+      end do
 
-       !! free surface
-       do k=kfs_top(i), kfs_bot(i)
+      !! free surface
+#ifdef _ES
+      !CDIR NOVECTOR
+#endif
+      do k=kfs_top(i), kfs_bot(i)
 
-          dxVy(k) = (  Vy(k  ,i+1) - Vy(k  ,i  )  ) * r20x
-          dzVy(k) = (  Vy(k+1,i  ) - Vy(k  ,i  )  ) * r20z
+        dxVy(k) = (  Vy(k  ,i+1) - Vy(k  ,i  )  ) * r20x
+        dzVy(k) = (  Vy(k+1,i  ) - Vy(k  ,i  )  ) * r20z
 
-       end do
+      end do
 
-       !! seafloor
-       do k=kob_top(i), kob_bot(i)
+      !! seafloor
+#ifdef _ES
+      !CDIR NOVECTOR
+#endif
+      do k=kob_top(i), kob_bot(i)
 
-          dxVy(k) = (  Vy(k  ,i+1) - Vy(k  ,i  )  ) * r20x
-          dzVy(k) = (  Vy(k+1,i  ) - Vy(k  ,i  )  ) * r20z
+        dxVy(k) = (  Vy(k  ,i+1) - Vy(k  ,i  )  ) * r20x
+        dzVy(k) = (  Vy(k+1,i  ) - Vy(k  ,i  )  ) * r20z
 
-       end do
-
-
-       do k=kbeg_k, kend_k
-
-          !!
-          !! effective rigidity for shear stress components
-          !!
-
-          nnn = mu (k  ,i )
-          pnn = mu (k+1,i )
-          npn = mu (k,  i+1)
-          mu_xy = 2*nnn*npn / ( nnn + npn + epsl )
-          mu_yz = 2*nnn*pnn / ( nnn + pnn + epsl )
-          taus1 = taus(k,i)
-
-          !!
-          !! update memory variables
-          !!
-
-          !! working variables for combinations of velocity derivatives
-          f_Ryz =  mu_yz * taus1 * dzVy(k)
-          f_Rxy =  mu_xy * taus1 * dxVy(k)
+      end do
 
 
-          Ryz_o = 0.0
-          Rxy_o = 0.0
-          Ryz_n = 0.0
-          Rxy_n = 0.0
+      do k=kbeg_k, kend_k
 
-          if( nm > 0 ) then
-             !! previous memory variables
-             Ryz_o = sum( Ryz( 1:nm, k,i) )
-             Rxy_o = sum( Rxy( 1:nm, k,i) )
+        !!
+        !! effective rigidity for shear stress components
+        !!
 
-             !! Crank-Nicolson Method for avoiding stiff solution
-             do m=1, nm
-                Ryz(m,k,i) = c1(m) * Ryz(m,k,i) - c2(m) * f_Ryz * dt
-                Rxy(m,k,i) = c1(m) * Rxy(m,k,i) - c2(m) * f_Rxy * dt
-             end do
+        nnn = mu (k  ,i )
+        pnn = mu (k+1,i )
+        npn = mu (k,  i+1)
+        mu_xy = 2*nnn*npn / ( nnn + npn + epsl )
+        mu_yz = 2*nnn*pnn / ( nnn + pnn + epsl )
+        taus1 = taus(k,i)
 
-             !! new memory variables
-             Ryz_n = sum( Ryz( 1:nm, k,i) )
-             Rxy_n = sum( Rxy( 1:nm, k,i) )
-          end if
+        !!
+        !! update memory variables
+        !!
 
-          !!
-          !! update stress components
-          !!
-          taus_plus1 = 1 + taus1
+        !! working variables for combinations of velocity derivatives
+        f_Ryz =  mu_yz * taus1 * dzVy(k)
+        f_Rxy =  mu_xy * taus1 * dxVy(k)
 
-          Syz (k,i) = Syz (k,i) + (  mu_yz*taus_plus1*dzVy(k) + ( Ryz_n+Ryz_o )/2 ) * dt
-          Sxy (k,i) = Sxy (k,i) + (  mu_xy*taus_plus1*dxVy(k) + ( Rxy_n+Rxy_o )/2 ) * dt
 
-       end do
+        Ryz_o = 0.0
+        Rxy_o = 0.0
+        Ryz_n = 0.0
+        Rxy_n = 0.0
+
+        if( nm > 0 ) then
+          !! previous memory variables
+          Ryz_o = sum( Ryz( 1:nm, k,i) )
+          Rxy_o = sum( Rxy( 1:nm, k,i) )
+
+          !! Crank-Nicolson Method for avoiding stiff solution
+          do m=1, nm
+            Ryz(m,k,i) = c1(m) * Ryz(m,k,i) - c2(m) * f_Ryz * dt
+            Rxy(m,k,i) = c1(m) * Rxy(m,k,i) - c2(m) * f_Rxy * dt
+          end do
+
+          !! new memory variables
+          Ryz_n = sum( Ryz( 1:nm, k,i) )
+          Rxy_n = sum( Rxy( 1:nm, k,i) )
+        end if
+
+        !!
+        !! update stress components
+        !!
+        taus_plus1 = 1 + taus1
+
+        Syz (k,i) = Syz (k,i) + (  mu_yz*taus_plus1*dzVy(k) + ( Ryz_n+Ryz_o )/2 ) * dt
+        Sxy (k,i) = Sxy (k,i) + (  mu_xy*taus_plus1*dxVy(k) + ( Rxy_n+Rxy_o )/2 ) * dt
+
+      end do
     end do
+     !$omp end do nowait
+     !$omp end parallel
+
+     !$omp barrier
 
     call pwatch__off("kernel__update_stress")
 
@@ -358,11 +392,6 @@ contains
        allocate( Rxy( 1:nm, kbeg_k:kend_k, ibeg_k:iend_k ) )
        allocate( c1(1:nm), c2(1:nm) )
     end if
-
-    allocate( dxSxy(kbeg_m:kend_m) , dzSyz(kbeg_m:kend_m) )
-    allocate( dxVy(kbeg_m:kend_m),  dzVy(kbeg_m:kend_m) )
-
-
 
   end subroutine memory_allocate
   !! --------------------------------------------------------------------------------------------------------------------------- !!
