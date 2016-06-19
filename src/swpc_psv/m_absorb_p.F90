@@ -82,29 +82,6 @@ contains
     !! ----
 
     !!
-    !! read parameters
-    !!
-
-    !!
-    !! Interior Kernel region
-    !!
-
-    !! initial value
-    ibeg_k = ibeg
-    iend_k = iend
-    kbeg_k = kbeg
-    kend_k = nz-na
-
-    if      ( iend <= na      ) then; ibeg_k = iend+1;  ! no kernel integration
-    else if ( ibeg <= na      ) then; ibeg_k = na+1  ;  ! pertial kernel
-    end if
-
-    if      ( ibeg >= nx-na+1 ) then; iend_k = ibeg-1;  ! no kernel integartion
-    else if ( iend >= nx-na+1 ) then; iend_k = nx-na;
-    end if
-
-
-    !!
     !! derivative coefficient
     !!
     r20x = 1.0 / dx
