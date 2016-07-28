@@ -102,6 +102,7 @@ contains
     integer        :: ng0
     real(SP)       :: dd
     character(256) :: abuf
+    real(SP)       :: evlo1, evla1
     !! ----
 
     if( benchmark_mode ) then
@@ -173,11 +174,18 @@ contains
 
     dt_dxyz = dt / ( dx*dy*dz )
 
-    call output__station_query( green_stnm, is_src, isrc, jsrc, ksrc, xsrc, ysrc, zsrc, evlo0, evla0 )
+    !! initialize with unrealistic value
+    evlo1 = -12345.0
+    evla1 = -12345.0
+    call output__station_query( green_stnm, is_src, isrc, jsrc, ksrc, xsrc, ysrc, zsrc, evlo1, evla1 )
 
     !! どこかのノードに震源があるか、MPI通信で確認
     call mpi_allreduce( is_src, src_somewhere, 1, MPI_LOGICAL, MPI_LOR, mpi_comm_world, ierr )
     call assert( src_somewhere )
+
+    !! Distribute evlo & evla. Stored to evlo0 and evla0
+    call mpi_allreduce( evlo1, evlo0, 1, MPI_REAL, MPI_MAX, mpi_comm_world, ierr )
+    call mpi_allreduce( evla1, evla0, 1, MPI_REAL, MPI_MAX, mpi_comm_world, ierr )
 
     !!
     !! Read Green's function location table
