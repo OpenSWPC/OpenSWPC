@@ -309,12 +309,14 @@ contains
     do i=1, ng
 
        write(cid8,'(I8.8)') gid(i)
-       call system__call( 'mkdir -p '//trim(odir) // '/green/' // cid8 )
-
+       call system__call( 'mkdir -p '//trim(odir) // '/green/' // trim(green_stnm) )
+       
        do j=1, ncmp
-          fn(j,i) = trim(odir)  // '/green/' // cid8 // '/' // trim(title) // '__' // green_cmp // '__' // &
-               cid8 // '__' //  trim(cmp(j)) // '__.sac'
-          write(sh(j,i)%kstnm,'(I8.8)') gid(i)
+         fn(j,i) = trim(odir)  // '/green/' // trim(green_stnm) // '/' // &
+             trim(title) // '__' // trim(green_stnm) // '__' //  green_cmp // '__' // &
+             cid8 // '__' //  trim(cmp(j)) // '__.sac'
+         sh(j,i)%kstnm = trim(green_stnm)
+         
        end do
 
 
