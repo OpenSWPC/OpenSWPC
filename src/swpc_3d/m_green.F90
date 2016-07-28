@@ -353,7 +353,7 @@ contains
        end do
 
        sh(:,i)%nzmsec = 0
-       sh(:,i)%b     = 0.0
+       sh(:,i)%b     = tbeg
        sh(:,i)%delta = ntdec_w * dt
        sh(:,i)%npts  = ntw
 
