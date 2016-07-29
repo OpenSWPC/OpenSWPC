@@ -506,7 +506,8 @@ contains
     logical :: isexist
     integer :: io
     integer :: i
-    character(1)   :: yn
+    character(1) :: yn
+    integer, parameter :: NVHDR = 1
     !! ----
     
     !! overwrite
@@ -548,6 +549,7 @@ contains
     open(io, file=trim(fn_csf), action='write', access='stream', &
         form='unformatted', status='unknown')
 
+    write(io) NVHDR
     write(io) ntrace
     write(io) npts
     
