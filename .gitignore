@@ -5,8 +5,8 @@
 *.mod
 
 # Compiler information output files
-*.L       # SX
-*.optrpt  # intel
+*.L
+*.optrpt
 
 # Executables
 *.x
