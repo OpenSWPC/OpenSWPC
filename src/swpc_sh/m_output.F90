@@ -77,7 +77,7 @@ module m_output
   integer   :: ntdec_s, ntdec_w                                !< time step decimation factor: Snap and Waves
   integer   :: idec, kdec                                !< spatial decimation factor: x, y, z
   character(2):: st_format                                       !< station file format
-
+  character(3) :: wav_format
   character(256) :: fn_stloc
 
   integer :: nxs, nzs !< snapshot grid size
@@ -139,6 +139,7 @@ contains
     call readini( io_prm, 'sw_wav_u',  sw_wav_u,  .false. )
 
     call readini( io_prm, 'snp_format', snp_format, 'native' )
+    call readini( io_prm, 'wav_format', wav_format, 'sac' )
 
     sw_wav = ( sw_wav_v .or. sw_wav_u )
 
@@ -240,26 +241,44 @@ contains
   subroutine output__export_wav()
     integer :: i
     character(256) :: fn1, fn2
-
+    character(6) :: cid
     call pwatch__on("output__export_wav")
 
     if( nst>0 ) call system__call('mkdir '//trim(odir)//'/wav > /dev/null 2>&1' )
 
-    do i=1, nst
-
-       if( sw_wav_v ) then
-
+    if( wav_format == 'sac' ) then
+      do i=1, nst
+        
+        if( sw_wav_v ) then
           fn1 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Vy.sac'
           call sac__write( fn1, sh(1,i), vyst(:,i), .true. )
-
-       end if
-
-       if( sw_wav_u ) then
+          
+        end if
+        
+        if( sw_wav_u ) then
           fn2 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Uy.sac'
           call sac__write( fn2, sh(2,i), uyst(:,i), .true. )
-       end if
+        end if
+        
+      end do
+    else if (wav_format == 'csf' ) then
 
-    end do
+      write(cid,'(I6.6)') myid
+
+      if( sw_wav_v ) then
+        fn1 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.Vy.sac'
+        call csf__write( fn1, nst, sh(1,1)%npts, sh(1,:), vyst(:,:), .true. )
+        
+      end if
+      
+      if( sw_wav_u ) then
+        fn2 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.Uy.sac'
+        call csf__write( fn2, nst, sh(2,1)%npts, sh(2,:), uyst(:,:), .true. )
+      end if
+
+    end if
+    
+      
     call pwatch__off("output__export_wav")
 
 

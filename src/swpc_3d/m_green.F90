@@ -42,6 +42,7 @@ module m_green
   real(SP) :: xsrc, ysrc, zsrc, evlo0, evla0
   real(SP) :: fx1, fy1, fz1
   character(3) :: cmp(9)
+  character(3) :: wav_format
 
   integer :: ntw
   integer :: ng
@@ -61,7 +62,8 @@ module m_green
   type(sac__hdr), allocatable :: sh(:,:)
   real(SP), allocatable :: gf(:,:,:)
   character(256), allocatable :: fn(:,:)
-
+  character(256) :: fn_csf
+  
   real(SP), allocatable :: Ux(:), Uy(:), Uz(:)
   real(SP), allocatable :: dxUx(:), dyUx(:), dzUx(:), dxUy(:), dyUy(:), dzUy(:), dxUz(:), dyUz(:), dzUz(:)
   real(SP), parameter :: green_tbeg = 0.0
@@ -103,6 +105,7 @@ contains
     real(SP)       :: dd
     character(256) :: abuf
     real(SP)       :: evlo1, evla1
+    character(6)   :: cmyid
     !! ----
 
     if( benchmark_mode ) then
@@ -140,7 +143,7 @@ contains
     call readini( io_prm, 'green_cmp',  green_cmp,  '' )
     call readini( io_prm, 'green_trise', green_trise, 1.0 )
     call readini( io_prm, 'green_bforce', green_bforce, .false. )
-    call readini( io_prm, 'green_maxdist', green_maxdist, 1e30 )
+    call readini( io_prm, 'green_maxdist', green_maxdist, 1e30 )    
     call assert( green_maxdist > 0.0 )
 
     M0 = 1
@@ -156,9 +159,9 @@ contains
 
     call readini( io_prm, 'ntdec_w',ntdec_w, 10 )
     call readini( io_prm, 'stftype', stftype, 'kupper' )
+    call readini( io_prm, 'wav_format', wav_format, 'sac' ) 
 
     if( trim(adjustl(stftype)) == 'scosine' ) stftype = 'cosine'  !! backward compatibility
-
 
     !!
     !! Set up pseudo source, information is obtained from m_output
@@ -314,6 +317,12 @@ contains
     allocate( gf(ncmp,ng,ntw) )
     allocate( fn(ncmp,ng) )
     gf(:,:,:) = 0.0
+
+    if( wav_format == 'csf' ) then
+      write(cmyid,'(I6.6)') myid
+      fn_csf = trim(odir)  // '/green/' // trim(green_stnm) // '/' // trim(title) // '__' // trim(cmyid) // '__.csf'
+    end if
+    
     do i=1, ng
 
        write(cid8,'(I8.8)') gid(i)
@@ -325,7 +334,6 @@ contains
          fn(j,i) = trim(odir)  // '/green/' // trim(green_stnm) // '/' // &
              trim(title) // '__' // trim(green_stnm) // '__' //  green_cmp // '__' // &
              cid8 // '__' //  trim(cmp(j)) // '__.sac'
-         
        end do
 
 
@@ -543,7 +551,7 @@ contains
   subroutine green__export()
 
     integer :: i, j
-
+    
     if( .not. green_mode ) return
 
     call pwatch__on( 'green__export' )
@@ -553,12 +561,17 @@ contains
        gf(:,:,:) = -gf(:,:,:)
     end if
 
-    do i=1, ng
-       do j=1, ncmp
+    if( wav_format == 'sac' ) then
+      do i=1, ng
+        do j=1, ncmp
           call sac__write( fn(j,i), sh(j,i), gf(j,i,:), .true. )
-       end do
-    end do
-
+        end do
+      end do
+    else
+      call csf__write( fn_csf, ng*ncmp, sh(1,1)%npts, &
+          reshape(sh(:,:), (/ng*ncmp/)), transpose(reshape(gf(:,:,:), (/ng*ncmp,sh(1,1)%npts/))), .true.)
+    end if
+    
     call pwatch__off( 'green__export' )
 
   end subroutine green__export

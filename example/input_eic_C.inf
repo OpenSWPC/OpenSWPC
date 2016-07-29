@@ -94,6 +94,7 @@
   ntdec_w          = 4                !! time decimation of waveform output
   st_format        = 'll'             !! station format: 'xy' or 'll'
   fn_stloc         = '${DATASET}/station/hinet.stlst'  !! station location file
+  wav_format       = 'sac'            !! 'sac' or 'csf'
 
   !! ----------------------------------------------------------------------- !!
   !! Earthquake Source
