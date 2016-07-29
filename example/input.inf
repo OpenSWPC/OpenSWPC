@@ -94,6 +94,7 @@
   ntdec_w          = 5                !! time decimation of waveform output
   st_format        = 'xy'             !! station format: 'xy' or 'll'
   fn_stloc         = './example/stloc.xy'  !! station location file
+  wav_format       = 'sac'            !! 'sac' or 'csf'
 
   !! ----------------------------------------------------------------------- !!
   !! Earthquake Source
