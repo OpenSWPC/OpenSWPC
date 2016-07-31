@@ -568,8 +568,10 @@ contains
         end do
       end do
     else
-      call csf__write( fn_csf, ng*ncmp, sh(1,1)%npts, &
-          reshape(sh(:,:), (/ng*ncmp/)), transpose(reshape(gf(:,:,:), (/ng*ncmp,sh(1,1)%npts/))), .true.)
+      if( ng>0 ) then
+        call csf__write( fn_csf, ng*ncmp, sh(1,1)%npts, &
+            reshape(sh(:,:), (/ng*ncmp/)), transpose(reshape(gf(:,:,:), (/ng*ncmp,sh(1,1)%npts/))), .true.)
+      end if
     end if
     
     call pwatch__off( 'green__export' )
