@@ -320,7 +320,8 @@ contains
 
     if( wav_format == 'csf' ) then
       write(cmyid,'(I6.6)') myid
-      fn_csf = trim(odir)  // '/green/' // trim(green_stnm) // '/' // trim(title) // '__' // trim(cmyid) // '__' // trim(green_cmp) // '__.csf'
+      fn_csf = trim(odir)  // '/green/' // trim(green_stnm) // '/' // &
+          trim(title) // '__' // trim(cmyid) // '__' // trim(green_cmp) // '__.csf'
     end if
     
     do i=1, ng
