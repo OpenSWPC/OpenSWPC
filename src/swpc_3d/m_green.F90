@@ -59,9 +59,9 @@ module m_green
   integer, allocatable :: ig(:), jg(:), kg(:)
   real(SP), allocatable :: xg(:), yg(:), zg(:), long(:), latg(:)
   integer, allocatable :: gid(:)
-  type(sac__hdr), allocatable :: sh(:,:)
-  real(SP), allocatable :: gf(:,:,:)
-  character(256), allocatable :: fn(:,:)
+  type(sac__hdr), allocatable :: sh(:)
+  real(SP), allocatable :: gf(:,:)
+  character(256), allocatable :: fn(:)
   character(256) :: fn_csf
   
   real(SP), allocatable :: Ux(:), Uy(:), Uz(:)
@@ -91,7 +91,7 @@ contains
     logical        :: src_somewhere
     integer        :: ierr
     character(8)   :: green_stnm
-    integer        :: i, j
+    integer        :: i, j, k
     real(SP)       :: xg0, yg0, zg0, long0, latg0
     integer        :: ii, jj, kk
     integer        :: gid0
@@ -295,18 +295,18 @@ contains
     else
        ncmp = 6
     end if
-    allocate( sh(ncmp,ng) )
+    allocate( sh(ncmp*ng) )
 
     do i=1,ng
        do j=1,ncmp
-          call sac__init(sh(j,i))
+          call sac__init(sh((i-1)*ncmp+j))
        end do
     end do
 
     !! station location = pseudo event location
-    sh(:,:)%stlo = evlo0
-    sh(:,:)%stla = evla0
-    sh(:,:)%stdp = zsrc * 1000
+    sh(:)%stlo = evlo0
+    sh(:)%stla = evla0
+    sh(:)%stdp = zsrc * 1000
 
     if( green_bforce ) then
        cmp(1:9) = (/ 'mxx', 'myy', 'mzz', 'myz', 'mxz', 'mxy', 'fx_', 'fy_', 'fz_' /)
@@ -314,9 +314,9 @@ contains
        cmp(1:6) = (/ 'mxx', 'myy', 'mzz', 'myz', 'mxz', 'mxy' /)
     end if
 
-    allocate( gf(ncmp,ng,ntw) )
-    allocate( fn(ncmp,ng) )
-    gf(:,:,:) = 0.0
+    allocate(gf(ntw,ncmp*ng))
+    allocate(fn(ncmp*ng))
+    gf(:,:) = 0.0
 
     if( wav_format == 'csf' ) then
       write(cmyid,'(I6.6)') myid
@@ -324,73 +324,86 @@ contains
           trim(title) // '__' // trim(cmyid) // '__' // trim(green_cmp) // '__.csf'
     end if
     
+    call system__call( 'mkdir -p '//trim(odir) // '/green/' // trim(green_stnm) )
+
     do i=1, ng
 
        write(cid8,'(I8.8)') gid(i)
-       call system__call( 'mkdir -p '//trim(odir) // '/green/' // trim(green_stnm) )
-
-       sh(:,i)%kevnm = cid8
-       sh(:,i)%kstnm = trim(green_stnm)
+       
        do j=1, ncmp
-         fn(j,i) = trim(odir)  // '/green/' // trim(green_stnm) // '/' // &
+         k = (i-1)*ncmp + j
+
+         fn(k) = trim(odir)  // '/green/' // trim(green_stnm) // '/' // &
              trim(title) // '__' // trim(green_stnm) // '__' //  green_cmp // '__' // &
              cid8 // '__' //  trim(cmp(j)) // '__.sac'
        end do
 
-
-       !! grid location = event location
-       sh(1,i)%evlo = long(i)
-       sh(1,i)%evla = latg(i)
-       sh(2:ncmp,i)%evlo = sh(1,i)%evlo
-       sh(2:ncmp,i)%evla = sh(1,i)%evla
-       sh(:,     i)%evdp = zg(i)*1000 ! in meter unit
-
        select case (green_cmp)
          case( 'x' )
-            sh(:,i)%kcmpnm = 'G_Vx_' // cmp(:)
-            sh(:,i)%cmpinc = 90.0
-            sh(:,i)%cmpaz  =  0.0 + phi
+           do j=1, ncmp
+             k = (i-1)*ncmp + j
+             sh(k)%kcmpnm = 'G_Vx_' // cmp(j)
+             sh(k)%cmpinc = 90.0
+             sh(k)%cmpaz  =  0.0 + phi
+           end do
          case( 'y' )
-            sh(:,i)%kcmpnm = 'G_Vy_' // cmp(:)
-            sh(:,i)%cmpinc = 90.0
-            sh(:,i)%cmpaz  = 90.0 + phi
+           do j=1, ncmp
+             k = (i-1)*ncmp + j
+             sh(k)%kcmpnm = 'G_Vy_' // cmp(j)
+             sh(k)%cmpinc = 90.0
+             sh(k)%cmpaz  = 90.0 + phi
+           end do
          case( 'z' )
-            sh(:,i)%kcmpnm = 'G_Vz_' // cmp(:)
-            sh(:,i)%cmpinc = 0.0
-            sh(:,i)%cmpaz  = 0.0
+           do j=1, ncmp
+             k = (i-1)*ncmp + j
+             sh(k)%kcmpnm = 'G_Vz_' // cmp(j)
+             sh(k)%cmpinc = 0.0
+             sh(k)%cmpaz  = 0.0
+           end do
        end select
 
-       sh(1:6,i)%idep = 7 ! velocity
-       if( green_bforce ) then
-          sh(7:9,i)%idep = 6
-       end if
-
-       sh(:,i)%tim   = exedate
+       !! headers (grid location = event location)
        do j=1, ncmp
-          call daytim__localtime( sh(j,i)%tim, &
-                                  sh(j,i)%nzyear, sh(j,i)%nzmonth, sh(j,i)%nzday, sh(j,i)%nzhour, sh(j,i)%nzmin, sh(j,i)%nzsec )
-          call daytim__ymd2jul  ( sh(j,i)%nzyear, sh(j,i)%nzmonth, sh(j,i)%nzday, sh(j,i)%nzjday )
+         k = (i-1)*ncmp + j
+
+         sh(k)%kevnm = cid8
+         sh(k)%kstnm = trim(green_stnm)
+         sh(k)%evlo = long(i)
+         sh(k)%evla = latg(i)
+         sh(k)%evdp = zg(i)*1000 ! in m-unit
+
+         sh(k)%tim   = exedate
+         if( j<=6 ) then
+           sh(k)%idep = 7
+         else
+           sh(k)%idep = 6
+         end if
+
+         
+         call daytim__localtime( sh(k)%tim, &
+             sh(k)%nzyear, sh(k)%nzmonth, sh(k)%nzday, sh(k)%nzhour, sh(k)%nzmin, sh(k)%nzsec )
+         call daytim__ymd2jul  ( sh(k)%nzyear, sh(k)%nzmonth, sh(k)%nzday, sh(k)%nzjday )
+         
+         sh(k)%nzmsec = 0
+         sh(k)%b     = tbeg
+         sh(k)%delta = ntdec_w * dt
+         sh(k)%npts  = ntw
+
+         !! grid location specified by input
+         sh(k)%user0 = xg(i)
+         sh(k)%user1 = yg(i)
+         sh(k)%user2 = zg(i)
+         
+         !! true location in grid system
+         sh(k)%user3 = dble(i2x( ig(i), xbeg, real(dx) ))
+         sh(k)%user4 = dble(j2y( jg(i), ybeg, real(dy) ))
+         sh(k)%user5 = dble(k2z( kg(i), zbeg, real(dz) ))
+         
+         sh(k)%user6 = clon !< coordinate
+         sh(k)%user7 = clat !< coordinate
+         sh(k)%user8 = phi  !< coordinate
+         
        end do
-
-       sh(:,i)%nzmsec = 0
-       sh(:,i)%b     = tbeg
-       sh(:,i)%delta = ntdec_w * dt
-       sh(:,i)%npts  = ntw
-
-       !! grid location specified by input
-       sh(:,i)%user0 = xg(i)
-       sh(:,i)%user1 = yg(i)
-       sh(:,i)%user2 = zg(i)
-
-       !! true location in grid system
-       sh(:,i)%user3 = dble(i2x( ig(i), xbeg, real(dx) ))
-       sh(:,i)%user4 = dble(j2y( jg(i), ybeg, real(dy) ))
-       sh(:,i)%user5 = dble(k2z( kg(i), zbeg, real(dz) ))
-
-       sh(:,i)%user6 = clon !< coordinate
-       sh(:,i)%user7 = clat !< coordinate
-       sh(:,i)%user8 = phi  !< coordinate
-
     end do
 
     call pwatch__off( 'green__setup' )
@@ -526,17 +539,17 @@ contains
           jj = jg(i)
           kk = kg(i)
 
-          gf(1,i,itw) =  dxUx(i)             * UC_DERIV * 1e9 ! m/s -> nm/s
-          gf(2,i,itw) =  dyUy(i)             * UC_DERIV * 1e9 ! m/s -> nm/s
-          gf(3,i,itw) =  dzUz(i)             * UC_DERIV * 1e9 ! m/s -> nm/s
-          gf(4,i,itw) = (dyUz(i) + dzUy(i) ) * UC_DERIV * 1e9 ! m/s -> nm/s
-          gf(5,i,itw) = (dxUz(i) + dzUx(i) ) * UC_DERIV * 1e9 ! m/s -> nm/s
-          gf(6,i,itw) = (dxUy(i) + dyUx(i) ) * UC_DERIV * 1e9 ! m/s -> nm/s
+          gf(itw,(i-1)*ncmp+1) =  dxUx(i)             * UC_DERIV * 1e9 ! m/s -> nm/s
+          gf(itw,(i-1)*ncmp+2) =  dyUy(i)             * UC_DERIV * 1e9 ! m/s -> nm/s
+          gf(itw,(i-1)*ncmp+3) =  dzUz(i)             * UC_DERIV * 1e9 ! m/s -> nm/s
+          gf(itw,(i-1)*ncmp+4) = (dyUz(i) + dzUy(i) ) * UC_DERIV * 1e9 ! m/s -> nm/s
+          gf(itw,(i-1)*ncmp+5) = (dxUz(i) + dzUx(i) ) * UC_DERIV * 1e9 ! m/s -> nm/s
+          gf(itw,(i-1)*ncmp+6) = (dxUy(i) + dyUx(i) ) * UC_DERIV * 1e9 ! m/s -> nm/s
 
           if( green_bforce ) then
-             gf(7,i,itw) = ux(i) * UC_BF * 1e9 ! m -> nm
-             gf(8,i,itw) = uy(i) * UC_BF * 1e9 ! m -> nm
-             gf(9,i,itw) = uz(i) * UC_BF * 1e9 ! m -> nm
+             gf(itw,(i-1)*ncmp+7) = ux(i) * UC_BF * 1e9 ! m -> nm
+             gf(itw,(i-1)*ncmp+8) = uy(i) * UC_BF * 1e9 ! m -> nm
+             gf(itw,(i-1)*ncmp+9) = uz(i) * UC_BF * 1e9 ! m -> nm
           end if
 
        end do
@@ -551,7 +564,7 @@ contains
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine green__export()
 
-    integer :: i, j
+    integer :: i, j, k
     
     if( .not. green_mode ) return
 
@@ -559,19 +572,19 @@ contains
 
     !! Make positive upward for z-component
     if( green_cmp == 'z' ) then
-       gf(:,:,:) = -gf(:,:,:)
+       gf(:,:) = -gf(:,:)
     end if
 
     if( wav_format == 'sac' ) then
       do i=1, ng
         do j=1, ncmp
-          call sac__write( fn(j,i), sh(j,i), gf(j,i,:), .true. )
+          k = (i-1)*ncmp + j
+          call sac__write( fn(k), sh(k), gf(:,k), .true. )
         end do
       end do
     else
       if( ng>0 ) then
-        call csf__write( fn_csf, ng*ncmp, sh(1,1)%npts, &
-            reshape(sh(:,:), (/ng*ncmp/)), transpose(reshape(gf(:,:,:), (/ng*ncmp,sh(1,1)%npts/))), .true.)
+        call csf__write( fn_csf, ng*ncmp, sh(1)%npts, sh, gf, .true. )
       end if
     end if
     
