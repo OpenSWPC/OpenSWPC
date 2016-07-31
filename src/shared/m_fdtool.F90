@@ -295,8 +295,12 @@ contains
 
     !! ----
 
-    moment_magnitude = (log10( m0 ) - 9.1 ) * 2.0 / 3.0
-
+    if( m0 < epsilon(1.0) ) then
+      moment_magnitude = -12345.0 !< undefined
+    else
+      moment_magnitude = (log10( m0 ) - 9.1 ) * 2.0 / 3.0
+    end if
+    
   end function moment_magnitude
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
