@@ -395,9 +395,13 @@ contains
     character(256) :: fn1, fn2, fn3, fn4, fn5, fn6
     character(6) :: cid
 
-    if( nst == 0 ) return
     
     call pwatch__on("output__export_wav")
+
+    if( nst == 0 ) then
+      call pwatch__off("output__export_wav")
+      return
+    end if
     
     if( wav_format == 'sac' ) then
       do i=1, nst
