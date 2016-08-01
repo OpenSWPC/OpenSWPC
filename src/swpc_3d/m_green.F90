@@ -322,7 +322,8 @@ contains
     if( wav_format == 'csf' ) then
       write(cmyid,'(I6.6)') myid
       fn_csf = trim(odir)  // '/green/' // trim(green_stnm) // '/' // &
-          trim(title) // '__' // trim(cmyid) // '__' // trim(green_cmp) // '__.csf'
+          trim(title) //  '__' // trim(green_stnm) // '__' // &
+          trim(green_cmp) // '__' // trim(cmyid) // '__.csf'
     end if
     
     call system__call( 'mkdir -p '//trim(odir) // '/green/' // trim(green_stnm) )
