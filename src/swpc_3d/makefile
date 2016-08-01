@@ -144,7 +144,7 @@ $(o_vmodel3):  $(s_vmodel3)  $(o_std) $(o_global) $(o_readini)  $(o_pdebug)
 $(o_vmodel1r):  $(s_vmodel1r)  $(o_std) $(o_global) $(o_readini)  $(o_pdebug) $(o_rdrmed)
 $(o_vmodel2r):  $(s_vmodel2)  $(o_std) $(o_system) $(o_global) $(o_fdtool) $(o_bicubic) $(o_readini)   $(o_geomap) $(o_pdebug)  $(o_rdrmed) $(o_fdtool)
 $(o_vmodel3r):  $(s_vmodel3)  $(o_std) $(o_global) $(o_readini)  $(o_pdebug)  $(o_rdrmed) $(o_fdtool)
-$(o_green):    $(s_green)    $(o_std) $(o_readini) $(o_global) $(o_wsac) $(o_output) $(o_geomap) $(o_pdebug)
+$(o_green):    $(s_green)     $(o_std) $(o_readini) $(o_global) $(o_wsac) $(o_output) $(o_geomap) $(o_pdebug) $(o_system)
 
 
 ##
