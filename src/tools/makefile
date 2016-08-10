@@ -56,7 +56,7 @@ m_gammaf.o  : m_gammaf.F90 m_std.o
 	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ -D_DEBUG $(NETCDF)
 
 ../../bin/qmodel_tau.x: qmodel_tau.F90 m_std.o m_system.o m_getopt.o m_fdtool.o m_readini.o m_debug.o
-	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
+	$(FC) $(FFLAGS) -o $@ $^
 
 ../../bin/grdsnp.x: grdsnp.F90 m_std.o m_system.o m_getopt.o m_fdtool.o m_readini.o m_bicubic.o m_geomap.o m_gk.o m_debug.o
 	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
@@ -68,10 +68,10 @@ m_gammaf.o  : m_gammaf.F90 m_std.o
 	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
 
 ../../bin/mapregion.x: mapregion.F90 m_std.o m_system.o m_fdtool.o m_gk.o m_readini.o m_getopt.o m_geomap.o m_debug.o
-	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
+	$(FC) $(FFLAGS) -o $@ $^
 
 ../../bin/fdmcond.x: fdmcond.F90 m_std.o m_getopt.o m_system.o m_debug.o
-	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
+	$(FC) $(FFLAGS) -o $@ $^
 
 ../../bin/ll2xy.x: ll2xy.F90 m_std.o m_geomap.o m_system.o m_gk.o m_debug.o
 	$(FC) $(FFLAGS) -o $@ $^ 
