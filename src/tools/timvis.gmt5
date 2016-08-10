@@ -1,0 +1,119 @@
+#!/bin/bash
+
+# Visualize Parallel MPI computation balance
+# usage: timvis.gmt5 [timfile]
+
+## @copyright
+##   Copyright 2013-2016 Takuto Maeda. All rights reserved.
+##   This project is released under the MIT license.
+
+# --------------------------------------------------------------------------- #
+
+#
+# gmt option
+#
+rm -f gmt.conf
+rm -f gmt.history
+
+# font size settings
+gmt set FONT_ANNOT_PRIMARY   11p,Helvetica,black
+gmt set FONT_ANNOT_SECONDARY 10p,Helvetica,black
+gmt set FONT_LABEL           13p,Helvetica,black
+gmt set FONT_TITLE           14p,Helvetica,black
+
+# Mapping
+gmt set MAP_GRID_PEN_PRIMARY 0.25p,30/30/30,'.'
+gmt set MAP_FRAME_TYPE       plain
+
+# Postscript
+gmt set PS_IMAGE_COMPRESS    none
+gmt set PS_LINE_CAP          round
+gmt set PS_LINE_JOIN         round
+
+## --
+
+infile=$1
+
+ncpu=` sort -n -k 1 ${infile} | tail -1 | awk '{print $1}' `
+ncpu2=`echo $ncpu | awk '{print $1+0.9999}'`
+nproc=` sort -n -k 2 ${infile} | tail -1 | awk '{printf("%d",$2)}' `
+nproc2=`echo $nproc | awk '{print $1+1}'`
+
+gmt makecpt -Cpaired  > col.cpt
+
+title=`basename $infile .tim`
+echo "title = " $title
+
+order=`echo $ncpu | awk '{print 10**int(log($1/4)/log(10.))}'`
+horder=`echo $order | awk '{print $1/2}'`
+htick=a${order}f${horder}
+vtick=a20f10g10
+echo "ticks = " $htick/$vtick
+echo "ncpu  = " $ncpu
+echo "nproc = " $nproc
+
+region=-0.9999999/$ncpu2/0/100
+echo "region = " $region
+width=15
+height=15
+
+gmt psbasemap \
+  -JX${width}c/${height}c -R$region \
+  -BWSen -Bx${htick}+l"MPI node number" -By${vtick}+l"relative time [%]" \
+  -K > $title.ps
+
+for (( i=$nproc; i > 0 ; i -- ))
+do
+  ii=$(echo $i | awk '{print $1%12}')
+  col=`awk '$1=='$ii'{print $2}' col.cpt`
+  awk '$2=='$i'{printf("%d  %f \n",$1,$7)}' $infile | \
+    gmt psxy -JX -R -Sb1u -Wfaint,black -G${col} -K -O >> $title.ps
+done
+
+gmt pstext -J -R -N -O -K  <<EOF>>$title.ps
+-1 108 12 0 0 LM $title
+EOF
+
+
+# legend
+bsize=`echo $nproc $height | awk '{print $2*100/110/$1/2}'`
+touch tmp$$
+gmt psxy -JX5c/15c -R0/5/0/15 -X15c -Sc0.2c -O -K  tmp$$ >> $title.ps
+rm -f tmp.$$
+
+for (( i=$nproc; i > 0 ; i -- ))
+do
+  ii=$(echo $i | awk '{print $1%12}')
+  col=`awk '$1=='$ii'{print $2}' col.cpt`
+  x1=0.5
+  x2=`echo $x1 $bsize| awk '{print $1+$2}'`
+  x3=`echo $x2 $bsize | awk '{print $1+$2/2}'`
+  y1=`echo $i $bsize | awk '{print ($1)*$2*2}'`
+  y2=`echo $y1 $bsize  | awk '{print $1+$2}'`
+  y3=`echo $y1 $y2 | awk '{print ($1+$2)/2}'`
+  gmt psxy -J -R -O -K  -G$col -Wthin,black <<EOF>> $title.ps
+$x1 $y1
+$x1 $y2
+$x2 $y2
+$x2 $y1
+$x1 $y1
+EOF
+  nm=`awk '$1==0&&$2=='$i'{print $3}' $infile`
+  gmt pstext -J -R -O -K  -N <<EOF>>$title.ps
+$x3 $y3 10 0 0 LM $nm
+EOF
+done
+
+
+
+# dummy file plot for closing postscript
+touch tmp$$
+gmt psxy -JX  -R -Sb1u tmp$$ -O  >> $title.ps
+rm -f tmp$$
+
+gmt ps2raster -Au1c -Tf -P $title.ps
+rm -f $title.ps
+
+rm -f gmt.conf
+rm -f gmt.history
+rm -f col.cpt
