@@ -3,7 +3,8 @@
 !! Geographyic coordinate transform by Gauss-Krugeur projection
 !!
 !! @see
-!!  http://www.gsi.go.jp/common/000065826.pdf
+!! http://www.gsi.go.jp/common/000062452.pdf
+!! http://www.gsi.go.jp/common/000065826.pdf
 !! http://surveycalc.gsi.go.jp/sokuchi/surveycalc/algorithm/xy2bl/xy2bl.htm
 !! http://surveycalc.gsi.go.jp/sokuchi/surveycalc/algorithm/bl2xy/bl2xy.htm
 !!
