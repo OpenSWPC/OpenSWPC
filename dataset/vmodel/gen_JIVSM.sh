@@ -12,12 +12,29 @@
 archive_jivsm_e=lp2012nankai-e_str.zip
 archive_jivsm_w=lp2012nankai-w_str.zip
 
-if [ ! -e ${archive_jivsm_e} ]; then
-  curl  -o ${archive_jivsm_e} http://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-e_str.zip
-fi
-if [ ! -e ${archive_jivsm_w} ]; then
-  curl  -o ${archive_jivsm_w} http://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-w_str.zip
-fi
+
+#
+# File download
+#
+
+# Please un-comment the following section to newly download the dataset
+
+# JIVSM original data
+
+#if [ ! -e ${archive_jivsm_e} ]; then
+#  curl  -o ${archive_jivsm_e} http://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-e_str.zip
+#fi
+#if [ ! -e ${archive_jivsm_w} ]; then
+#  curl  -o ${archive_jivsm_w} http://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-w_str.zip
+#fi
+
+
+# Topography & bathymetry data for extrapotation
+
+#if [ ! -e ETOPO1_Bed_g_gmt4.grd.gz ]; then
+#  curl -o ETOPO1_Bed_g_gmt4.grd.gz  https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO1/data/bedrock/grid_registered/netcdf/ETOP#O1_Bed_g_gmt4.grd.gz
+#fi
+#gunzip ETOPO1_Bed_g_gmt4.grd.gz
 
 
 . ./param.sh
@@ -146,12 +163,6 @@ rm -f jivsm_layer.dat
 # It requires wider area topography data in grd format, which is defined
 # in the parameter file (param.sh).
 #
-
-# topography data
-if [ ! -e ETOPO1_Bed_g_gmt4.grd.gz ]; then
-  curl -o ETOPO1_Bed_g_gmt4.grd.gz  https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO1/data/bedrock/grid_registered/netcdf/ETOPO1_Bed_g_gmt4.grd.gz
-fi
-gunzip ETOPO1_Bed_g_gmt4.grd.gz
 
 
 #
