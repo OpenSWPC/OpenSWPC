@@ -1,0 +1,114 @@
+#!/bin/bash
+
+# Visualize Parallel MPI computation balance
+# usage: timvis.gmt4 [timfile]
+
+## @copyright
+##   Copyright 2013-2016 Takuto Maeda. All rights reserved.
+##   This project is released under the MIT license.
+
+# --------------------------------------------------------------------------- #
+
+#
+# gmt option
+#
+rm -f .gmt*
+gmtset ANNOT_FONT_SIZE                   12p
+gmtset ANNOT_FONT_SIZE_SECONDARY         10p
+gmtset HEADER_FONT_SIZE                  14p
+gmtset HEADER_OFFSET                    0.2c
+gmtset LABEL_FONT_SIZE                   14p
+gmtset LABEL_OFFSET                     0.2c
+gmtset ANNOT_FONT                  Helvetica
+gmtset ANNOT_FONT_SECONDARY        Helvetica
+gmtset HEADER_FONT                 Helvetica
+gmtset LABEL_FONT                  Helvetica
+gmtset GRID_PEN_PRIMARY               0.125p
+gmtset DOTS_PR_INCH                      600
+gmtset BASEMAP_TYPE                    plain
+gmtset PLOT_DEGREE_FORMAT                +DF
+gmtset PS_LINE_CAP                     round
+gmtset PS_LINE_JOIN                    round
+gmtset PS_IMAGE_FORMAT                 ascii
+gmtset PS_IMAGE_COMPRESS                none
+gmtset TICK_LENGTH 0
+
+infile=$1
+
+ncpu=` sort -n -k 1 ${infile} | tail -1 | awk '{print $1}' `
+ncpu2=`echo $ncpu | awk '{print $1+0.9999}'`
+nproc=` sort -n -k 2 ${infile} | tail -1 | awk '{printf("%d",$2)}' `
+nproc2=`echo $nproc | awk '{print $1+1}'`
+
+makecpt -Chaxby -T1/${nproc2}/1 > col.cpt
+
+title=`basename $infile .tim`
+echo "title = " $title
+
+order=`echo $ncpu | awk '{print 10**int(log($1/4)/log(10.))}'`
+horder=`echo $order | awk '{print $1/2}'`
+htick=a${order}f${horder}
+vtick=a20f10g100
+echo "ticks = " $htick/$vtick
+echo "ncpu  = " $ncpu
+echo "nproc = " $nproc
+
+region=-0.9999999/$ncpu2/-5/105
+echo "region = " $region
+width=15
+height=15
+
+psbasemap -JX${width}c/${height}c -R$region -B${htick}:"MPI node number":/${vtick}:"relative time [%]":WSen -K > $title.ps
+
+for (( i=$nproc; i > 0 ; i -- ))
+do
+#  ii=`echo $i $nproc|awk '$1%2==1{printf("%d",$2-$1/2+1)} $1%2==0{printf("%d",$1/2)}'`
+  col=`awk '$1=='$i'{print $2"/"$3"/"$4}' col.cpt`
+  awk '$2=='$i'{printf("%d  %f \n",$1,$7)}' $infile | psxy -JX -R -Sb1u -Wfaint,black -G${col} -K -O >> $title.ps
+done
+
+pstext -J -R -N -O -K  <<EOF>>$title.ps
+-1 108 12 0 0 LM $title
+EOF
+
+
+# legend
+bsize=`echo $nproc $height | awk '{print $2*100/110/$1/2}'`
+touch tmp$$
+psxy -JX5c/15c -R0/5/0/15 -X15c -Sc0.2c -O -K  tmp$$ >> $title.ps
+rm -f tmp.$$
+
+for (( i=$nproc; i > 0 ; i -- ))
+do
+#  ii=`echo $i $nproc|awk '$1%2==1{printf("%d",$2-$1/2+1)} $1%2==0{printf("%d",$1/2)}'`
+  col=`awk '$1=='$i'{print $2"/"$3"/"$4}' col.cpt`
+  x1=0.5
+  x2=`echo $x1 $bsize| awk '{print $1+$2}'`
+  x3=`echo $x2 $bsize | awk '{print $1+$2/2}'`
+  y1=`echo $i $bsize | awk '{print ($1)*$2*2}'`
+  y2=`echo $y1 $bsize  | awk '{print $1+$2}'`
+  y3=`echo $y1 $y2 | awk '{print ($1+$2)/2}'`
+  psxy -J -R -O -K  -G$col -W2,black <<EOF>> $title.ps
+$x1 $y1
+$x1 $y2
+$x2 $y2
+$x2 $y1
+$x1 $y1
+EOF
+
+  nm=`awk '$1==0&&$2=='$i'{print $3}' $infile`
+  pstext -J -R -O -K  -N <<EOF>>$title.ps
+$x3 $y3 10 0 0 LM $nm
+EOF
+done
+
+
+
+# dummy file plot for closing postscript
+touch tmp$$
+psxy -JX  -R -Sb1u tmp$$ -O  >> $title.ps
+rm -f tmp$$
+
+ps2raster -Tf -P $title.ps
+rm -f $title.ps
+
