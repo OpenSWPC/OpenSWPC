@@ -21,6 +21,7 @@ module m_wsac
   public :: sac__write   ! write sac datafile
   public :: sac__init    ! initialize sac data type
   public :: sac__whdr    ! read header
+  public :: csf__write   ! write concatenated sac format file
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
@@ -138,6 +139,24 @@ module m_wsac
   end interface
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  !>
+  !! Write CSF file
+  !!
+  !! @par Usage
+  !! call sac__csf( char filename, integer ntrace, integer npts, sac__hdr sh(:), real(*) dat(:), logical sw )
+  !! data can be single or double precisions
+  !! if sw = true, the existing file is automatically replaced. 
+  !<
+  !! --
+  interface csf__write
+     
+     module procedure wcsf_d, wcsf_s
+     
+  end interface
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+
+    
 contains
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -443,5 +462,108 @@ contains
   end subroutine sac__init
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
+ !! --------------------------------------------------------------------------------------------------------------------------- !!
+  !>
+  !! Write csf format
+  !<
+  !! --
+  subroutine wcsf_d( fn_csf, ntrace, npts, sh, dat, overwrite )
+
+    !! Arguments
+    character(*),      intent(in) :: fn_csf
+    integer,           intent(in) :: ntrace
+    integer,           intent(in) :: npts
+    type(sac__hdr),    intent(in) :: sh(ntrace)
+    real(DP),          intent(in) :: dat(npts,ntrace)
+    logical, optional, intent(in) :: overwrite
+    !! ----
+
+    if( present(overwrite) ) then
+      call wcsf_s( fn_csf, ntrace, npts, sh, real(dat), overwrite )
+    else
+      call wcsf_s( fn_csf, ntrace, npts, sh, real(dat) )
+    end if
+
+  end subroutine wcsf_d
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+ 
+    
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  !>
+  !! Write csf format
+  !<
+  !! --
+  subroutine wcsf_s( fn_csf, ntrace, npts, sh, dat, overwrite )
+    
+    !! Arguments
+    character(*),      intent(in) :: fn_csf
+    integer,           intent(in) :: ntrace
+    integer,           intent(in) :: npts
+    type(sac__hdr),    intent(in) :: sh(ntrace)
+    real(SP),          intent(in) :: dat(npts,ntrace)
+    logical, optional, intent(in) :: overwrite
+    !! --
+    logical :: isexist
+    integer :: io
+    integer :: i
+    character(1) :: yn
+    integer, parameter :: NVHDR = 1
+    !! ----
+    
+    !! overwrite
+    inquire( file = fn_csf, exist=isexist )
+    if( isexist ) then
+      if( present( overwrite) ) then
+        if( .not. overwrite ) then
+          write(STDERR,*) 'wcsf: file '//trim(fn_csf)//' exists.' 
+          write(STDERR,*) 'wcsf: could not overwrite the file.'
+          write(STDERR,*) 'wcsf: return without success'
+          write(STDERR,*)
+          return
+        end if
+      else
+        write(STDERR,*) 'wcsf: file '//trim(fn_csf)//' exists.' 
+        write(STDERR,*) 'wcsf: Overwrite ? (y/n)' 
+        read(STDIN,'(A)') yn
+        if( yn /= 'y' .and. yn /='Y' ) then
+          write(STDERR,*) 'wcsf: could not overwrite the file.'
+          write(STDERR,*) 'wcsf: return without success'
+          write(STDERR,*)
+          return
+        end if
+      end if
+    end if
+    
+    !file check
+    do i=1, ntrace
+      if( sh(i)%npts /= npts ) then
+        write(STDERR,*) "wcdf: npts mismatch"
+        write(STDERR,*) "wcdf: return without success"
+        return
+      end if
+    end do
+
+#ifdef _ES
+    ! big endian numbers are used with F_NORCW="900,901,902,..." environmental variable
+    call std__getio(io, is_big=.true.)
+    open(io, file=trim(fn_csf), action='write', form='unformatted', status='unknown')
+#else
+    call std__getio(io)
+    open(io, file=trim(fn_csf), action='write', access='stream', form='unformatted', status='unknown')
+#endif
+    write(io) NVHDR
+    write(io) ntrace
+    write(io) npts
+    
+    do i=1, ntrace
+      call sac__whdr(io, sh(i))
+      write(io) dat(1:npts, i)
+    end do
+    
+    close(io)
+    
+  end subroutine wcsf_s
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+    
 end module m_wsac
 !! ----------------------------------------------------------------------------------------------------------------------------- !!

@@ -79,7 +79,8 @@ module m_output
   integer   :: ntdec_s, ntdec_w                                !< time step decimation factor: Snap and Waves
   integer   :: idec, jdec, kdec                                !< spatial decimation factor: x, y, z directions
   character(2) :: st_format                                       !< station file format
-
+  character(3) :: wav_format                                   !< sac or csf
+  
   real(SP) :: z0_xy, x0_yz, y0_xz ! < danmen
   integer  :: k0_xy, i0_yz, j0_xz ! < danmen
   character(256) :: fn_stloc
@@ -164,6 +165,7 @@ contains
     call readini( io_prm, 'sw_wav_v',   sw_wav_v,   .false. )
     call readini( io_prm, 'sw_wav_u',   sw_wav_u,   .false. )
     call readini( io_prm, 'snp_format', snp_format, 'native' )
+    call readini( io_prm, 'wav_format', wav_format, 'sac' ) 
 
     !! Do not output waveform for Green's function mode
     call readini( io_prm, 'green_mode', green_mode, .false. )
@@ -391,34 +393,67 @@ contains
   subroutine output__export_wav()
     integer :: i
     character(256) :: fn1, fn2, fn3, fn4, fn5, fn6
+    character(6) :: cid
 
+    
     call pwatch__on("output__export_wav")
 
+    if( nst == 0 ) then
+      call pwatch__off("output__export_wav")
+      return
+    end if
+    
+    if( wav_format == 'sac' ) then
+      do i=1, nst
+        
+        if( sw_wav_v ) then
+          
+          fn1 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Vx.sac'
+          fn2 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Vy.sac'
+          fn3 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Vz.sac'
+          
+          call sac__write( fn1, sh(1,i), vxst(:,i), .true. )
+          call sac__write( fn2, sh(2,i), vyst(:,i), .true. )
+          call sac__write( fn3, sh(3,i), vzst(:,i), .true. )
+          
+        end if
+        
+        if( sw_wav_u ) then
+          fn4 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Ux.sac'
+          fn5 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Uy.sac'
+          fn6 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Uz.sac'
+          call sac__write( fn4, sh(4,i), uxst(:,i), .true. )
+          call sac__write( fn5, sh(5,i), uyst(:,i), .true. )
+          call sac__write( fn6, sh(6,i), uzst(:,i), .true. )
+        end if
+        
+      end do
 
-    do i=1, nst
-
+    else
+      write(cid,'(I6.6)') myid
+      
       if( sw_wav_v ) then
 
-        fn1 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Vx.sac'
-        fn2 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Vy.sac'
-        fn3 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Vz.sac'
-
-        call sac__write( fn1, sh(1,i), vxst(:,i), .true. )
-        call sac__write( fn2, sh(2,i), vyst(:,i), .true. )
-        call sac__write( fn3, sh(3,i), vzst(:,i), .true. )
+        fn1 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.Vx.csf'
+        fn2 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.Vy.csf'
+        fn3 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.Vz.csf'
+        call csf__write( fn1, nst, sh(1,1)%npts, sh(1,:), vxst(:,:), .true.)
+        call csf__write( fn2, nst, sh(2,1)%npts, sh(2,:), vyst(:,:), .true.)
+        call csf__write( fn3, nst, sh(3,1)%npts, sh(3,:), vzst(:,:), .true.)
 
       end if
 
       if( sw_wav_u ) then
-        fn4 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Ux.sac'
-        fn5 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Uy.sac'
-        fn6 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Uz.sac'
-        call sac__write( fn4, sh(4,i), uxst(:,i), .true. )
-        call sac__write( fn5, sh(5,i), uyst(:,i), .true. )
-        call sac__write( fn6, sh(6,i), uzst(:,i), .true. )
+        fn4 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.Ux.sac'
+        fn5 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.Uy.sac'
+        fn6 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.Uz.sac'
+        call csf__write( fn4, nst, sh(4,1)%npts, sh(4,:), uxst(:,:), .true. )
+        call csf__write( fn5, nst, sh(5,1)%npts, sh(5,:), uyst(:,:), .true. )
+        call csf__write( fn6, nst, sh(6,1)%npts, sh(6,:), uzst(:,:), .true. )
       end if
-
-    end do
+        
+    end if
+    
     call pwatch__off("output__export_wav")
 
 

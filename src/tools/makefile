@@ -8,7 +8,8 @@
 ##
 ## --
 
-all: read_snp.x diff_snp.x mapregion.x fdmcond.x qmodel_tau.x grdsnp.x gen_rmed2d.x gen_rmed3d.x
+all: read_snp.x diff_snp.x mapregion.x fdmcond.x qmodel_tau.x grdsnp.x \
+	gen_rmed2d.x gen_rmed3d.x ll2xy.x xy2ll.x
 
 ## file search path
 
@@ -55,7 +56,7 @@ m_gammaf.o  : m_gammaf.F90 m_std.o
 	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ -D_DEBUG $(NETCDF)
 
 ../../bin/qmodel_tau.x: qmodel_tau.F90 m_std.o m_system.o m_getopt.o m_fdtool.o m_readini.o m_debug.o
-	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
+	$(FC) $(FFLAGS) -o $@ $^
 
 ../../bin/grdsnp.x: grdsnp.F90 m_std.o m_system.o m_getopt.o m_fdtool.o m_readini.o m_bicubic.o m_geomap.o m_gk.o m_debug.o
 	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
@@ -67,10 +68,16 @@ m_gammaf.o  : m_gammaf.F90 m_std.o
 	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
 
 ../../bin/mapregion.x: mapregion.F90 m_std.o m_system.o m_fdtool.o m_gk.o m_readini.o m_getopt.o m_geomap.o m_debug.o
-	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
+	$(FC) $(FFLAGS) -o $@ $^
 
 ../../bin/fdmcond.x: fdmcond.F90 m_std.o m_getopt.o m_system.o m_debug.o
-	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
+	$(FC) $(FFLAGS) -o $@ $^
+
+../../bin/ll2xy.x: ll2xy.F90 m_std.o m_geomap.o m_system.o m_gk.o m_debug.o
+	$(FC) $(FFLAGS) -o $@ $^ 
+
+../../bin/xy2ll.x: xy2ll.F90 m_std.o m_geomap.o m_system.o m_gk.o m_debug.o
+	$(FC) $(FFLAGS) -o $@ $^ 
 
 clean:
-	/bin/rm -f *.o *.mod *~ ../../bin/read_snp.x ../../bin/diff_snp.x ../../bin/mapregion.x ../../bin/fdmcond.x ../../bin/qmodel_tau.x ../../bin/grdsnp.x ../../bin/gen_rmed2d.x ../../bin/gen_rmed3d.x
+	/bin/rm -f *.o *.mod *~ ../../bin/read_snp.x ../../bin/diff_snp.x ../../bin/mapregion.x ../../bin/fdmcond.x ../../bin/qmodel_tau.x ../../bin/grdsnp.x ../../bin/gen_rmed2d.x ../../bin/gen_rmed3d.x ../../bin/ll2xy.x ../../bin/xy2ll.x
