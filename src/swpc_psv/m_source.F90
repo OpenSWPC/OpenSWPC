@@ -875,7 +875,7 @@ contains
     end if
 
     !! wavelength condition
-    i = x2i( 0.0,     xbeg, real(dx) )
+    i = x2i( (xbeg+xend)/2, xbeg, real(dx) )
     k = z2k( pw_ztop, zbeg, real(dz) )
     fcut = 0
     fmax = 0
