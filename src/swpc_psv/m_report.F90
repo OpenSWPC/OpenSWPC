@@ -80,8 +80,8 @@ contains
     end if
 
     call memory_size_psv ( nproc_x, nx, nz, nm, na, mem_all, mem_node )
-    call fdm_cond_stability ( real(dx),  1e10, real(dz), vmax, dt,   c ) !  1e30 dummy for 2d evaluation
-    call fdm_cond_wavelength( real(dx),  -1.0, real(dz), vmin, fmax, r ) ! -1e30 dummy for 2d evaluation
+    call fdm_cond_stability ( real(dx),  1e10, real(dz), vmax, dt,   c )
+    call fdm_cond_wavelength( real(dx),  -1.0, real(dz), vmin, fmax, r )
 
     if( myid == terminal_output_node ) then
 

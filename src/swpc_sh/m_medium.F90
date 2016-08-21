@@ -49,6 +49,7 @@ contains
     real(SP) :: vcut
     character(16) :: vmodel_type
     integer :: i, k
+    logical :: is_stabilize_pml
 
     call pwatch__on("medium__setup")
 
@@ -194,6 +195,11 @@ contains
     call surface_detection()
     call velocity_minmax()
 
+    call readini( io_prm, 'stabilize_pml', is_stabilize_pml, .false. )
+    if( is_stabilize_pml ) then
+      call stabilize_absorber()
+    end if
+    
     !! initialized flag
     init = .true.
 
@@ -323,6 +329,49 @@ contains
   end function medium__initialized
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  !>
+  !! Avoid low-velocity layer for stabilize PML absorber
+  !<
+  !! --
+  subroutine stabilize_absorber()
+    
+    integer :: i, k
+    real :: vs
+    real, parameter :: V_DYNAMIC_RANGE = 0.4 ! ratio between maximum and minimum velocity
+    real :: vmin_pml
+    
+    vmin_pml = vmax * V_DYNAMIC_RANGE
+    
+    do i=ibeg-1, iend+1
+      do k=minval(kbeg_a(i-2:i+2)), kend
+        
+        if( lam(k,i) < lam(k-1,i) .or. mu(k,i) < mu(k-1,i) ) then
+          rho (k,i) = rho (k-1,i)
+          mu  (k,i) = mu  (k-1,i)
+          taus(k,i) = taus(k-1,i)
+        end if
+      end do
+    end do
+    
+    do i=ibeg-1, iend+1
+      do k=minval(kbeg_a(i-2:i+2)), kend
+        
+        vs = sqrt( mu(k,i) / rho(k,i) )
+        
+        ! skip ocean and air
+        if( vs < epsilon(1.0) ) cycle
+        
+        if( vs < vmin_pml ) then
+          vs = vmin_pml
+          mu (k,i) = rho(k,i) * (vs**2)
+        end if
+      end do
+    end do
+    
+  end subroutine stabilize_absorber
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine memory_allocate()
     !!

@@ -488,9 +488,9 @@ contains
     end if
 
     !! wavelength condition
-    i = x2i( 0.0,     xbeg, real(dx) )
-    j = y2j( 0.0,     ybeg, real(dy) )
-    k = z2k( pw_ztop, zbeg, real(dz) )
+    i = x2i( (xbeg+xend)/2, xbeg, real(dx) )
+    j = y2j( (ybeg+yend)/2, ybeg, real(dy) )
+    k = z2k( pw_ztop,       zbeg, real(dz) )
     fcut = 0.0
     fmax = 0.0
     if( ibeg <= i .and. i <= iend .and. jbeg <= j .and. j<= jend ) then
