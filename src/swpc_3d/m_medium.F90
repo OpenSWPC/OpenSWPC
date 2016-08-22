@@ -319,51 +319,68 @@ contains
     !<
     !! --
     subroutine stabilize_absorber()
-
-      integer :: i, j, k
+      
+      integer :: i, j, k, k2
       real :: vp, vs, gamma
       real, parameter :: V_DYNAMIC_RANGE = 0.4 ! ratio between maximum and minimum velocity
       real :: vmin_pml
-
+      integer :: LV_THICK = 20 !! minimum thickness of low-velocity layer in grids
+      
       vmin_pml = vmax * V_DYNAMIC_RANGE
-
+      
       do j=jbeg-1, jend+1
-         do i=ibeg-1, iend+1
-            do k=minval(kbeg_a(i-2:i+2,j-2:j+2)), kend
+        do i=ibeg-1, iend+1
+          k=minval(kbeg_a(i-2:i+2,j-2:j+2))
+          do while( k<=kend )
+            
+            if( lam(k,i,j) < lam(k-1,i,j) .or. mu(k,i,j) < mu(k-1,i,j) ) then
+              
+              do k2=k+1, kend
+                if( lam(k2,i,j) > lam(k2-1,i,j) .or. mu(k2,i,j) > mu(k2-1,i,j) ) exit
+              end do
+              
+              if( k2-k <= LV_THICK ) then
+                
+                
+                rho (k,i,j) = rho (k-1,i,j)
+                lam (k,i,j) = lam (k-1,i,j)
+                mu  (k,i,j) = mu  (k-1,i,j)
+                taup(k,i,j) = taup(k-1,i,j)
+                taus(k,i,j) = taus(k-1,i,j)
+                k = k2 - 1
+                
+              end if
 
-               if( lam(k,i,j) < lam(k-1,i,j) .or. mu(k,i,j) < mu(k-1,i,j) ) then
-                  rho (k,i,j) = rho (k-1,i,j)
-                  lam (k,i,j) = lam (k-1,i,j)
-                  mu  (k,i,j) = mu  (k-1,i,j)
-                  taup(k,i,j) = taup(k-1,i,j)
-                  taus(k,i,j) = taus(k-1,i,j)
-               end if
-            end do
-         end do
+            end if
+            
+            k = k + 1
+            
+          end do
+        end do
       end do
-
+      
       do j=jbeg-1, jend+1
-         do i=ibeg-1, iend+1
-            do k=minval(kbeg_a(i-2:i+2,j-2:j+2)), kend
-
-               vp = sqrt( (lam(k,i,j) + 2 * mu(k,i,j))/rho(k,i,j) )
-               vs = sqrt( mu(k,i,j) / rho(k,i,j) )
-
-               ! skip ocean and air
-               if( vs < epsilon(1.0) ) cycle
-
-               gamma = sqrt(3.0)
-               if( vs < vmin_pml ) then
-                  vs = vmin_pml
-                  vp = vs * gamma
-
-                  lam(k,i,j) = rho(k,i,j) * (vp**2 - 2 * vs**2)
-                  mu (k,i,j) = rho(k,i,j) * (vs**2)
-               end if
-            end do
-         end do
+        do i=ibeg-1, iend+1
+          do k=minval(kbeg_a(i-2:i+2,j-2:j+2)), kend
+            
+            vp = sqrt( (lam(k,i,j) + 2 * mu(k,i,j))/rho(k,i,j) )
+            vs = sqrt( mu(k,i,j) / rho(k,i,j) )
+            
+            ! skip ocean and air
+            if( vs < epsilon(1.0) ) cycle
+            
+            gamma = sqrt(3.0)
+            if( vs < vmin_pml ) then
+              vs = vmin_pml
+              vp = vs * gamma
+              
+              lam(k,i,j) = rho(k,i,j) * (vp**2 - 2 * vs**2)
+              mu (k,i,j) = rho(k,i,j) * (vs**2)
+            end if
+          end do
+        end do
       end do
-
+      
     end subroutine stabilize_absorber
     !! ------------------------------------------------------------------------------------------------------------------------ !!
 

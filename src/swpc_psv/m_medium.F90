@@ -359,24 +359,37 @@ contains
   !! --
   subroutine stabilize_absorber()
     
-    integer :: i, k
+    integer :: i, k, k2
     real :: vp, vs, gamma
     real, parameter :: V_DYNAMIC_RANGE = 0.4 ! ratio between maximum and minimum velocity
     real :: vmin_pml
+    integer :: LV_THICK = 20 !! minimum thickness of low-velocity layer in grids
     
     vmin_pml = vmax * V_DYNAMIC_RANGE
     
     do i=ibeg-1, iend+1
-      do k=minval(kbeg_a(i-2:i+2)), kend
-        
+      k = minval(kbeg_a(i-2:i+2))
+      do while ( k <= kend )
         if( lam(k,i) < lam(k-1,i) .or. mu(k,i) < mu(k-1,i) ) then
-          rho (k,i) = rho (k-1,i)
-          lam (k,i) = lam (k-1,i)
-          mu  (k,i) = mu  (k-1,i)
-          taup(k,i) = taup(k-1,i)
-          taus(k,i) = taus(k-1,i)
-        end if
-      end do
+
+          !! detection the bottom of the low-velocity layer
+          do k2=k+1, kend
+            if( lam(k2,i) > lam(k2-1,i) .or. mu(k2,i) > mu(k2-1,i) ) exit
+          end do
+          
+          if( k2-k <= LV_THICK ) then
+            
+            rho (k:k2-1,i) = rho (k-1,i)
+            lam (k:k2-1,i) = lam (k-1,i)
+            mu  (k:k2-1,i) = mu  (k-1,i)
+            taup(k:k2-1,i) = taup(k-1,i)
+            taus(k:k2-1,i) = taus(k-1,i)
+            k = k2-1
+           end if
+           
+         end if
+         k = k + 1
+       end do
     end do
     
     do i=ibeg-1, iend+1
