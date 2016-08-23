@@ -92,18 +92,16 @@ contains
 
     hx = na * dx
     hz = na * dz
-    !$omp parallel do private(i)
+
     do i=ibeg, iend
        call damping_profile( xc(i),              hx, xbeg, xend, gxc(:,i) )
        call damping_profile( xc(i)+real(dx)/2.0, hx, xbeg, xend, gxe(:,i) )
     end do
-    !$omp end parallel do
-    !$omp parallel do private(k)
+
     do k=kbeg, kend
        call damping_profile( zc(k),              hz, zbeg, zend, gzc(:,k) )
        call damping_profile( zc(k)+real(dz)/2.0, hz, zbeg, zend, gze(:,k) )
      end do
-     !$omp end parallel do
 
     !!
     !! PML region definition
