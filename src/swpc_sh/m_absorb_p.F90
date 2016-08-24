@@ -375,7 +375,7 @@ contains
     real(SP), intent(out) :: g(4) !< damping prof
 
     real(SP) :: R0 !! reflection coefficient
-    real(SP), save :: d0, a0, b0
+    real(SP) :: d0, a0, b0
     integer, parameter :: pd = 1
     integer, parameter :: pa = 2
     integer, parameter :: pb = 2
