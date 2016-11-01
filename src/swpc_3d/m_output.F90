@@ -630,7 +630,11 @@ contains
       call info( "station depth exceeds kend at station "//trim(stnm(i)) )
       kst(i) = kend - 1
     end if
-
+    if( kst(i) < kbeg ) then
+      write(STDERR,*) 'WARNING[output__setup]: station depth exceeds kbeg at station ' // trim(stnm(i))
+      kst(i) = kbeg + 1
+    end if
+       
 
   end do
 

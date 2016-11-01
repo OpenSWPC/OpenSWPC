@@ -83,7 +83,7 @@ contains
     end do
     close( io_vel )
 
-    !! define topography shape here
+    !! defne topography shape here
     bd(i0:i1,0) = depth(1)
 
     do k = k0, k1
