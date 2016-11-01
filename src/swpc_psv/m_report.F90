@@ -101,7 +101,7 @@ contains
 
        if( r < 5   ) then
           call info( 'wavelength condition is violated! ' )
-          call info( 'use smaller grid and/or decrease maximum frequqency' )
+          call info( 'use smaller grid and/or decrease maximum frequency' )
        end if
 
        if( c < 0.5 ) then

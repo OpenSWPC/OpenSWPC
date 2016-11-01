@@ -77,13 +77,21 @@ contains
        if( adum(1:1) == "#" ) cycle
        l = l + 1
        read(adum,*) depth(l), rho0(l), vp0(l), vs0(l), qp0(l), qs0(l)
-       !! apply cut-off velocity
-       vp0(l) = max( vp0(l), vcut )
-       vs0(l) = max( vs0(l), vcut )
     end do
     close( io_vel )
 
-    !! define topography shape here
+    !! velocity cut-off
+    do l = nlayer-1, 1, -1
+      if( ( vp0(l) < vcut .or. vs0(l) < vcut ) .and. ( vp0(l) > 0 .and. vs0(l) >0 ) ) then
+          vp0(l)  = vp0(l+1)
+          vs0(l)  = vs0(l+1)
+          rho0(l) = rho0(l+1)
+          qp0(l)  = qp0(l+1)
+          qs0(l)  = qs0(l+1)
+      end if
+    end do
+
+    !! defne topography shape here
     bd(i0:i1,0) = depth(1)
 
     do k = k0, k1
