@@ -184,7 +184,7 @@ contains
 
     !! cut-off velocity: filled by medium velocity of the deeper layer
     do n=ngrd-1, 1, -1
-       if( vp1(n) < vcut .or. vs1(n) < vcut ) then
+       if( (vp1(n) < vcut .or. vs1(n) < vcut) .and. ( vp1(n) > 0 .and. vs1(n) > 0 ) ) then
           vp1 (n) = vp1 (n+1)
           vs1 (n) = vs1 (n+1)
           rho1(n) = rho1(n+1)
