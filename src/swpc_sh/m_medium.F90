@@ -17,6 +17,7 @@ module m_medium
   use m_vmodel_uni
   use m_vmodel_grd
   use m_vmodel_lhm
+  use m_vmodel_user
   use m_vmodel_uni_rmed
   use m_vmodel_lhm_rmed
   use m_vmodel_grd_rmed
@@ -107,6 +108,11 @@ contains
 
        call pwatch__on("vmodel")
        select case ( trim(vmodel_type) )
+
+       case ( 'user' )
+
+          call vmodel_user( io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, &
+                                   rho, lam, mu, taup, taus, bddep )
 
        case ( 'uni' )
 
