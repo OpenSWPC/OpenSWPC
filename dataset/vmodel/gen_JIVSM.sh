@@ -32,7 +32,7 @@ archive_jivsm_w=lp2012nankai-w_str.zip
 # Topography & bathymetry data for extrapotation
 
 #if [ ! -e ETOPO1_Bed_g_gmt4.grd.gz ]; then
-#  curl -o ETOPO1_Bed_g_gmt4.grd.gz  https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO1/data/bedrock/grid_registered/netcdf/ETOP#O1_Bed_g_gmt4.grd.gz
+#  curl -o ETOPO1_Bed_g_gmt4.grd.gz  https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO1/data/bedrock/grid_registered/netcdf/ETOPO1_Bed_g_gmt4.grd.gz
 #fi
 #gunzip ETOPO1_Bed_g_gmt4.grd.gz
 
