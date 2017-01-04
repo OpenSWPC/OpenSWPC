@@ -45,6 +45,7 @@ s_absorb_c  = m_absorb_c.F90
 s_absorb_p  = m_absorb_p.F90
 s_absorb  = m_absorb.F90
 s_ckprst  = m_ckprst.F90
+s_vmodel0 = m_vmodel_user.F90
 s_vmodel1 = m_vmodel_uni.F90
 s_vmodel2 = m_vmodel_grd.F90
 s_vmodel3 = m_vmodel_lhm.F90
@@ -98,6 +99,7 @@ o_absorb  = $(s_absorb:.F90=.o)
 o_absorb_c  = $(s_absorb_c:.F90=.o)
 o_absorb_p  = $(s_absorb_p:.F90=.o)
 o_ckprst  = $(s_ckprst:.F90=.o)
+o_vmodel0 = $(s_vmodel0:.F90=.o)
 o_vmodel1 = $(s_vmodel1:.F90=.o)
 o_vmodel2 = $(s_vmodel2:.F90=.o)
 o_vmodel3 = $(s_vmodel3:.F90=.o)
@@ -133,6 +135,7 @@ $(o_absorb):  $(s_absorb)  $(o_std) $(o_global) $(o_pwatch) $(o_readini) $(o_abs
 $(o_absorb_c):  $(s_absorb_c)  $(o_std) $(o_fdtool) $(o_global) $(o_pdebug)
 $(o_absorb_p):  $(s_absorb_p)  $(o_std) $(o_fdtool) $(o_global) $(o_readini) $(o_pdebug)
 $(o_ckprst):  $(s_ckprst)  $(o_std) $(o_system) $(o_global) $(o_kernel) $(o_medium) $(o_absorb) $(o_report) $(o_source) $(o_pwatch) $(o_readini) $(o_output) $(o_pdebug)
+$(o_vmodel0): $(s_vmodel0) $(o_std) $(o_system) $(o_global) $(o_fdtool) $(o_bicubic) $(o_readini) $(o_geomap)
 $(o_vmodel1): $(s_vmodel1) $(o_std) $(o_global) $(o_readini)  $(o_pdebug)
 $(o_vmodel2): $(s_vmodel2) $(o_std) $(o_system) $(o_global) $(o_fdtool) $(o_bicubic) $(o_readini) $(o_geomap) $(o_pdebug)
 $(o_vmodel3): $(s_vmodel3) $(o_std) $(o_global) $(o_readini)  $(o_pdebug)
@@ -152,11 +155,11 @@ $(o_vmodel3r): $(s_vmodel3r) $(o_std) $(o_global) $(o_readini)  $(o_pdebug) $(o_
 ## Targets
 ##
 
-../../bin/swpc_sh.x: $(s_main) $(o_std) $(o_system) $(o_fdtool) $(o_global) $(o_kernel) $(o_getopt) $(o_source) $(o_medium) $(o_report) $(o_pwatch) $(o_output) $(o_absorb)  $(o_gk) $(o_bicubic) $(o_daytim) $(o_wsac) $(o_ckprst) $(o_readini) $(o_geomap) $(o_absorb_p) $(o_absorb_c) $(o_vmodel1) $(o_vmodel2) $(o_vmodel3)  $(o_pdebug) $(o_rdrmed) $(o_vmodel1r) $(o_rdrmed) $(o_vmodel3r) $(o_vmodel2r)
+../../bin/swpc_sh.x: $(s_main) $(o_std) $(o_system) $(o_fdtool) $(o_global) $(o_kernel) $(o_getopt) $(o_source) $(o_medium) $(o_report) $(o_pwatch) $(o_output) $(o_absorb)  $(o_gk) $(o_bicubic) $(o_daytim) $(o_wsac) $(o_ckprst) $(o_readini) $(o_geomap) $(o_absorb_p) $(o_absorb_c) $(o_vmodel1) $(o_vmodel2) $(o_vmodel3)  $(o_pdebug) $(o_rdrmed) $(o_vmodel1r) $(o_rdrmed) $(o_vmodel3r) $(o_vmodel2r) $(o_vmodel0)
 	$(FC) $(NCINC)  $(NCLIB)  $(FFLAGS) -o $@ $^ $(NETCDF)
 
 clean:
-	/bin/rm -f $(o_std) $(o_system) $(o_fdtool) $(o_global) $(o_kernel) $(o_getopt) $(o_source) $(o_medium) $(o_report) $(o_pwatch) $(o_output) $(o_absorb) $(o_gk) $(o_bicubic) $(o_daytim) $(o_wsac) $(o_ckprst) $(o_readini) $(o_geomap)  $(o_absorb_p) $(o_absorb_c) $(o_vmodel1) $(o_vmodel2) $(o_vmodel3) $(o_pdebug) $(o_rdrmed) $(o_vmodel1r) $(o_rdrmed) $(o_vmodel3r) $(o_vmodel2r) ../../bin/swpc_sh.x
+	/bin/rm -f $(o_std) $(o_system) $(o_fdtool) $(o_global) $(o_kernel) $(o_getopt) $(o_source) $(o_medium) $(o_report) $(o_pwatch) $(o_output) $(o_absorb) $(o_gk) $(o_bicubic) $(o_daytim) $(o_wsac) $(o_ckprst) $(o_readini) $(o_geomap)  $(o_absorb_p) $(o_absorb_c) $(o_vmodel1) $(o_vmodel2) $(o_vmodel3) $(o_pdebug) $(o_rdrmed) $(o_vmodel1r) $(o_rdrmed) $(o_vmodel3r) $(o_vmodel2r)  $(o_vmodel0) ../../bin/swpc_sh.x
 	/bin/rm -f *.mod
 	/bin/rm -f *~
 	/bin/rm -f *.L
