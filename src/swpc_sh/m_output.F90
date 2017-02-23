@@ -954,7 +954,7 @@ contains
 
     if( .not. sw_wav ) return
 
-    call pwatch__on( "output__write_wav" )
+    call pwatch__on( "output__store_wav" )
 
 
     if( it == 1 ) then
@@ -986,7 +986,7 @@ contains
        end if
     end if
 
-    call pwatch__off( "output__write_wav" )
+    call pwatch__off( "output__store_wav" )
 
   end subroutine output__store_wav
   !! --------------------------------------------------------------------------------------------------------------------------- !!
