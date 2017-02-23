@@ -33,7 +33,7 @@
   dt               = 0.025            !! time step width
 
   vcut             = 1.5              !! minimum velocity
-                                      !- smaller velocity will be raised
+                                      !- smaller velocities will be increased
 
   xbeg             = -500.0           !! minimum in x-dir
   ybeg             = -640.0           !! minimum in y-dir
@@ -43,10 +43,10 @@
   clon             = 136.0            !! center longitude
   clat             = 34.5             !! center latitude
   phi              = 0.0              !! horizontal coordinate rotation
-                                      !- measured clockwise from north
+                                      !- measured clockwise from the north
 
-  fq_min           = 0.02             !! minimum freq. for Q-const model
-  fq_max           = 2.00             !! maximum freq. for Q-const model
+  fq_min           = 0.02             !! minimum freq. for Q-constant model
+  fq_max           = 2.00             !! maximum freq. for Q-constant model
   fq_ref           = 1.0              !! ref. freq. for physical dispersion
 
   !! ----------------------------------------------------------------------- !!
@@ -102,7 +102,7 @@
 
   !! Moment tensor source format:
   !!   xymoij / xym0dc / llm0ij / llm0dc / xymwij / xymwdc / llmwij / llmwdc
-  !! Body force source fomrat:
+  !! Body force source format:
   !!   xy or ll
   stf_format       = 'llmwdc'
 
@@ -126,8 +126,8 @@
     !! Plane wave source mode
     !!
     pw_mode          = .false.   !! plane wave input. neglects fn_stf
-    pw_ztop          = 100.      !! top z-coord of initial plane wave
-    pw_zlen          = 30.       !! wavelength of initial plane wave
+    pw_ztop          = 100.      !! top z-coordinate of the initial plane wave
+    pw_zlen          = 30.       !! wavelength of the initial plane wave
     pw_ps            = 'p'       !! 'p' P-wave 's' S-wave
     pw_strike        = 0.0       !! strike direction of plane wave (deg.)
     pw_dip           = 0.0       !! dip of plane wave (deg.)
@@ -148,7 +148,7 @@
 
   vmodel_type      = 'grd'            !! velocity model type 'uni'/'grd'/'lhm'
   is_ocean         = .true.           !! topography z<0 is covered by ocean
-  is_flatten       = .false.          !! Force topography variation zero
+  is_flatten       = .false.          !! Force topography variation to zero
 
     !! --------------------------------------------------------------------- !!
     !! For uniform velocity model 'uni'
