@@ -183,7 +183,7 @@ contains
     evla1 = -12345.0
     call output__station_query( green_stnm, is_src, isrc, jsrc, ksrc, xsrc, ysrc, zsrc, evlo1, evla1 )
 
-    !! どこかのノードに震源があるか、MPI通信で確認
+    !! Confirm if the computational domain contains the source
     call mpi_allreduce( is_src, src_somewhere, 1, MPI_LOGICAL, MPI_LOR, mpi_comm_world, ierr )
     call assert( src_somewhere )
 
@@ -628,7 +628,7 @@ contains
     fy = fy1 * dt_dxyz * stf
     fz = fz1 * dt_dxyz * stf
 
-    ! 応力の平均化はNG. かならずbx, by, bzで計算しないと大きな誤差が出る．
+    !! Reciprocal density must be avaraged for keeping accuracy
     Vx(ksrc  ,isrc  ,jsrc  ) = Vx(ksrc  ,isrc  ,jsrc  ) + bx(ksrc  ,isrc  ,jsrc  ) * fx / 2
     Vx(ksrc  ,isrc-1,jsrc  ) = Vx(ksrc  ,isrc-1,jsrc  ) + bx(ksrc  ,isrc-1,jsrc  ) * fx / 2
     Vy(ksrc  ,isrc  ,jsrc  ) = Vy(ksrc  ,isrc  ,jsrc  ) + by(ksrc  ,isrc  ,jsrc  ) * fy / 2

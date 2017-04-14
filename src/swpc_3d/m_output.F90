@@ -2219,7 +2219,7 @@ subroutine output__store_wav(it)
 
   if( .not. ( sw_wav_v .or. sw_wav_u ) ) return
 
-  call pwatch__on( "output__write_wav" )
+  call pwatch__on( "output__store_wav" )
 
 
   if( it == 1 ) then
@@ -2265,7 +2265,7 @@ subroutine output__store_wav(it)
     end if
   end if
 
-  call pwatch__off( "output__write_wav" )
+  call pwatch__off( "output__store_wav" )
 
 end subroutine output__store_wav
 !! --------------------------------------------------------------------------------------------------------------------------- !!

@@ -263,6 +263,8 @@ contains
 
     integer :: nl3
     integer :: i, k
+    integer :: nproc_exe, ierr
+          
 
     call pwatch__on( "global__setup2" ) !! measure from here
 
@@ -274,8 +276,8 @@ contains
     !!
     !! size settings
     !!
-
-    call sizecheck()
+    call mpi_comm_size( mpi_comm_world, nproc_exe, ierr )
+    call assert( nproc_x == nproc_exe )
 
     nxp = ceiling( nx / real(nproc_x) )  !!  nxp-1 <  nx / nproc_x  <= nxp
 
@@ -370,42 +372,6 @@ contains
 
     call pwatch__off( "global__setup2" ) !! measure from here
 
-
-
-  contains
-
-    subroutine sizecheck
-
-      !!
-      !! MPI size check
-      !!
-
-      integer :: nproc_exe
-      integer :: ierr
-      call mpi_comm_size( mpi_comm_world, nproc_exe, ierr )
-
-      !! too-many processors: continue calculation
-      if( nproc_x < nproc_exe ) then
-         if( myid == 0 ) then
-            write(STDERR,*) "warning [global__setup]: " // &
-                 "Too many prepared processors: ", nproc_exe
-            write(STDERR,*)
-         end if
-      end if
-
-      !! shortage: error stop
-      if( nproc_x > nproc_exe ) then
-         if( myid == 0 ) then
-            write(STDERR,*) "error [global__setup]: " // &
-                 "Process number ", nproc_exe, " is less than expected ", nproc_x
-            write(STDERR,*) "error [global__setup]: " // "terminate .."
-         end if
-         call mpi_finalize( ierr )
-         stop
-      end if
-
-    end subroutine sizecheck
-    !! --
 
   end subroutine global__setup2
   !! ---------------------------------------------------------------------------------------------------------------------------- !!

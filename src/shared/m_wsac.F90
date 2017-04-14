@@ -91,7 +91,9 @@ module m_wsac
      logical       :: lcalda          ! is calc distance azimuth      (109)
      character(8)  :: kstnm           ! station name                  (111)
      character(16) :: kevnm           ! event name                    (113)
-     character(8)  :: ka              ! time pick name                (123)
+     character(8)  :: khole           ! hole name                     (117)
+     character(8)  :: ko              ! origin time identification    (119)
+     character(8)  :: ka              ! time pick name                (121)
      character(8)  :: kt0             ! time pick name                (123)
      character(8)  :: kt1             ! time pick name                (125)
      character(8)  :: kt2             ! time pick name                (127)
@@ -102,6 +104,7 @@ module m_wsac
      character(8)  :: kt7             ! time pick name                (137)
      character(8)  :: kt8             ! time pick name                (139)
      character(8)  :: kt9             ! time pick name                (141)
+     character(8)  :: kf              ! fini identification           (143)
      character(8)  :: kuser0          ! user area                     (145)
      character(8)  :: kuser1          ! user area                     (147)
      character(8)  :: kuser2          ! user area                     (149)
@@ -335,6 +338,9 @@ contains
     aheader(111) = ss%kstnm(1:4);  aheader(112) = ss%kstnm(5:8)
     aheader(113) = ss%kevnm(1:4);  aheader(114) = ss%kevnm(5:8)
     aheader(115) = ss%kevnm(9:12); aheader(116) = ss%kevnm(13:16)
+    aheader(117) = ss%khole(1:4);  aheader(118) = ss%khole(5:8)
+    aheader(119) = ss%ko(1:4);     aheader(120) = ss%ko(5:8)
+    aheader(121) = ss%ka(1:4);     aheader(122) = ss%ka(5:8)
     aheader(123) = ss%kt0(1:4);    aheader(124) = ss%kt0(5:8)
     aheader(125) = ss%kt1(1:4);    aheader(126) = ss%kt1(5:8)
     aheader(127) = ss%kt2(1:4);    aheader(128) = ss%kt2(5:8)
@@ -345,6 +351,7 @@ contains
     aheader(137) = ss%kt7(1:4);    aheader(138) = ss%kt7(5:8)
     aheader(139) = ss%kt8(1:4);    aheader(140) = ss%kt8(5:8)
     aheader(141) = ss%kt9(1:4);    aheader(142) = ss%kt9(5:8)
+    aheader(143) = ss%kf(1:4);     aheader(143) = ss%kf(5:8)
     aheader(145) = ss%kuser0(1:4); aheader(146) = ss%kuser0(5:8)
     aheader(147) = ss%kuser1(1:4); aheader(148) = ss%kuser1(5:8)
     aheader(149) = ss%kuser2(1:4); aheader(150) = ss%kuser2(5:8)
@@ -438,6 +445,9 @@ contains
     ss%kstnm   = cerr
     ss%kcmpnm  = cerr
     ss%kevnm   = cerr
+    ss%khole   = cerr
+    ss%ko      = cerr
+    ss%ka      = cerr
     ss%kt0     = cerr
     ss%kt1     = cerr
     ss%kt2     = cerr
@@ -448,6 +458,7 @@ contains
     ss%kt7     = cerr
     ss%kt8     = cerr
     ss%kt9     = cerr
+    ss%kf      = cerr
     ss%kuser0  = cerr
     ss%kuser1  = cerr
     ss%kuser2  = cerr
