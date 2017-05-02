@@ -108,6 +108,11 @@ ifeq ($(arch),es3)
   NCLIB   = -L/SX/usr/local/netcdf-4.1.3/lib
   NCINC   = -I/SX/usr/local/netcdf-4.1.3/include
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -size_t64
+
+  ifeq ($(debug),true)
+	FFLAGS = -eR -pi -Wf"-pvctl fullmsg -init stack=nan heap=nan" -D_ES -f2003 -I ../include -D_INFO -D_ASSERT -Popenmp
+  endif
+
 endif
 
 ##
