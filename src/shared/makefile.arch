@@ -110,7 +110,7 @@ ifeq ($(arch),es3)
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -size_t64
 
   ifeq ($(debug),true)
-	FFLAGS = -eR -pi -Wf"-pvctl fullmsg -init stack=nan heap=nan" -D_ES -f2003 -I ../include -D_INFO -D_ASSERT -Popenmp
+	FFLAGS = -eR -pi nest=5 -Wf"-pvctl fullmsg -init stack=nan heap=nan" -D_ES -f2003 -I ../include -D_INFO -D_ASSERT -Popenmp
   endif
 
 endif
