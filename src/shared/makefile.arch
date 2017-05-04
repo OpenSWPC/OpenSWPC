@@ -103,7 +103,7 @@ endif
 ##
 ifeq ($(arch),es3)
   FC      = sxmpif90
-  FFLAGS  = -R2 -pi -Wf"-pvctl fullmsg" -D_ES -f2003 -I ../include -D_INFO -D_ASSERT -Popenmp
+  FFLAGS  = -R2 -pi nest=5 -Wf"-pvctl fullmsg" -D_ES -f2003 -I ../include -D_INFO -D_ASSERT -Popenmp
   NCFLAG  = -D_NETCDF
   NCLIB   = -L/SX/usr/local/netcdf-4.1.3/lib
   NCINC   = -I/SX/usr/local/netcdf-4.1.3/include
