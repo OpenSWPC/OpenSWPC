@@ -55,11 +55,11 @@ program wav2sac
         write(STDERR,*) "    . ",  trim(fn_sac)
         call sac__write( fn_sac, sh(j), wav(:,j), .true. )
       end do
-
-      close(io)
       deallocate( sh, wav )
       
     end do
+
+    close(io)
     
   end do
 
