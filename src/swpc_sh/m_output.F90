@@ -291,11 +291,11 @@ contains
 #endif
 
       if( sw_wav_v ) then
-        write(io) nst, ntw, title, sh(1,:), vyst(:,:)
+        write(io) nst, ntw, sh(1,:), vyst(:,:)
       end if
       
       if( sw_wav_u ) then
-        write(io) nst, ntw, title, sh(2,:), uyst(:,:)
+        write(io) nst, ntw, sh(2,:), uyst(:,:)
       end if
 
       close(io)

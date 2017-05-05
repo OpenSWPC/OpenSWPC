@@ -22,7 +22,6 @@ program wav2sac
   integer :: nfile
   integer :: io
   integer :: i, j
-  character(80) :: title
   
   if( system__iargc() == 0 ) then
     write(*,*) 'wav2sac.x [wavfiles]'
@@ -40,7 +39,7 @@ program wav2sac
     write(STDERR,*) "FILE: ", trim(fn_wav)
 
     do
-      read( io, iostat=ierr ) nch, npts, title
+      read( io, iostat=ierr ) nch, npts
       if( ierr /= 0 ) then
         close(io)
         exit
@@ -51,7 +50,7 @@ program wav2sac
       read(io) wav
 
       do j=1, nch
-        fn_sac = trim(title) // '.' // trim( sh(j)%kstnm ) // '.' // trim(sh(j)%kcmpnm) // '.sac'
+        fn_sac = trim(sh(j)%kevnm) // '.' // trim( sh(j)%kstnm ) // '.' // trim(sh(j)%kcmpnm) // '.sac'
         write(STDERR,*) "    . ",  trim(fn_sac)
         call sac__write( fn_sac, sh(j), wav(:,j), .true. )
       end do

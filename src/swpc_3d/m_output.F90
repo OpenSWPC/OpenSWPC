@@ -467,15 +467,15 @@ contains
 #endif
 
       if( sw_wav_v ) then
-        write(io) nst, ntw, title, sh(1,:), vxst(:,:)
-        write(io) nst, ntw, title, sh(2,:), vyst(:,:)
-        write(io) nst, ntw, title, sh(3,:), vzst(:,:)
+        write(io) nst, ntw, sh(1,:), vxst(:,:)
+        write(io) nst, ntw, sh(2,:), vyst(:,:)
+        write(io) nst, ntw, sh(3,:), vzst(:,:)
       end if
       
       if( sw_wav_u ) then
-        write(io) nst, ntw, title, sh(4,:), uxst(:,:)
-        write(io) nst, ntw, title, sh(5,:), uyst(:,:)
-        write(io) nst, ntw, title, sh(6,:), uzst(:,:)
+        write(io) nst, ntw, sh(4,:), uxst(:,:)
+        write(io) nst, ntw, sh(5,:), uyst(:,:)
+        write(io) nst, ntw, sh(6,:), uzst(:,:)
       end if
 
       close(io)
