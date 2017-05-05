@@ -328,8 +328,8 @@ contains
          k = (i-1)*ncmp + j
 
          fn(k) = trim(odir)  // '/green/' // trim(green_stnm) // '/' // &
-             trim(title) // '__' // trim(green_stnm) // '__' //  green_cmp // '__' // &
-             cid8 // '__' //  trim(cmp(j)) // '__.sac'
+             trim(title) // '__' // cid8 // '__' // trim(green_stnm) // '__' //  green_cmp // '__' // &
+             trim(cmp(j)) // '__.sac'
        end do
 
        select case (green_cmp)
@@ -608,7 +608,7 @@ contains
         open(io, file=trim(fn_wav), access='stream', form='unformatted', action='write', status='replace')
 #endif
 
-        write(io) ng*ncmp, ntw
+        write(io) ng*ncmp, ntw, title
         write(io) sh(:)
         write(io) gf(:,:)
 
