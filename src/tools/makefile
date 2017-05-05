@@ -9,7 +9,7 @@
 ## --
 
 all: read_snp.x diff_snp.x mapregion.x fdmcond.x qmodel_tau.x grdsnp.x \
-	gen_rmed2d.x gen_rmed3d.x ll2xy.x xy2ll.x
+	gen_rmed2d.x gen_rmed3d.x ll2xy.x xy2ll.x wav2sac.x
 
 ## file search path
 
@@ -77,6 +77,9 @@ m_gammaf.o  : m_gammaf.F90 m_std.o
 	$(FC) $(FFLAGS) -o $@ $^ 
 
 ../../bin/xy2ll.x: xy2ll.F90 m_std.o m_geomap.o m_system.o m_gk.o m_debug.o
+	$(FC) $(FFLAGS) -o $@ $^ 
+
+../../bin/wav2sac.x: wav2sac.F90 m_std.o m_system.o m_daytim.o m_wsac.o 
 	$(FC) $(FFLAGS) -o $@ $^ 
 
 clean:
