@@ -316,13 +316,13 @@ contains
 #endif
 
       if( sw_wav_v ) then
-        write(io) nst, ntw, sh(1,:), vxst(:,:)
-        write(io) nst, ntw, sh(2,:), vzst(:,:)
+        write(io) nst, ntw, title, sh(1,:), vxst(:,:)
+        write(io) nst, ntw, title, sh(2,:), vzst(:,:)
       end if
       
       if( sw_wav_u ) then
-        write(io) nst, ntw, sh(3,:), uxst(:,:)
-        write(io) nst, ntw, sh(4,:), uzst(:,:)
+        write(io) nst, ntw, title, sh(3,:), uxst(:,:)
+        write(io) nst, ntw, title, sh(4,:), uzst(:,:)
       end if
 
       close(io)
