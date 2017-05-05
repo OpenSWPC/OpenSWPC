@@ -505,6 +505,24 @@ contains
     ss%nzday   = ierr
     ss%tim     = ierr
 
+    !! inoficial headers
+    ss%user10 = ferr
+    ss%user11 = ferr
+    ss%user12 = ferr
+    ss%user13 = ferr
+    ss%user14 = ferr
+    ss%user15 = ferr
+    ss%user16 = ferr
+    ss%iuser0 = ierr
+    ss%iuser1 = ierr
+    ss%iuser2 = ierr
+    ss%iuser3 = ierr
+    ss%iuser4 = ierr
+    ss%iuser5 = ierr
+    ss%iuser6 = ierr
+    ss%iuser7 = ierr
+    ss%luser0 = .false.    
+
   end subroutine sac__init
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
