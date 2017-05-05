@@ -106,7 +106,6 @@ contains
     real(SP)       :: dd
     character(256) :: abuf
     real(SP)       :: evlo1, evla1
-    character(6)   :: cmyid
     !! ----
 
     if( benchmark_mode ) then
@@ -319,13 +318,6 @@ contains
     allocate(fn(ncmp*ng))
     gf(:,:) = 0.0
 
-    if( wav_format == 'csf' ) then
-      write(cmyid,'(I6.6)') myid
-      fn_csf = trim(odir)  // '/green/' // trim(green_stnm) // '/' // &
-          trim(title) //  '__' // trim(green_stnm) // '__' // &
-          trim(green_cmp) // '__' // trim(cmyid) // '__.csf'
-    end if
-    
     call system__call( 'mkdir -p '//trim(odir) // '/green/' // trim(green_stnm) )
 
     do i=1, ng
@@ -336,8 +328,8 @@ contains
          k = (i-1)*ncmp + j
 
          fn(k) = trim(odir)  // '/green/' // trim(green_stnm) // '/' // &
-             trim(title) // '__' // trim(green_stnm) // '__' //  green_cmp // '__' // &
-             cid8 // '__' //  trim(cmp(j)) // '__.sac'
+             trim(title) // '__' // cid8 // '__' // trim(green_stnm) // '__' //  green_cmp // '__' // &
+             trim(cmp(j)) // '__.sac'
        end do
 
        select case (green_cmp)
@@ -567,6 +559,10 @@ contains
   subroutine green__export()
 
     integer :: i, j, k
+    integer :: io
+    character(6) :: cmyid
+    character(256) :: fn_csf, fn_wav
+    !! --
     
     if( .not. green_mode ) return
 
@@ -584,10 +580,43 @@ contains
           call sac__write( fn(k), sh(k), gf(:,k), .true. )
         end do
       end do
-    else
+    else if ( wav_format == 'csf' ) then
+
       if( ng>0 ) then
+
+        write(cmyid,'(I6.6)') myid
+        fn_csf = trim(odir)  // '/green/' // trim(sh(1)%kstnm) // '/' // &
+            trim(title) //  '__' // trim(sh(1)%kstnm) // '__' // &
+            trim(green_cmp) // '__' // trim(cmyid) // '__.csf'
         call csf__write( fn_csf, ng*ncmp, sh(1)%npts, sh, gf, .true. )
       end if
+      
+    else if ( wav_format == 'wav' ) then
+
+      if( ng>0 ) then
+        
+        write(cmyid,'(I6.6)') myid
+        fn_wav = trim(odir)  // '/green/' // trim(sh(1)%kstnm) // '/' // &
+                 trim(title) //  '__' // trim(sh(1)%kstnm) // '__' // &
+                 trim(green_cmp) // '__' // trim(cmyid) // '__.wav'
+
+#ifdef _ES
+        call std__getio(io, is_big=.true.)
+        open(io, file=trim(fn_wav), form='unformatted', action='write', status='replace')
+#else
+        call std__getio(io) 
+        open(io, file=trim(fn_wav), access='stream', form='unformatted', action='write', status='replace')
+#endif
+
+        write(io) ng*ncmp, ntw, title
+        write(io) sh(:)
+        write(io) gf(:,:)
+
+        close(io)
+        
+      end if
+      
+      
     end if
     
     call pwatch__off( 'green__export' )

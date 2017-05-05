@@ -29,7 +29,7 @@ module m_wsac
   !<
   !! --
   type sac__hdr
-
+     
      !!               var name          description                   record#
      real(DP)      :: delta           ! sampling interval             (001)
      real(DP)      :: depmin          ! minimum value                 (002)
@@ -73,7 +73,7 @@ module m_wsac
      real(DP)      :: gcarc           ! angular distance (deg)        (054)
      real(DP)      :: depmen          ! mean value                    (057)
      real(DP)      :: cmpaz           ! component azimuth             (058)
-     real(DP)      :: cmpinc          ! component incident angle      (059)
+     real(DP)      :: cmpinc          ! component incident angle      (059)     
      integer       :: nzyear          ! reference time, year          (071)
      integer       :: nzjday          ! reference time, julian day    (072)
      integer       :: nzhour          ! reference time, hour          (073)
@@ -113,14 +113,31 @@ module m_wsac
      character(8)  :: kdatrd          ! date data onto comp.          (155)
      character(8)  :: kinst           ! instrument                    (157)
 
+     !! Unofficial header at unused blocks
+     real(DP) :: user10 ! user header (064)
+     real(DP) :: user11 ! user header (065)
+     real(DP) :: user12 ! user header (066)
+     real(DP) :: user13 ! user header (067)
+     real(DP) :: user14 ! user header (068)
+     real(DP) :: user15 ! user header (069)
+     real(DP) :: user16 ! user header (070)
+     integer  :: iuser0 ! user header (098)
+     integer  :: iuser1 ! user header (099)
+     integer  :: iuser2 ! user header (100)
+     integer  :: iuser3 ! user header (101)
+     integer  :: iuser4 ! user header (102)
+     integer  :: iuser5 ! user header (103)
+     integer  :: iuser6 ! user header (104)
+     integer  :: iuser7 ! user header (105)
+     logical  :: luser0 ! user header (110)
+
      !! associated information from sac header
      integer :: nzmonth ! month of begin time from nzjday
      integer :: nzday   ! day   of begin time from nzjday
-
+     
      integer :: tim     ! absolute begin time from 1970/1/1 0:0:0 in second
      logical :: is_same_endian
-
-
+     
   end type sac__hdr
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -317,6 +334,13 @@ contains
     fheader( 57) = real( ss % depmen )
     fheader( 58) = real( ss % cmpaz  )
     fheader( 59) = real( ss % cmpinc )
+    fheader( 64) = real( ss % user10 )
+    fheader( 65) = real( ss % user11 )
+    fheader( 66) = real( ss % user12 )
+    fheader( 67) = real( ss % user13 )
+    fheader( 68) = real( ss % user14 )
+    fheader( 69) = real( ss % user15 )
+    fheader( 70) = real( ss % user16 )
 
     iheader( 71) = ss % nzyear
     iheader( 72) = ss % nzjday
@@ -330,11 +354,22 @@ contains
     iheader( 87) = ss % idep
     iheader( 93) = ss % ievtyp
 
+    iheader( 98) = ss % iuser0
+    iheader( 99) = ss % iuser1
+    iheader(100) = ss % iuser2
+    iheader(101) = ss % iuser3
+    iheader(102) = ss % iuser4
+    iheader(103) = ss % iuser5
+    iheader(104) = ss % iuser6
+    iheader(105) = ss % iuser7
+    
     lheader(106) = ss % leven
     lheader(107) = ss % lpspol
     lheader(108) = ss % lovrok
     lheader(109) = ss % lcalda
 
+    lheader(110) = ss % luser0
+    
     aheader(111) = ss%kstnm(1:4);  aheader(112) = ss%kstnm(5:8)
     aheader(113) = ss%kevnm(1:4);  aheader(114) = ss%kevnm(5:8)
     aheader(115) = ss%kevnm(9:12); aheader(116) = ss%kevnm(13:16)

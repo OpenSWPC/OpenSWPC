@@ -79,7 +79,7 @@ module m_output
   integer   :: ntdec_s, ntdec_w                                !< time step decimation factor: Snap and Waves
   integer   :: idec, jdec, kdec                                !< spatial decimation factor: x, y, z directions
   character(2) :: st_format                                       !< station file format
-  character(3) :: wav_format                                   !< sac or csf
+  character(3) :: wav_format                                   !< sac, csf, or wav
   
   real(SP) :: z0_xy, x0_yz, y0_xz ! < danmen
   integer  :: k0_xy, i0_yz, j0_xz ! < danmen
@@ -394,6 +394,7 @@ contains
     integer :: i
     character(256) :: fn1, fn2, fn3, fn4, fn5, fn6
     character(6) :: cid
+    integer :: io
 
     
     call pwatch__on("output__export_wav")
@@ -429,7 +430,7 @@ contains
         
       end do
 
-    else
+    else if ( wav_format == 'csf' ) then
       write(cid,'(I6.6)') myid
       
       if( sw_wav_v ) then
@@ -451,7 +452,33 @@ contains
         call csf__write( fn5, nst, sh(5,1)%npts, sh(5,:), uyst(:,:), .true. )
         call csf__write( fn6, nst, sh(6,1)%npts, sh(6,:), uzst(:,:), .true. )
       end if
-        
+
+    else if ( wav_format == 'wav' ) then
+
+      write(cid,'(I6.6)') myid
+      fn1 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.wav'
+
+#ifdef _ES
+      call std__getio(io, is_big=.true.)
+      open(io, file=trim(fn1), form='unformatted', action='write', status='replace')
+#else
+      call std__getio(io) 
+      open(io, file=trim(fn1), access='stream', form='unformatted', action='write', status='replace')
+#endif
+
+      if( sw_wav_v ) then
+        write(io) nst, ntw, title, sh(1,:), vxst(:,:)
+        write(io) nst, ntw, title, sh(2,:), vyst(:,:)
+        write(io) nst, ntw, title, sh(3,:), vzst(:,:)
+      end if
+      
+      if( sw_wav_u ) then
+        write(io) nst, ntw, title, sh(4,:), uxst(:,:)
+        write(io) nst, ntw, title, sh(5,:), uyst(:,:)
+        write(io) nst, ntw, title, sh(6,:), uzst(:,:)
+      end if
+
+      close(io)
     end if
     
     call pwatch__off("output__export_wav")

@@ -256,7 +256,7 @@ contains
     integer :: i
     character(256) :: fn1, fn2, fn3, fn4
     character(6) :: cid
-    
+    integer :: io
     call pwatch__on("output__export_wav")
 
     if( nst>0 ) call system__call('mkdir '//trim(odir)//'/wav > /dev/null 2>&1' )
@@ -301,6 +301,32 @@ contains
         call csf__write( fn3, nst, sh(3,1)%npts, sh(3,:), uxst(:,:), .true. )
         call csf__write( fn4, nst, sh(4,1)%npts, sh(4,:), uzst(:,:), .true. )
       end if
+
+    else if ( wav_format == 'wav' ) then
+
+      write(cid,'(I6.6)') myid
+      fn1 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.wav'
+
+#ifdef _ES
+      call std__getio(io, is_big=.true.)
+      open(io, file=trim(fn1), form='unformatted', action='write', status='replace')
+#else
+      call std__getio(io) 
+      open(io, file=trim(fn1), access='stream', form='unformatted', action='write', status='replace')
+#endif
+
+      if( sw_wav_v ) then
+        write(io) nst, ntw, title, sh(1,:), vxst(:,:)
+        write(io) nst, ntw, title, sh(2,:), vzst(:,:)
+      end if
+      
+      if( sw_wav_u ) then
+        write(io) nst, ntw, title, sh(3,:), uxst(:,:)
+        write(io) nst, ntw, title, sh(4,:), uzst(:,:)
+      end if
+
+      close(io)
+      
     end if
 
     call pwatch__off("output__export_wav")
