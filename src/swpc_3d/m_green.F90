@@ -604,7 +604,7 @@ contains
         call std__getio(io, is_big=.true.)
         open(io, file=trim(fn_wav), form='unformatted', action='write', status='replace')
 #else
-        call std__getio(io) 
+        call std__getio(io, is_big=.true.) 
         open(io, file=trim(fn_wav), access='stream', form='unformatted', action='write', status='replace')
 #endif
 

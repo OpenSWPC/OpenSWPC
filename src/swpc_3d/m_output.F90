@@ -458,13 +458,15 @@ contains
       write(cid,'(I6.6)') myid
       fn1 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.wav'
 
+      if( sw_wav_v .or. sw_wav_u ) then
 #ifdef _ES
-      call std__getio(io, is_big=.true.)
-      open(io, file=trim(fn1), form='unformatted', action='write', status='replace')
+        call std__getio(io, is_big=.true.)
+        open(io, file=trim(fn1), form='unformatted', action='write', status='replace')
 #else
-      call std__getio(io) 
-      open(io, file=trim(fn1), access='stream', form='unformatted', action='write', status='replace')
+        call std__getio(io, is_big=.true.) 
+        open(io, file=trim(fn1), access='stream', form='unformatted', action='write', status='replace')
 #endif
+      end if
 
       if( sw_wav_v ) then
         write(io) nst, ntw, title, sh(1,:), vxst(:,:)
