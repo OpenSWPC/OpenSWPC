@@ -615,7 +615,7 @@ contains
     call std__getio(io)
     open(io, file=trim(fn_csf), action='write', access='stream', form='unformatted', status='unknown')
 #endif
-    write(io) NVHDR
+    write(io) 'CSFD'
     write(io) ntrace
     write(io) npts
     
