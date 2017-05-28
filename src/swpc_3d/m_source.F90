@@ -43,7 +43,7 @@ module m_source
   real(MP), allocatable :: fx(:), fy(:), fz(:)                            !< body force
   real(MP), allocatable :: mo(:)                                          !< moment at grids
   real(MP)              :: dt_dxyz
-  character(4)          :: sdep_fit                                       !< 'bd1', 'bd2', ..., 'bd9'
+  character(4)          :: sdep_fit                                       !< 'bd0', 'bd1', ..., 'bd9'
 
 
 contains
@@ -292,7 +292,7 @@ contains
 
           srcprm(:,nn) = srcprm_g(:,i)
 
-          do k=1, NBD
+          do k=0, NBD
              write(sdep0,'(I1.1)') k
              sdep0 = 'bd' // sdep0
 

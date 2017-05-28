@@ -43,7 +43,7 @@ module m_source
   real(MP), allocatable :: fx(:), fz(:)
   real(MP), allocatable :: mo(:)                            !< moment at grids
   real(MP)              :: dt_dxz
-  character(4)          :: sdep_fit                         !< 'bd1', 'bd2', ..., 'bd9'
+  character(4)          :: sdep_fit                         !< 'bd0', 'bd1', ..., 'bd9'
 
 
 contains
@@ -253,7 +253,7 @@ contains
 
           !! depth fitting
 
-          do k=1, NBD
+          do k=0, NBD
              write(sdep0,'(I1.1)') k
              sdep0 = 'bd' // sdep0
 
