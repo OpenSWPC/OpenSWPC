@@ -29,115 +29,115 @@ module m_wsac
   !<
   !! --
   type sac__hdr
-     
-     !!               var name          description                   record#
-     real(DP)      :: delta           ! sampling interval             (001)
-     real(DP)      :: depmin          ! minimum value                 (002)
-     real(DP)      :: depmax          ! maximum value                 (003)
-     real(DP)      :: b               ! begenning independent value   (006)
-     real(DP)      :: e               ! ending independent value      (007)
-     real(DP)      :: o               ! event origin time             (008)
-     real(DP)      :: a               ! first arrival time            (009)
-     real(DP)      :: t0              ! time picks                    (011)
-     real(DP)      :: t1              ! time picks                    (012)
-     real(DP)      :: t2              ! time picks                    (013)
-     real(DP)      :: t3              ! time picks                    (014)
-     real(DP)      :: t4              ! time picks                    (015)
-     real(DP)      :: t5              ! time picks                    (016)
-     real(DP)      :: t6              ! time picks                    (017)
-     real(DP)      :: t7              ! time picks                    (018)
-     real(DP)      :: t8              ! time picks                    (019)
-     real(DP)      :: t9              ! time picks                    (020)
-     real(DP)      :: stla            ! station latitude              (032)
-     real(DP)      :: stlo            ! station longitude             (033)
-     real(DP)      :: stel            ! station elevation (m)         (034)
-     real(DP)      :: stdp            ! station depth (m)             (035)
-     real(DP)      :: evla            ! event latitude                (036)
-     real(DP)      :: evlo            ! event longitude               (037)
-     real(DP)      :: evel            ! event elevation (m)           (038)
-     real(DP)      :: evdp            ! event depth (m)               (039)
-     real(DP)      :: mag             ! event magnitude               (040)
-     real(DP)      :: user0           ! user header                   (041)
-     real(DP)      :: user1           ! user header                   (042)
-     real(DP)      :: user2           ! user header                   (043)
-     real(DP)      :: user3           ! user header                   (044)
-     real(DP)      :: user4           ! user header                   (045)
-     real(DP)      :: user5           ! user header                   (046)
-     real(DP)      :: user6           ! user header                   (047)
-     real(DP)      :: user7           ! user header                   (048)
-     real(DP)      :: user8           ! user header                   (049)
-     real(DP)      :: user9           ! user header                   (050)
-     real(DP)      :: dist            ! distance (km)                 (051)
-     real(DP)      :: az              ! azimuth (deg)                 (052)
-     real(DP)      :: baz             ! back azimuth (deg)            (053)
-     real(DP)      :: gcarc           ! angular distance (deg)        (054)
-     real(DP)      :: depmen          ! mean value                    (057)
-     real(DP)      :: cmpaz           ! component azimuth             (058)
-     real(DP)      :: cmpinc          ! component incident angle      (059)     
-     integer       :: nzyear          ! reference time, year          (071)
-     integer       :: nzjday          ! reference time, julian day    (072)
-     integer       :: nzhour          ! reference time, hour          (073)
-     integer       :: nzmin           ! reference time, minute        (074)
-     integer       :: nzsec           ! reference time, second        (075)
-     integer       :: nzmsec          ! reference time, millisecond   (076)
-     integer       :: nvhdr           ! header version                (077)
-     integer       :: npts            ! number of data points         (080)
-     integer       :: iftype          ! type of file                  (086)
-     integer       :: idep            ! type of dependent var.        (087)
-     integer       :: ievtyp          ! event type                    (093)
-     logical       :: leven           ! is evenly spaced file         (106)
-     logical       :: lpspol          ! is positive polarity          (107)
-     logical       :: lovrok          ! is overwrite ok?              (108)
-     logical       :: lcalda          ! is calc distance azimuth      (109)
-     character(8)  :: kstnm           ! station name                  (111)
-     character(16) :: kevnm           ! event name                    (113)
-     character(8)  :: khole           ! hole name                     (117)
-     character(8)  :: ko              ! origin time identification    (119)
-     character(8)  :: ka              ! time pick name                (121)
-     character(8)  :: kt0             ! time pick name                (123)
-     character(8)  :: kt1             ! time pick name                (125)
-     character(8)  :: kt2             ! time pick name                (127)
-     character(8)  :: kt3             ! time pick name                (129)
-     character(8)  :: kt4             ! time pick name                (131)
-     character(8)  :: kt5             ! time pick name                (133)
-     character(8)  :: kt6             ! time pick name                (135)
-     character(8)  :: kt7             ! time pick name                (137)
-     character(8)  :: kt8             ! time pick name                (139)
-     character(8)  :: kt9             ! time pick name                (141)
-     character(8)  :: kf              ! fini identification           (143)
-     character(8)  :: kuser0          ! user area                     (145)
-     character(8)  :: kuser1          ! user area                     (147)
-     character(8)  :: kuser2          ! user area                     (149)
-     character(8)  :: kcmpnm          ! component name                (151)
-     character(8)  :: knetwk          ! network name                  (153)
-     character(8)  :: kdatrd          ! date data onto comp.          (155)
-     character(8)  :: kinst           ! instrument                    (157)
 
-     !! Unofficial header at unused blocks
-     real(DP) :: user10 ! user header (064)
-     real(DP) :: user11 ! user header (065)
-     real(DP) :: user12 ! user header (066)
-     real(DP) :: user13 ! user header (067)
-     real(DP) :: user14 ! user header (068)
-     real(DP) :: user15 ! user header (069)
-     real(DP) :: user16 ! user header (070)
-     integer  :: iuser0 ! user header (098)
-     integer  :: iuser1 ! user header (099)
-     integer  :: iuser2 ! user header (100)
-     integer  :: iuser3 ! user header (101)
-     integer  :: iuser4 ! user header (102)
-     integer  :: iuser5 ! user header (103)
-     integer  :: iuser6 ! user header (104)
-     integer  :: iuser7 ! user header (105)
-     logical  :: luser0 ! user header (110)
+    !!               var name          description                   record#
+    real(DP)      :: delta           ! sampling interval             (001)
+    real(DP)      :: depmin          ! minimum value                 (002)
+    real(DP)      :: depmax          ! maximum value                 (003)
+    real(DP)      :: b               ! begenning independent value   (006)
+    real(DP)      :: e               ! ending independent value      (007)
+    real(DP)      :: o               ! event origin time             (008)
+    real(DP)      :: a               ! first arrival time            (009)
+    real(DP)      :: t0              ! time picks                    (011)
+    real(DP)      :: t1              ! time picks                    (012)
+    real(DP)      :: t2              ! time picks                    (013)
+    real(DP)      :: t3              ! time picks                    (014)
+    real(DP)      :: t4              ! time picks                    (015)
+    real(DP)      :: t5              ! time picks                    (016)
+    real(DP)      :: t6              ! time picks                    (017)
+    real(DP)      :: t7              ! time picks                    (018)
+    real(DP)      :: t8              ! time picks                    (019)
+    real(DP)      :: t9              ! time picks                    (020)
+    real(DP)      :: stla            ! station latitude              (032)
+    real(DP)      :: stlo            ! station longitude             (033)
+    real(DP)      :: stel            ! station elevation (m)         (034)
+    real(DP)      :: stdp            ! station depth (m)             (035)
+    real(DP)      :: evla            ! event latitude                (036)
+    real(DP)      :: evlo            ! event longitude               (037)
+    real(DP)      :: evel            ! event elevation (m)           (038)
+    real(DP)      :: evdp            ! event depth (m)               (039)
+    real(DP)      :: mag             ! event magnitude               (040)
+    real(DP)      :: user0           ! user header                   (041)
+    real(DP)      :: user1           ! user header                   (042)
+    real(DP)      :: user2           ! user header                   (043)
+    real(DP)      :: user3           ! user header                   (044)
+    real(DP)      :: user4           ! user header                   (045)
+    real(DP)      :: user5           ! user header                   (046)
+    real(DP)      :: user6           ! user header                   (047)
+    real(DP)      :: user7           ! user header                   (048)
+    real(DP)      :: user8           ! user header                   (049)
+    real(DP)      :: user9           ! user header                   (050)
+    real(DP)      :: dist            ! distance (km)                 (051)
+    real(DP)      :: az              ! azimuth (deg)                 (052)
+    real(DP)      :: baz             ! back azimuth (deg)            (053)
+    real(DP)      :: gcarc           ! angular distance (deg)        (054)
+    real(DP)      :: depmen          ! mean value                    (057)
+    real(DP)      :: cmpaz           ! component azimuth             (058)
+    real(DP)      :: cmpinc          ! component incident angle      (059)     
+    integer       :: nzyear          ! reference time, year          (071)
+    integer       :: nzjday          ! reference time, julian day    (072)
+    integer       :: nzhour          ! reference time, hour          (073)
+    integer       :: nzmin           ! reference time, minute        (074)
+    integer       :: nzsec           ! reference time, second        (075)
+    integer       :: nzmsec          ! reference time, millisecond   (076)
+    integer       :: nvhdr           ! header version                (077)
+    integer       :: npts            ! number of data points         (080)
+    integer       :: iftype          ! type of file                  (086)
+    integer       :: idep            ! type of dependent var.        (087)
+    integer       :: ievtyp          ! event type                    (093)
+    logical       :: leven           ! is evenly spaced file         (106)
+    logical       :: lpspol          ! is positive polarity          (107)
+    logical       :: lovrok          ! is overwrite ok?              (108)
+    logical       :: lcalda          ! is calc distance azimuth      (109)
+    character(8)  :: kstnm           ! station name                  (111)
+    character(16) :: kevnm           ! event name                    (113)
+    character(8)  :: khole           ! hole name                     (117)
+    character(8)  :: ko              ! origin time identification    (119)
+    character(8)  :: ka              ! time pick name                (121)
+    character(8)  :: kt0             ! time pick name                (123)
+    character(8)  :: kt1             ! time pick name                (125)
+    character(8)  :: kt2             ! time pick name                (127)
+    character(8)  :: kt3             ! time pick name                (129)
+    character(8)  :: kt4             ! time pick name                (131)
+    character(8)  :: kt5             ! time pick name                (133)
+    character(8)  :: kt6             ! time pick name                (135)
+    character(8)  :: kt7             ! time pick name                (137)
+    character(8)  :: kt8             ! time pick name                (139)
+    character(8)  :: kt9             ! time pick name                (141)
+    character(8)  :: kf              ! fini identification           (143)
+    character(8)  :: kuser0          ! user area                     (145)
+    character(8)  :: kuser1          ! user area                     (147)
+    character(8)  :: kuser2          ! user area                     (149)
+    character(8)  :: kcmpnm          ! component name                (151)
+    character(8)  :: knetwk          ! network name                  (153)
+    character(8)  :: kdatrd          ! date data onto comp.          (155)
+    character(8)  :: kinst           ! instrument                    (157)
 
-     !! associated information from sac header
-     integer :: nzmonth ! month of begin time from nzjday
-     integer :: nzday   ! day   of begin time from nzjday
-     
-     integer :: tim     ! absolute begin time from 1970/1/1 0:0:0 in second
-     logical :: is_same_endian
-     
+    !! Unofficial header at unused blocks
+    real(DP) :: user10 ! user header (064)
+    real(DP) :: user11 ! user header (065)
+    real(DP) :: user12 ! user header (066)
+    real(DP) :: user13 ! user header (067)
+    real(DP) :: user14 ! user header (068)
+    real(DP) :: user15 ! user header (069)
+    real(DP) :: user16 ! user header (070)
+    integer  :: iuser0 ! user header (098)
+    integer  :: iuser1 ! user header (099)
+    integer  :: iuser2 ! user header (100)
+    integer  :: iuser3 ! user header (101)
+    integer  :: iuser4 ! user header (102)
+    integer  :: iuser5 ! user header (103)
+    integer  :: iuser6 ! user header (104)
+    integer  :: iuser7 ! user header (105)
+    logical  :: luser0 ! user header (110)
+
+    !! associated information from sac header
+    integer :: nzmonth ! month of begin time from nzjday
+    integer :: nzday   ! day   of begin time from nzjday
+
+    integer :: tim     ! absolute begin time from 1970/1/1 0:0:0 in second
+    logical :: is_same_endian
+
   end type sac__hdr
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -154,9 +154,9 @@ module m_wsac
   !! --
   interface sac__write
 
-     module procedure wsac_d, wsac_s
+    module procedure wsac_d, wsac_s
 
-  end interface
+  end interface sac__write
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -170,13 +170,13 @@ module m_wsac
   !<
   !! --
   interface csf__write
-     
-     module procedure wcsf_d, wcsf_s
-     
-  end interface
+
+    module procedure wcsf_d, wcsf_s
+
+  end interface csf__write
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-    
+
 contains
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -195,9 +195,9 @@ contains
     !! ----
 
     if( present( overwrite) ) then
-       call wsac_s( fn_sac, ss, real(dat), overwrite)
+      call wsac_s( fn_sac, ss, real(dat), overwrite)
     else
-       call wsac_s( fn_sac, ss, real(dat) )
+      call wsac_s( fn_sac, ss, real(dat) )
     end if
 
   end subroutine wsac_d
@@ -223,25 +223,25 @@ contains
     !! overwrite check
     inquire( file = fn_sac, exist=isexist )
     if( isexist ) then
-       if( present( overwrite) ) then
-          if( .not. overwrite ) then
-             write(STDERR,*) 'wsac: file '//trim(fn_sac)//' exists.'
-             write(STDERR,*) 'wsac: could not overwrite the file.'
-             write(STDERR,*) 'wsac: return without success'
-             write(STDERR,*)
-             return
-          end if
-       else
+      if( present( overwrite) ) then
+        if( .not. overwrite ) then
           write(STDERR,*) 'wsac: file '//trim(fn_sac)//' exists.'
-          write(STDERR,*) 'wsac: Overwrite ? (y/n)'
-          read(STDIN,'(A)') yn
-          if( yn /= 'y' .and. yn /='Y' ) then
-             write(STDERR,*) 'wsac: could not overwrite the file.'
-             write(STDERR,*) 'wsac: return without success'
-             write(STDERR,*)
-             return
-          end if
-       end if
+          write(STDERR,*) 'wsac: could not overwrite the file.'
+          write(STDERR,*) 'wsac: return without success'
+          write(STDERR,*)
+          return
+        end if
+      else
+        write(STDERR,*) 'wsac: file '//trim(fn_sac)//' exists.'
+        write(STDERR,*) 'wsac: Overwrite ? (y/n)'
+        read(STDIN,'(A)') yn
+        if( yn /= 'y' .and. yn /='Y' ) then
+          write(STDERR,*) 'wsac: could not overwrite the file.'
+          write(STDERR,*) 'wsac: return without success'
+          write(STDERR,*)
+          return
+        end if
+      end if
     end if
 
 #ifdef _ES
@@ -285,8 +285,8 @@ contains
     iheader(71:105) = -12345
     lheader(106:110) = .false.
     do i=111, 157, 2
-       aheader( i ) = '-123'
-       aheader( i+1 ) = '45'
+      aheader( i ) = '-123'
+      aheader( i+1 ) = '45'
     end do
 
 
@@ -362,14 +362,14 @@ contains
     iheader(103) = ss % iuser5
     iheader(104) = ss % iuser6
     iheader(105) = ss % iuser7
-    
+
     lheader(106) = ss % leven
     lheader(107) = ss % lpspol
     lheader(108) = ss % lovrok
     lheader(109) = ss % lcalda
 
     lheader(110) = ss % luser0
-    
+
     aheader(111) = ss%kstnm(1:4);  aheader(112) = ss%kstnm(5:8)
     aheader(113) = ss%kevnm(1:4);  aheader(114) = ss%kevnm(5:8)
     aheader(115) = ss%kevnm(9:12); aheader(116) = ss%kevnm(13:16)
@@ -526,7 +526,7 @@ contains
   end subroutine sac__init
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
- !! --------------------------------------------------------------------------------------------------------------------------- !!
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
   !! Write csf format
   !<
@@ -550,15 +550,15 @@ contains
 
   end subroutine wcsf_d
   !! --------------------------------------------------------------------------------------------------------------------------- !!
- 
-    
+
+
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
   !! Write csf format
   !<
   !! --
   subroutine wcsf_s( fn_csf, ntrace, npts, sh, dat, overwrite )
-    
+
     !! Arguments
     character(*),      intent(in) :: fn_csf
     integer,           intent(in) :: ntrace
@@ -573,7 +573,7 @@ contains
     character(1) :: yn
     integer, parameter :: NVHDR = 1
     !! ----
-    
+
     !! overwrite
     inquire( file = fn_csf, exist=isexist )
     if( isexist ) then
@@ -597,7 +597,7 @@ contains
         end if
       end if
     end if
-    
+
     !file check
     do i=1, ntrace
       if( sh(i)%npts /= npts ) then
@@ -618,16 +618,16 @@ contains
     write(io) 'CSFD'
     write(io) ntrace
     write(io) npts
-    
+
     do i=1, ntrace
       call sac__whdr(io, sh(i))
       write(io) dat(1:npts, i)
     end do
-    
+
     close(io)
-    
+
   end subroutine wcsf_s
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-    
+
 end module m_wsac
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
