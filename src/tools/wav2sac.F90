@@ -13,7 +13,7 @@ program wav2sac
   use m_wsac
   use m_system
   implicit none
-  
+
   character(256) :: fn_wav, fn_sac
   type(sac__hdr), allocatable :: sh(:)
   integer :: ierr
@@ -23,12 +23,12 @@ program wav2sac
   integer :: io
   integer :: i, j
   character(80) :: title
-  
+
   if( system__iargc() == 0 ) then
     write(*,*) 'wav2sac.x [wavfiles]'
     stop
   end if
-  
+
   nfile = system__iargc()
 
   do i=1, nfile
@@ -46,7 +46,7 @@ program wav2sac
         exit
       end if
       allocate( sh(nch), wav(npts,nch) )
-      
+
       read(io) sh
       read(io) wav
 
@@ -62,11 +62,11 @@ program wav2sac
         call sac__write( fn_sac, sh(j), wav(:,j), .true. )
       end do
       deallocate( sh, wav )
-      
+
     end do
 
     close(io)
-    
+
   end do
 
 end program wav2sac

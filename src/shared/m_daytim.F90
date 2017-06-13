@@ -3,7 +3,7 @@
 !! Date and Time routines
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
 module m_daytim
@@ -37,9 +37,9 @@ module m_daytim
   !! --
   interface daytim__getdate
 
-     module procedure  getdate_c, getdate_i1, getdate_i2
+    module procedure  getdate_c, getdate_i1, getdate_i2
 
-  end interface
+  end interface daytim__getdate
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -55,9 +55,9 @@ module m_daytim
   !! --
   interface daytim__dayweek
 
-     module procedure  dayweek_i, dayweek_a
+    module procedure  dayweek_i, dayweek_a
 
-  end interface
+  end interface daytim__dayweek
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 
@@ -77,11 +77,11 @@ contains
     !! ----
 
     if( mod( year, 100 ) == 0 .and.  mod( year, 400 ) == 0 ) then
-       isLeap = .true.
+      isLeap = .true.
     else if( mod(year, 100 ) /= 0 .and. mod( year, 4 ) == 0 ) then
-       isLeap = .true.
+      isLeap = .true.
     else
-       isLeap = .false.
+      isLeap = .false.
     end if
 
   end subroutine daytim__isLeapYear
@@ -112,9 +112,9 @@ contains
     call daytim__isLeapYear( year, is_leap )
 
     if( is_leap ) then
-       dom = (/31,29,31,30,31,30,31,31,30,31,30,31/)
+      dom = (/31,29,31,30,31,30,31,31,30,31,30,31/)
     else
-       dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
+      dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
     end if
 
     ! initialize
@@ -122,19 +122,19 @@ contains
 
     ! error handling
     if( day > dom(month) ) then
-       write(STDERR,*) 'ymd2jul: input day excees the last day of the month'
-       julday = 0
-       return
+      write(STDERR,*) 'ymd2jul: input day excees the last day of the month'
+      julday = 0
+      return
     end if
     if( month > 12 ) then
-       write(STDERR,*) 'ymd2jul: month excees 12 !'
-       julday = 0
-       return
+      write(STDERR,*) 'ymd2jul: month excees 12 !'
+      julday = 0
+      return
     end if
 
     ! month
     do i=1,month-1
-       julday = julday + dom(i)
+      julday = julday + dom(i)
     end do
 
     ! day
@@ -165,30 +165,30 @@ contains
     call daytim__isLeapYear( year, is_leap )
 
     if( is_leap ) then
-       dom = (/31,29,31,30,31,30,31,31,30,31,30,31/)
+      dom = (/31,29,31,30,31,30,31,31,30,31,30,31/)
     else
-       dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
+      dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
     end if
 
     if( is_leap .and. julday > 366 ) then
-       write(STDERR,*) 'jul2md: day of year excees Dec. 31'
-       month = 0
-       day   = 0
-       return
+      write(STDERR,*) 'jul2md: day of year excees Dec. 31'
+      month = 0
+      day   = 0
+      return
     else if ( .not. is_leap ) then
-       if( julday > 365 ) then
-          write(STDERR,*) 'jul2md: day of year excees Dec. 31'
-          month = 0
-          day   = 0
-          return
-       end if
+      if( julday > 365 ) then
+        write(STDERR,*) 'jul2md: day of year excees Dec. 31'
+        month = 0
+        day   = 0
+        return
+      end if
 
     end if
 
     month = 1
 
     do  while( sum( dom(1:month) ) < julday )
-       month = month + 1
+      month = month + 1
     end do
 
     day = julday - sum(dom(1:month-1))
@@ -214,22 +214,22 @@ contains
     integer :: y, m, d
     !! ----
     if( month<=0 .or. month>=14 ) then
-       write(STDERR,'(A)') 'subroutine dayweek: invalied argument'
-       dw = -1
-       return
+      write(STDERR,'(A)') 'subroutine dayweek: invalied argument'
+      dw = -1
+      return
     end if
     if( month==1 .or. month==2 ) then
-       y = year-1
-       m = month + 12
-       d = day
+      y = year-1
+      m = month + 12
+      d = day
     else
-       y = year
-       m = month
-       d = day
+      y = year
+      m = month
+      d = day
     end if
 
     dw = y + int(y/4.) - int(y/100.) + int(y/400.)  + &
-         int( (26*m+16)/10.) + d
+        int( (26*m+16)/10.) + d
     dw = mod( dw, 7 )
 
   end subroutine dayweek_i
@@ -250,12 +250,12 @@ contains
 
     integer :: idw
     character(9) :: dwname(0:6) = (/'Sunday   ', &
-                                    'Monday   ', &
-                                    'Tuesday  ', &
-                                    'Wednesday', &
-                                    'Thursday ', &
-                                    'Friday   ', &
-                                    'Saturday ' /)
+        'Monday   ', &
+        'Tuesday  ', &
+        'Wednesday', &
+        'Thursday ', &
+        'Friday   ', &
+        'Saturday ' /)
     !! ----
 
     call dayweek_i( year, month, day, idw )
@@ -288,15 +288,15 @@ contains
     !! ----
     tim = 0
     if( year > 1970 ) then
-       do i = 1970, year-1
-          call daytim__ymd2jul( i, 12, 31, doy )
-          tim = tim + doy * 24 * 60 * 60
-       end do
+      do i = 1970, year-1
+        call daytim__ymd2jul( i, 12, 31, doy )
+        tim = tim + doy * 24 * 60 * 60
+      end do
     else
-       do i = year, 1970-1
-          call daytim__ymd2jul( i, 12, 31, doy )
-          tim = tim - doy * 24 * 60 * 60
-       end do
+      do i = year, 1970-1
+        call daytim__ymd2jul( i, 12, 31, doy )
+        tim = tim - doy * 24 * 60 * 60
+      end do
     end if
     call daytim__ymd2jul( year, month, day, jday )
     tim = tim + ( (jday-1) * 24 * 60 + hour*60 + min )*60 + sec
@@ -328,50 +328,50 @@ contains
     ttim = tim
 
     if( ttim >= 0 ) then
-       year = 1970
-       do
-          call daytim__ymd2jul(year,12,31,doy)
-          soy = doy*24*60*60
-          if(ttim<soy) then
-             exit
-          else
-             year = year + 1
-             ttim  = ttim - soy
-          end if
+      year = 1970
+      do
+        call daytim__ymd2jul(year,12,31,doy)
+        soy = doy*24*60*60
+        if(ttim<soy) then
+          exit
+        else
+          year = year + 1
+          ttim  = ttim - soy
+        end if
 
-       end do
+      end do
 
-       jday = ttim / 86400 +1
-       call daytim__jul2md( jday, year, month, day )
+      jday = ttim / 86400 +1
+      call daytim__jul2md( jday, year, month, day )
 
-       ttim = ttim - (jday-1) * 86400
-       hour = ttim / 3600
-       ttim = ttim - hour * 3600
-       min =  ttim / 60
-       sec = ttim - min * 60
+      ttim = ttim - (jday-1) * 86400
+      hour = ttim / 3600
+      ttim = ttim - hour * 3600
+      min =  ttim / 60
+      sec = ttim - min * 60
 
     else
-       year = 1969
-       do
-          call daytim__ymd2jul(year,12,31,doy)
-          soy = doy*24*60*60
-          ttim = ttim + soy
-          if(ttim>=0) then
-             exit
-          else
-             year = year - 1
-          end if
+      year = 1969
+      do
+        call daytim__ymd2jul(year,12,31,doy)
+        soy = doy*24*60*60
+        ttim = ttim + soy
+        if(ttim>=0) then
+          exit
+        else
+          year = year - 1
+        end if
 
-       end do
+      end do
 
-       jday = ttim / 86400 +1
-       call daytim__jul2md( jday, year, month, day )
+      jday = ttim / 86400 +1
+      call daytim__jul2md( jday, year, month, day )
 
-       ttim = ttim - (jday-1) * 86400
-       hour = ttim / 3600
-       ttim = ttim - hour * 3600
-       min =  ttim / 60
-       sec = ttim - min * 60
+      ttim = ttim - (jday-1) * 86400
+      hour = ttim / 3600
+      ttim = ttim - hour * 3600
+      min =  ttim / 60
+      sec = ttim - min * 60
 
 
     end if

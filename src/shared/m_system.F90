@@ -3,7 +3,7 @@
 !! Linux/Mac system routines, for processig command line argument, environment variables, and system call
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 module m_system
@@ -30,9 +30,9 @@ module m_system
   !! --
   interface system__getarg
 
-     module procedure getarg_a, getarg_i, getarg_f, getarg_d
+    module procedure getarg_a, getarg_i, getarg_f, getarg_d
 
-  end interface
+  end interface system__getarg
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 contains
@@ -163,14 +163,14 @@ contains
     iptr = 1
     str2 = ''
     do
-       ikey1 = scan( str(iptr:), "${" ) + iptr - 1
-       if( ikey1==iptr-1 ) exit
+      ikey1 = scan( str(iptr:), "${" ) + iptr - 1
+      if( ikey1==iptr-1 ) exit
 
-       ikey2 = scan( str(iptr:), "}" ) + iptr -1
-       str2=trim(str2) // str(iptr:ikey1-1)
-       call system__getenv( str(ikey1+2:ikey2-1), str3 )
-       str2 = trim(str2) // trim(str3)
-       iptr = ikey2+1
+      ikey2 = scan( str(iptr:), "}" ) + iptr -1
+      str2=trim(str2) // str(iptr:ikey1-1)
+      call system__getenv( str(ikey1+2:ikey2-1), str3 )
+      str2 = trim(str2) // trim(str3)
+      iptr = ikey2+1
 
     end do
     str2 = trim(str2) // trim(str(iptr:))

@@ -3,7 +3,7 @@
 !! Read/Write pnm (color ppm / grayscale pgm ) files
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 #include "m_debug.h"
@@ -51,11 +51,11 @@ contains
 
     !! Convert one-byte ascii
     do i=1, height
-       do j=1, width
-          do k=1, 3
-             aimg(k,j,i)  = transfer( max(min(img(k,j,i),255),0), 'a')
-          end do
-       end do
+      do j=1, width
+        do k=1, 3
+          aimg(k,j,i)  = transfer( max(min(img(k,j,i),255),0), 'a')
+        end do
+      end do
     end do
 
     call std__getio( io_ppm )
@@ -110,11 +110,11 @@ contains
 
     !! Convert to integer image
     do k=1, height
-       do j=1, width
-          do i=1, 3
-             image(i,j,k) = transfer( aimage(i,j,k), width)
-          end do
-       end do
+      do j=1, width
+        do i=1, 3
+          image(i,j,k) = transfer( aimage(i,j,k), width)
+        end do
+      end do
     end do
 
   end subroutine ppm__read
@@ -146,18 +146,18 @@ contains
 
     !! data scaling
     do j=1, height
-       do i=1, width
-          img2(1,i,j) = max( min( img(i,j)/256, 255 ), 0 )
-          img2(2,i,j) = max( mod( img(i,j),256 ), 0 )
-       end do
+      do i=1, width
+        img2(1,i,j) = max( min( img(i,j)/256, 255 ), 0 )
+        img2(2,i,j) = max( mod( img(i,j),256 ), 0 )
+      end do
     end do
 
     !! Convert one-byte character
     do j=1, height
-       do i=1, width
-          aimg(1,i,j) = transfer( img2(1,i,j), 'a')
-          aimg(2,i,j) = transfer( img2(2,i,j), 'a')
-       end do
+      do i=1, width
+        aimg(1,i,j) = transfer( img2(1,i,j), 'a')
+        aimg(2,i,j) = transfer( img2(2,i,j), 'a')
+      end do
     end do
 
     call std__getio( io_pgm )
@@ -221,11 +221,11 @@ contains
 
     !! convert to integer
     do j=1, height
-       do i=1, width
-          var1 = transfer( aimage(1,i,j), width)
-          var2 = transfer( aimage(2,i,j), width)
-          image(i,j) = var1*256 + var2
-       end do
+      do i=1, width
+        var1 = transfer( aimage(1,i,j), width)
+        var2 = transfer( aimage(2,i,j), width)
+        image(i,j) = var1*256 + var2
+      end do
     end do
 
   end subroutine pgm__read_16
@@ -254,9 +254,9 @@ contains
     !! ----
 
     do j=1, height
-       do i=1, width
-          aimg(i,j) = transfer( max(min(img(i,j),255),0), 'a')
-       end do
+      do i=1, width
+        aimg(i,j) = transfer( max(min(img(i,j),255),0), 'a')
+      end do
     end do
 
     call std__getio( io_pgm )
@@ -312,9 +312,9 @@ contains
     close(io_pgm)
 
     do j=1, height
-       do i=1, width
-          image(i,j) = transfer( aimage(i,j), width)
-       end do
+      do i=1, width
+        image(i,j) = transfer( aimage(i,j), width)
+      end do
     end do
 
   end subroutine pgm__read_8

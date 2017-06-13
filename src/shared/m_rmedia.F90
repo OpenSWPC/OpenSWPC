@@ -3,7 +3,7 @@
 !! Calculate power spectrum density functions (PSDF) and synthetizing realization of random media
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 module m_rmedia
@@ -103,50 +103,50 @@ contains
     call random_seed( size=nseed )
     allocate(seedval(nseed))
     if ( present( seed ) ) then
-       seedval = seed
+      seedval = seed
     else
-       call system_clock ( count = ic )
-       seedval = ic
+      call system_clock ( count = ic )
+      seedval = ic
     end if
     call random_seed( put=seedval )
     deallocate( seedval )
 
     ! random value
     do k=1, nz
-       do j=1, ny
-          do i=1, nx
-             call random_number( media(i,j,k) )
-          end do
-       end do
+      do j=1, ny
+        do i=1, nx
+          call random_number( media(i,j,k) )
+        end do
+      end do
     end do
 
     call fk__x2k_3d( nx, ny, nz, dx, dy, dz, media, bb, kx, ky, kz )
     do k=1, nz
-       do j=1, ny
-          do i=1, nx
+      do j=1, ny
+        do i=1, nx
 
-             !! spectrum whitening
-             bb(i,j,k) = bb(i,j,k) / abs( bb(i,j,k) )
+          !! spectrum whitening
+          bb(i,j,k) = bb(i,j,k) / abs( bb(i,j,k) )
 
-             !! obtain PSDF
-             m = sqrt( kx(i)**2 + ky(j)**2 + kz(k)**2 )
+          !! obtain PSDF
+          m = sqrt( kx(i)**2 + ky(j)**2 + kz(k)**2 )
 
-             select case ( ptype )
-                case ( ptype_gauss )
-                   call rmedia__psdf_ani_gauss3d ( kx(i), ky(j), kz(k), ax, ay, az, epsil, psdf )
-                case ( ptype_exp )
-                   call rmedia__psdf_ani_exp3d ( kx(i), ky(j), kz(k), ax, ay, az, epsil, psdf )
-                case ( ptype_vonKarman )
-                   call rmedia__psdf_ani_vonkarman3d ( kx(i), ky(j), kz(k), ax, ay, az, epsil, kappa, psdf )
-                case default
-                   write(STDERR,'(A)') 'WARNING [rmedia__3dgen]: no such psdf type; assume von Karman'
-                   call rmedia__psdf_ani_vonkarman3d ( kx(i), ky(j), kz(k), ax, ay, az, epsil, kappa, psdf )
-             end select
+          select case ( ptype )
+          case ( ptype_gauss )
+            call rmedia__psdf_ani_gauss3d ( kx(i), ky(j), kz(k), ax, ay, az, epsil, psdf )
+          case ( ptype_exp )
+            call rmedia__psdf_ani_exp3d ( kx(i), ky(j), kz(k), ax, ay, az, epsil, psdf )
+          case ( ptype_vonKarman )
+            call rmedia__psdf_ani_vonkarman3d ( kx(i), ky(j), kz(k), ax, ay, az, epsil, kappa, psdf )
+          case default
+            write(STDERR,'(A)') 'WARNING [rmedia__3dgen]: no such psdf type; assume von Karman'
+            call rmedia__psdf_ani_vonkarman3d ( kx(i), ky(j), kz(k), ax, ay, az, epsil, kappa, psdf )
+          end select
 
-             ! filetering
-             bb(i,j,k) = bb(i,j,k) * sqrt(psdf*nx*ny*nz*dx*dy*dz)
-          end do
-       end do
+          ! filetering
+          bb(i,j,k) = bb(i,j,k) * sqrt(psdf*nx*ny*nz*dx*dy*dz)
+        end do
+      end do
     end do
 
     ! let DC component zero
@@ -161,11 +161,11 @@ contains
     ! epsilon correction so that  epsilon^2 = sum( media^2 )
     aepsil = 0.0_dp
     do k=1, nz
-       do j=1, ny
-          do i=1, nx
-             aepsil = aepsil + media(i,j,k)**2
-          end do
-       end do
+      do j=1, ny
+        do i=1, nx
+          aepsil = aepsil + media(i,j,k)**2
+        end do
+      end do
     end do
 
     aepsil = sqrt( aepsil / dble( nx*ny*nz ) )
@@ -174,13 +174,13 @@ contains
 
     ! axis
     do i=1, nx
-       x(i) = (i-1)*dx
+      x(i) = (i-1)*dx
     end do
     do j=1, ny
-       y(j) = (j-1)*dy
+      y(j) = (j-1)*dy
     end do
     do k=1, nz
-       z(k) = (k-1)*dz
+      z(k) = (k-1)*dz
     end do
 
     deallocate( bb )
@@ -241,50 +241,50 @@ contains
     call random_seed( size=nseed )
     allocate(seedval(nseed))
     if ( present( seed ) ) then
-       seedval = seed
+      seedval = seed
     else
-       call system_clock ( count = ic )
-       seedval = ic
+      call system_clock ( count = ic )
+      seedval = ic
     end if
     call random_seed( put=seedval )
     deallocate( seedval )
 
     ! random value
     do k=1, nz
-       do j=1, ny
-          do i=1, nx
-             call random_number( media(i,j,k) )
-          end do
-       end do
+      do j=1, ny
+        do i=1, nx
+          call random_number( media(i,j,k) )
+        end do
+      end do
     end do
 
     call fk__x2k_3d( nx, ny, nz, dx, dy, dz, media, bb, kx, ky, kz )
     do k=1, nz
-       do j=1, ny
-          do i=1, nx
+      do j=1, ny
+        do i=1, nx
 
-             !! spectrum whitening
-             bb(i,j,k) = bb(i,j,k) / abs( bb(i,j,k) )
+          !! spectrum whitening
+          bb(i,j,k) = bb(i,j,k) / abs( bb(i,j,k) )
 
-             !! obtain PSDF
-             m = sqrt( kx(i)**2 + ky(j)**2 + kz(k)**2 )
+          !! obtain PSDF
+          m = sqrt( kx(i)**2 + ky(j)**2 + kz(k)**2 )
 
-             select case ( ptype )
-                case ( ptype_gauss )
-                   call rmedia__psdf_gauss3d ( m, a, epsil, psdf )
-                case ( ptype_exp )
-                   call rmedia__psdf_exp3d ( m, a, epsil, psdf )
-                case ( ptype_vonKarman )
-                   call rmedia__psdf_vonkarman3d ( m, a, epsil, kappa, psdf )
-                case default
-                   write(STDERR,'(A)') 'WARNING [rmedia__3dgen]: no such psdf type; assume von Karman'
-                   call rmedia__psdf_vonkarman3d ( m, a, epsil, kappa, psdf )
-             end select
+          select case ( ptype )
+          case ( ptype_gauss )
+            call rmedia__psdf_gauss3d ( m, a, epsil, psdf )
+          case ( ptype_exp )
+            call rmedia__psdf_exp3d ( m, a, epsil, psdf )
+          case ( ptype_vonKarman )
+            call rmedia__psdf_vonkarman3d ( m, a, epsil, kappa, psdf )
+          case default
+            write(STDERR,'(A)') 'WARNING [rmedia__3dgen]: no such psdf type; assume von Karman'
+            call rmedia__psdf_vonkarman3d ( m, a, epsil, kappa, psdf )
+          end select
 
-             ! filetering
-             bb(i,j,k) = bb(i,j,k) * sqrt(psdf*nx*ny*nz*dx*dy*dz)
-          end do
-       end do
+          ! filetering
+          bb(i,j,k) = bb(i,j,k) * sqrt(psdf*nx*ny*nz*dx*dy*dz)
+        end do
+      end do
     end do
 
     ! let DC component zero
@@ -299,11 +299,11 @@ contains
     ! epsilon correction so that  epsilon^2 = sum( media^2 )
     aepsil = 0.0_dp
     do k=1, nz
-       do j=1, ny
-          do i=1, nx
-             aepsil = aepsil + media(i,j,k)**2
-          end do
-       end do
+      do j=1, ny
+        do i=1, nx
+          aepsil = aepsil + media(i,j,k)**2
+        end do
+      end do
     end do
 
     aepsil = sqrt( aepsil / dble( nx*ny*nz ) )
@@ -312,13 +312,13 @@ contains
 
     ! axis
     do i=1, nx
-       x(i) = (i-1)*dx
+      x(i) = (i-1)*dx
     end do
     do j=1, ny
-       y(j) = (j-1)*dy
+      y(j) = (j-1)*dy
     end do
     do k=1, nz
-       z(k) = (k-1)*dz
+      z(k) = (k-1)*dz
     end do
 
     deallocate( bb )
@@ -376,10 +376,10 @@ contains
     call random_seed( size=nseed )
     allocate(seedval(nseed))
     if ( present( seed ) ) then
-       seedval = seed
+      seedval = seed
     else
-       call system_clock ( count = ic )
-       seedval = ic
+      call system_clock ( count = ic )
+      seedval = ic
     end if
     call random_seed( put=seedval )
     deallocate( seedval )
@@ -387,30 +387,30 @@ contains
 
     ! random value
     do i=1, nx
-       do j=1, ny
-          call random_number( media(i,j) )
-       end do
+      do j=1, ny
+        call random_number( media(i,j) )
+      end do
     end do
 
     call fk__x2k_2d( nx, ny, dx, dy, media, aa, kx, ky )
 
     do i=1, nx
-       do j=1, ny
+      do j=1, ny
 
-          ! whitening
-          aa(i,j) = aa(i,j) / abs( aa(i,j) )
+        ! whitening
+        aa(i,j) = aa(i,j) / abs( aa(i,j) )
 
-          if( ptype == ptype_gauss ) then
-             call rmedia__psdf_ani_gauss2d( kx(i), ky(j), ax, ay, epsil, psdf )
-          else if( ptype == ptype_exp ) then
-             call rmedia__psdf_ani_exp2d( kx(i), ky(j), ax, ay, epsil, psdf )
-          else
-             call rmedia__psdf_ani_vonKarman2d( kx(i), ky(j), ax, ay, epsil,kappa, psdf )
-          end if
+        if( ptype == ptype_gauss ) then
+          call rmedia__psdf_ani_gauss2d( kx(i), ky(j), ax, ay, epsil, psdf )
+        else if( ptype == ptype_exp ) then
+          call rmedia__psdf_ani_exp2d( kx(i), ky(j), ax, ay, epsil, psdf )
+        else
+          call rmedia__psdf_ani_vonKarman2d( kx(i), ky(j), ax, ay, epsil,kappa, psdf )
+        end if
 
-          ! filetering
-          aa(i,j) = aa(i,j) * sqrt(psdf*nx*ny*dx*dy)
-       end do
+        ! filetering
+        aa(i,j) = aa(i,j) * sqrt(psdf*nx*ny*dx*dy)
+      end do
     end do
 
     ! let DC component zero
@@ -425,19 +425,19 @@ contains
     ! epsilon correction so that  epsilon^2 = sum( media^2 )
     aepsil = 0.0
     do i=1, nx
-       do j=1, ny
-          aepsil = aepsil + media(i,j)**2
-       end do
+      do j=1, ny
+        aepsil = aepsil + media(i,j)**2
+      end do
     end do
     aepsil = sqrt( aepsil / dble( nx*ny ) )
 
     media = media * epsil/aepsil
 
     do i=1, nx
-       x(i) = (i-1)*dx
+      x(i) = (i-1)*dx
     end do
     do j=1, ny
-       y(j) = (j-1)*dy
+      y(j) = (j-1)*dy
     end do
 
     deallocate( aa )
@@ -480,42 +480,42 @@ contains
     call random_seed( size=nseed )
     allocate(seedval(nseed))
     if ( present( seed ) ) then
-       seedval = seed
+      seedval = seed
     else
-       call system_clock ( count = ic )
-       seedval = ic
+      call system_clock ( count = ic )
+      seedval = ic
     end if
     call random_seed( put=seedval )
     deallocate( seedval )
 
     ! random value
     do i=1, nx
-       do j=1, ny
-          call random_number(media(i,j))
-       end do
+      do j=1, ny
+        call random_number(media(i,j))
+      end do
     end do
 
     call fk__x2k_2d( nx, ny, dx, dy, media, aa, kx, ky )
 
     do i=1, nx
-       do j=1, ny
+      do j=1, ny
 
-          ! whitening
-          aa(i,j) = aa(i,j) / abs( aa(i,j) )
+        ! whitening
+        aa(i,j) = aa(i,j) / abs( aa(i,j) )
 
-          m = sqrt( kx(i)**2 + ky(j)**2 )
+        m = sqrt( kx(i)**2 + ky(j)**2 )
 
-          if( ptype == ptype_gauss ) then
-             call rmedia__psdf_gauss2d( m, a, epsil, psdf )
-          else if( ptype == ptype_exp ) then
-             call rmedia__psdf_exp2d( m, a, epsil, psdf )
-          else
-             call rmedia__psdf_vonKarman2d( m, a, epsil, kappa, psdf )
-          end if
+        if( ptype == ptype_gauss ) then
+          call rmedia__psdf_gauss2d( m, a, epsil, psdf )
+        else if( ptype == ptype_exp ) then
+          call rmedia__psdf_exp2d( m, a, epsil, psdf )
+        else
+          call rmedia__psdf_vonKarman2d( m, a, epsil, kappa, psdf )
+        end if
 
-          ! filetering
-          aa(i,j) = aa(i,j) * sqrt(psdf*nx*ny*dx*dy)
-       end do
+        ! filetering
+        aa(i,j) = aa(i,j) * sqrt(psdf*nx*ny*dx*dy)
+      end do
     end do
 
     ! let DC component zero
@@ -530,18 +530,18 @@ contains
     ! epsilon correction so that  epsilon^2 = sum( media^2 )
     aepsil = 0.0
     do i=1, nx
-       do j=1, ny
-          aepsil = aepsil + media(i,j)**2
-       end do
+      do j=1, ny
+        aepsil = aepsil + media(i,j)**2
+      end do
     end do
     aepsil = sqrt( aepsil / dble( nx*ny ) )
 
     media = media * epsil/aepsil
     do i=1, nx
-       x(i) = (i-1)*dx
+      x(i) = (i-1)*dx
     end do
     do j=1, ny
-       y(j) = (j-1)*dy
+      y(j) = (j-1)*dy
     end do
 
     deallocate( aa )
@@ -706,7 +706,7 @@ contains
     !! --
 
     psdf = ( 2 * sqrt(PI_D) * epsil*epsil * a * gammaf( kappa + 0.5 ) ) / &
-           ( gammaf( kappa ) * ( 1+a*a * m*m )**( kappa + 0.5 ) )
+        ( gammaf( kappa ) * ( 1+a*a * m*m )**( kappa + 0.5 ) )
 
   end subroutine rmedia__psdf_vonKarman1d
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -739,8 +739,8 @@ contains
     !! --
 
     psdf = ( 8 * PI_D**(1.5) * &
-         epsil*epsil * a*a*a * gammaf( kappa + 1.5)  ) / &
-         ( gammaf(kappa) * (1 + a*a * m*m)**( kappa+1.5 ) )
+        epsil*epsil * a*a*a * gammaf( kappa + 1.5)  ) / &
+        ( gammaf(kappa) * (1 + a*a * m*m)**( kappa+1.5 ) )
 
   end subroutine rmedia__psdf_vonKarman3d
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -801,8 +801,8 @@ contains
     !! --
 
     psdf = ( 8 * PI_D**(1.5) * &
-         epsil*epsil * ax*ay*az * gammaf( kappa + 1.5)  ) / &
-         ( gammaf(kappa) * (1 + (mx*ax)**2 + (my*ay)**2 + (mz*az)**2 )**( kappa+1.5 ) )
+        epsil*epsil * ax*ay*az * gammaf( kappa + 1.5)  ) / &
+        ( gammaf(kappa) * (1 + (mx*ax)**2 + (my*ay)**2 + (mz*az)**2 )**( kappa+1.5 ) )
 
   end subroutine rmedia__psdf_ani_vonKarman3d
   !! --------------------------------------------------------------------------------------------------------------------------- !!

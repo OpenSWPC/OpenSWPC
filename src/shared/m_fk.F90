@@ -3,7 +3,7 @@
 !! Frequency & Wavenumber FFTs
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 module m_fk
@@ -38,8 +38,8 @@ module m_fk
   !<
   !! --
   interface fk__t2f
-     module procedure t2f_8, t2f_4
-  end interface
+    module procedure t2f_8, t2f_4
+  end interface fk__t2f
   !! ----------------------------------------------------------------------- !!
 
 
@@ -60,8 +60,8 @@ module m_fk
   !<
   !! --
   interface fk__f2t
-     module procedure f2t_8, f2t_4
-  end interface
+    module procedure f2t_8, f2t_4
+  end interface fk__f2t
   !! ----------------------------------------------------------------------- !!
 
   !! ----------------------------------------------------------------------- !!
@@ -81,8 +81,8 @@ module m_fk
   !<
   !! --
   interface fk__x2k_2d
-     module procedure x2k2d_8, x2k2d_4
-  end interface
+    module procedure x2k2d_8, x2k2d_4
+  end interface fk__x2k_2d
   !! ----------------------------------------------------------------------- !!
 
   !! ----------------------------------------------------------------------- !!
@@ -101,8 +101,8 @@ module m_fk
   !<
   !! --
   interface fk__k2x_2d
-     module procedure k2x2d_8, k2x2d_4
-  end interface
+    module procedure k2x2d_8, k2x2d_4
+  end interface fk__k2x_2d
   !! ----------------------------------------------------------------------- !!
 
   !! ----------------------------------------------------------------------- !!
@@ -122,8 +122,8 @@ module m_fk
   !<
   !! --
   interface fk__x2k_3d
-     module procedure x2k3d_8, x2k3d_4
-  end interface
+    module procedure x2k3d_8, x2k3d_4
+  end interface fk__x2k_3d
   !! ----------------------------------------------------------------------- !!
 
   !! ----------------------------------------------------------------------- !!
@@ -143,8 +143,8 @@ module m_fk
   !<
   !! --
   interface fk__k2x_3d
-     module procedure k2x3d_8, k2x3d_4
-  end interface
+    module procedure k2x3d_8, k2x3d_4
+  end interface fk__k2x_3d
   !! ----------------------------------------------------------------------- !!
 
 contains
@@ -172,8 +172,8 @@ contains
     call rfft__1drf( n, r, c, 1 )
 
     do i=1, n/2+1
-       f(i) = dble(i-1)/(dble(n)*dt)
-       c(i) = c(i) * dt
+      f(i) = dble(i-1)/(dble(n)*dt)
+      c(i) = c(i) * dt
     end do
 
   end subroutine t2f_8
@@ -201,8 +201,8 @@ contains
     call rfft__1drf( n, r, c, 1 )
 
     do i=1, n/2+1
-       f(i) = dble(i-1)/(dble(n)*dt)
-       c(i) = c(i) * dt
+      f(i) = dble(i-1)/(dble(n)*dt)
+      c(i) = c(i) * dt
     end do
 
 
@@ -307,9 +307,9 @@ contains
 
     call rfft__2d( nx, ny, b, 1 )
     do j=1, ny
-       do i=1, nx
-          a(i,j) = dble(b(i,j)) / ( nx *dx * ny * dy)
-       end do
+      do i=1, nx
+        a(i,j) = dble(b(i,j)) / ( nx *dx * ny * dy)
+      end do
     end do
 
   end subroutine k2x2d_8
@@ -369,9 +369,9 @@ contains
     call rfft__2d( nx, ny, b, 1 )
 
     do j=1, ny
-       do i=1, nx
-          a(i,j) = dble(b(i,j)) / ( nx *dx * ny * dy)
-       end do
+      do i=1, nx
+        a(i,j) = dble(b(i,j)) / ( nx *dx * ny * dy)
+      end do
     end do
 
   end subroutine k2x2d_4
@@ -471,11 +471,11 @@ contains
     call rfft__3d( nx, ny, nz, b, 1 )
 
     do k=1, nz
-       do j=1, ny
-          do i=1, nx
-             a(i,j,k) = dble(b(i,j,k)) / ( nx *dx * ny * dy * nz * dz)
-          end do
-       end do
+      do j=1, ny
+        do i=1, nx
+          a(i,j,k) = dble(b(i,j,k)) / ( nx *dx * ny * dy * nz * dz)
+        end do
+      end do
     end do
 
   end subroutine k2x3d_8
@@ -503,11 +503,11 @@ contains
     call rfft__3d( nx, ny, nz, b, 1 )
 
     do k=1, nz
-       do j=1, ny
-          do i=1, nx
-             a(i,j,k) = real(b(i,j,k)) / ( nx *dx * ny * dy * nz * dz)
-          end do
-       end do
+      do j=1, ny
+        do i=1, nx
+          a(i,j,k) = real(b(i,j,k)) / ( nx *dx * ny * dy * nz * dz)
+        end do
+      end do
     end do
 
   end subroutine k2x3d_4

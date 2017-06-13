@@ -3,7 +3,7 @@
 !! User-routines for defining velocity/attenuation structure
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 
@@ -72,10 +72,10 @@ contains
     allocate( xi(k0:k1,i0:i1) )
     inquire( file=fn_rmed0, exist=is_exist )
     if( is_exist ) then
-       call rdrmed__2d( i0, i1, k0, k1, fn_rmed0, xi )
+      call rdrmed__2d( i0, i1, k0, k1, fn_rmed0, xi )
     else
-       call info( 'rmedia file '//trim(fn_rmed0)//' not found' )
-       xi(:,:) = 0.0
+      call info( 'rmedia file '//trim(fn_rmed0)//' not found' )
+      xi(:,:) = 0.0
     end if
 
     vmin = vcut
@@ -90,53 +90,53 @@ contains
 
     do i = i0, i1
 
-       bd(i,0) = topo0
+      bd(i,0) = topo0
 
-       do k = k0, k1
+      do k = k0, k1
 
-          if( zc( k ) > bd(i,0) ) then
+        if( zc( k ) > bd(i,0) ) then
 
-             !! elastic medium
-             rho2 = (1 + 0.8*xi(k,i)) * rho0
-             vp2  = (1 +     xi(k,i)) * vp0
-             vs2  = (1 +     xi(k,i)) * vs0
+          !! elastic medium
+          rho2 = (1 + 0.8*xi(k,i)) * rho0
+          vp2  = (1 +     xi(k,i)) * vp0
+          vs2  = (1 +     xi(k,i)) * vs0
 
-            call vcheck( vp2, vs2, rho2, xi(k,i), vmin, vmax, rhomin, is_vmin_under, is_vmax_over, is_rhomin_under )
+          call vcheck( vp2, vs2, rho2, xi(k,i), vmin, vmax, rhomin, is_vmin_under, is_vmax_over, is_rhomin_under )
 
-             rho(k,i) = rho2
-             mu (k,i) = rho2 * vs2 * vs2
-             lam(k,i) = rho2 * ( vp2*vp2 - 2*vs2*vs2 )
-             qp (k,i) = qp0
-             qs (k,i) = qs0
+          rho(k,i) = rho2
+          mu (k,i) = rho2 * vs2 * vs2
+          lam(k,i) = rho2 * ( vp2*vp2 - 2*vs2*vs2 )
+          qp (k,i) = qp0
+          qs (k,i) = qs0
 
-          else if ( zc (k) > 0.0 ) then
+        else if ( zc (k) > 0.0 ) then
 
-             !! ocean column
+          !! ocean column
 
-             vp1 = 1.5
-             vs1 = 0.0
+          vp1 = 1.5
+          vs1 = 0.0
 
-             rho(k,i) = 1.0
-             mu (k,i) = rho(k,i) * vs1 * vs1
-             lam(k,i) = rho(k,i) * ( vp1*vp1 - 2*vs1*vs1 )
-             qp (k,i) = 1000000.0 ! effectively no attenuation in ocean column
-             qs (k,i) = 1000000.0
+          rho(k,i) = 1.0
+          mu (k,i) = rho(k,i) * vs1 * vs1
+          lam(k,i) = rho(k,i) * ( vp1*vp1 - 2*vs1*vs1 )
+          qp (k,i) = 1000000.0 ! effectively no attenuation in ocean column
+          qs (k,i) = 1000000.0
 
-          else
+        else
 
-             !! air column
+          !! air column
 
-             vp1 = 0.0
-             vs1 = 0.0
+          vp1 = 0.0
+          vs1 = 0.0
 
-             rho(k,i) = 0.001
-             mu (k,i) = rho(k,i) * vs1 * vs1
-             lam(k,i) = rho(k,i) * ( vp1*vp1 - 2*vs1*vs1 )
-             qp (k,i) = 10.0 ! artificially strong attenuation in air-column
-             qs (k,i) = 10.0 ! artificially strong attenuation in air-column
+          rho(k,i) = 0.001
+          mu (k,i) = rho(k,i) * vs1 * vs1
+          lam(k,i) = rho(k,i) * ( vp1*vp1 - 2*vs1*vs1 )
+          qp (k,i) = 10.0 ! artificially strong attenuation in air-column
+          qs (k,i) = 10.0 ! artificially strong attenuation in air-column
 
-          end if
-       end do
+        end if
+      end do
     end do
 
     !! notification for velocity torelance

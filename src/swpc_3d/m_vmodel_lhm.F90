@@ -3,7 +3,7 @@
 !! 1D velocity structure
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -69,24 +69,24 @@ contains
 
     l = 0
     do
-       read(io_vel,'(A256)', iostat=ierr ) adum
-       if( ierr /= 0 ) exit
-       adum = trim(adjustl(adum))
-       if( trim(adum) == '' ) cycle
-       if( adum(1:1) == "#" ) cycle
-       l = l + 1
-       read(adum,*) depth(l), rho0(l), vp0(l), vs0(l), qp0(l), qs0(l)
+      read(io_vel,'(A256)', iostat=ierr ) adum
+      if( ierr /= 0 ) exit
+      adum = trim(adjustl(adum))
+      if( trim(adum) == '' ) cycle
+      if( adum(1:1) == "#" ) cycle
+      l = l + 1
+      read(adum,*) depth(l), rho0(l), vp0(l), vs0(l), qp0(l), qs0(l)
     end do
     close( io_vel )
 
     !! velocity cut-off
     do l = nlayer-1, 1, -1
       if( ( vp0(l) < vcut .or. vs0(l) < vcut ) .and. ( vp0(l) > 0 .and. vs0(l) >0 ) ) then
-          vp0(l)  = vp0(l+1)
-          vs0(l)  = vs0(l+1)
-          rho0(l) = rho0(l+1)
-          qp0(l)  = qp0(l+1)
-          qs0(l)  = qs0(l+1)
+        vp0(l)  = vp0(l+1)
+        vs0(l)  = vs0(l+1)
+        rho0(l) = rho0(l+1)
+        qp0(l)  = qp0(l+1)
+        qs0(l)  = qs0(l+1)
       end if
     end do
 
@@ -95,39 +95,39 @@ contains
 
     do k = k0, k1
 
-       !! air column
-       if( zc(k) < depth(1) ) then
+      !! air column
+      if( zc(k) < depth(1) ) then
 
-          vp1 = 0.0
-          vs1 = 0.0
+        vp1 = 0.0
+        vs1 = 0.0
 
-          rho(k,i0:i1,j0:j1) = 0.001
-          mu (k,i0:i1,j0:j1) = 0.0
-          lam(k,i0:i1,j0:j1) = 0.0
-          ! give artificially strong attenuation in air-column
-          qp (k,i0:i1,j0:j1) = 10.0
-          qs (k,i0:i1,j0:j1) = 10.0
+        rho(k,i0:i1,j0:j1) = 0.001
+        mu (k,i0:i1,j0:j1) = 0.0
+        lam(k,i0:i1,j0:j1) = 0.0
+        ! give artificially strong attenuation in air-column
+        qp (k,i0:i1,j0:j1) = 10.0
+        qs (k,i0:i1,j0:j1) = 10.0
 
-          cycle
-       end if
+        cycle
+      end if
 
-       !! chose layer
-       do l=1, nlayer
-          if( zc(k) >= depth(l) ) then
-             rho1 = rho0(l)
-             vp1  = vp0(l)
-             vs1  = vs0(l)
-             qp1  = qp0(l)
-             qs1  = qs0(l)
-          end if
-       end do
+      !! chose layer
+      do l=1, nlayer
+        if( zc(k) >= depth(l) ) then
+          rho1 = rho0(l)
+          vp1  = vp0(l)
+          vs1  = vs0(l)
+          qp1  = qp0(l)
+          qs1  = qs0(l)
+        end if
+      end do
 
-       !! set medium parameters
-       rho(k,i0:i1,j0:j1) = rho1
-       mu (k,i0:i1,j0:j1) = rho1 * vs1 * vs1
-       lam(k,i0:i1,j0:j1) = rho1 * ( vp1*vp1 - 2*vs1*vs1 )
-       qp (k,i0:i1,j0:j1) = qp1
-       qs (k,i0:i1,j0:j1) = qs1
+      !! set medium parameters
+      rho(k,i0:i1,j0:j1) = rho1
+      mu (k,i0:i1,j0:j1) = rho1 * vs1 * vs1
+      lam(k,i0:i1,j0:j1) = rho1 * ( vp1*vp1 - 2*vs1*vs1 )
+      qp (k,i0:i1,j0:j1) = qp1
+      qs (k,i0:i1,j0:j1) = qs1
 
     end do
 

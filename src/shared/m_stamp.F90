@@ -3,7 +3,7 @@
 !! Ascii font image and stamp routine to image data
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 module m_stamp
@@ -21,7 +21,7 @@ module m_stamp
   !! --
 
   interface stamp__char
-     module procedure char_mono, char_col
+    module procedure char_mono, char_col
   end interface stamp__char
 
   !! ----
@@ -57,43 +57,43 @@ contains
     !! ----
 
     if( is_first ) then
-       is_first = .false.
-       call char_img( cimg )
+      is_first = .false.
+      call char_img( cimg )
     end if
 
     is_really_white = .false.
     if( present( is_white ) ) then
-       if( is_white ) then
-          is_really_white = .true.
-       end if
+      if( is_white ) then
+        is_really_white = .true.
+      end if
     end if
 
     if( j0 + H0 > hei .or. i0 + len_trim(char) * W1 > wid ) then
-       write(STDERR,*) "size exceeds"
+      write(STDERR,*) "size exceeds"
     end if
 
     do i=1, len_trim(char)
-       ic = ichar( char(i:i) )
-       if( ic < 32 .or. ic > 126 ) then
-          write(STDERR,*) "character out of range"
-          exit
-       end if
+      ic = ichar( char(i:i) )
+      if( ic < 32 .or. ic > 126 ) then
+        write(STDERR,*) "character out of range"
+        exit
+      end if
 
-       ! 幅15データのうち10を使う「詰め」モード
-       is = i0 + (i-1)*W1
-       js = j0
-       ie = is + W1 - 1
-       je = js + H0 - 1
+      ! 幅15データのうち10を使う「詰め」モード
+      is = i0 + (i-1)*W1
+      js = j0
+      ie = is + W1 - 1
+      je = js + H0 - 1
 
-       if( ie <= wid .and. je <= hei ) then
-          if( is_really_white ) then
-             img( is:ie, js:je )  = 255 &
-                  - int( ( 255 - img(is:ie,js:je) ) * cimg(3:12,1:H0,ic) / 255. )
-          else
-             img( is:ie, js:je )  = &
-                  int( img(is:ie,js:je) * cimg(3:12,1:H0,ic) / 255. )
-          end if
-       end if
+      if( ie <= wid .and. je <= hei ) then
+        if( is_really_white ) then
+          img( is:ie, js:je )  = 255 &
+              - int( ( 255 - img(is:ie,js:je) ) * cimg(3:12,1:H0,ic) / 255. )
+        else
+          img( is:ie, js:je )  = &
+              int( img(is:ie,js:je) * cimg(3:12,1:H0,ic) / 255. )
+        end if
+      end if
 
     end do
 
@@ -122,13 +122,13 @@ contains
     !! ----
 
     if( present( is_white ) ) then
-       call char_mono( char, i0, j0, wid, hei, img(1,:,:), is_white )
-       call char_mono( char, i0, j0, wid, hei, img(2,:,:), is_white )
-       call char_mono( char, i0, j0, wid, hei, img(3,:,:), is_white )
+      call char_mono( char, i0, j0, wid, hei, img(1,:,:), is_white )
+      call char_mono( char, i0, j0, wid, hei, img(2,:,:), is_white )
+      call char_mono( char, i0, j0, wid, hei, img(3,:,:), is_white )
     else
-       call char_mono( char, i0, j0, wid, hei, img(1,:,:) )
-       call char_mono( char, i0, j0, wid, hei, img(2,:,:) )
-       call char_mono( char, i0, j0, wid, hei, img(3,:,:) )
+      call char_mono( char, i0, j0, wid, hei, img(1,:,:) )
+      call char_mono( char, i0, j0, wid, hei, img(2,:,:) )
+      call char_mono( char, i0, j0, wid, hei, img(3,:,:) )
     end if
 
   end subroutine char_col

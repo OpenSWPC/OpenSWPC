@@ -3,7 +3,7 @@
 !! User-routine for defining velocity/attenuation structure
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 module m_vmodel_user
@@ -146,15 +146,15 @@ contains
 
     !! dummy value
     bd(:,1:NBD) = -9999
-    
+
     ! substitute to a dummy variable for avoiding compiler warnings
     dum = xc(i0)
     dum = zc(k0)
     dum = vcut
-    
+
   end subroutine vmodel_user
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
-  
+
+
 end module m_vmodel_user
 !! ----------------------------------------------------------------------------------------------------------------------------- !!

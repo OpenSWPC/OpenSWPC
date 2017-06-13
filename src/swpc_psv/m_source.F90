@@ -3,7 +3,7 @@
 !! seismic source radiation
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 #include "m_debug.h"
@@ -84,13 +84,13 @@ contains
     !!
     call readini(io_prm, 'pw_mode', pw_mode, .false. )
     if( pw_mode ) then
-       if( .not. benchmark_mode ) then !! neglect pw_mode for benchmark
-          call pw_setup( io_prm )
-          nsrc = 0        !! no regular source grid for plane wave mode
-          M0 = 1.0 / UC   !! Fictitious scalar moment for output
-          call pwatch__off("source__setup")
-          return
-       end if
+      if( .not. benchmark_mode ) then !! neglect pw_mode for benchmark
+        call pw_setup( io_prm )
+        nsrc = 0        !! no regular source grid for plane wave mode
+        M0 = 1.0 / UC   !! Fictitious scalar moment for output
+        call pwatch__off("source__setup")
+        return
+      end if
     end if
 
     !! body-force mode?
@@ -108,29 +108,29 @@ contains
 
     !! n_stfprm may be changed for future extension.
     select case ( trim(stftype) )
-      case ( 'boxcar'   );  n_stfprm = 2
-      case ( 'triangle' );  n_stfprm = 2
-      case ( 'herrmann' );  n_stfprm = 2
-      case ( 'kupper'   );  n_stfprm = 2
-      case ( 'cosine'   );  n_stfprm = 2
-      case ( 'texp'     );  n_stfprm = 2
+    case ( 'boxcar'   );  n_stfprm = 2
+    case ( 'triangle' );  n_stfprm = 2
+    case ( 'herrmann' );  n_stfprm = 2
+    case ( 'kupper'   );  n_stfprm = 2
+    case ( 'cosine'   );  n_stfprm = 2
+    case ( 'texp'     );  n_stfprm = 2
     end select
 
 
 
     !! fixed source parameter for benchmarking: no source grid file used
     if( benchmark_mode ) then
-       nsrc_g   = 1
-       stftype  = 'kupper'
-       n_stfprm = 2
-       bf_mode = .false.
+      nsrc_g   = 1
+      stftype  = 'kupper'
+      n_stfprm = 2
+      bf_mode = .false.
     else
 
-       !! count source-grid file
-       call std__getio(io)
-       open( io, file=trim(fn_stf), action='read', status='old')
-       call std__countline( io, nsrc_g, "#" )  ! exclude comment line which start by "#"
-       close( io )
+      !! count source-grid file
+      call std__getio(io)
+      open( io, file=trim(fn_stf), action='read', status='old')
+      call std__countline( io, nsrc_g, "#" )  ! exclude comment line which start by "#"
+      close( io )
     end if
 
 
@@ -144,40 +144,40 @@ contains
     inside(1:nsrc_g) = .false.
 
     if( bf_mode ) then
-       allocate( fx_g(nsrc_g), fz_g(nsrc_g) )
-       call source__grid_bodyforce( fn_stf, stf_format, nsrc_g, n_stfprm, sx_g, sz_g, fx_g, fz_g, srcprm_g )
+      allocate( fx_g(nsrc_g), fz_g(nsrc_g) )
+      call source__grid_bodyforce( fn_stf, stf_format, nsrc_g, n_stfprm, sx_g, sz_g, fx_g, fz_g, srcprm_g )
     else
 
-       allocate( mo_g(nsrc_g), mxx_g(nsrc_g), mzz_g(nsrc_g), mxz_g(nsrc_g) )
-       !! fixed source parameter for benchmarking
-       if( benchmark_mode ) then
-          sx_g(1) = 0.0
-          sz_g(1) = 5.0
-          mo_g(1) = 1e15
-          mxx_g(1) = 1 / sqrt(2.0)
-          mzz_g(1) = 1 / sqrt(2.0)
-          mxz_g(1) = 0.0
-          srcprm_g(1,1) = 0.1
-          srcprm_g(2,1) = 2.0
+      allocate( mo_g(nsrc_g), mxx_g(nsrc_g), mzz_g(nsrc_g), mxz_g(nsrc_g) )
+      !! fixed source parameter for benchmarking
+      if( benchmark_mode ) then
+        sx_g(1) = 0.0
+        sz_g(1) = 5.0
+        mo_g(1) = 1e15
+        mxx_g(1) = 1 / sqrt(2.0)
+        mzz_g(1) = 1 / sqrt(2.0)
+        mxz_g(1) = 0.0
+        srcprm_g(1,1) = 0.1
+        srcprm_g(2,1) = 2.0
 
-       else
+      else
 
-          !!
-          !! request all source grid information ( from user-defined routine )
-          !!
-          call source__grid_moment( fn_stf, stf_format, nsrc_g, n_stfprm, &
-               sx_g, sz_g, mo_g, mxx_g, mzz_g, mxz_g, srcprm_g)
+        !!
+        !! request all source grid information ( from user-defined routine )
+        !!
+        call source__grid_moment( fn_stf, stf_format, nsrc_g, n_stfprm, &
+            sx_g, sz_g, mo_g, mxx_g, mzz_g, mxz_g, srcprm_g)
 
-       end if
+      end if
     end if
 
     ! count up all moment / body force
     if( bf_mode ) then
-       M0 = sqrt( sum( fx_g(1:nsrc_g)**2 + fz_g(1:nsrc_g)**2  ) )
-       !! unit conversion for body wave source
-       UC = UC * 10**3
+      M0 = sqrt( sum( fx_g(1:nsrc_g)**2 + fz_g(1:nsrc_g)**2  ) )
+      !! unit conversion for body wave source
+      UC = UC * 10**3
     else
-       M0 = sum( mo_g(1:nsrc_g) )
+      M0 = sum( mo_g(1:nsrc_g) )
     end if
 
 
@@ -185,7 +185,7 @@ contains
     !! currently assumes srcprm(2,:) indicates rise time
     fcut = 0.
     do i=1, nsrc_g
-       fcut = max( fcut, 1/srcprm_g(2,i) )
+      fcut = max( fcut, 1/srcprm_g(2,i) )
     end do
     fmax = 2 * fcut
 
@@ -195,19 +195,19 @@ contains
     nsrc = 0
     do i=1, nsrc_g
 
-       is_g(i) = x2i( sx_g(i), xbeg, real(dx) )
-       ks_g(i) = z2k( sz_g(i), zbeg, real(dz) )
+      is_g(i) = x2i( sx_g(i), xbeg, real(dx) )
+      ks_g(i) = z2k( sz_g(i), zbeg, real(dz) )
 
 
-       !! Count-up source grid *including sleeve area* so that it works even if the source grid is near MPI node boundary
-       if( ibeg - 2 <= is_g(i) .and. is_g(i) <= iend + 3 .and. &
-           kbeg - 2 <= ks_g(i) .and. ks_g(i) <= kend + 3      ) then
+      !! Count-up source grid *including sleeve area* so that it works even if the source grid is near MPI node boundary
+      if( ibeg - 2 <= is_g(i) .and. is_g(i) <= iend + 3 .and. &
+          kbeg - 2 <= ks_g(i) .and. ks_g(i) <= kend + 3      ) then
 
-          inside(i) = .true.
+        inside(i) = .true.
 
-          nsrc = nsrc + 1
+        nsrc = nsrc + 1
 
-       end if
+      end if
     end do
 
 
@@ -219,9 +219,9 @@ contains
     allocate( srcprm(n_stfprm,nsrc) )
 
     if( bf_mode ) then
-       allocate( fx(nsrc), fz(nsrc) )
+      allocate( fx(nsrc), fz(nsrc) )
     else
-       allocate( mo(nsrc), mxx(nsrc), mzz(nsrc), mxz(nsrc) )
+      allocate( mo(nsrc), mxx(nsrc), mzz(nsrc), mxz(nsrc) )
     end if
 
 
@@ -230,48 +230,48 @@ contains
     !!
     nn = 0
     do i=1, nsrc_g
-       if( inside(i) ) then
+      if( inside(i) ) then
 
-          nn = nn + 1
+        nn = nn + 1
 
-          isrc(nn) = is_g (i)
-          ksrc(nn) = ks_g (i)
-          sx  (nn) = sx_g (i)
-          sz  (nn) = sz_g (i)
+        isrc(nn) = is_g (i)
+        ksrc(nn) = ks_g (i)
+        sx  (nn) = sx_g (i)
+        sz  (nn) = sz_g (i)
 
-          if( bf_mode ) then
-             fx  (nn) = fx_g (i)
-             fz  (nn) = fz_g (i)
-          else
-             mo  (nn) = mo_g (i)
-             mxx (nn) = mxx_g(i)
-             mzz (nn) = mzz_g(i)
-             mxz (nn) = mxz_g(i)
+        if( bf_mode ) then
+          fx  (nn) = fx_g (i)
+          fz  (nn) = fz_g (i)
+        else
+          mo  (nn) = mo_g (i)
+          mxx (nn) = mxx_g(i)
+          mzz (nn) = mzz_g(i)
+          mxz (nn) = mxz_g(i)
+        end if
+
+        srcprm(:,nn) = srcprm_g(:,i)
+
+        !! depth fitting
+
+        do k=0, NBD
+          write(sdep0,'(I1.1)') k
+          sdep0 = 'bd' // sdep0
+
+          if( trim(sdep_fit) == sdep0 ) then
+            sz(nn) = bddep(isrc(nn),  k)
+            ksrc(nn) = z2k( sz(nn), zbeg, real(dz) )
           end if
+        end do
 
-          srcprm(:,nn) = srcprm_g(:,i)
-
-          !! depth fitting
-
-          do k=0, NBD
-             write(sdep0,'(I1.1)') k
-             sdep0 = 'bd' // sdep0
-
-             if( trim(sdep_fit) == sdep0 ) then
-                sz(nn) = bddep(isrc(nn),  k)
-                ksrc(nn) = z2k( sz(nn), zbeg, real(dz) )
-             end if
-          end do
-
-       end if
+      end if
     end do
 
     !!
     !! Confirm that FDM model space contains the srouce grid location
     !!
     do i=1, nsrc
-       call assert( xbeg <= sx(i) .and. sx(i) <= xend )
-       call assert( zbeg <= sz(i) .and. sz(i) <= zend )
+      call assert( xbeg <= sx(i) .and. sx(i) <= xend )
+      call assert( zbeg <= sz(i) .and. sz(i) <= zend )
     end do
 
 
@@ -282,10 +282,10 @@ contains
     deallocate( is_g, ks_g )
     deallocate( inside )
     if( bf_mode ) then
-       deallocate( fx_g, fz_g )
+      deallocate( fx_g, fz_g )
     else
-       deallocate( mxx_g, mzz_g, mxz_g )
-       deallocate( mo_g )
+      deallocate( mxx_g, mzz_g, mxz_g )
+      deallocate( mo_g )
     end if
 
     !!
@@ -293,10 +293,10 @@ contains
     !! Total moment M0 will again be multiplied when export the result
     !!
     if( bf_mode ) then
-       fx(1:nsrc) = fx(1:nsrc) / M0
-       fz(1:nsrc) = fz(1:nsrc) / M0
+      fx(1:nsrc) = fx(1:nsrc) / M0
+      fz(1:nsrc) = fz(1:nsrc) / M0
     else
-       mo(1:nsrc) = mo(1:nsrc) / M0
+      mo(1:nsrc) = mo(1:nsrc) / M0
     end if
 
     !! common grid-related value for stress drip calculation
@@ -347,99 +347,99 @@ contains
 
     do
 
-       read(io,'(A256)', iostat=ierr) adum
-       if( ierr /= 0 ) exit                  ! detect EOF
-       if( adjustl(adum(1:1)) == "#" ) cycle ! neglect comment line
-       if( trim(adjustl(adum)) == "" ) cycle ! neglect blank line
+      read(io,'(A256)', iostat=ierr) adum
+      if( ierr /= 0 ) exit                  ! detect EOF
+      if( adjustl(adum(1:1)) == "#" ) cycle ! neglect comment line
+      if( trim(adjustl(adum)) == "" ) cycle ! neglect blank line
 
-       i = i+1
+      i = i+1
 
-       select case( stf_format )
+      select case( stf_format )
 
-          case( 'xym0ij' )
-             read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), mo(i), mxx(i), rdum, mzz(i), rdum, mxz(i), rdum
-             call assert( ierr == 0 )
+      case( 'xym0ij' )
+        read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), mo(i), mxx(i), rdum, mzz(i), rdum, mxz(i), rdum
+        call assert( ierr == 0 )
 
-          case( 'xym0dc' )
-             read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), mo(i), strike, dip, rake
-             call assert( ierr == 0 )
-             call assert( -360. <= strike .and. strike <= 360. )
-             call assert(  -90. <= dip    .and. dip    <= 90.  )
-             call assert( -180. <= rake   .and. rake   <= 180. )
-             ! use strike angle measured from map azimuth
-             call sdr2moment( strike-phi, dip, rake, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum )
+      case( 'xym0dc' )
+        read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), mo(i), strike, dip, rake
+        call assert( ierr == 0 )
+        call assert( -360. <= strike .and. strike <= 360. )
+        call assert(  -90. <= dip    .and. dip    <= 90.  )
+        call assert( -180. <= rake   .and. rake   <= 180. )
+        ! use strike angle measured from map azimuth
+        call sdr2moment( strike-phi, dip, rake, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum )
 
-          case( 'llm0ij' )
-             read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mo(i), mxx(i), rdum, mzz(i), rdum, mxz(i), rdum
-             call assert( ierr == 0 )
-             call assert( -360. <= lon .and. lon <= 360 )
-             call assert(  -90. <= lat .and. lat <=  90 )
-             call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum)
+      case( 'llm0ij' )
+        read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mo(i), mxx(i), rdum, mzz(i), rdum, mxz(i), rdum
+        call assert( ierr == 0 )
+        call assert( -360. <= lon .and. lon <= 360 )
+        call assert(  -90. <= lat .and. lat <=  90 )
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum)
 
-          case( 'llm0dc' )
-             read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mo(i), strike, dip, rake
-             call assert( ierr == 0 )
-             call assert( -360. <= lon .and. lon <= 360 )
-             call assert(  -90. <= lat .and. lat <=  90 )
-             call sdr2moment( strike-phi, dip, rake, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum )
-             call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
+      case( 'llm0dc' )
+        read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mo(i), strike, dip, rake
+        call assert( ierr == 0 )
+        call assert( -360. <= lon .and. lon <= 360 )
+        call assert(  -90. <= lat .and. lat <=  90 )
+        call sdr2moment( strike-phi, dip, rake, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum )
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
 
-          case( 'xymwij' )
-             read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), mw, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum
-             call assert( ierr == 0 )
-             call assert( mw <= 11. ) !! magnitude
-             mo(i) = seismic_moment(mw)
+      case( 'xymwij' )
+        read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), mw, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum
+        call assert( ierr == 0 )
+        call assert( mw <= 11. ) !! magnitude
+        mo(i) = seismic_moment(mw)
 
-          case( 'xymwdc' )
-             read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), mw, strike, dip, rake
-             call assert( ierr == 0 )
-             call assert( -360. <= strike .and. strike <= 360. )
-             call assert(  -90. <= dip    .and. dip    <= 90.  )
-             call assert( -180. <= rake   .and. rake   <= 180. )
-             call assert( mw <= 11. ) !! magnitude
-             ! use strike angle measured from map azimuth
-             mo(i) = seismic_moment(mw)
-             call sdr2moment( strike-phi, dip, rake, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum )
+      case( 'xymwdc' )
+        read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), mw, strike, dip, rake
+        call assert( ierr == 0 )
+        call assert( -360. <= strike .and. strike <= 360. )
+        call assert(  -90. <= dip    .and. dip    <= 90.  )
+        call assert( -180. <= rake   .and. rake   <= 180. )
+        call assert( mw <= 11. ) !! magnitude
+        ! use strike angle measured from map azimuth
+        mo(i) = seismic_moment(mw)
+        call sdr2moment( strike-phi, dip, rake, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum )
 
-          case( 'llmwij' )
-             read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mw, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum
-             call assert( ierr == 0 )
-             call assert( -360. <= lon .and. lon <= 360 )
-             call assert(  -90. <= lat .and. lat <=  90 )
-             call assert( mw <= 11. ) !! magnitude
-             mo(i) = seismic_moment(mw)
-             call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum)
+      case( 'llmwij' )
+        read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mw, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum
+        call assert( ierr == 0 )
+        call assert( -360. <= lon .and. lon <= 360 )
+        call assert(  -90. <= lat .and. lat <=  90 )
+        call assert( mw <= 11. ) !! magnitude
+        mo(i) = seismic_moment(mw)
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum)
 
-          case( 'llmwdc' )
-             read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mw, strike, dip, rake
-             call assert( ierr == 0 )
-             call assert( -360. <= lon .and. lon <= 360 )
-             call assert(  -90. <= lat .and. lat <=  90 )
-             call assert( -360. <= strike .and. strike <= 360. )
-             call assert(  -90. <= dip    .and. dip    <= 90.  )
-             call assert( -180. <= rake   .and. rake   <= 180. )
-             call assert( mw <= 11. ) !! magnitude
-             mo(i) = seismic_moment(mw)
-             call sdr2moment( strike-phi, dip, rake, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum )
-             call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
+      case( 'llmwdc' )
+        read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mw, strike, dip, rake
+        call assert( ierr == 0 )
+        call assert( -360. <= lon .and. lon <= 360 )
+        call assert(  -90. <= lat .and. lat <=  90 )
+        call assert( -360. <= strike .and. strike <= 360. )
+        call assert(  -90. <= dip    .and. dip    <= 90.  )
+        call assert( -180. <= rake   .and. rake   <= 180. )
+        call assert( mw <= 11. ) !! magnitude
+        mo(i) = seismic_moment(mw)
+        call sdr2moment( strike-phi, dip, rake, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum )
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
 
-          case default
-             write(STDERR,*) "ERROR [source__setup]: Invalid source type: "//trim(stf_format)
+      case default
+        write(STDERR,*) "ERROR [source__setup]: Invalid source type: "//trim(stf_format)
 
-        end select
+      end select
 
-        !! remember first record as hypocenter
-        if( i==1 ) then
-           call geomap__c2g( sx(i), 0.0, clon, clat, phi, evlo, evla )
-           evdp = sz(i)
-           mxx0 = mxx(i)
-           myy0 = -12345.0
-           mzz0 = mzz(i)
-           myz0 = -12345.0
-           mxz0 = mxz(i)
-           mxy0 = -12345.0
-           otim = sprm(1,i)
-        end if
+      !! remember first record as hypocenter
+      if( i==1 ) then
+        call geomap__c2g( sx(i), 0.0, clon, clat, phi, evlo, evla )
+        evdp = sz(i)
+        mxx0 = mxx(i)
+        myy0 = -12345.0
+        mzz0 = mzz(i)
+        myz0 = -12345.0
+        mxz0 = mxz(i)
+        mxy0 = -12345.0
+        otim = sprm(1,i)
+      end if
 
     end do
 
@@ -491,43 +491,43 @@ contains
 
     do
 
-       read(io,'(A256)', iostat=ierr) adum
-       if( ierr /= 0 ) exit                  ! detect EOF
-       if( adjustl(adum(1:1)) == "#" ) cycle ! neglect comment line
-       if( trim(adjustl(adum)) == "" ) cycle ! neglect blank line
+      read(io,'(A256)', iostat=ierr) adum
+      if( ierr /= 0 ) exit                  ! detect EOF
+      if( adjustl(adum(1:1)) == "#" ) cycle ! neglect comment line
+      if( trim(adjustl(adum)) == "" ) cycle ! neglect blank line
 
-       i = i+1
+      i = i+1
 
-       select case( stf_coord )
+      select case( stf_coord )
 
-          case( 'xy' )
-             read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), fx(i), rdum, fz(i)
-             call assert( ierr == 0 )
+      case( 'xy' )
+        read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), fx(i), rdum, fz(i)
+        call assert( ierr == 0 )
 
-          case( 'll' )
-             read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), fx(i), rdum, fz(i)
-             call assert( ierr == 0 )
-             call assert( -360. <= lon .and. lon <= 360 )
-             call assert(  -90. <= lat .and. lat <=  90 )
-             call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
+      case( 'll' )
+        read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), fx(i), rdum, fz(i)
+        call assert( ierr == 0 )
+        call assert( -360. <= lon .and. lon <= 360 )
+        call assert(  -90. <= lat .and. lat <=  90 )
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
 
-          case default
-             write(STDERR,*) "ERROR [source__setup]: Invalid source type: "//trim(stf_format)
+      case default
+        write(STDERR,*) "ERROR [source__setup]: Invalid source type: "//trim(stf_format)
 
-        end select
+      end select
 
-        !! remember first record as hypocenter
-        if( i==1 ) then
-           call geomap__c2g( sx(i), 0.0, clon, clat, phi, evlo, evla )
-           evdp = sz(i)
-           otim = sprm(1,i)
-           fx0 = fx(i)
-           fy0 = -12345.0
-           fz0 = fz(i)
-        end if
+      !! remember first record as hypocenter
+      if( i==1 ) then
+        call geomap__c2g( sx(i), 0.0, clon, clat, phi, evlo, evla )
+        evdp = sz(i)
+        otim = sprm(1,i)
+        fx0 = fx(i)
+        fy0 = -12345.0
+        fz0 = fz(i)
+      end if
 
 
-     end do
+    end do
 
     close( io )
 
@@ -564,19 +564,19 @@ contains
 
     do i=1, nsrc
 
-       stime = source__momentrate( t, stftype, n_stfprm, srcprm(:,i) )
-       sdrop = mo(i) * stime * dt_dxz
+      stime = source__momentrate( t, stftype, n_stfprm, srcprm(:,i) )
+      sdrop = mo(i) * stime * dt_dxz
 
-       ii = isrc(i)
-       kk = ksrc(i)
+      ii = isrc(i)
+      kk = ksrc(i)
 
-       Sxx(kk,ii) = Sxx(kk,ii) - mxx(i)*sdrop
-       Szz(kk,ii) = Szz(kk,ii) - mzz(i)*sdrop
+      Sxx(kk,ii) = Sxx(kk,ii) - mxx(i)*sdrop
+      Szz(kk,ii) = Szz(kk,ii) - mzz(i)*sdrop
 
-       Sxz(kk  ,ii  ) = Sxz(kk  ,ii  ) - mxz(i)*sdrop/4
-       Sxz(kk-1,ii  ) = Sxz(kk-1,ii  ) - mxz(i)*sdrop/4
-       Sxz(kk  ,ii-1) = Sxz(kk  ,ii-1) - mxz(i)*sdrop/4
-       Sxz(kk-1,ii-1) = Sxz(kk-1,ii-1) - mxz(i)*sdrop/4
+      Sxz(kk  ,ii  ) = Sxz(kk  ,ii  ) - mxz(i)*sdrop/4
+      Sxz(kk-1,ii  ) = Sxz(kk-1,ii  ) - mxz(i)*sdrop/4
+      Sxz(kk  ,ii-1) = Sxz(kk  ,ii-1) - mxz(i)*sdrop/4
+      Sxz(kk-1,ii-1) = Sxz(kk-1,ii-1) - mxz(i)*sdrop/4
 
     end do
 
@@ -614,16 +614,16 @@ contains
 
     do i=1, nsrc
 
-       stime = source__momentrate( t, stftype, n_stfprm, srcprm(:,i) )
+      stime = source__momentrate( t, stftype, n_stfprm, srcprm(:,i) )
 
-       ii = isrc(i)
-       kk = ksrc(i)
+      ii = isrc(i)
+      kk = ksrc(i)
 
 
-       Vx(kk  ,ii  ) = Vx(kk  ,ii  ) + fx(i) * stime * dt_dxz / 2
-       Vx(kk  ,ii-1) = Vx(kk  ,ii-1) + fx(i) * stime * dt_dxz / 2
-       Vz(kk  ,ii  ) = Vz(kk  ,ii  ) + fz(i) * stime * dt_dxz / 2
-       Vz(kk-1,ii  ) = Vz(kk-1,ii  ) + fz(i) * stime * dt_dxz / 2
+      Vx(kk  ,ii  ) = Vx(kk  ,ii  ) + fx(i) * stime * dt_dxz / 2
+      Vx(kk  ,ii-1) = Vx(kk  ,ii-1) + fx(i) * stime * dt_dxz / 2
+      Vz(kk  ,ii  ) = Vz(kk  ,ii  ) + fz(i) * stime * dt_dxz / 2
+      Vz(kk-1,ii  ) = Vz(kk-1,ii  ) + fz(i) * stime * dt_dxz / 2
 
     end do
 
@@ -644,29 +644,29 @@ contains
     write( io ) bf_mode
 
     if( nsrc > 0 ) then
-       write( io ) srcprm(1:n_stfprm,1:nsrc)
-       write( io ) sx(1:nsrc)
-       write( io ) sz(1:nsrc)
-       write( io ) isrc(1:nsrc)
-       write( io ) ksrc(1:nsrc)
-       if( bf_mode ) then
-          write( io ) fx(1:nsrc)
-          write( io ) fz(1:nsrc)
-       else
-          write( io ) mxx(1:nsrc)
-          write( io ) mzz(1:nsrc)
-          write( io ) mxz(1:nsrc)
-          write( io ) mo(1:nsrc)
-       end if
+      write( io ) srcprm(1:n_stfprm,1:nsrc)
+      write( io ) sx(1:nsrc)
+      write( io ) sz(1:nsrc)
+      write( io ) isrc(1:nsrc)
+      write( io ) ksrc(1:nsrc)
+      if( bf_mode ) then
+        write( io ) fx(1:nsrc)
+        write( io ) fz(1:nsrc)
+      else
+        write( io ) mxx(1:nsrc)
+        write( io ) mzz(1:nsrc)
+        write( io ) mxz(1:nsrc)
+        write( io ) mo(1:nsrc)
+      end if
     end if
 
     write( io ) dt_dxz
     write( io ) M0
 
     if( bf_mode ) then
-       write( io ) fx0, fy0, fz0
+      write( io ) fx0, fy0, fz0
     else
-       write( io ) mxx0, myy0, mzz0, myz0, mxz0, mxy0
+      write( io ) mxx0, myy0, mzz0, myz0, mxz0, mxy0
     end if
 
   end subroutine source__checkpoint
@@ -689,29 +689,29 @@ contains
     allocate( srcprm(n_stfprm,nsrc) )
 
     if( nsrc > 0 ) then
-       read( io ) srcprm(1:n_stfprm,1:nsrc)
-       read( io ) sx(1:nsrc)
-       read( io ) sz(1:nsrc)
-       read( io ) isrc(1:nsrc)
-       read( io ) ksrc(1:nsrc)
-       if( bf_mode ) then
-          read( io ) fx(1:nsrc)
-          read( io ) fz(1:nsrc)
-       else
-          read( io ) mxx(1:nsrc)
-          read( io ) mzz(1:nsrc)
-          read( io ) mxz(1:nsrc)
-          read( io ) mo(1:nsrc)
-       end if
+      read( io ) srcprm(1:n_stfprm,1:nsrc)
+      read( io ) sx(1:nsrc)
+      read( io ) sz(1:nsrc)
+      read( io ) isrc(1:nsrc)
+      read( io ) ksrc(1:nsrc)
+      if( bf_mode ) then
+        read( io ) fx(1:nsrc)
+        read( io ) fz(1:nsrc)
+      else
+        read( io ) mxx(1:nsrc)
+        read( io ) mzz(1:nsrc)
+        read( io ) mxz(1:nsrc)
+        read( io ) mo(1:nsrc)
+      end if
     end if
 
     read( io ) dt_dxz
     read( io ) M0
 
     if( bf_mode ) then
-       read( io ) fx0, fy0, fz0
+      read( io ) fx0, fy0, fz0
     else
-       read( io ) mxx0, myy0, mzz0, myz0, mxz0, mxy0
+      read( io ) mxx0, myy0, mzz0, myz0, mxz0, mxy0
     end if
 
 
@@ -747,13 +747,13 @@ contains
     trise  = srcprm(2)
 
     select case ( trim(stftype) )
-      case ( 'boxcar'   );  source__momentrate = boxcar   ( t, tbeg, trise )
-      case ( 'triangle' );  source__momentrate = triangle ( t, tbeg, trise )
-      case ( 'herrmann' );  source__momentrate = herrmann ( t, tbeg, trise )
-      case ( 'kupper'   );  source__momentrate = kupper   ( t, tbeg, trise )
-      case ( 'cosine'   );  source__momentrate = cosine   ( t, tbeg, trise )
-      case ( 'texp'     );  source__momentrate = texp     ( t, tbeg, trise )
-      case default;         source__momentrate = kupper   ( t, tbeg, trise )
+    case ( 'boxcar'   );  source__momentrate = boxcar   ( t, tbeg, trise )
+    case ( 'triangle' );  source__momentrate = triangle ( t, tbeg, trise )
+    case ( 'herrmann' );  source__momentrate = herrmann ( t, tbeg, trise )
+    case ( 'kupper'   );  source__momentrate = kupper   ( t, tbeg, trise )
+    case ( 'cosine'   );  source__momentrate = cosine   ( t, tbeg, trise )
+    case ( 'texp'     );  source__momentrate = texp     ( t, tbeg, trise )
+    case default;         source__momentrate = kupper   ( t, tbeg, trise )
     end select
 
   end function source__momentrate
@@ -809,69 +809,69 @@ contains
 
     if( pw_ps == 'p' .or. pw_ps == 'P' ) then
 
-       do i=ibeg_m, iend_m
-          do k=kbeg_m, kend_m
+      do i=ibeg_m, iend_m
+        do k=kbeg_m, kend_m
 
-             vp = sqrt( ( lam(k,i) + 2 * mu(k,i) ) / rho(k,i) )
-             if( vp < epsilon(1.0) ) cycle
+          vp = sqrt( ( lam(k,i) + 2 * mu(k,i) ) / rho(k,i) )
+          if( vp < epsilon(1.0) ) cycle
 
-             x0 = xbeg + (i-0.5) * dx
-             z0 = zbeg + (k-0.5) * dz - pw_ztop
-             x1 = x0 + dx/2.
-             z1 = z0 + dz/2.
+          x0 = xbeg + (i-0.5) * dx
+          z0 = zbeg + (k-0.5) * dz - pw_ztop
+          x1 = x0 + dx/2.
+          z1 = z0 + dz/2.
 
-             !! source time function evaluated along rotated zeta value at staggered grid points
-             stf_ii =  source__momentrate( sd*sf * x0 + cd * z0,            stftype, 2, (/ 0., pw_zlen /) )
-             stf_vx =  source__momentrate( sd*sf * x1 + cd * z0 + dt/2.*vp, stftype, 2, (/ 0., pw_zlen /) )
-             stf_vz =  source__momentrate( sd*sf * x0 + cd * z1 + dt/2.*vp, stftype, 2, (/ 0., pw_zlen /) )
-             stf_xz =  source__momentrate( sd*sf * x1 + cd * z1,            stftype, 2, (/ 0., pw_zlen /) )
+          !! source time function evaluated along rotated zeta value at staggered grid points
+          stf_ii =  source__momentrate( sd*sf * x0 + cd * z0,            stftype, 2, (/ 0., pw_zlen /) )
+          stf_vx =  source__momentrate( sd*sf * x1 + cd * z0 + dt/2.*vp, stftype, 2, (/ 0., pw_zlen /) )
+          stf_vz =  source__momentrate( sd*sf * x0 + cd * z1 + dt/2.*vp, stftype, 2, (/ 0., pw_zlen /) )
+          stf_xz =  source__momentrate( sd*sf * x1 + cd * z1,            stftype, 2, (/ 0., pw_zlen /) )
 
-             la0 = lam(k,i)
-             mu0 = mu(k,i)
+          la0 = lam(k,i)
+          mu0 = mu(k,i)
 
-             vx (k,i) = - sd * sf * stf_vx
-             vz (k,i) = - cd *      stf_vz
-             sxx(k,i) = - ( la0 + 2 * mu0 * sd * sd * sf * sf ) * stf_ii / vp
-             szz(k,i) = - ( la0 + 2 * mu0 + cd * cd           ) * stf_ii / vp
-             sxz(k,i) = - 2 * mu0 * sd * cd * sf * stf_xz / vp
+          vx (k,i) = - sd * sf * stf_vx
+          vz (k,i) = - cd *      stf_vz
+          sxx(k,i) = - ( la0 + 2 * mu0 * sd * sd * sf * sf ) * stf_ii / vp
+          szz(k,i) = - ( la0 + 2 * mu0 + cd * cd           ) * stf_ii / vp
+          sxz(k,i) = - 2 * mu0 * sd * cd * sf * stf_xz / vp
 
-          end do
-       end do
+        end do
+      end do
 
     else if ( pw_ps == 's' .or. pw_ps == 'S' ) then
 
-       do i=ibeg_m, iend_m
-          do k=kbeg_m, kend_m
+      do i=ibeg_m, iend_m
+        do k=kbeg_m, kend_m
 
-             vs = sqrt( mu(k,i) / rho(k,i) )
-             if( vs < epsilon(1.0) ) cycle
+          vs = sqrt( mu(k,i) / rho(k,i) )
+          if( vs < epsilon(1.0) ) cycle
 
 
-             x0 = xbeg + (i-0.5) * dx
-             z0 = zbeg + (k-0.5) * dz - pw_ztop
-             x1 = x0 + dx/2.
-             z1 = z0 + dz/2.
+          x0 = xbeg + (i-0.5) * dx
+          z0 = zbeg + (k-0.5) * dz - pw_ztop
+          x1 = x0 + dx/2.
+          z1 = z0 + dz/2.
 
-             la0 = lam(k,i)
-             mu0 = mu(k,i)
+          la0 = lam(k,i)
+          mu0 = mu(k,i)
 
-             !! source time function evaluated along rotated zeta value at staggered grid points
-             stf_ii =  source__momentrate( sd*sf * x0 + cd * z0,            stftype, 2, (/ 0., pw_zlen /) )
-             stf_vx =  source__momentrate( sd*sf * x1 + cd * z0 + dt/2.*vs, stftype, 2, (/ 0., pw_zlen /) )
-             stf_vz =  source__momentrate( sd*sf * x0 + cd * z1 + dt/2.*vs, stftype, 2, (/ 0., pw_zlen /) )
-             stf_xz =  source__momentrate( sd*sf * x1 + cd * z1,            stftype, 2, (/ 0., pw_zlen /) )
+          !! source time function evaluated along rotated zeta value at staggered grid points
+          stf_ii =  source__momentrate( sd*sf * x0 + cd * z0,            stftype, 2, (/ 0., pw_zlen /) )
+          stf_vx =  source__momentrate( sd*sf * x1 + cd * z0 + dt/2.*vs, stftype, 2, (/ 0., pw_zlen /) )
+          stf_vz =  source__momentrate( sd*sf * x0 + cd * z1 + dt/2.*vs, stftype, 2, (/ 0., pw_zlen /) )
+          stf_xz =  source__momentrate( sd*sf * x1 + cd * z1,            stftype, 2, (/ 0., pw_zlen /) )
 
-             vx (k,i) = ( cl*cf + sl*cd*sf ) * stf_vx
-             vz (k,i) =          -sl*sd      * stf_vz
-             sxx(k,i) =   2 * mu0 *sd * sf * (cl * cf + sl * cd * sf) * stf_ii / vs
-             szz(k,i) = - 2 * mu0 *cd      *            sl * sd       * stf_ii / vs
-             sxz(k,i) =   mu0 * (cl * cd * cf  + sl * c2d * sf) * stf_xz / vs
+          vx (k,i) = ( cl*cf + sl*cd*sf ) * stf_vx
+          vz (k,i) =          -sl*sd      * stf_vz
+          sxx(k,i) =   2 * mu0 *sd * sf * (cl * cf + sl * cd * sf) * stf_ii / vs
+          szz(k,i) = - 2 * mu0 *cd      *            sl * sd       * stf_ii / vs
+          sxz(k,i) =   mu0 * (cl * cd * cf  + sl * c2d * sf) * stf_xz / vs
 
-          end do
-       end do
+        end do
+      end do
 
     else
-       call assert( .false. )
+      call assert( .false. )
     end if
 
     !! wavelength condition
@@ -881,13 +881,13 @@ contains
     fmax = 0
     if( ibeg <= i .and. i <= iend ) then
 
-       if( pw_ps == 'p' .or. pw_ps == 'P' ) then
-          vp = sqrt( ( lam(k,i) + 2 * mu(k,i) ) / rho(k,i) )
-          fcut = vp / pw_zlen
-       else
-          vs = sqrt( mu(k,i) / rho(k,i) )
-          fcut = vs / pw_zlen
-       end if
+      if( pw_ps == 'p' .or. pw_ps == 'P' ) then
+        vp = sqrt( ( lam(k,i) + 2 * mu(k,i) ) / rho(k,i) )
+        fcut = vp / pw_zlen
+      else
+        vs = sqrt( mu(k,i) / rho(k,i) )
+        fcut = vs / pw_zlen
+      end if
     end if
 
     call mpi_allreduce( fcut, fmax, 1, MPI_REAL, MPI_MAX, mpi_comm_world, ierr )

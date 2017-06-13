@@ -3,7 +3,7 @@
 !! global control parameters, shared arrays and MPI communication
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -170,29 +170,29 @@ contains
     call readini( io_prm, 'odir',    odir,  './out'    )
 
     if( benchmark_mode ) then
-       dx = 0.5
-       dz = 0.5
-       dt = 0.04
-       na = 20
-       xbeg = -nx/2 * dx
-       zbeg = -30   * dz
-       tbeg = 0.0
-       clon = 139.7604
-       clat = 35.7182
-       phi  = 0.0
-       abc_type = 'pml'
+      dx = 0.5
+      dz = 0.5
+      dt = 0.04
+      na = 20
+      xbeg = -nx/2 * dx
+      zbeg = -30   * dz
+      tbeg = 0.0
+      clon = 139.7604
+      clat = 35.7182
+      phi  = 0.0
+      abc_type = 'pml'
     else
-       call readini( io_prm, 'dx',      dx,      0.5_MP         )
-       call readini( io_prm, 'dz',      dz,      0.5_MP         )
-       call readini( io_prm, 'dt',      dt,      0.01           )
-       call readini( io_prm, 'na',      na,      20             )
-       call readini( io_prm, 'xbeg',    xbeg,   -nx/2*real(dx)  )
-       call readini( io_prm, 'zbeg',    zbeg,   -30*real(dz)    )
-       call readini( io_prm, 'tbeg',    tbeg,    0.0            )
-       call readini( io_prm, 'clon',    clon,  139.7604         )
-       call readini( io_prm, 'clat',    clat,   35.7182         )
-       call readini( io_prm, 'phi',     phi,     0.0            )
-       call readini( io_prm, 'abc_type', abc_type, 'pml'        )
+      call readini( io_prm, 'dx',      dx,      0.5_MP         )
+      call readini( io_prm, 'dz',      dz,      0.5_MP         )
+      call readini( io_prm, 'dt',      dt,      0.01           )
+      call readini( io_prm, 'na',      na,      20             )
+      call readini( io_prm, 'xbeg',    xbeg,   -nx/2*real(dx)  )
+      call readini( io_prm, 'zbeg',    zbeg,   -30*real(dz)    )
+      call readini( io_prm, 'tbeg',    tbeg,    0.0            )
+      call readini( io_prm, 'clon',    clon,  139.7604         )
+      call readini( io_prm, 'clat',    clat,   35.7182         )
+      call readini( io_prm, 'phi',     phi,     0.0            )
+      call readini( io_prm, 'abc_type', abc_type, 'pml'        )
     end if
 
 
@@ -217,9 +217,9 @@ contains
     !!
     call mpi_comm_rank( mpi_comm_world, myid, ierr )
     if( MP == DP ) then
-       mpi_precision = MPI_DOUBLE_PRECISION
+      mpi_precision = MPI_DOUBLE_PRECISION
     else
-       mpi_precision = MPI_REAL
+      mpi_precision = MPI_REAL
     end if
 
 
@@ -325,10 +325,10 @@ contains
     allocate( xc(ibeg_m:iend_m), zc(kbeg_m:kend_m) )
 
     do i=ibeg_m, iend_m
-       xc(i) = i2x( i, xbeg, real(dx) )
+      xc(i) = i2x( i, xbeg, real(dx) )
     end do
     do k=kbeg_m, kend_m
-       zc(k) = k2z( k, zbeg, real(dz) )
+      zc(k) = k2z( k, zbeg, real(dz) )
     end do
 
 
@@ -338,11 +338,11 @@ contains
     !!
     allocate( kbeg_a(ibeg_m:iend_m) )
     do i=ibeg_m, iend_m
-       if( i <= na .or. nx-na+1 <= i ) then
-          kbeg_a(i) = kbeg
-       else
-          kbeg_a(i) = kend-na+1
-       end if
+      if( i <= na .or. nx-na+1 <= i ) then
+        kbeg_a(i) = kbeg
+      else
+        kbeg_a(i) = kend-na+1
+      end if
     end do
 
     ibeg_k = ibeg
@@ -351,17 +351,17 @@ contains
     kend_k = kend
 
     if( abc_type == 'pml' ) then
-       if( iend <= na ) then ! no kernel integration
-          ibeg_k = iend+1
-       else if ( ibeg <= na ) then ! pertial kernel
-          ibeg_k = na+1
-       end if
-       if( ibeg >= nx-na+1 ) then ! no kernel integartion
-          iend_k = ibeg-1
-       else if ( iend >= nx-na+1 ) then
-          iend_k = nx-na
-       end if
-       kend_k = nz-na
+      if( iend <= na ) then ! no kernel integration
+        ibeg_k = iend+1
+      else if ( ibeg <= na ) then ! pertial kernel
+        ibeg_k = na+1
+      end if
+      if( ibeg >= nx-na+1 ) then ! no kernel integartion
+        iend_k = ibeg-1
+      else if ( iend >= nx-na+1 ) then
+        iend_k = nx-na
+      end if
+      kend_k = nz-na
     end if
 
 
@@ -524,9 +524,9 @@ contains
 
     if( ibeg <= i .and. i<= iend .and. &
         kbeg <= k .and. k<= kend ) then
-       inside_node = .true.
+      inside_node = .true.
     else
-       inside_node = .false.
+      inside_node = .false.
     end if
 
   end function inside_node
@@ -622,8 +622,8 @@ contains
     itbl(-1:nproc_x) = MPI_PROC_NULL
     do i=0, nproc_x-1
 
-       ii = mod( i, nproc_x )
-       itbl(ii) = i
+      ii = mod( i, nproc_x )
+      itbl(ii) = i
 
     end do
 

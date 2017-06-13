@@ -9,7 +9,7 @@
 !! http://surveycalc.gsi.go.jp/sokuchi/surveycalc/algorithm/bl2xy/bl2xy.htm
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 module m_gk
@@ -33,10 +33,10 @@ module m_gk
   public :: gk__xytoll
 
   interface gk__lltoxy
-     module procedure lltoxy_d, lltoxy_s
+    module procedure lltoxy_d, lltoxy_s
   end interface gk__lltoxy
   interface gk__xytoll
-     module procedure xytoll_d, xytoll_s
+    module procedure xytoll_d, xytoll_s
   end interface gk__xytoll
 
 contains
@@ -62,8 +62,8 @@ contains
 
 
     if( is_first ) then
-       call set_coef
-       is_first = .false.
+      call set_coef
+      is_first = .false.
     end if
 
     !! ----
@@ -93,8 +93,8 @@ contains
     y = eta
 
     do j=1, 5
-       x = x + alpha(j)*sin(2*j*xi)*cosh(2*j*eta)
-       y = y + alpha(j)*cos(2*j*xi)*sinh(2*j*eta)
+      x = x + alpha(j)*sin(2*j*xi)*cosh(2*j*eta)
+      y = y + alpha(j)*cos(2*j*xi)*sinh(2*j*eta)
     end do
     x = Abar * x - S_phi0(phi0)
     y = Abar * y
@@ -147,8 +147,8 @@ contains
     real(DP) :: chi
     integer :: j
     if( is_first ) then
-       call set_coef
-       is_first = .false.
+      call set_coef
+      is_first = .false.
     end if
 
 
@@ -162,15 +162,15 @@ contains
     xi2 = xi
     eta2 = eta
     do j=1, 5
-       xi2  = xi2  - beta(j) * sin(2*j*xi) * cosh(2*j*eta)
-       eta2 = eta2 - beta(j) * cos(2*j*xi) * sinh(2*j*eta)
+      xi2  = xi2  - beta(j) * sin(2*j*xi) * cosh(2*j*eta)
+      eta2 = eta2 - beta(j) * cos(2*j*xi) * sinh(2*j*eta)
     end do
     chi = asin( sin(xi2)/cosh(eta2) )
 
     lam = lam0 + atan( sinh(eta2)/cos(xi2) )
     phi = chi
     do j=1, 6
-       phi = phi + delta(j)*sin(2*j*chi)
+      phi = phi + delta(j)*sin(2*j*chi)
     end do
 
     lon = std__rad2deg( lam )
@@ -207,10 +207,10 @@ contains
     !S_phi0 = AA(0) * phi0 / rho
     S_phi0 = AA(0) * phi0
     do j=1, 5
-       S_phi0 = S_phi0 + AA(j) * sin( 2 * j * phi0 )
+      S_phi0 = S_phi0 + AA(j) * sin( 2 * j * phi0 )
     end do
     S_phi0 = S_phi0 * ( m0 * a / ( 1 + n ) )
-!        S_phi0 = S_phi0 * ( a / ( 1 + n ) )
+    !        S_phi0 = S_phi0 * ( a / ( 1 + n ) )
 
   end function S_phi0
   !! --------------------------------------------------------------------------------------------------------------------------- !!

@@ -10,7 +10,7 @@
 !! - call info( msg ):    write message msg to STDERR.
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 module m_debug
@@ -30,24 +30,24 @@ module m_debug
 
   !! debug through preprocessor macro
   interface debug__macro
-     module procedure debug_c,  debug_i,  debug_r,  debug_d,  debug_l,  debug__void
-     module procedure debug_c1, debug_i1, debug_r1, debug_d1, debug_l1
-  end interface
+    module procedure debug_c,  debug_i,  debug_r,  debug_d,  debug_l,  debug__void
+    module procedure debug_c1, debug_i1, debug_r1, debug_d1, debug_l1
+  end interface debug__macro
 
   !! regular debug
   interface debug
-     module procedure debug_c0, debug_i0, debug_r0, debug_d0, debug_l0
-  end interface
+    module procedure debug_c0, debug_i0, debug_r0, debug_d0, debug_l0
+  end interface debug
 
   !! assersion with priprosessor macro
   interface assert__macro
-     module procedure  assert_1, assert_2
-  end interface
+    module procedure  assert_1, assert_2
+  end interface assert__macro
 
   !! regular assertion
   interface assert
-     module procedure assert_0
-  end interface
+    module procedure assert_0
+  end interface assert
 
   logical :: initialized = .false.
   integer :: nproc, myid
@@ -115,7 +115,7 @@ contains
     write(cline,'(I5)') nline
 
     write(STDERR,'(A,I0,A)') '[debug{', myid ,'}] '//fname// &
-         ' ('//trim(adjustl(cline))//'): '//trim(adjustl(varname)) //' = '//trim(adjustl(var))
+        ' ('//trim(adjustl(cline))//'): '//trim(adjustl(varname)) //' = '//trim(adjustl(var))
 
   end subroutine debug_c1
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
@@ -210,9 +210,9 @@ contains
     !! ----
 
     if( abs(var) < 10000.) then
-       write(cvar,'(F15.5)') var
+      write(cvar,'(F15.5)') var
     else
-       write(cvar,'(ES15.5)') var
+      write(cvar,'(ES15.5)') var
     end if
     call debug_c( cvar, fname, nline )
 
@@ -235,9 +235,9 @@ contains
     !! ----
 
     if( abs(var) < 10000.) then
-       write(cvar,'(F15.5)') var
+      write(cvar,'(F15.5)') var
     else
-       write(cvar,'(ES15.5)') var
+      write(cvar,'(ES15.5)') var
     end if
     call debug_c1( cvar, varname, fname, nline )
 
@@ -257,9 +257,9 @@ contains
     !! ----
 
     if( abs(var) < 10000.) then
-       write(cvar,'(F15.5)') var
+      write(cvar,'(F15.5)') var
     else
-       write(cvar,'(ES15.5)') var
+      write(cvar,'(ES15.5)') var
     end if
     call debug_c0( cvar )
 
@@ -281,9 +281,9 @@ contains
     !! ----
 
     if( abs(var) < 10000.) then
-       write(cvar,'(F15.5)') var
+      write(cvar,'(F15.5)') var
     else
-       write(cvar,'(ES15.5)') var
+      write(cvar,'(ES15.5)') var
     end if
     call debug_c( cvar, fname, nline )
 
@@ -305,9 +305,9 @@ contains
     !! ----
 
     if( abs(var) < 10000.) then
-       write(cvar,'(F15.5)') var
+      write(cvar,'(F15.5)') var
     else
-       write(cvar,'(ES15.5)') var
+      write(cvar,'(ES15.5)') var
     end if
     call debug_c1( cvar, varname, fname, nline )
 
@@ -327,9 +327,9 @@ contains
     !! ----
 
     if( abs(var) < 10000.) then
-       write(cvar,'(F15.5)') var
+      write(cvar,'(F15.5)') var
     else
-       write(cvar,'(ES15.5)') var
+      write(cvar,'(ES15.5)') var
     end if
     call debug_c0( cvar )
 
@@ -350,9 +350,9 @@ contains
     character(15) :: cvar
     !! ----
     if( var ) then
-       cvar = '.true.'
+      cvar = '.true.'
     else
-       cvar = '.false.'
+      cvar = '.false.'
     end if
     call debug_c( cvar, fname, nline )
 
@@ -374,9 +374,9 @@ contains
     character(15) :: cvar
     !! ----
     if( var ) then
-       cvar = '.true.'
+      cvar = '.true.'
     else
-       cvar = '.false.'
+      cvar = '.false.'
     end if
     call debug_c1( cvar, varname, fname, nline )
 
@@ -395,9 +395,9 @@ contains
     character(15) :: cvar
     !! ----
     if( var ) then
-       cvar = '.true.'
+      cvar = '.true.'
     else
-       cvar = '.false.'
+      cvar = '.false.'
     end if
     call debug_c0( cvar )
 
@@ -418,8 +418,8 @@ contains
 
     if( .not. initialized ) call debug_init
     if( .not. cond ) then
-       write(STDERR,'(A,I0,A)') '[assert{', myid, '}] failed'
-       call mpi_abort( mpi_comm_world, ierr, ierr )
+      write(STDERR,'(A,I0,A)') '[assert{', myid, '}] failed'
+      call mpi_abort( mpi_comm_world, ierr, ierr )
     end if
 
   end subroutine assert_0
@@ -442,10 +442,10 @@ contains
 
     if( .not. initialized ) call debug_init
     if( .not. cond ) then
-       write(cl,'(I5)') nline
+      write(cl,'(I5)') nline
 
-       write(STDERR,'(A,I0,A)') '[assert{', myid, '}] failed at ' // trim(adjustl(fname)) //'('//trim(adjustl(cl))//')'
-       call mpi_abort( mpi_comm_world, ierr, ierr )
+      write(STDERR,'(A,I0,A)') '[assert{', myid, '}] failed at ' // trim(adjustl(fname)) //'('//trim(adjustl(cl))//')'
+      call mpi_abort( mpi_comm_world, ierr, ierr )
     end if
 
   end subroutine assert_1
@@ -467,9 +467,9 @@ contains
 
     if( .not. initialized ) call debug_init
     if( .not. cond ) then
-       write(STDERR,'(A,I0,A,I0,A)') '[assert{', myid, '}] failed at ' // trim(adjustl(fname))  &
-            //'(', nline, '): ' // trim(adjustl(cname))
-       call mpi_abort( mpi_comm_world, ierr, ierr )
+      write(STDERR,'(A,I0,A,I0,A)') '[assert{', myid, '}] failed at ' // trim(adjustl(fname))  &
+          //'(', nline, '): ' // trim(adjustl(cname))
+      call mpi_abort( mpi_comm_world, ierr, ierr )
     end if
 
   end subroutine assert_2

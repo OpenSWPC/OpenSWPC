@@ -3,7 +3,7 @@
 !! Checkpoint and restart
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -58,58 +58,58 @@ contains
 
 
     if( myid == 0 ) then
-       call system_clock( t1, t_rate, t_max )
-       if( t1 < t0 ) then
-          t_elapse = ( t_max - t0 + t1 ) / real( t_rate )
-       else
-          t_elapse = ( t1 - t0 ) / real( t_rate )
-       end if
+      call system_clock( t1, t_rate, t_max )
+      if( t1 < t0 ) then
+        t_elapse = ( t_max - t0 + t1 ) / real( t_rate )
+      else
+        t_elapse = ( t1 - t0 ) / real( t_rate )
+      end if
 
-       if( t_elapse > ckp_time ) arrived_checkpoint = .true.
+      if( t_elapse > ckp_time ) arrived_checkpoint = .true.
     end if
     call mpi_bcast( arrived_checkpoint, 1, MPI_LOGICAL, 0, mpi_comm_world, ierr )
 
 
     if( arrived_checkpoint .and. myid == 0 ) then
-       write(STDERR,*)
-       write(STDERR,'(A)') "INFO [ckprst__checkpoint]: Checkpoint arrived. Taking snapshot.. "
+      write(STDERR,*)
+      write(STDERR,'(A)') "INFO [ckprst__checkpoint]: Checkpoint arrived. Taking snapshot.. "
     end if
 
     if( arrived_checkpoint ) then
 
-       call output__closefiles()
+      call output__closefiles()
 
-       call checkpoint_fname( fn_ckp )
+      call checkpoint_fname( fn_ckp )
 
-       !! Open the checkpoint file with replace mode
-       call std__getio( io_ckp )
-       open( io_ckp, file=trim(fn_ckp), form='unformatted', action='write', status='replace' )
-       write( io_ckp ) it
+      !! Open the checkpoint file with replace mode
+      call std__getio( io_ckp )
+      open( io_ckp, file=trim(fn_ckp), form='unformatted', action='write', status='replace' )
+      write( io_ckp ) it
 
-       call global__checkpoint( io_ckp )
-       call kernel__checkpoint( io_ckp )
-       call medium__checkpoint( io_ckp )
-       call absorb__checkpoint( io_ckp )
-       call report__checkpoint( io_ckp )
-       call source__checkpoint( io_ckp )
-       call output__checkpoint( io_ckp )
+      call global__checkpoint( io_ckp )
+      call kernel__checkpoint( io_ckp )
+      call medium__checkpoint( io_ckp )
+      call absorb__checkpoint( io_ckp )
+      call report__checkpoint( io_ckp )
+      call source__checkpoint( io_ckp )
+      call output__checkpoint( io_ckp )
 
-       call pwatch__off( "ckprst__checkpoint" )  !! to save pwatch, stop mesurement before checkpoint of pwatch itself
-       call pwatch__checkpoint( io_ckp )
+      call pwatch__off( "ckprst__checkpoint" )  !! to save pwatch, stop mesurement before checkpoint of pwatch itself
+      call pwatch__checkpoint( io_ckp )
 
-       close( io_ckp )
+      close( io_ckp )
 
-       call mpi_barrier(mpi_comm_world, ierr )
+      call mpi_barrier(mpi_comm_world, ierr )
 
-       if( myid == 0 ) then
-          write(STDERR,'(A)') "INFO [ckprst__checkpoint]: Finished."
-          write(STDERR,*) ""
-       end if
+      if( myid == 0 ) then
+        write(STDERR,'(A)') "INFO [ckprst__checkpoint]: Finished."
+        write(STDERR,*) ""
+      end if
 
-       call mpi_finalize(ierr)
-       stop
+      call mpi_finalize(ierr)
+      stop
     else
-       call pwatch__off( "ckprst__checkpoint" )
+      call pwatch__off( "ckprst__checkpoint" )
     end if
 
 
@@ -149,8 +149,8 @@ contains
     !! --
 
     if( .not. is_ckp ) then
-       it = 1
-       return
+      it = 1
+      return
     end if
 
 
@@ -158,8 +158,8 @@ contains
 
     inquire( file=trim(fn_ckp), exist=is_exist )
     if( .not. is_exist ) then
-       it = 1
-       return
+      it = 1
+      return
     end if
 
 
@@ -168,32 +168,32 @@ contains
 
     !! if file does not exist
     if( ierr /= 0 ) then
-       it = 1
+      it = 1
     else
-       read( io_ckp ) it
+      read( io_ckp ) it
     end if
 
     if( it == 1 ) then
 
-       return
+      return
 
     else if( it < 0 ) then
 
-       if( myid == 0 ) then
-          write(STDERR,*) 'INFO [ckprst__restart]: Program has already finished in previous execution'
-          write(STDERR,*) 'INFO [ckprst__restart]: Terminate .. '
-       end if
-       call mpi_finalize( ierr )
-       stop
+      if( myid == 0 ) then
+        write(STDERR,*) 'INFO [ckprst__restart]: Program has already finished in previous execution'
+        write(STDERR,*) 'INFO [ckprst__restart]: Terminate .. '
+      end if
+      call mpi_finalize( ierr )
+      stop
     end if
 
 
     it = it + 1 ! advance one time step
 
     if( myid == 0 ) then
-       write(STDERR,*)
-       write(STDERR,'(A,I5)') "INFO [ckprst__restart]: restart from it = ", it
-       write(STDERR,*)
+      write(STDERR,*)
+      write(STDERR,'(A,I5)') "INFO [ckprst__restart]: restart from it = ", it
+      write(STDERR,*)
     end if
     call global__restart( io_ckp )
     call kernel__restart( io_ckp )

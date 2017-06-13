@@ -3,7 +3,7 @@
 !! Computation kernel for FDM numerical simulation
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -59,8 +59,8 @@ contains
     call pwatch__on("kernel__setup")
 
     if( .not. medium__initialized() ) then
-       write(STDERR,'(A)') 'ERROR [kernel__setup]: call medium__setup() before kernel__setup()'
-       stop
+      write(STDERR,'(A)') 'ERROR [kernel__setup]: call medium__setup() before kernel__setup()'
+      stop
     end if
 
     r40x = C40 / dx
@@ -81,14 +81,14 @@ contains
     Szz (       kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0_MP
     Sxz (       kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0_MP
     if( nm > 0 ) then
-       Rxx ( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
-       Rzz ( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
-       Rxz ( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
+      Rxx ( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
+      Rzz ( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
+      Rxz ( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
 
-       do m=1, nm
-          c1(m) = ( 2 * ts(m) - dt ) / ( 2 * ts(m) + dt )
-          c2(m) = ( 2              ) / ( 2 * ts(m) + dt ) / nm
-       end do
+      do m=1, nm
+        c1(m) = ( 2 * ts(m) - dt ) / ( 2 * ts(m) + dt )
+        c2(m) = ( 2              ) / ( 2 * ts(m) + dt ) / nm
+      end do
 
     end if
 
@@ -103,15 +103,15 @@ contains
   !<
   !! ----
   subroutine kernel__update_vel()
-    
+
     integer :: i, k
     real(SP) :: bx, bz ! buoyancy
     real(MP) :: dxSxx(kbeg:kend), dxSxz(kbeg:kend), dzSxz(kbeg:kend), dzSzz(kbeg:kend)
     !! ----
-    
+
     call pwatch__on("kernel__update_vel")
-    
-    
+
+
     !$omp parallel &
     !$omp private(dxSxx, dzSzz, dxSxz, dzSxz ) &
     !$omp private(i,k) &
@@ -123,7 +123,7 @@ contains
     !$omp schedule(static,1)
 #endif
     do i=ibeg_k, iend_k
-      
+
       !! derivateives
       do k=kbeg_k, kend_k
         dxSxx(k) = (  Sxx(k  ,i+1) - Sxx(k  ,i  )  ) * r40x  -  (  Sxx(k  ,i+2) - Sxx(k  ,i-1)  ) * r41x
@@ -131,10 +131,10 @@ contains
         dxSxz(k) = (  Sxz(k  ,i  ) - Sxz(k  ,i-1)  ) * r40x  -  (  Sxz(k  ,i+1) - Sxz(k  ,i-2)  ) * r41x
         dzSxz(k) = (  Sxz(k  ,i  ) - Sxz(k-1,i  )  ) * r40z  -  (  Sxz(k+1,i  ) - Sxz(k-2,i  )  ) * r41z
       end do
-      
+
       !! surfaces
 #ifdef _ES
-!CDIR NOVECTOR
+      !CDIR NOVECTOR
 #endif
       do k=kfs_top(i), kfs_bot(i)
         dxSxx(k) = (  Sxx(k  ,i+1) - Sxx(k  ,i  )  ) * r20x
@@ -142,9 +142,9 @@ contains
         dxSxz(k) = (  Sxz(k  ,i  ) - Sxz(k  ,i-1)  ) * r20x
         dzSxz(k) = (  Sxz(k  ,i  ) - Sxz(k-1,i  )  ) * r20z
       end do
-      
+
 #ifdef _ES
-!CDIR NOVECTOR
+      !CDIR NOVECTOR
 #endif
       do k=kob_top(i), kob_bot(i)
         dxSxx(k) = (  Sxx(k  ,i+1) - Sxx(k  ,i  )  ) * r20x
@@ -152,21 +152,21 @@ contains
         dxSxz(k) = (  Sxz(k  ,i  ) - Sxz(k  ,i-1)  ) * r20x
         dzSxz(k) = (  Sxz(k  ,i  ) - Sxz(k-1,i  )  ) * r20z
       end do
-      
-      
+
+
       !! top
       dzSzz(1)    = (  Szz(2  ,i  ) - Szz(1  ,i  )  ) * r20z
       dzSxz(1)    = (  Sxz(1  ,i  ) - 0.0        ) * r20z
       dzSxz(2)    = (  Sxz(2  ,i  ) - Sxz(1,  i  )  ) * r20z
-      
+
       !! bottom
       dzSzz(nz-1) = (  Szz(nz  ,i  ) - Szz(nz-1,i  )  ) * r20z
       dzSzz(nz)   = (  0.0        - Szz(nz  ,i  )  ) * r20z
       dzSxz(nz)   = (  Sxz(nz  ,i  ) - Sxz(nz-1,i  )  ) * r20z
-      
+
       !! i-boundary 
 #ifdef _ES
-!CDIR NOVECTOR
+      !CDIR NOVECTOR
 #endif
       if( i == 1 ) then
         do k=kbeg_k, kend_k
@@ -187,37 +187,37 @@ contains
           dxSxz(k) = (  Sxz(k  ,nx  ) - Sxz(k  ,nx-1)  ) * r20x
         end do
       end if
-      
-      
-      
+
+
+
       !!
       !! update velocity
       !!
       do k=kbeg_k, kend_k
-        
+
         !!
         !! effective buoyancy
         !!
-        
+
         bx = 2.0 / ( rho(k,i) + rho(k,i+1) )
         bz = 2.0 / ( rho(k,i) + rho(k+1,i) )
-        
+
         !!
         !! update velocity
         !!
         Vx(k,i) = Vx(k,i) + bx * ( dxSxx(k) + dzSxz(k) ) * dt
         Vz(k,i) = Vz(k,i) + bz * ( dxSxz(k) + dzSzz(k) ) * dt
-        
+
       end do
     end do
     !$omp end do nowait
     !$omp end parallel
-    
+
     !$omp barrier
-    
+
     call pwatch__off("kernel__update_vel")
-    
-    
+
+
   end subroutine kernel__update_vel
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -263,167 +263,167 @@ contains
 #endif
     do i=ibeg_k, iend_k
 
-       !!
-       !! Derivatives
-       !!
-       do k=kbeg_k, kend_k
+      !!
+      !! Derivatives
+      !!
+      do k=kbeg_k, kend_k
 
-          dxVx(k) = (  Vx(k  ,i  ) - Vx(k  ,i-1)  ) * r40x  -  (  Vx(k  ,i+1) - Vx(k  ,i-2)  ) * r41x
-          dxVz(k) = (  Vz(k  ,i+1) - Vz(k  ,i  )  ) * r40x  -  (  Vz(k  ,i+2) - Vz(k  ,i-1)  ) * r41x
-          dzVx(k) = (  Vx(k+1,i  ) - Vx(k  ,i  )  ) * r40z  -  (  Vx(k+2,i  ) - Vx(k-1,i  )  ) * r41z
-          dzVz(k) = (  Vz(k  ,i  ) - Vz(k-1,i  )  ) * r40z  -  (  Vz(k+1,i  ) - Vz(k-2,i  )  ) * r41z
+        dxVx(k) = (  Vx(k  ,i  ) - Vx(k  ,i-1)  ) * r40x  -  (  Vx(k  ,i+1) - Vx(k  ,i-2)  ) * r41x
+        dxVz(k) = (  Vz(k  ,i+1) - Vz(k  ,i  )  ) * r40x  -  (  Vz(k  ,i+2) - Vz(k  ,i-1)  ) * r41x
+        dzVx(k) = (  Vx(k+1,i  ) - Vx(k  ,i  )  ) * r40z  -  (  Vx(k+2,i  ) - Vx(k-1,i  )  ) * r41z
+        dzVz(k) = (  Vz(k  ,i  ) - Vz(k-1,i  )  ) * r40z  -  (  Vz(k+1,i  ) - Vz(k-2,i  )  ) * r41z
 
-       end do
+      end do
 
-       !! free surface
+      !! free surface
 #ifdef _ES
-!CDIR NOVECTOR
+      !CDIR NOVECTOR
 #endif
-       do k=kfs_top(i), kfs_bot(i)
+      do k=kfs_top(i), kfs_bot(i)
 
-          dxVx(k) = (  Vx(k  ,i  ) - Vx(k  ,i-1)  ) * r20x
+        dxVx(k) = (  Vx(k  ,i  ) - Vx(k  ,i-1)  ) * r20x
+        dxVz(k) = (  Vz(k  ,i+1) - Vz(k  ,i  )  ) * r20x
+        dzVx(k) = (  Vx(k+1,i  ) - Vx(k  ,i  )  ) * r20z
+        dzVz(k) = (  Vz(k  ,i  ) - Vz(k-1,i  )  ) * r20z
+
+      end do
+
+      !! seafloor
+#ifdef _ES
+      !CDIR NOVECTOR
+#endif
+      do k=kob_top(i), kob_bot(i)
+
+        dxVx(k) = (  Vx(k  ,i  ) - Vx(k  ,i-1)  ) * r20x
+        dxVz(k) = (  Vz(k  ,i+1) - Vz(k  ,i  )  ) * r20x
+        dzVx(k) = (  Vx(k+1,i  ) - Vx(k  ,i  )  ) * r20z
+        dzVz(k) = (  Vz(k  ,i  ) - Vz(k-1,i  )  ) * r20z
+
+      end do
+
+      !!
+      !! vertical edge
+      !!
+
+      !! top
+      dzVx(1) = (  Vx(2  ,i  ) - Vx(1  ,i  )  ) * r20z
+      dzVz(1) = (  Vz(1  ,i  ) - 0.0       ) * r20z
+      dzVz(2) = (  Vz(2  ,i  ) - Vz(1  ,i  )  ) * r20z
+
+      !! bottom
+      dzVx(nz-1) = (  Vx(nz,i  ) - Vx(nz-1,i  )  ) * r20z
+      dzVx(nz  ) = (  0.0     - Vx(nz  ,i  )  ) * r20z
+      dzVz(nz  ) = (  Vz(nz,i  ) - Vz(nz-1,i  )  ) * r20z
+
+
+      !!
+      !! i-edge
+      !!
+#ifdef _ES
+      !CDIR NOVECTOR
+#endif
+      if( i == 1 ) then
+        do k=kbeg_k, kend_k
+          dxVx(k) = (  Vx(k  ,i  ) - 0.0       ) * r20x
           dxVz(k) = (  Vz(k  ,i+1) - Vz(k  ,i  )  ) * r20x
-          dzVx(k) = (  Vx(k+1,i  ) - Vx(k  ,i  )  ) * r20z
-          dzVz(k) = (  Vz(k  ,i  ) - Vz(k-1,i  )  ) * r20z
-
-       end do
-
-       !! seafloor
-#ifdef _ES
-!CDIR NOVECTOR
-#endif
-       do k=kob_top(i), kob_bot(i)
-
+        end do
+      else if ( i == 2 ) then
+        do k=kbeg_k, kend_k
           dxVx(k) = (  Vx(k  ,i  ) - Vx(k  ,i-1)  ) * r20x
+        end do
+      else if ( i == nx-1 ) then
+        do k=kbeg_k, kend_k
           dxVz(k) = (  Vz(k  ,i+1) - Vz(k  ,i  )  ) * r20x
-          dzVx(k) = (  Vx(k+1,i  ) - Vx(k  ,i  )  ) * r20z
-          dzVz(k) = (  Vz(k  ,i  ) - Vz(k-1,i  )  ) * r20z
-
-       end do
-
-       !!
-       !! vertical edge
-       !!
-
-       !! top
-       dzVx(1) = (  Vx(2  ,i  ) - Vx(1  ,i  )  ) * r20z
-       dzVz(1) = (  Vz(1  ,i  ) - 0.0       ) * r20z
-       dzVz(2) = (  Vz(2  ,i  ) - Vz(1  ,i  )  ) * r20z
-
-       !! bottom
-       dzVx(nz-1) = (  Vx(nz,i  ) - Vx(nz-1,i  )  ) * r20z
-       dzVx(nz  ) = (  0.0     - Vx(nz  ,i  )  ) * r20z
-       dzVz(nz  ) = (  Vz(nz,i  ) - Vz(nz-1,i  )  ) * r20z
+        end do
+      else if ( i==nx ) then
+        do k=kbeg_k, kend_k
+          dxVx(k) = (  Vx(k  ,i  ) - Vx(k  ,i-1)  ) * r20x
+          dxVz(k) = (  0.0      - Vz(k  ,i  )  ) * r20x
+        end do
+      end if
 
 
-       !!
-       !! i-edge
-       !!
-#ifdef _ES
-!CDIR NOVECTOR
-#endif
-       if( i == 1 ) then
-          do k=kbeg_k, kend_k
-             dxVx(k) = (  Vx(k  ,i  ) - 0.0       ) * r20x
-             dxVz(k) = (  Vz(k  ,i+1) - Vz(k  ,i  )  ) * r20x
+      do k=kbeg_k, kend_k
+
+        !!
+        !! medium copy
+        !!
+        mu2    = 2*mu (k,i)
+        lam2mu = lam(k,i) + mu2
+
+        taup1 = taup(k,i)
+        taus1 = taus(k,i)
+
+        !!
+        !! effective rigidity for shear stress components
+        !!
+
+        nnn = mu (k  ,i  )
+        pnn = mu (k+1,i  )
+        npn = mu (k,  i+1)
+        ppn = mu (k+1,i+1)
+        mu_xz = 4*nnn*pnn*npn*ppn / ( nnn*pnn*npn + nnn*pnn*ppn + nnn*npn*ppn + pnn*npn*ppn + epsl)
+
+
+        !!
+        !! update memory variables
+        !!
+
+        !! working variables for combinations of velocity derivatives
+        d2v2      = dxVx(k) + dzVz(k)
+        dxVx_dzVz = dxVx(k) + dzVz(k)
+        dxVz_dzVx = dxVz(k) + dzVx(k)
+
+
+        f_Rxx = lam2mu * taup1 * d2v2  -  mu2   * taus1 * dzVz(k)
+        f_Rzz = lam2mu * taup1 * d2v2  -  mu2   * taus1 * dxVx(k)
+        f_Rxz =                           mu_xz * taus1 * dxVz_dzVx
+
+
+        Rxx_o = 0.0
+        Rzz_o = 0.0
+        Rxz_o = 0.0
+        Rxx_n = 0.0
+        Rzz_n = 0.0
+        Rxz_n = 0.0
+        if( nm > 0 ) then
+          !! previous memory variables
+          Rxx_o = sum( Rxx( 1:nm, k,i) )
+          Rzz_o = sum( Rzz( 1:nm, k,i) )
+          Rxz_o = sum( Rxz( 1:nm, k,i) )
+
+
+          !! Crank-Nicolson Method for avoiding stiff solution
+          do m=1, nm
+            Rxx(m,k,i) = c1(m) * Rxx(m,k,i) - c2(m) * f_Rxx * dt
+            Rzz(m,k,i) = c1(m) * Rzz(m,k,i) - c2(m) * f_Rzz * dt
+            Rxz(m,k,i) = c1(m) * Rxz(m,k,i) - c2(m) * f_Rxz * dt
           end do
-       else if ( i == 2 ) then
-          do k=kbeg_k, kend_k
-             dxVx(k) = (  Vx(k  ,i  ) - Vx(k  ,i-1)  ) * r20x
-          end do
-       else if ( i == nx-1 ) then
-          do k=kbeg_k, kend_k
-             dxVz(k) = (  Vz(k  ,i+1) - Vz(k  ,i  )  ) * r20x
-          end do
-       else if ( i==nx ) then
-          do k=kbeg_k, kend_k
-             dxVx(k) = (  Vx(k  ,i  ) - Vx(k  ,i-1)  ) * r20x
-             dxVz(k) = (  0.0      - Vz(k  ,i  )  ) * r20x
-          end do
-       end if
 
-
-       do k=kbeg_k, kend_k
-
-          !!
-          !! medium copy
-          !!
-          mu2    = 2*mu (k,i)
-          lam2mu = lam(k,i) + mu2
-
-          taup1 = taup(k,i)
-          taus1 = taus(k,i)
-
-          !!
-          !! effective rigidity for shear stress components
-          !!
-
-          nnn = mu (k  ,i  )
-          pnn = mu (k+1,i  )
-          npn = mu (k,  i+1)
-          ppn = mu (k+1,i+1)
-          mu_xz = 4*nnn*pnn*npn*ppn / ( nnn*pnn*npn + nnn*pnn*ppn + nnn*npn*ppn + pnn*npn*ppn + epsl)
-
-
-          !!
-          !! update memory variables
-          !!
-
-          !! working variables for combinations of velocity derivatives
-          d2v2      = dxVx(k) + dzVz(k)
-          dxVx_dzVz = dxVx(k) + dzVz(k)
-          dxVz_dzVx = dxVz(k) + dzVx(k)
-
-
-          f_Rxx = lam2mu * taup1 * d2v2  -  mu2   * taus1 * dzVz(k)
-          f_Rzz = lam2mu * taup1 * d2v2  -  mu2   * taus1 * dxVx(k)
-          f_Rxz =                           mu_xz * taus1 * dxVz_dzVx
-
-
-          Rxx_o = 0.0
-          Rzz_o = 0.0
-          Rxz_o = 0.0
-          Rxx_n = 0.0
-          Rzz_n = 0.0
-          Rxz_n = 0.0
-          if( nm > 0 ) then
-             !! previous memory variables
-             Rxx_o = sum( Rxx( 1:nm, k,i) )
-             Rzz_o = sum( Rzz( 1:nm, k,i) )
-             Rxz_o = sum( Rxz( 1:nm, k,i) )
-
-
-             !! Crank-Nicolson Method for avoiding stiff solution
-             do m=1, nm
-                Rxx(m,k,i) = c1(m) * Rxx(m,k,i) - c2(m) * f_Rxx * dt
-                Rzz(m,k,i) = c1(m) * Rzz(m,k,i) - c2(m) * f_Rzz * dt
-                Rxz(m,k,i) = c1(m) * Rxz(m,k,i) - c2(m) * f_Rxz * dt
-             end do
-
-             !! new memory variables
-             Rxx_n = sum( Rxx( 1:nm, k,i) )
-             Rzz_n = sum( Rzz( 1:nm, k,i) )
-             Rxz_n = sum( Rxz( 1:nm, k,i) )
-          end if
+          !! new memory variables
+          Rxx_n = sum( Rxx( 1:nm, k,i) )
+          Rzz_n = sum( Rzz( 1:nm, k,i) )
+          Rxz_n = sum( Rxz( 1:nm, k,i) )
+        end if
 
 
 
-          !!
-          !! update stress components
-          !!
-          taup_plus1 = 1 + taup1
-          taus_plus1 = 1 + taus1
+        !!
+        !! update stress components
+        !!
+        taup_plus1 = 1 + taup1
+        taus_plus1 = 1 + taus1
 
-          Sxx (k,i) = Sxx (k,i) + ( lam2mu*taup_plus1*d2v2 - mu2*taus_plus1*dzVz(k)   + ( Rxx_n+Rxx_o )/2 ) * dt
-          Szz (k,i) = Szz (k,i) + ( lam2mu*taup_plus1*d2v2 - mu2*taus_plus1*dxVx(k)   + ( Rzz_n+Rzz_o )/2 ) * dt
-          Sxz (k,i) = Sxz (k,i) + (                        mu_xz*taus_plus1*dxVz_dzVx + ( Rxz_n+Rxz_o )/2 ) * dt
+        Sxx (k,i) = Sxx (k,i) + ( lam2mu*taup_plus1*d2v2 - mu2*taus_plus1*dzVz(k)   + ( Rxx_n+Rxx_o )/2 ) * dt
+        Szz (k,i) = Szz (k,i) + ( lam2mu*taup_plus1*d2v2 - mu2*taus_plus1*dxVx(k)   + ( Rzz_n+Rzz_o )/2 ) * dt
+        Sxz (k,i) = Sxz (k,i) + (                        mu_xz*taus_plus1*dxVz_dzVx + ( Rxz_n+Rxz_o )/2 ) * dt
 
-       end do
-     end do
-     !$omp end do nowait
-     !$omp end parallel
+      end do
+    end do
+    !$omp end do nowait
+    !$omp end parallel
 
-     !$omp barrier
+    !$omp barrier
     call pwatch__off("kernel__update_stress")
 
   end subroutine kernel__update_stress
@@ -442,8 +442,8 @@ contains
     xmax = 0.0
     zmax = 0.0
     do i=ibeg_k, iend_k
-       xmax = max( xmax, abs( vx(kob(i)+1,i) ) )
-       zmax = max( zmax, abs( vz(kob(i)+1,i) ) )
+      xmax = max( xmax, abs( vx(kob(i)+1,i) ) )
+      zmax = max( zmax, abs( vz(kob(i)+1,i) ) )
     end do
 
   end subroutine kernel__vmax
@@ -470,10 +470,10 @@ contains
     write(io) Sxz(       kbeg_m:kend_m, ibeg_m:iend_m )
 
     do m=1, nm
-       write(io) c1(m), c2(m)
-       write(io) Rxx( m, kbeg_m:kend_m, ibeg_m:iend_m )
-       write(io) Rzz( m, kbeg_m:kend_m, ibeg_m:iend_m )
-       write(io) Rxz( m, kbeg_m:kend_m, ibeg_m:iend_m )
+      write(io) c1(m), c2(m)
+      write(io) Rxx( m, kbeg_m:kend_m, ibeg_m:iend_m )
+      write(io) Rzz( m, kbeg_m:kend_m, ibeg_m:iend_m )
+      write(io) Rxz( m, kbeg_m:kend_m, ibeg_m:iend_m )
     end do
 
   end subroutine kernel__checkpoint
@@ -502,10 +502,10 @@ contains
     read(io) Sxz(       kbeg_m:kend_m, ibeg_m:iend_m )
 
     do m=1, nm
-       read(io) c1(m), c2(m)
-       read(io) Rxx( m, kbeg_m:kend_m, ibeg_m:iend_m )
-       read(io) Rzz( m, kbeg_m:kend_m, ibeg_m:iend_m )
-       read(io) Rxz( m, kbeg_m:kend_m, ibeg_m:iend_m )
+      read(io) c1(m), c2(m)
+      read(io) Rxx( m, kbeg_m:kend_m, ibeg_m:iend_m )
+      read(io) Rzz( m, kbeg_m:kend_m, ibeg_m:iend_m )
+      read(io) Rxz( m, kbeg_m:kend_m, ibeg_m:iend_m )
     end do
 
 
@@ -527,10 +527,10 @@ contains
     allocate( Sxz(       kbeg_m:kend_m, ibeg_m:iend_m ) )
 
     if( nm > 0 ) then
-       allocate( Rxx( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) )
-       allocate( Rzz( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) )
-       allocate( Rxz( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) )
-       allocate( c1(1:nm), c2(1:nm) )
+      allocate( Rxx( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) )
+      allocate( Rzz( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) )
+      allocate( Rxz( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) )
+      allocate( c1(1:nm), c2(1:nm) )
     end if
 
 

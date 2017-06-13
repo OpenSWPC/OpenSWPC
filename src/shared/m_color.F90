@@ -3,7 +3,7 @@
 !! color palette
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
 module m_color
@@ -21,11 +21,11 @@ module m_color
   !! --
   type color__palette
 
-     integer               :: nc
-     real(DP), allocatable :: v1(:), v2(:)
-     integer,  allocatable :: col1(:,:), col2(:,:)
-     integer               :: col_b(3), col_f(3), col_n(3)
-     logical               :: initialized = .false.
+    integer               :: nc
+    real(DP), allocatable :: v1(:), v2(:)
+    integer,  allocatable :: col1(:,:), col2(:,:)
+    integer               :: col_b(3), col_f(3), col_n(3)
+    logical               :: initialized = .false.
 
   end type color__palette
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -47,7 +47,7 @@ contains
     !! ----
 
     do i=1, cp%nc
-       write(io,'(F12.4,3I5,A,F12.4,3I5)') cp%v1(i), cp%col1(:,i), "   ", cp%v2(i), cp%col2(:,i)
+      write(io,'(F12.4,3I5,A,F12.4,3I5)') cp%v1(i), cp%col1(:,i), "   ", cp%v2(i), cp%col2(:,i)
     end do
 
     write(io, '(A,3I5)') "B  ", cp%col_b(:)
@@ -73,23 +73,23 @@ contains
 
     !! initial
     if( v < cp%v1(1) ) then
-       col(:) = cp%col_b(:)
-       return
+      col(:) = cp%col_b(:)
+      return
     end if
 
 
     found = .false.
     do i=1, cp%nc
 
-       if( cp%v1(i) <= v .and. v < cp%v2(i) ) then
-          do j=1, 3
-             col(j) = ( cp%col2(j,i) - cp%col1(j,i) ) / ( cp%v2(i) - cp%v1(i) ) * v &
-                    + ( cp%col1(j,i)*cp%v2(i) - cp%col2(j,i)*cp%v1(i) ) / ( cp%v2(i) - cp%v1(i) )
-             col(j) = min( max( col(j), 0 ), 255 )
-          end do
-          found = .true.
-          exit
-       end if
+      if( cp%v1(i) <= v .and. v < cp%v2(i) ) then
+        do j=1, 3
+          col(j) = ( cp%col2(j,i) - cp%col1(j,i) ) / ( cp%v2(i) - cp%v1(i) ) * v &
+              + ( cp%col1(j,i)*cp%v2(i) - cp%col2(j,i)*cp%v1(i) ) / ( cp%v2(i) - cp%v1(i) )
+          col(j) = min( max( col(j), 0 ), 255 )
+        end do
+        found = .true.
+        exit
+      end if
 
     end do
 
@@ -107,8 +107,8 @@ contains
     cp%initialized = .true.
 
     select case ( typ )
-       case ( 'mytopo' ); call cpt_mytopo
-       case ( 'hot' );    call cpt_hot()
+    case ( 'mytopo' ); call cpt_mytopo
+    case ( 'hot' );    call cpt_hot()
     end select
 
   contains
