@@ -562,40 +562,5 @@ contains
 
   end subroutine fft0
 
-!!$
-!!$  !! original recursive FFT with direct calculation of cos/sin functions
-!!$  !! simple, but very slow
-!!$  !<
-!!$  !! --
-!!$  recursive subroutine fft0( n, theta, dat, tmp )
-!!$
-!!$    integer,  intent(in) :: n
-!!$    real(DP), intent(in) :: theta 
-!!$    complex(DP), intent(inout) :: dat(n)
-!!$    complex(DP), intent(inout) :: tmp(n)
-!!$    real(DP) :: q
-!!$    integer :: nh
-!!$    integer :: j
-!!$
-!!$    if( n <= 1 ) return
-!!$
-!!$    nh = n / 2
-!!$
-!!$    do j=1, nh
-!!$       q = theta*dble(j-1)
-!!$       tmp(j)    =   dat(j) + dat(nh+j)
-!!$       tmp(nh+j) = ( dat(j) - dat(nh+j) ) * dcmplx(cos(q), sin(q))
-!!$    end do
-!!$    
-!!$    call fft0( nh, 2*theta, tmp(1:nh)  , dat(1:nh)     )
-!!$    call fft0( nh, 2*theta, tmp(nh+1:n), dat(nh+1:n)   )
-!!$
-!!$    do j=1, nh
-!!$       dat(2*j-1) = tmp(   j)
-!!$       dat(2*j  ) = tmp(nh+j)
-!!$    end do
-!!$
-!!$  end subroutine fft0
-
 end module m_rfft
 !! ------------------------------------------------------------------------- !!
