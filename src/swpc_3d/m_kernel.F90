@@ -144,16 +144,16 @@ contains
         !! stress derivatives
         do k=kbeg_k, kend_k
           d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r40x  -  (  Sxx(k  ,i+2,j  ) - Sxx(k  ,i-1,j  )  ) * r41x &
-              + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r40y  -  (  Sxy(k  ,i  ,j+1) - Sxy(k  ,i  ,j-2)  ) * r41y &
-              + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r40z  -  (  Sxz(k+1,i  ,j  ) - Sxz(k-2,i  ,j  )  ) * r41z
+                   + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r40y  -  (  Sxy(k  ,i  ,j+1) - Sxy(k  ,i  ,j-2)  ) * r41y &
+                   + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r40z  -  (  Sxz(k+1,i  ,j  ) - Sxz(k-2,i  ,j  )  ) * r41z
 
           d3Sy3(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r40x  -  (  Sxy(k  ,i+1,j  ) - Sxy(k  ,i-2,j  )  ) * r41x &
-              + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r40y  -  (  Syy(k  ,i  ,j+2) - Syy(k  ,i  ,j-1)  ) * r41y &
-              + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r40z  -  (  Syz(k+1,i  ,j  ) - Syz(k-2,i  ,j  )  ) * r41z
+                   + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r40y  -  (  Syy(k  ,i  ,j+2) - Syy(k  ,i  ,j-1)  ) * r41y &
+                   + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r40z  -  (  Syz(k+1,i  ,j  ) - Syz(k-2,i  ,j  )  ) * r41z
 
           d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r40x  -  (  Sxz(k  ,i+1,j  ) - Sxz(k  ,i-2,j  )  ) * r41x &
-              + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r40y  -  (  Syz(k  ,i  ,j+1) - Syz(k  ,i  ,j-2)  ) * r41y &
-              + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r40z  -  (  Szz(k+2,i  ,j  ) - Szz(k-1,i  ,j  )  ) * r41z
+                   + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r40y  -  (  Syz(k  ,i  ,j+1) - Syz(k  ,i  ,j-2)  ) * r41y &
+                   + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r40z  -  (  Szz(k+2,i  ,j  ) - Szz(k-1,i  ,j  )  ) * r41z
         end do
 
         !! overwrite around free surface
@@ -162,16 +162,16 @@ contains
 #endif
         do k=kfs_top(i,j), kfs_bot(i,j)
           d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
-              + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
-              + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
+                   + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
+                   + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
 
           d3Sy3(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r20x  &
-              + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y  &
-              + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
+                   + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y  &
+                   + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
 
           d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r20x  &
-              + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y  &
-              + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
+                   + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y  &
+                   + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
         end do
 
         !! overwrite around seafloor
@@ -180,16 +180,16 @@ contains
 #endif
         do k=kob_top(i,j), kob_bot(i,j)
           d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
-              + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
-              + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
+                   + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
+                   + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
 
           d3Sy3(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r20x  &
-              + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y  &
-              + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
+                   + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y  &
+                   + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
 
           d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r20x  &
-              + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y  &
-              + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
+                   + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y  &
+                   + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
         end do
 
         !!
@@ -369,11 +369,11 @@ contains
         do k=kbeg_k, kend_k
 
           dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r40x  -  (  Vy(k  ,i+2,j  ) - Vy(k  ,i-1,j  )  ) * r41x &
-              + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r40y  -  (  Vx(k  ,i  ,j+2) - Vx(k  ,i  ,j-1)  ) * r41y
+                       + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r40y  -  (  Vx(k  ,i  ,j+2) - Vx(k  ,i  ,j-1)  ) * r41y
           dxVz_dzVx(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r40x  -  (  Vz(k  ,i+2,j  ) - Vz(k  ,i-1,j  )  ) * r41x &
-              + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r40z  -  (  Vx(k+2,i  ,j  ) - Vx(k-1,i  ,j  )  ) * r41z
+                       + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r40z  -  (  Vx(k+2,i  ,j  ) - Vx(k-1,i  ,j  )  ) * r41z
           dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r40y  -  (  Vz(k  ,i  ,j+2) - Vz(k  ,i  ,j-1)  ) * r41y &
-              + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r40z  -  (  Vy(k+2,i  ,j  ) - Vy(k-1,i  ,j  )  ) * r41z
+                       + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r40z  -  (  Vy(k+2,i  ,j  ) - Vy(k-1,i  ,j  )  ) * r41z
         end do
 
         !! overwrite around free surface
@@ -383,11 +383,11 @@ contains
         do k=kfs_top(i,j), kfs_bot(i,j)
 
           dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
-              + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
+                       + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
           dxVz_dzVx(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x  &
-              + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
+                       + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
           dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y  &
-              + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
+                       + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
 
         end do
 
@@ -398,11 +398,11 @@ contains
         do k=kob_top(i,j), kob_bot(i,j)
 
           dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
-              + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
+                       + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
           dxVz_dzVx(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x  &
-              + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
+                       + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
           dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y  &
-              + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
+                       + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
 
         end do
 
@@ -502,106 +502,106 @@ contains
 
     write(io) r40x, r40y, r40z, r41x, r41y, r41z, r20x, r20y, r20z
     do j=jbeg_m,jend_m; write(io)  Vx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate(  Vx )
-      do j=jbeg_m,jend_m; write(io)  Vy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate(  Vy )
-        do j=jbeg_m,jend_m; write(io)  Vz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate(  Vz )
-          do j=jbeg_m,jend_m; write(io) Sxx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Sxx )
-            do j=jbeg_m,jend_m; write(io) Syy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Syy )
-              do j=jbeg_m,jend_m; write(io) Szz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Szz )
-                do j=jbeg_m,jend_m; write(io) Syz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Syz )
-                  do j=jbeg_m,jend_m; write(io) Sxz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Sxz )
-                    do j=jbeg_m,jend_m; write(io) Sxy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Sxy )
+    do j=jbeg_m,jend_m; write(io)  Vy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate(  Vy )
+    do j=jbeg_m,jend_m; write(io)  Vz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate(  Vz )
+    do j=jbeg_m,jend_m; write(io) Sxx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Sxx )
+    do j=jbeg_m,jend_m; write(io) Syy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Syy )
+    do j=jbeg_m,jend_m; write(io) Szz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Szz )
+    do j=jbeg_m,jend_m; write(io) Syz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Syz )
+    do j=jbeg_m,jend_m; write(io) Sxz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Sxz )
+    do j=jbeg_m,jend_m; write(io) Sxy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Sxy )
 
-                      if( nm > 0 ) then
-                        write(io) c1(1:nm)
-                        write(io) c2(1:nm)
+    if( nm > 0 ) then
+      write(io) c1(1:nm)
+      write(io) c2(1:nm)
+      
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxx(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxx )
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Ryy(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Ryy )
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rzz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rzz )
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Ryz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Ryz )
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxz )
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxy(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxy )
+        
+    end if
 
-                        do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxx(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxx )
-                          do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Ryy(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Ryy )
-                            do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rzz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rzz )
-                              do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Ryz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Ryz )
-                                do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxz )
-                                  do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxy(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxy )
-
-                                  end if
-
-
-                                end subroutine kernel__checkpoint
-                                !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
-                                !! --------------------------------------------------------------------------------------------------------------------------- !!
-                                !>
-                                !! checkpoint data inport
-                                !<
-                                !! --
-                                subroutine kernel__restart( io )
-
-                                  integer, intent(in) :: io
-                                  integer :: i, j
-                                  !! --
+    
+  end subroutine kernel__checkpoint
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 
-                                  call memory_allocate()
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  !>
+  !! checkpoint data inport
+  !<
+  !! --
+  subroutine kernel__restart( io )
+    
+    integer, intent(in) :: io
+    integer :: i, j
+    !! --
+    
+    
+    call memory_allocate()
+    
+    read(io) r40x, r40y, r40z, r41x, r41y, r41z, r20x, r20y, r20z
+    
+    do j=jbeg_m,jend_m; read(io)  Vx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
+    do j=jbeg_m,jend_m; read(io)  Vy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
+    do j=jbeg_m,jend_m; read(io)  Vz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
+    do j=jbeg_m,jend_m; read(io) Sxx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
+    do j=jbeg_m,jend_m; read(io) Syy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
+    do j=jbeg_m,jend_m; read(io) Szz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
+    do j=jbeg_m,jend_m; read(io) Syz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
+    do j=jbeg_m,jend_m; read(io) Sxz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
+    do j=jbeg_m,jend_m; read(io) Sxy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
+                      
+    if( nm > 0 ) then
+      read(io) c1(1:nm)
+      read(io) c2(1:nm)
+                                                      
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxx(kbeg_k:kend_k,i,j,1:nm); end do; end do;
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Ryy(kbeg_k:kend_k,i,j,1:nm); end do; end do;
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rzz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Ryz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxy(kbeg_k:kend_k,i,j,1:nm); end do; end do;
+        
+    end if
+    
+  end subroutine kernel__restart
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  
 
-                                  read(io) r40x, r40y, r40z, r41x, r41y, r41z, r20x, r20y, r20z
-
-                                  do j=jbeg_m,jend_m; read(io)  Vx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-                                    do j=jbeg_m,jend_m; read(io)  Vy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-                                      do j=jbeg_m,jend_m; read(io)  Vz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-                                        do j=jbeg_m,jend_m; read(io) Sxx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-                                          do j=jbeg_m,jend_m; read(io) Syy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-                                            do j=jbeg_m,jend_m; read(io) Szz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-                                              do j=jbeg_m,jend_m; read(io) Syz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-                                                do j=jbeg_m,jend_m; read(io) Sxz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-                                                  do j=jbeg_m,jend_m; read(io) Sxy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-
-                                                    if( nm > 0 ) then
-                                                      read(io) c1(1:nm)
-                                                      read(io) c2(1:nm)
-
-                                                      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxx(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-                                                        do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Ryy(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-                                                          do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rzz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-                                                            do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Ryz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-                                                              do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-                                                                do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxy(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-
-                                                                end if
-
-                                                              end subroutine kernel__restart
-                                                              !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
-
-                                                              !! --------------------------------------------------------------------------------------------------------------------------- !!
-                                                              subroutine memory_allocate
-                                                                !!
-                                                                !! memory allocation
-                                                                !!
-                                                                allocate(  Vx(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-                                                                allocate(  Vy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-                                                                allocate(  Vz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-
-                                                                allocate( Sxx(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-                                                                allocate( Syy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-                                                                allocate( Szz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-                                                                allocate( Syz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-                                                                allocate( Sxz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-                                                                allocate( Sxy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-
-                                                                if( nm > 0 ) then
-                                                                  allocate( c1(nm), c2(nm), d1(nm) )
-                                                                  allocate( Rxx( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-                                                                  allocate( Ryy( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-                                                                  allocate( Rzz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-                                                                  allocate( Ryz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-                                                                  allocate( Rxz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-                                                                  allocate( Rxy( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-                                                                end if
-
-                                                              end subroutine memory_allocate
-                                                              !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
-                                                            end module m_kernel
-                                                            !! ----------------------------------------------------------------------------------------------------------------------------- !!
+  
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  subroutine memory_allocate
+    !!
+    !! memory allocation
+    !!
+    allocate(  Vx(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
+    allocate(  Vy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
+    allocate(  Vz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
+    
+    allocate( Sxx(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
+    allocate( Syy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
+    allocate( Szz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
+    allocate( Syz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
+    allocate( Sxz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
+    allocate( Sxy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
+    
+    if( nm > 0 ) then
+      allocate( c1(nm), c2(nm), d1(nm) )
+      allocate( Rxx( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
+      allocate( Ryy( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
+      allocate( Rzz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
+      allocate( Ryz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
+      allocate( Rxz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
+      allocate( Rxy( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
+    end if
+    
+  end subroutine memory_allocate
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  
+  
+end module m_kernel
+!! ----------------------------------------------------------------------------------------------------------------------------- !!
