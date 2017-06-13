@@ -3,7 +3,7 @@
 !! Set-up medium velocity/attenuation structure
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -77,67 +77,67 @@ contains
     !!
     if( benchmark_mode ) then
 
-       fq_min = 0.05
-       fq_max = 5.0
-       fq_ref = 1.0
-       do k = kbeg_m, kend_m
-          if( zc(k) < 0.0 ) then
-             rho( k, :, : )  = 0.001
-             mu ( k, :, : )  = 0.0
-             lam( k, :, : )  = 0.0
-          else
-             rho(k,:,:)  = 2.7
-             mu (k,:,:)  = 2.7 * 3.5*3.5
-             lam(k,:,:)  = 2.7 * 3.5*3.5 ! poison solid: lambda = mu
-          end if
+      fq_min = 0.05
+      fq_max = 5.0
+      fq_ref = 1.0
+      do k = kbeg_m, kend_m
+        if( zc(k) < 0.0 ) then
+          rho( k, :, : )  = 0.001
+          mu ( k, :, : )  = 0.0
+          lam( k, :, : )  = 0.0
+        else
+          rho(k,:,:)  = 2.7
+          mu (k,:,:)  = 2.7 * 3.5*3.5
+          lam(k,:,:)  = 2.7 * 3.5*3.5 ! poison solid: lambda = mu
+        end if
 
-          !! very large Q value (no attenuation) for benchmark
-          taup(k,:,:) = 1e10
-          taus(k,:,:) = 1e10
-       end do
+        !! very large Q value (no attenuation) for benchmark
+        taup(k,:,:) = 1e10
+        taus(k,:,:) = 1e10
+      end do
 
     else
 
-       !!
-       !! read parameters
-       !!
-       call readini( io_prm, 'fq_min', fq_min, 0.05 )
-       call readini( io_prm, 'fq_max', fq_max, 5.00 )
-       call readini( io_prm, 'fq_ref', fq_ref, 1.00 )
+      !!
+      !! read parameters
+      !!
+      call readini( io_prm, 'fq_min', fq_min, 0.05 )
+      call readini( io_prm, 'fq_max', fq_max, 5.00 )
+      call readini( io_prm, 'fq_ref', fq_ref, 1.00 )
 
-       call readini( io_prm, 'vmodel_type', vmodel_type, 'uni' )
-       call readini( io_prm, 'vcut',  vcut, 0.0 )
+      call readini( io_prm, 'vmodel_type', vmodel_type, 'uni' )
+      call readini( io_prm, 'vcut',  vcut, 0.0 )
 
-       !!
-       call pwatch__on("vmodel")
-       select case ( trim(vmodel_type) )
+      !!
+      call pwatch__on("vmodel")
+      select case ( trim(vmodel_type) )
 
-       case ( 'user' )
-          call vmodel_user( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
-                                   rho, lam, mu, taup, taus, bddep )
-       case ( 'uni' )
-          call vmodel_uni( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
-                                   rho, lam, mu, taup, taus, bddep )
-       case ( 'grd' )
-          call vmodel_grd( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
-                                   rho, lam, mu, taup, taus, bddep )
-       case ( 'lhm' )
-          call vmodel_lhm( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
-                                   rho, lam, mu, taup, taus, bddep )
-       case ( 'uni_rmed' )
-          call vmodel_uni_rmed( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
-                                   rho, lam, mu, taup, taus, bddep )
-       case ( 'grd_rmed' )
-          call vmodel_grd_rmed( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
-                                   rho, lam, mu, taup, taus, bddep )
-       case ( 'lhm_rmed' )
-          call vmodel_lhm_rmed( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
-                                   rho, lam, mu, taup, taus, bddep )
+      case ( 'user' )
+        call vmodel_user( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
+            rho, lam, mu, taup, taus, bddep )
+      case ( 'uni' )
+        call vmodel_uni( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
+            rho, lam, mu, taup, taus, bddep )
+      case ( 'grd' )
+        call vmodel_grd( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
+            rho, lam, mu, taup, taus, bddep )
+      case ( 'lhm' )
+        call vmodel_lhm( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
+            rho, lam, mu, taup, taus, bddep )
+      case ( 'uni_rmed' )
+        call vmodel_uni_rmed( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
+            rho, lam, mu, taup, taus, bddep )
+      case ( 'grd_rmed' )
+        call vmodel_grd_rmed( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
+            rho, lam, mu, taup, taus, bddep )
+      case ( 'lhm_rmed' )
+        call vmodel_lhm_rmed( io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
+            rho, lam, mu, taup, taus, bddep )
 
-       case default
-          call assert( .false. )
-       end select
-       call pwatch__off("vmodel")
+      case default
+        call assert( .false. )
+      end select
+      call pwatch__off("vmodel")
 
     end if
 
@@ -146,69 +146,69 @@ contains
     !! homogenize absorber region
     !!
     do i=ibeg_m, na
-       !$omp parallel do private(j,k)
-       do j=jbeg_m,jend_m
-          do k=kbeg_m, kend_m
-             rho (k,i,j) = rho (k,na+1,j)
-             lam (k,i,j) = lam (k,na+1,j)
-             mu  (k,i,j) = mu  (k,na+1,j)
-             taup(k,i,j) = taup(k,na+1,j)
-             taus(k,i,j) = taus(k,na+1,j)
-          end do
-       end do
-       !$omp end parallel do
+      !$omp parallel do private(j,k)
+      do j=jbeg_m,jend_m
+        do k=kbeg_m, kend_m
+          rho (k,i,j) = rho (k,na+1,j)
+          lam (k,i,j) = lam (k,na+1,j)
+          mu  (k,i,j) = mu  (k,na+1,j)
+          taup(k,i,j) = taup(k,na+1,j)
+          taus(k,i,j) = taus(k,na+1,j)
+        end do
+      end do
+      !$omp end parallel do
     end do
     do i=nx-na+1,iend_m
-       !$omp parallel do private(j,k)
-       do j=jbeg_m,jend_m
-          do k=kbeg_m, kend_m
-             rho (k,i,j) = rho (k,nx-na,j)
-             lam (k,i,j) = lam (k,nx-na,j)
-             mu  (k,i,j) = mu  (k,nx-na,j)
-             taup(k,i,j) = taup(k,nx-na,j)
-             taus(k,i,j) = taus(k,nx-na,j)
-          end do
-       end do
-       !$omp end parallel do
+      !$omp parallel do private(j,k)
+      do j=jbeg_m,jend_m
+        do k=kbeg_m, kend_m
+          rho (k,i,j) = rho (k,nx-na,j)
+          lam (k,i,j) = lam (k,nx-na,j)
+          mu  (k,i,j) = mu  (k,nx-na,j)
+          taup(k,i,j) = taup(k,nx-na,j)
+          taus(k,i,j) = taus(k,nx-na,j)
+        end do
+      end do
+      !$omp end parallel do
     end do
     do j=jbeg_m, na
-       !$omp parallel do private(i,k)
-       do i=ibeg_m,iend_m
-          do k=kbeg_m, kend_m
-             rho (k,i,j) = rho (k,i,na+1)
-             lam (k,i,j) = lam (k,i,na+1)
-             mu  (k,i,j) = mu  (k,i,na+1)
-             taup(k,i,j) = taup(k,i,na+1)
-             taus(k,i,j) = taus(k,i,na+1)
-          end do
-       end do
-       !$omp end parallel do
+      !$omp parallel do private(i,k)
+      do i=ibeg_m,iend_m
+        do k=kbeg_m, kend_m
+          rho (k,i,j) = rho (k,i,na+1)
+          lam (k,i,j) = lam (k,i,na+1)
+          mu  (k,i,j) = mu  (k,i,na+1)
+          taup(k,i,j) = taup(k,i,na+1)
+          taus(k,i,j) = taus(k,i,na+1)
+        end do
+      end do
+      !$omp end parallel do
     end do
     do j=ny-na+1,jend_m
-       !$omp parallel do private(i,k)
-       do i=ibeg_m,iend_m
-          do k=kbeg_m, kend_m
-             rho (k,i,j) = rho (k,i,ny-na)
-             lam (k,i,j) = lam (k,i,ny-na)
-             mu  (k,i,j) = mu  (k,i,ny-na)
-             taup(k,i,j) = taup(k,i,ny-na)
-             taus(k,i,j) = taus(k,i,ny-na)
-          end do
-       end do
-       !$omp end parallel do
+      !$omp parallel do private(i,k)
+      do i=ibeg_m,iend_m
+        do k=kbeg_m, kend_m
+          rho (k,i,j) = rho (k,i,ny-na)
+          lam (k,i,j) = lam (k,i,ny-na)
+          mu  (k,i,j) = mu  (k,i,ny-na)
+          taup(k,i,j) = taup(k,i,ny-na)
+          taus(k,i,j) = taus(k,i,ny-na)
+        end do
+      end do
+      !$omp end parallel do
     end do
 
     !$omp parallel do private(i,j,k)
     do j=jbeg_m,jend_m
-       do i=ibeg_m,iend_m
-          do k=nz-na+1,kend_m
-             rho (k,i,j) = rho (nz-na,i,j)
-             lam (k,i,j) = lam (nz-na,i,j)
-             mu  (k,i,j) = mu  (nz-na,i,j)
-             taup(k,i,j) = taup(nz-na,i,j)
-             taus(k,i,j) = taus(nz-na,i,j)
-          end do
-       end do
+      do i=ibeg_m,iend_m
+        do k=nz-na+1,kend_m
+          rho (k,i,j) = rho (nz-na,i,j)
+          lam (k,i,j) = lam (nz-na,i,j)
+          mu  (k,i,j) = mu  (nz-na,i,j)
+          taup(k,i,j) = taup(nz-na,i,j)
+          taus(k,i,j) = taus(nz-na,i,j)
+        end do
+      end do
     end do
     !$omp end parallel do
 
@@ -224,12 +224,12 @@ contains
     !!
     !$omp parallel do private(i,j,k)
     do j=jbeg_m, jend_m
-       do i=ibeg_m, iend_m
-          do k=kbeg_m, kend_m
-             taup(k,i,j) = nm * zeta / taup(k,i,j)
-             taus(k,i,j) = nm * zeta / taus(k,i,j)
-          end do
-       end do
+      do i=ibeg_m, iend_m
+        do k=kbeg_m, kend_m
+          taup(k,i,j) = nm * zeta / taup(k,i,j)
+          taus(k,i,j) = nm * zeta / taus(k,i,j)
+        end do
+      end do
     end do
     !$omp end parallel do
 
@@ -277,7 +277,7 @@ contains
     !! scale medium velocity using reference frequency
     !!
     subroutine relaxed_medium()
-
+      
       integer :: i, j, k, im
       real(SP) :: rho_beta2, rho_alpha2
       real(SP) :: chi_mu, chi_lam
@@ -291,26 +291,26 @@ contains
       omega = 2 * PI * fq_ref
       cc = 0.0
       do im=1, nm
-         cc = cc + ( EI * omega * ts(im) ) / ( 1.0 - EI * omega * ts(im) )
+        cc = cc + ( EI * omega * ts(im) ) / ( 1.0 - EI * omega * ts(im) )
       end do
       cc = cc / nm
 
       !$omp parallel do private(rho_beta2, rho_alpha2, chi_mu, chi_lam, i, j, k)
       do j=jbeg_m, jend_m
-         do i=ibeg_m, iend_m
-            do k=kbeg_m, kend_m
+        do i=ibeg_m, iend_m
+          do k=kbeg_m, kend_m
 
-               rho_beta2  =  mu(k,i,j)
-               rho_alpha2 = lam(k,i,j) + 2*mu(k,i,j)
+            rho_beta2  =  mu(k,i,j)
+            rho_alpha2 = lam(k,i,j) + 2*mu(k,i,j)
 
-               chi_mu  = 1.0 / real( 1.0 / sqrt( 1.0 - cc * taus(k,i,j) ) )
-               chi_lam = 1.0 / real( 1.0 / sqrt( 1.0 - cc * taup(k,i,j) ) )
+            chi_mu  = 1.0 / real( 1.0 / sqrt( 1.0 - cc * taus(k,i,j) ) )
+            chi_lam = 1.0 / real( 1.0 / sqrt( 1.0 - cc * taup(k,i,j) ) )
 
-               mu (k,i,j) = rho_beta2  / chi_mu **2
-               lam(k,i,j) = rho_alpha2 / chi_lam**2 - 2 * mu(k,i,j)
+            mu (k,i,j) = rho_beta2  / chi_mu **2
+            lam(k,i,j) = rho_alpha2 / chi_lam**2 - 2 * mu(k,i,j)
 
-            end do
-         end do
+          end do
+        end do
       end do
       !$omp end parallel do
 
@@ -323,68 +323,68 @@ contains
     !<
     !! --
     subroutine stabilize_absorber()
-      
+
       integer :: i, j, k, k2
       real :: vp, vs, gamma
       real, parameter :: V_DYNAMIC_RANGE = 0.4 ! ratio between maximum and minimum velocity
       real :: vmin_pml
       integer :: LV_THICK = 20 !! minimum thickness of low-velocity layer in grids
-      
+
       vmin_pml = vmax * V_DYNAMIC_RANGE
-      
+
       do j=jbeg-1, jend+1
         do i=ibeg-1, iend+1
           k=minval(kbeg_a(i-2:i+2,j-2:j+2))
           do while( k<=kend )
-            
+
             if( lam(k,i,j) < lam(k-1,i,j) .or. mu(k,i,j) < mu(k-1,i,j) ) then
-              
+
               do k2=k+1, kend
                 if( lam(k2,i,j) > lam(k2-1,i,j) .or. mu(k2,i,j) > mu(k2-1,i,j) ) exit
               end do
-              
+
               if( k2-k <= LV_THICK ) then
-                
-                
+
+
                 rho (k,i,j) = rho (k-1,i,j)
                 lam (k,i,j) = lam (k-1,i,j)
                 mu  (k,i,j) = mu  (k-1,i,j)
                 taup(k,i,j) = taup(k-1,i,j)
                 taus(k,i,j) = taus(k-1,i,j)
                 k = k2 - 1
-                
+
               end if
 
             end if
-            
+
             k = k + 1
-            
+
           end do
         end do
       end do
-      
+
       do j=jbeg-1, jend+1
         do i=ibeg-1, iend+1
           do k=minval(kbeg_a(i-2:i+2,j-2:j+2)), kend
-            
+
             vp = sqrt( (lam(k,i,j) + 2 * mu(k,i,j))/rho(k,i,j) )
             vs = sqrt( mu(k,i,j) / rho(k,i,j) )
-            
+
             ! skip ocean and air
             if( vs < epsilon(1.0) ) cycle
-            
+
             gamma = sqrt(3.0)
             if( vs < vmin_pml ) then
               vs = vmin_pml
               vp = vs * gamma
-              
+
               lam(k,i,j) = rho(k,i,j) * (vp**2 - 2 * vs**2)
               mu (k,i,j) = rho(k,i,j) * (vs**2)
             end if
           end do
         end do
       end do
-      
+
     end subroutine stabilize_absorber
     !! ------------------------------------------------------------------------------------------------------------------------ !!
 
@@ -411,21 +411,21 @@ contains
       !!
       !$omp parallel do private(i,j,k)
       do j=jbeg-1, jend+2
-         do i=ibeg-1, iend+2
-            do k=kbeg, kend-1
+        do i=ibeg-1, iend+2
+          do k=kbeg, kend-1
 
-               !! air(ocean)-to-solid boundary
-               if( abs(mu (k,i,j)) < epsl .and. abs(mu (k+1,i,j)) > epsl ) then
-                  kob(i,j) = k
-               end if
+            !! air(ocean)-to-solid boundary
+            if( abs(mu (k,i,j)) < epsl .and. abs(mu (k+1,i,j)) > epsl ) then
+              kob(i,j) = k
+            end if
 
-               !! air-to-solid(ocean) boundary
-               if( abs(lam(k,i,j)) < epsl .and. abs(lam(k+1,i,j)) > epsl ) then
-                  kfs(i,j) = k
-               end if
+            !! air-to-solid(ocean) boundary
+            if( abs(lam(k,i,j)) < epsl .and. abs(lam(k+1,i,j)) > epsl ) then
+              kfs(i,j) = k
+            end if
 
-            end do
-         end do
+          end do
+        end do
       end do
       !$omp end parallel do
 
@@ -435,15 +435,15 @@ contains
       !!
       !$omp parallel do private(i,j,k)
       do j=jbeg, jend
-         do i=ibeg, iend
+        do i=ibeg, iend
 
-            kfs_top(i,j) = max( minval( kfs(i-2:i+3,j-2:j+3) ) - 2, kbeg )
-            kfs_bot(i,j) = min( maxval( kfs(i-2:i+3,j-2:j+3) ) + 2, kend )
+          kfs_top(i,j) = max( minval( kfs(i-2:i+3,j-2:j+3) ) - 2, kbeg )
+          kfs_bot(i,j) = min( maxval( kfs(i-2:i+3,j-2:j+3) ) + 2, kend )
 
-            kob_top(i,j) = max( minval( kob(i-2:i+3,j-2:j+3) ) - 2, kbeg )
-            kob_bot(i,j) = min( maxval( kob(i-2:i+3,j-2:j+3) ) + 2, kend )
+          kob_top(i,j) = max( minval( kob(i-2:i+3,j-2:j+3) ) - 2, kbeg )
+          kob_bot(i,j) = min( maxval( kob(i-2:i+3,j-2:j+3) ) + 2, kend )
 
-         end do
+        end do
       end do
       !$omp end parallel do
 
@@ -465,17 +465,17 @@ contains
       vmin1 = 1e30
       !$omp parallel do reduction(max:vmax1) reduction(min:vmin1)
       do j=jbeg, jend
-         do i=ibeg, iend
-            do k=kfs(i,j)+1, kend
-               vp = sqrt( ( lam(k,i,j) + 2 * mu(k,i,j) ) / rho(k,i,j) )
-               vs = sqrt(                    mu(k,i,j)   / rho(k,i,j) )
+        do i=ibeg, iend
+          do k=kfs(i,j)+1, kend
+            vp = sqrt( ( lam(k,i,j) + 2 * mu(k,i,j) ) / rho(k,i,j) )
+            vs = sqrt(                    mu(k,i,j)   / rho(k,i,j) )
 
-               vmax1 = max( vmax1, vp )
-               if( vs < epsilon(1.0) ) cycle
-               vmin1 = min( vmin1, vs )
+            vmax1 = max( vmax1, vp )
+            if( vs < epsilon(1.0) ) cycle
+            vmin1 = min( vmin1, vs )
 
-            end do
-         end do
+          end do
+        end do
       end do
       !$omp end parallel do
 
@@ -497,25 +497,25 @@ contains
 
       !$omp parallel do private( nnn,pnn,npn,ppn,nnp,npp,pnp, i,j,k )
       do j=jbeg, jend
-         do i=ibeg, iend
-            do k=kbeg, kend
-               bx(k,i,j) = 2.0 / ( rho(k,i,j) + rho(k,i+1,j) )
-               by(k,i,j) = 2.0 / ( rho(k,i,j) + rho(k,i,j+1) )
-               bz(k,i,j) = 2.0 / ( rho(k,i,j) + rho(k+1,i,j) )
+        do i=ibeg, iend
+          do k=kbeg, kend
+            bx(k,i,j) = 2.0 / ( rho(k,i,j) + rho(k,i+1,j) )
+            by(k,i,j) = 2.0 / ( rho(k,i,j) + rho(k,i,j+1) )
+            bz(k,i,j) = 2.0 / ( rho(k,i,j) + rho(k+1,i,j) )
 
-               nnn = mu(k  ,i  ,j  )
-               pnn = mu(k+1,i,  j  )
-               npn = mu(k,  i+1,j  )
-               ppn = mu(k+1,i+1,j  )
-               nnp = mu(k,  i,  j+1)
-               npp = mu(k,  i+1,j+1)
-               pnp = mu(k+1,i,  j+1)
+            nnn = mu(k  ,i  ,j  )
+            pnn = mu(k+1,i,  j  )
+            npn = mu(k,  i+1,j  )
+            ppn = mu(k+1,i+1,j  )
+            nnp = mu(k,  i,  j+1)
+            npp = mu(k,  i+1,j+1)
+            pnp = mu(k+1,i,  j+1)
 
-               muxz(k,i,j) = 4*nnn*pnn*npn*ppn / ( nnn*pnn*npn + nnn*pnn*ppn + nnn*npn*ppn + pnn*npn*ppn + epsl )
-               muxy(k,i,j) = 4*nnn*npn*nnp*npp / ( nnn*npn*nnp + nnn*npn*npp + nnn*nnp*npp + npn*nnp*npp + epsl )
-               muyz(k,i,j) = 4*nnn*pnn*nnp*pnp / ( nnn*pnn*nnp + nnn*pnn*pnp + nnn*nnp*pnp + pnn*nnp*pnp + epsl )
-            end do
-         end do
+            muxz(k,i,j) = 4*nnn*pnn*npn*ppn / ( nnn*pnn*npn + nnn*pnn*ppn + nnn*npn*ppn + pnn*npn*ppn + epsl )
+            muxy(k,i,j) = 4*nnn*npn*nnp*npp / ( nnn*npn*nnp + nnn*npn*npp + nnn*nnp*npp + npn*nnp*npp + epsl )
+            muyz(k,i,j) = 4*nnn*pnn*nnp*pnp / ( nnn*pnn*nnp + nnn*pnn*pnp + nnn*nnp*pnp + pnn*nnp*pnp + epsl )
+          end do
+        end do
       end do
       !$omp end parallel do
     end subroutine averaged_medium
@@ -589,19 +589,19 @@ contains
     write(io) kob_bot( ibeg_m:iend_m, jbeg_m:jend_m )
     write(io) bddep  ( ibeg_m:iend_m, jbeg_m:jend_m, 0:NBD )
     if( nm > 0 ) write(io) ts(  1:nm )
-
+    
     deallocate( kfs, kob, kfs_top, kfs_bot, kob_top, kob_bot, bddep )
-
+    
   end subroutine medium__checkpoint
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine medium__restart( io )
-
+    
     integer, intent(in) :: io
     integer :: j
     !! ----
-
+    
     call memory_allocate()
     do j=jbeg_m,jend_m;  read(io)   bx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
     do j=jbeg_m,jend_m;  read(io)   by(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
@@ -621,13 +621,13 @@ contains
     read(io) kob_top( ibeg_m:iend_m, jbeg_m:jend_m )
     read(io) kob_bot( ibeg_m:iend_m, jbeg_m:jend_m )
     read(io) bddep  ( ibeg_m:iend_m, jbeg_m:jend_m, 0:NBD )
-
+    
     if( nm > 0 ) read(io) ts(  1:nm )
-
+    
   end subroutine medium__restart
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
-
+  
+  
 end module m_medium
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
+  

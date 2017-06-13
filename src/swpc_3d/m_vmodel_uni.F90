@@ -3,7 +3,7 @@
 !! User-routines for defining velocity/attenuation structure
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -59,51 +59,51 @@ contains
     call readini( io_prm, 'topo0', topo0, 0.0 )
 
     do j = j0, j1
-       do i = i0, i1
+      do i = i0, i1
 
-          !! define topography shape here
-          bd(i,j,0) = topo0
+        !! define topography shape here
+        bd(i,j,0) = topo0
 
-          do k = k0, k1
+        do k = k0, k1
 
-             if( zc( k ) > bd(i,j,0) ) then
+          if( zc( k ) > bd(i,j,0) ) then
 
-                !! elastic medium
-                rho(k,i,j) = rho0
-                mu (k,i,j) = rho(k,i,j) * vs0 * vs0
-                lam(k,i,j) = rho(k,i,j) * ( vp0*vp0 - 2*vs0*vs0 )
-                qp (k,i,j) = qp0
-                qs (k,i,j) = qs0
+            !! elastic medium
+            rho(k,i,j) = rho0
+            mu (k,i,j) = rho(k,i,j) * vs0 * vs0
+            lam(k,i,j) = rho(k,i,j) * ( vp0*vp0 - 2*vs0*vs0 )
+            qp (k,i,j) = qp0
+            qs (k,i,j) = qs0
 
-             else if ( zc (k) > 0.0 ) then
+          else if ( zc (k) > 0.0 ) then
 
-                !! ocean column
+            !! ocean column
 
-                vp1 = 1.5
-                vs1 = 0.0
+            vp1 = 1.5
+            vs1 = 0.0
 
-                rho(k,i,j) = 1.0
-                mu (k,i,j) = rho(k,i,j) * vs1 * vs1
-                lam(k,i,j) = rho(k,i,j) * ( vp1*vp1 - 2*vs1*vs1 )
-                qp (k,i,j) = 1000000.0 ! effectively no attenuation in ocean column
-                qs (k,i,j) = 1000000.0
+            rho(k,i,j) = 1.0
+            mu (k,i,j) = rho(k,i,j) * vs1 * vs1
+            lam(k,i,j) = rho(k,i,j) * ( vp1*vp1 - 2*vs1*vs1 )
+            qp (k,i,j) = 1000000.0 ! effectively no attenuation in ocean column
+            qs (k,i,j) = 1000000.0
 
-             else
+          else
 
-                !! air column
+            !! air column
 
-                vp1 = 0.0
-                vs1 = 0.0
+            vp1 = 0.0
+            vs1 = 0.0
 
-                rho(k,i,j) = 0.001
-                mu (k,i,j) = rho(k,i,j) * vs1 * vs1
-                lam(k,i,j) = rho(k,i,j) * ( vp1*vp1 - 2*vs1*vs1 )
-                qp (k,i,j) = 10.0 ! artificially strong attenuation in air-column
-                qs (k,i,j) = 10.0 ! artificially strong attenuation in air-column
+            rho(k,i,j) = 0.001
+            mu (k,i,j) = rho(k,i,j) * vs1 * vs1
+            lam(k,i,j) = rho(k,i,j) * ( vp1*vp1 - 2*vs1*vs1 )
+            qp (k,i,j) = 10.0 ! artificially strong attenuation in air-column
+            qs (k,i,j) = 10.0 ! artificially strong attenuation in air-column
 
-             end if
-          end do
-       end do
+          end if
+        end do
+      end do
     end do
 
     ! dummy value

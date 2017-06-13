@@ -3,7 +3,7 @@
 !! FDM model parameter condition check
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! -----
 program fdmcond
@@ -31,8 +31,8 @@ program fdmcond
   read(*,*) dim
 
   if( dim /= 2 .and. dim /= 3 ) then
-     write(*,*) "Invalid Dimension. Quit."
-     stop
+    write(*,*) "Invalid Dimension. Quit."
+    stop
   end if
 
   allocate( dh(dim) )
@@ -47,14 +47,14 @@ program fdmcond
   read(*,*) stype
 
   if( stype == 1 ) then
-     ef = 5.4
+    ef = 5.4
   else if ( stype == 2 ) then
-     ef = 3.2
+    ef = 3.2
   else if ( stype == 3 ) then
-     ef = 2.3
+    ef = 2.3
   else
-     write(*,*) "Invalid Source Type. Quit."
-     stop
+    write(*,*) "Invalid Source Type. Quit."
+    stop
   end if
 
   call fdline(6)
@@ -77,56 +77,56 @@ program fdmcond
   write(*,'(A)') " Assumed Parameters: "
   select case( inq )
   case(1)
-     call get_dh ( dh )
-     fmax = getv( 'fmax' )
-     vmax = getv( 'vmax' )
-     call cond_1( dh, fmax, vmax )
+    call get_dh ( dh )
+    fmax = getv( 'fmax' )
+    vmax = getv( 'vmax' )
+    call cond_1( dh, fmax, vmax )
 
   case(2)
-     call get_dh ( dh )
-     tr = getv( 'Tr' )
-     vmax = getv( 'vmax' )
-     call cond_2( dh, Tr, vmax )
+    call get_dh ( dh )
+    tr = getv( 'Tr' )
+    vmax = getv( 'vmax' )
+    call cond_2( dh, Tr, vmax )
 
   case(3)
-     call get_dh ( dh )
-     fmax = getv( 'fmax' )
-     dt   = getv( 'dt' )
-     call cond_3( dh, fmax, dt )
+    call get_dh ( dh )
+    fmax = getv( 'fmax' )
+    dt   = getv( 'dt' )
+    call cond_3( dh, fmax, dt )
 
   case(4)
-     call get_dh ( dh )
-     tr  = getv( 'Tr' )
-     dt  = getv( 'dt' )
-     call cond_4( dh, Tr, dt )
+    call get_dh ( dh )
+    tr  = getv( 'Tr' )
+    dt  = getv( 'dt' )
+    call cond_4( dh, Tr, dt )
 
   case(5)
-     call get_dh ( dh )
-     vmin = getv( 'vmin' )
-     vmax = getv( 'vmax' )
-     call cond_5( dh, vmin, vmax )
+    call get_dh ( dh )
+    vmin = getv( 'vmin' )
+    vmax = getv( 'vmax' )
+    call cond_5( dh, vmin, vmax )
 
   case(6)
-     call get_dh ( dh )
-     vmin = getv( 'vmin' )
-     dt   = getv( 'dt'  )
-     call cond_6( dh, vmin, dt )
+    call get_dh ( dh )
+    vmin = getv( 'vmin' )
+    dt   = getv( 'dt'  )
+    call cond_6( dh, vmin, dt )
 
   case(7)
-     fmax = getv( 'fmax' )
-     vmax = getv( 'vmax' )
-     dt   = getv( 'dt' )
-     call cond_7( fmax, vmax, dt )
+    fmax = getv( 'fmax' )
+    vmax = getv( 'vmax' )
+    dt   = getv( 'dt' )
+    call cond_7( fmax, vmax, dt )
   case(8)
-     tr   = getv( 'Tr' )
-     vmax = getv( 'vmax' )
-     dt   = getv( 'dt' )
-     call cond_8( tr, vmax, dt )
+    tr   = getv( 'Tr' )
+    vmax = getv( 'vmax' )
+    dt   = getv( 'dt' )
+    call cond_8( tr, vmax, dt )
   case(9)
-     vmin = getv( 'vmin' )
-     vmax = getv( 'vmax' )
-     dt   = getv( 'dt' )
-     call cond_9( vmin, vmax, dt )
+    vmin = getv( 'vmin' )
+    vmax = getv( 'vmax' )
+    dt   = getv( 'dt' )
+    call cond_9( vmin, vmax, dt )
   end select
 
   write(*,*)
@@ -150,7 +150,7 @@ contains
     integer, intent(in) :: n
     integer :: i
     do i=1, n
-       write(*,*)
+      write(*,*)
     end do
   end subroutine fdline
 
@@ -159,7 +159,7 @@ contains
     integer, intent(in) :: n
     integer :: i
     do i=1, n
-       write(*,'(1X,A)') char(27)//'[2A'
+      write(*,'(1X,A)') char(27)//'[2A'
     end do
   end subroutine bkline
 
@@ -295,7 +295,7 @@ contains
     write(*,'(A,F9.5)') "   fmax   = ", fmax
     write(*,'(A,F9.5)') "   dx    >= ", dh
     if( dim == 3 ) then
-       write(*,'(A,F9.5)') "   dy    >= ", dh
+      write(*,'(A,F9.5)') "   dy    >= ", dh
     end if
     write(*,'(A,F9.5)') "   dz    >= ", dh
     write(*,'(A,F9.5)') "   vmin  >= ", vmin
@@ -318,7 +318,7 @@ contains
     write(*,'(A)') " Derivaed Parameters: "
     write(*,'(A,F9.5)') "   dx    >= ", dh
     if( dim == 3 ) then
-       write(*,'(A,F9.5)') "   dy    >= ", dh
+      write(*,'(A,F9.5)') "   dy    >= ", dh
     end if
     write(*,'(A,F9.5)') "   dz    >= ", dh
     write(*,'(A,F9.5)') "   fmax  <= ", fmax
@@ -333,12 +333,12 @@ contains
     real, intent(out) :: dh(:)
 
     if( dim == 2 ) then
-       dh(1) = getv( 'dx' )
-       dh(2) = getv( 'dz')
+      dh(1) = getv( 'dx' )
+      dh(2) = getv( 'dz')
     else
-       dh(1) = getv( 'dx')
-       dh(2) = getv( 'dy')
-       dh(3) = getv( 'dz')
+      dh(1) = getv( 'dx')
+      dh(2) = getv( 'dy')
+      dh(3) = getv( 'dz')
     end if
   end subroutine get_dh
 

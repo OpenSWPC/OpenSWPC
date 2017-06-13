@@ -3,7 +3,7 @@
 !! Calculate frequency dependense of Q^(-1) model
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 program qmodel_tau
@@ -43,8 +43,8 @@ program qmodel_tau
 
   open( io, file=trim(fn_prm), action='read', iostat=ierr );
   if( ierr /= 0 ) then
-     write(STDERR,*) 'input file open error'
-     call usage_exit
+    write(STDERR,*) 'input file open error'
+    call usage_exit
   end if
 
   call readini( io, 'fq_min', fq_min, 0.01 )
@@ -63,21 +63,21 @@ program qmodel_tau
   write(fmt,'(A,I1.1,A)') 'F12.5,',nm+1,'ES12.5,ES12.5'
   do i=1, nf
 
-     f = f0 * ( f1/f0 )**( real(i-1)/real(nf-1) )
-     omega = 2*PI*f
+    f = f0 * ( f1/f0 )**( real(i-1)/real(nf-1) )
+    omega = 2*PI*f
 
-     i1=0
-     i2=0
-     chi = 0
-     do l=1, nm
-        i1 = i1 + ( omega * ts(l) ) / ( 1 + omega**2*ts(l)**2 )
-        i2 = i2 + (1 + omega**2 * ts(l)**2 * ( 1 + tau ) )/(1+omega**2*ts(l)**2 )
-        qinv2(l) = ( omega * ts(l) * tau ) / ( 1 + omega**2*ts(l)**2 )/nm ! 要素Q
-     end do
-     qinv = tau * i1 / i2
-     chi = visco_chi( nm, ts, tau, f )
+    i1=0
+    i2=0
+    chi = 0
+    do l=1, nm
+      i1 = i1 + ( omega * ts(l) ) / ( 1 + omega**2*ts(l)**2 )
+      i2 = i2 + (1 + omega**2 * ts(l)**2 * ( 1 + tau ) )/(1+omega**2*ts(l)**2 )
+      qinv2(l) = ( omega * ts(l) * tau ) / ( 1 + omega**2*ts(l)**2 )/nm ! 要素Q
+    end do
+    qinv = tau * i1 / i2
+    chi = visco_chi( nm, ts, tau, f )
 
-     write(STDOUT,"("//trim(fmt)//")") f, qinv, qinv2(:), chi / chi_R
+    write(STDOUT,"("//trim(fmt)//")") f, qinv, qinv2(:), chi / chi_R
   end do
 
 

@@ -3,7 +3,7 @@
 !! Absorbing Boundary Condition
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -41,11 +41,11 @@ contains
 
     select case( trim(abc_type) )
     case( 'pml' )
-       call absorb_p__setup( io_prm )
+      call absorb_p__setup( io_prm )
     case( 'cerjan' )
-       call absorb_c__setup( io_prm )
+      call absorb_c__setup( io_prm )
     case default
-       call assert( .false. )
+      call assert( .false. )
     end select
     call pwatch__off( "absorb__setup")
 
@@ -60,11 +60,11 @@ contains
 
     select case( trim(abc_type) )
     case( 'pml' )
-       call absorb_p__update_vel
+      call absorb_p__update_vel
     case( 'cerjan' )
-       call absorb_c__update_vel
+      call absorb_c__update_vel
     case default
-       continue
+      continue
     end select
 
     call pwatch__off( "absorb__update_vel")
@@ -79,11 +79,11 @@ contains
 
     select case( trim(abc_type) )
     case( 'pml' )
-       call absorb_p__update_stress
+      call absorb_p__update_stress
     case( 'cerjan' )
-       call absorb_c__update_stress
+      call absorb_c__update_stress
     case default
-       continue
+      continue
     end select
 
     call pwatch__off( "absorb__update_stress")
@@ -100,11 +100,11 @@ contains
 
     select case( trim(abc_type) )
     case( 'pml' )
-       call absorb_p__checkpoint(io)
+      call absorb_p__checkpoint(io)
     case( 'cerjan' )
-       call absorb_c__checkpoint(io)
+      call absorb_c__checkpoint(io)
     case default
-       continue
+      continue
     end select
 
   end subroutine absorb__checkpoint
@@ -119,11 +119,11 @@ contains
 
     select case( trim(abc_type) )
     case( 'pml' )
-       call absorb_p__restart(io)
+      call absorb_p__restart(io)
     case( 'cerjan' )
-       call absorb_c__restart(io)
+      call absorb_c__restart(io)
     case default
-       continue
+      continue
     end select
 
   end subroutine absorb__restart

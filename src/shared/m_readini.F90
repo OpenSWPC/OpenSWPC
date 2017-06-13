@@ -3,7 +3,7 @@
 !! Read ini-style parameter file
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -39,9 +39,9 @@ module m_readini
   !! --
   interface readini
 
-     module procedure readini_d, readini_s, readini_i, readini_c, readini_l
+    module procedure readini_d, readini_s, readini_i, readini_c, readini_l
 
-  end interface
+  end interface readini
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 contains
@@ -68,9 +68,9 @@ contains
 
     if( .not. isopen ) then
 
-       write(STDERR,'(A)') 'ERROR [readini]: file not open.'
-       var = trim(def)
-       return
+      write(STDERR,'(A)') 'ERROR [readini]: file not open.'
+      var = trim(def)
+      return
 
     end if
 
@@ -85,35 +85,35 @@ contains
 
     do
 
-       !! get one line
-       read(io,'(A)', iostat=ierr) cline
+      !! get one line
+      read(io,'(A)', iostat=ierr) cline
 
-       !! reach to the last line
-       if( ierr /= 0 ) then
-          call info( 'key ' // trim(keyword) //' is not found.' )
-          call info( '    Use default value '//trim(def)//' instead.' )
-          var = trim(def)
-          return
-       end if
+      !! reach to the last line
+      if( ierr /= 0 ) then
+        call info( 'key ' // trim(keyword) //' is not found.' )
+        call info( '    Use default value '//trim(def)//' instead.' )
+        var = trim(def)
+        return
+      end if
 
-       cline = adjustl(cline)
-
-
-       !! comment line
-       if( cline(1:1) == '#' .or. cline(1:1) == '!' ) cycle
+      cline = adjustl(cline)
 
 
-       !! find keyword
-       if( cline(1:keylen) == trim(keyword) ) then
+      !! comment line
+      if( cline(1:1) == '#' .or. cline(1:1) == '!' ) cycle
 
-          cline = adjustl( cline( keylen+1: ) )
 
-          if( cline(1:1) == '=' ) then
-             cline = adjustl(cline(2:))
-             read(cline,*) var
-             exit
-          end if
-       end if
+      !! find keyword
+      if( cline(1:keylen) == trim(keyword) ) then
+
+        cline = adjustl( cline( keylen+1: ) )
+
+        if( cline(1:1) == '=' ) then
+          cline = adjustl(cline(2:))
+          read(cline,*) var
+          exit
+        end if
+      end if
     end do
 
     rewind(io)

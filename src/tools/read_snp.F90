@@ -3,7 +3,7 @@
 !! Read snap files from output of swpc, and export to figure
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -49,15 +49,15 @@ program read_snp
   !! Check Input File
   !!
   if( system__iargc() == 0 ) then
-     call usage_exit()
+    call usage_exit()
   end if
 
 
   call getopt( 'i', is_exist, fn_snp )
   if( .not. is_exist ) then
-     write(STDERR,'(A)') "ERROR [read_snp]: no input file given"
-     write(STDERR,*)
-     call usage_exit
+    write(STDERR,'(A)') "ERROR [read_snp]: no input file given"
+    write(STDERR,*)
+    call usage_exit
   end if
 
   !! existence check
@@ -76,7 +76,7 @@ program read_snp
   ny = hdr%ns2
 #ifdef _NETCDF
   if( snp_type == 'netcdf') then
-      allocate(vid(hdr%nsnp))
+    allocate(vid(hdr%nsnp))
     do i=1, hdr%nsnp
       call nc_chk(nf90_inquire_variable(io_snp, 3+hdr%nmed+i, vname))
       call nc_chk(nf90_inq_varid(io_snp, vname, vid(i)))
@@ -109,10 +109,10 @@ program read_snp
   if( is_exist ) call dat_output( 'bin' )
 
   if( snp_type == 'native' ) then
-     close( io_snp )
+    close( io_snp )
 #ifdef _NETCDF
   else
-     ierr = nf90_close( io_snp )
+    ierr = nf90_close( io_snp )
 #endif
   end if
 
@@ -192,12 +192,12 @@ contains
 
 
     if( typ == 'asc' ) then
-       ext = typ
+      ext = typ
     else if ( typ == 'bin' ) then
-       ext = typ
+      ext = typ
     else
-       write(STDERR,*) 'unknown type'
-       stop
+      write(STDERR,*) 'unknown type'
+      stop
     end if
 
 
@@ -209,30 +209,30 @@ contains
     !! Medium structure
     !!
     if( snp_type == 'native' ) then
-       read( io_snp ) den, lam, rig
+      read( io_snp ) den, lam, rig
 #ifdef _NETCDF
     else
-       call nc_chk( nf90_inq_varid( io_snp, 'rho',    vid_rho ) )
-       call nc_chk( nf90_inq_varid( io_snp, 'lambda', vid_lambda ) )
-       call nc_chk( nf90_inq_varid( io_snp, 'mu',     vid_mu ) )
-       call nc_chk( nf90_get_var( io_snp, vid_rho,    den ) )
-       call nc_chk( nf90_get_var( io_snp, vid_lambda, lam ) )
-       call nc_chk( nf90_get_var( io_snp, vid_mu,     rig ) )
+      call nc_chk( nf90_inq_varid( io_snp, 'rho',    vid_rho ) )
+      call nc_chk( nf90_inq_varid( io_snp, 'lambda', vid_lambda ) )
+      call nc_chk( nf90_inq_varid( io_snp, 'mu',     vid_mu ) )
+      call nc_chk( nf90_get_var( io_snp, vid_rho,    den ) )
+      call nc_chk( nf90_get_var( io_snp, vid_lambda, lam ) )
+      call nc_chk( nf90_get_var( io_snp, vid_mu,     rig ) )
 #endif
     end if
 
     do j=1, ny
-       do i=1, nx
-          vs(i,j) = sqrt(   rig(i,j)              / den(i,j) )
-          vp(i,j) = sqrt( ( lam(i,j)+2*rig(i,j) ) / den(i,j) )
-       end do
+      do i=1, nx
+        vs(i,j) = sqrt(   rig(i,j)              / den(i,j) )
+        vp(i,j) = sqrt( ( lam(i,j)+2*rig(i,j) ) / den(i,j) )
+      end do
     end do
 
     do i=1, nx
-       xx(i) = hdr%beg1 + (i-1) * hdr%ds1
+      xx(i) = hdr%beg1 + (i-1) * hdr%ds1
     end do
     do j=1, ny
-       yy(j) = hdr%beg2 + (j-1) * hdr%ds2
+      yy(j) = hdr%beg2 + (j-1) * hdr%ds2
     end do
 
 
@@ -240,28 +240,28 @@ contains
     write(STDERR,*) trim(fn_dat)
 
     if( typ=='asc') then
-       call std__getio(io)
-       open( io, file=fn_dat, action='write' )
+      call std__getio(io)
+      open( io, file=fn_dat, action='write' )
 
-       fmt = "(2F15.5,3ES15.5)"
+      fmt = "(2F15.5,3ES15.5)"
 
-       do j=1, ny
-          do i=1, nx
-             write(io,fmt) xx(i), yy(j), vp(i,j), vs(i,j), den(i,j)
-          end do
-          write(io,*)
-       end do
+      do j=1, ny
+        do i=1, nx
+          write(io,fmt) xx(i), yy(j), vp(i,j), vs(i,j), den(i,j)
+        end do
+        write(io,*)
+      end do
 
-       close(io)
+      close(io)
     else
-       call std__getio(io)
-       open( io, file=fn_dat, action='write', access='stream', form='unformatted' )
-       do j=1, ny
-          do i=1, nx
-             write(io) xx(i), yy(j), vp(i,j), vs(i,j), den(i,j)
-          end do
-       end do
-       close(io)
+      call std__getio(io)
+      open( io, file=fn_dat, action='write', access='stream', form='unformatted' )
+      do j=1, ny
+        do i=1, nx
+          write(io) xx(i), yy(j), vp(i,j), vs(i,j), den(i,j)
+        end do
+      end do
+      close(io)
     end if
 
 
@@ -280,68 +280,68 @@ contains
     is_eof = .false.
     it = -iskip
     do
-       t = (it + iskip) * hdr%dt
+      t = (it + iskip) * hdr%dt
 
-       if( snp_type == 'native' )then
-          do i=1, hdr%nsnp
-             read( io_snp, iostat = ierr ) amp(i,:,:)
-             if( ierr /= 0 ) then
-                write(STDERR,*) "EOF detected"
-                is_eof = .true.
-                exit
-             end if
-          end do
-          if( is_eof ) exit
+      if( snp_type == 'native' )then
+        do i=1, hdr%nsnp
+          read( io_snp, iostat = ierr ) amp(i,:,:)
+          if( ierr /= 0 ) then
+            write(STDERR,*) "EOF detected"
+            is_eof = .true.
+            exit
+          end if
+        end do
+        if( is_eof ) exit
 #ifdef _NETCDF
-       else
-          count = (/ nx, ny, 1/)
-          start = (/ 1, 1, it + iskip + 1 /)
-          do i=1, hdr%nsnp
-             call nc_chk( nf90_get_var( io_snp, vid(i), amp(i,:,:), start=start, count=count ) )
+      else
+        count = (/ nx, ny, 1/)
+        start = (/ 1, 1, it + iskip + 1 /)
+        do i=1, hdr%nsnp
+          call nc_chk( nf90_get_var( io_snp, vid(i), amp(i,:,:), start=start, count=count ) )
+        end do
+
+        if( it == nt ) then
+          is_eof = .true.
+          exit
+        end if
+#endif
+      end if
+
+      if( it >= 0 ) then
+        write(ct, '(F6.1)') t
+        write(cit,'(I6.6)') it
+
+        fn_dat = trim(odir)//'/'//trim(hdr%title)// '.'//trim(hdr%coordinate)//'.'//trim(hdr%datatype)//'.'//cit//'.'//ext
+        write(STDERR,*) trim(fn_dat)
+
+        if( typ=='asc') then
+          call std__getio(io)
+          open( io, file=fn_dat, action='write' )
+
+          write(ci,'(I1)') hdr%nsnp
+          fmt = "(2F15.5,"//ci//"ES15.5)"
+
+          do j=1, ny
+            do i=1, nx
+              write(io,fmt) xx(i), yy(j), amp(:,i,j)
+            end do
+            write(io,*)
           end do
 
-          if( it == nt ) then
-             is_eof = .true.
-             exit
-          end if
-#endif
-       end if
+          close(io)
+        else
+          call std__getio(io)
+          open( io, file=fn_dat, action='write', access='stream', form='unformatted' )
+          do j=1, ny
+            do i=1, nx
+              write(io) xx(i), yy(j), amp(:,i,j)
+            end do
+          end do
+          close(io)
+        end if
+      end if
 
-       if( it >= 0 ) then
-          write(ct, '(F6.1)') t
-          write(cit,'(I6.6)') it
-
-          fn_dat = trim(odir)//'/'//trim(hdr%title)// '.'//trim(hdr%coordinate)//'.'//trim(hdr%datatype)//'.'//cit//'.'//ext
-          write(STDERR,*) trim(fn_dat)
-
-          if( typ=='asc') then
-             call std__getio(io)
-             open( io, file=fn_dat, action='write' )
-
-             write(ci,'(I1)') hdr%nsnp
-             fmt = "(2F15.5,"//ci//"ES15.5)"
-
-             do j=1, ny
-                do i=1, nx
-                   write(io,fmt) xx(i), yy(j), amp(:,i,j)
-                end do
-                write(io,*)
-             end do
-
-             close(io)
-          else
-             call std__getio(io)
-             open( io, file=fn_dat, action='write', access='stream', form='unformatted' )
-             do j=1, ny
-                do i=1, nx
-                   write(io) xx(i), yy(j), amp(:,i,j)
-                end do
-             end do
-             close(io)
-          end if
-       end if
-
-       it = it + 1
+      it = it + 1
     end do
 
 
@@ -443,27 +443,27 @@ contains
     !!
     call getopt( 'pall', is_exist )
     if( is_exist ) then
-       nxs = nx
-       nys = ny
-       is = 1
-       js = 1
+      nxs = nx
+      nys = ny
+      is = 1
+      js = 1
     else
-       if( hdr%coordinate == 'fs' .or. hdr%coordinate == 'ob' .or. hdr%coordinate == 'xy' ) then
-          nxs = nx - 2 * hdr%na1
-          nys = ny - 2 * hdr%na2
-          is = hdr%na1+1
-          js = hdr%na2+1
-       else
-          nxs = nx - 2 * hdr%na1
-          nys = ny - 2 * hdr%na2
-          is = hdr%na1+1
-          js = hdr%na2+1
-       end if
+      if( hdr%coordinate == 'fs' .or. hdr%coordinate == 'ob' .or. hdr%coordinate == 'xy' ) then
+        nxs = nx - 2 * hdr%na1
+        nys = ny - 2 * hdr%na2
+        is = hdr%na1+1
+        js = hdr%na2+1
+      else
+        nxs = nx - 2 * hdr%na1
+        nys = ny - 2 * hdr%na2
+        is = hdr%na1+1
+        js = hdr%na2+1
+      end if
     end if
     if( hdr%coordinate == 'fs' .or. hdr%coordinate == 'ob' .or. hdr%coordinate == 'xy' ) then
-       is_transpose = .true.
+      is_transpose = .true.
     else
-       is_transpose = .false.
+      is_transpose = .false.
     end if
 
 
@@ -475,34 +475,34 @@ contains
     !! Medium structure
     !!
     if( snp_type == 'native' ) then
-       read( io_snp ) den, lam, rig
+      read( io_snp ) den, lam, rig
 #ifdef _NETCDF
     else
-       call nc_chk( nf90_inq_varid( io_snp, 'rho',    vid_rho ) )
-       call nc_chk( nf90_inq_varid( io_snp, 'lambda', vid_lambda ) )
-       call nc_chk( nf90_inq_varid( io_snp, 'mu',     vid_mu ) )
-       call nc_chk( nf90_get_var( io_snp, vid_rho,    den ) )
-       call nc_chk( nf90_get_var( io_snp, vid_lambda, lam ) )
-       call nc_chk( nf90_get_var( io_snp, vid_mu,     rig ) )
+      call nc_chk( nf90_inq_varid( io_snp, 'rho',    vid_rho ) )
+      call nc_chk( nf90_inq_varid( io_snp, 'lambda', vid_lambda ) )
+      call nc_chk( nf90_inq_varid( io_snp, 'mu',     vid_mu ) )
+      call nc_chk( nf90_get_var( io_snp, vid_rho,    den ) )
+      call nc_chk( nf90_get_var( io_snp, vid_lambda, lam ) )
+      call nc_chk( nf90_get_var( io_snp, vid_mu,     rig ) )
 #endif
     end if
 
     do j=1, ny
-       do i=1, nx
-          vs(i,j) = sqrt(   rig(i,j)              / den(i,j) )
-          vp(i,j) = sqrt( ( lam(i,j)+2*rig(i,j) ) / den(i,j) )
-       end do
+      do i=1, nx
+        vs(i,j) = sqrt(   rig(i,j)              / den(i,j) )
+        vp(i,j) = sqrt( ( lam(i,j)+2*rig(i,j) ) / den(i,j) )
+      end do
     end do
     !! horizontal case: read topography
     if( hdr%coordinate == 'fs' .or. hdr%coordinate == 'ob' .or. hdr%coordinate == 'xy' ) then
-       if( snp_type == 'native' ) then
-          read( io_snp ) topo
+      if( snp_type == 'native' ) then
+        read( io_snp ) topo
 #ifdef _NETCDF
-       else
-          call nc_chk( nf90_inq_varid( io_snp, 'topo', vid_topo ) )
-          call nc_chk( nf90_get_var( io_snp, vid_topo, topo ) )
+      else
+        call nc_chk( nf90_inq_varid( io_snp, 'topo', vid_topo ) )
+        call nc_chk( nf90_get_var( io_snp, vid_topo, topo ) )
 #endif
-       end if
+      end if
     end if
 
 
@@ -518,56 +518,56 @@ contains
 
     if( hdr%coordinate == 'fs' .or. hdr%coordinate == 'ob' ) then
 
-       !! surface map: use topography data for background color
+      !! surface map: use topography data for background color
 
-       call color__set('mytopo', cp)
+      call color__set('mytopo', cp)
 
-       do j=1, ny
-          do i=1, nx
-             call color__interpolate( cp, dble(topo(i,j)), cmed(:,i,j) )
-          end do
-       end do
+      do j=1, ny
+        do i=1, nx
+          call color__interpolate( cp, dble(topo(i,j)), cmed(:,i,j) )
+        end do
+      end do
 
 
     else
 
-       !! other cases: coloring by density with discontinuous structure detection
-       do j=1, ny
-          do i=1, nx
-             wk =  1.2 - 0.1 * exp(1.2*( ( vp(i,j)-amin )/(amax-amin) ) )
-             if( vs(i,j) > 0.1 ) then ! solid
-                cmed(1,i,j) = min( max( int( 255 * wk ), 0 ), 255 )
-                cmed(2,i,j) = min( max( int( 255 * wk ), 0 ), 255 )
-                cmed(3,i,j) = min( max( int( 220 * wk ), 0 ), 255 )
-             else if ( vp(i,j) > 0.1 ) then ! ocean
-                cmed(1,i,j) = int( 220 * wk )
-                cmed(2,i,j) = int( 235 * wk )
-                cmed(3,i,j) = int( 255 * wk )
-             else
-                cmed(:,i,j) = 255 ! air/vaccum
-             end if
-          end do
-       end do
+      !! other cases: coloring by density with discontinuous structure detection
+      do j=1, ny
+        do i=1, nx
+          wk =  1.2 - 0.1 * exp(1.2*( ( vp(i,j)-amin )/(amax-amin) ) )
+          if( vs(i,j) > 0.1 ) then ! solid
+            cmed(1,i,j) = min( max( int( 255 * wk ), 0 ), 255 )
+            cmed(2,i,j) = min( max( int( 255 * wk ), 0 ), 255 )
+            cmed(3,i,j) = min( max( int( 220 * wk ), 0 ), 255 )
+          else if ( vp(i,j) > 0.1 ) then ! ocean
+            cmed(1,i,j) = int( 220 * wk )
+            cmed(2,i,j) = int( 235 * wk )
+            cmed(3,i,j) = int( 255 * wk )
+          else
+            cmed(:,i,j) = 255 ! air/vaccum
+          end if
+        end do
+      end do
 
-       !! edge detection (Sobel's edge detection operator)
-       do i=2, nx-1
-          do j=2, ny-1
+      !! edge detection (Sobel's edge detection operator)
+      do i=2, nx-1
+        do j=2, ny-1
 
-             sobel_edge_x = den(i+1,j+1) + 2*den(i+1,j) + den(i+1,j-1) &
-                          - den(i-1,j+1) - 2*den(i-1,j) - den(i-1,j-1)
-             sobel_edge_y = den(i+1,j+1) + 2*den(i,j+1) + den(i-1,j+1) &
-                          - den(i+1,j-1) - 2*den(i,j-1) - den(i-1,j-1)
-             sobel_edge = sqrt( sobel_edge_x**2 + sobel_edge_y**2 )
-             if( sobel_edge > 0. ) then
-               medium_bound(i,j)             = max( ( 1-sobel_edge/10 )**2, 0. )
+          sobel_edge_x = den(i+1,j+1) + 2*den(i+1,j) + den(i+1,j-1) &
+              - den(i-1,j+1) - 2*den(i-1,j) - den(i-1,j-1)
+          sobel_edge_y = den(i+1,j+1) + 2*den(i,j+1) + den(i-1,j+1) &
+              - den(i+1,j-1) - 2*den(i,j-1) - den(i-1,j-1)
+          sobel_edge = sqrt( sobel_edge_x**2 + sobel_edge_y**2 )
+          if( sobel_edge > 0. ) then
+            medium_bound(i,j)             = max( ( 1-sobel_edge/10 )**2, 0. )
 
-             end if
-          end do
-       end do
-       medium_bound(1,:)  = medium_bound(2,:)
-       medium_bound(nx,:) = medium_bound(nx-1,:)
-       medium_bound(:,1)  = medium_bound(:,2)
-       medium_bound(:,ny) = medium_bound(:,ny-1)
+          end if
+        end do
+      end do
+      medium_bound(1,:)  = medium_bound(2,:)
+      medium_bound(nx,:) = medium_bound(nx-1,:)
+      medium_bound(:,1)  = medium_bound(:,2)
+      medium_bound(:,ny) = medium_bound(:,ny-1)
 
     end if
 
@@ -586,9 +586,9 @@ contains
     !!
     allocate( amp(hdr%nsnp,nx,ny) )
     if( is_transpose ) then
-       allocate( img(3,nys,nxs) )
+      allocate( img(3,nys,nxs) )
     else
-       allocate( img(3,nxs,nys) )
+      allocate( img(3,nxs,nys) )
     end if
 
 
@@ -606,200 +606,200 @@ contains
     !!
     is_eof = .false.
     do
-       t = (it+iskip) * hdr%dt
+      t = (it+iskip) * hdr%dt
 
-       if( snp_type == 'native' ) then
-          do i=1, hdr%nsnp
-             read( io_snp, iostat = ierr ) amp(i,:,:)
-             if( ierr /= 0 ) then
-                write(STDERR,*) "EOF detected"
-                is_eof = .true.
-                exit
-             end if
+      if( snp_type == 'native' ) then
+        do i=1, hdr%nsnp
+          read( io_snp, iostat = ierr ) amp(i,:,:)
+          if( ierr /= 0 ) then
+            write(STDERR,*) "EOF detected"
+            is_eof = .true.
+            exit
+          end if
 
-          end do
-          if( is_eof ) exit
+        end do
+        if( is_eof ) exit
 #ifdef _NETCDF
-       else
-          if( it == nt ) then
-             is_eof = .true.
-             exit
-          end if
-          count = (/ nx, ny, 1/)
-          start = (/ 1, 1, it + iskip + 1 /)
-          do i=1, hdr%nsnp
-             call nc_chk( nf90_get_var( io_snp, vid(i), amp(i,:,:), start=start, count=count ) )
-          end do
+      else
+        if( it == nt ) then
+          is_eof = .true.
+          exit
+        end if
+        count = (/ nx, ny, 1/)
+        start = (/ 1, 1, it + iskip + 1 /)
+        do i=1, hdr%nsnp
+          call nc_chk( nf90_get_var( io_snp, vid(i), amp(i,:,:), start=start, count=count ) )
+        end do
 #endif
-       end if
+      end if
 
-       if( it < 0 ) then
-          it = it + 1
-          cycle
-       end if
-
-
-       if( is_lpf ) then
-          do i=1, hdr%nsnp
-             call filt2d__lowpass( nx, ny, hdr%ds1, hdr%ds2, amp(i,:,:), kmax, 2 )
-          end do
-       end if
-
-       write(ct, '(F6.1)') t
-       write(cit,'(I6.6)') it
-
-       fn_snp = trim(odir)//'/'//trim(hdr%title)// '.'//trim(hdr%coordinate)//'.'//trim(hdr%datatype)//'.'//cit//'.'//typ
-       write(STDERR,*) trim(fn_snp)
-
-       do i=1, hdr%nsnp
-          amp(i,:,:) = mul(i) * abs(amp(i,:,:))
-       end do
+      if( it < 0 ) then
+        it = it + 1
+        cycle
+      end if
 
 
+      if( is_lpf ) then
+        do i=1, hdr%nsnp
+          call filt2d__lowpass( nx, ny, hdr%ds1, hdr%ds2, amp(i,:,:), kmax, 2 )
+        end do
+      end if
 
-       !!
-       !! coloring
-       !!
-       do j=js+1, ny-js
-          do i=is+1, nx-is
+      write(ct, '(F6.1)') t
+      write(cit,'(I6.6)') it
 
-             if( is_transpose ) then
-                ii = j-js+1
-                jj = nxs-(i-is+1)+1
+      fn_snp = trim(odir)//'/'//trim(hdr%title)// '.'//trim(hdr%coordinate)//'.'//trim(hdr%datatype)//'.'//cit//'.'//typ
+      write(STDERR,*) trim(fn_snp)
 
-             else
-                ii = i-is+1
-                jj = j-js+1
-             end if
-
-             if( hdr%datatype == "ps" ) then
-
-                ! wave
-                div = amp(1,i,j)
-                rot = sqrt( sum( amp(2:hdr%nsnp,i,j)**2 ) ) ! include psv and 3D
-
-                img(1,ii,jj) = cmed(1,i,j) - int( 255*rot ) / 4
-                img(2,ii,jj) = cmed(2,i,j) - int( 255*div ) / 2
-                img(3,ii,jj) = cmed(3,i,j) - int( 255*(div+rot) ) /3
-
-             else if ( hdr%datatype == "v3" .or. hdr%datatype == "u3"  ) then
-
-                if( is_abs ) then
-
-                   !! absolute value plot by hot color palette
-                   call color__interpolate( cp_hot, dble(sqrt( sum(amp(:,i,j)**2) )), ctmp(:) )
-
-                   !! reducing color
-                   img(1,ii,jj) = cmed(1,i,j) - ( 255 - ctmp(1) )
-                   img(2,ii,jj) = cmed(2,i,j) - ( 255 - ctmp(2) )
-                   img(3,ii,jj) = cmed(3,i,j) - ( 255 - ctmp(3) )
-
-                else
-
-                   ud = abs(amp(3,i,j))
-                   horiz = sqrt(amp(1,i,j)**2 + amp(2,i,j)**2)
-
-                   img(1,ii,jj) = cmed(1,i,j) - int( 255*horiz      ) / 4
-                   img(2,ii,jj) = cmed(2,i,j) - int( 255*ud         ) / 2
-                   img(3,ii,jj) = cmed(3,i,j) - int( 255*(ud+horiz) ) / 3
-
-
-                end if
-
-
-             else if ( hdr%datatype == "v2" .or. hdr%datatype == "u2" ) then
-
-                if( is_abs ) then
-
-                   !! absolute value plot by hot color palette
-                   call color__interpolate( cp_hot, dble( sqrt( sum(amp(:,i,j)**2) )), ctmp(:) )
-
-                   !! reducing color
-                   img(1,ii,jj) = cmed(1,i,j) - ( 255 - ctmp(1) )
-                   img(2,ii,jj) = cmed(2,i,j) - ( 255 - ctmp(2) )
-                   img(3,ii,jj) = cmed(3,i,j) - ( 255 - ctmp(3) )
-
-                else
-
-                   ud = abs(amp(2,i,j))
-                   horiz = abs(amp(1,i,j))
-
-                   img(1,ii,jj) = cmed(1,i,j) - int( 255*horiz      ) / 4
-                   img(2,ii,jj) = cmed(2,i,j) - int( 255* ud        ) / 2
-                   img(3,ii,jj) = cmed(3,i,j) - int( 255*(ud+horiz) ) / 3
+      do i=1, hdr%nsnp
+        amp(i,:,:) = mul(i) * abs(amp(i,:,:))
+      end do
 
 
 
-                end if
+      !!
+      !! coloring
+      !!
+      do j=js+1, ny-js
+        do i=is+1, nx-is
 
-             else if ( hdr%datatype == "vy" .or. hdr%datatype == "uy" ) then
+          if( is_transpose ) then
+            ii = j-js+1
+            jj = nxs-(i-is+1)+1
 
-
-                   ud = 0
-                   horiz = abs(amp(1,i,j))
-
-                   img(1,ii,jj) = cmed(1,i,j) - int( 255*horiz      ) / 4
-                   img(2,ii,jj) = cmed(2,i,j) - int( 255* ud        ) / 2
-                   img(3,ii,jj) = cmed(3,i,j) - int( 255*(ud+horiz) ) / 3
-
-
-             end if
-
-             ! normalize
-             img(1,ii,jj) =  max( 20, min( 255, img(1,ii,jj) ) )
-             img(2,ii,jj) =  max( 20, min( 255, img(2,ii,jj) ) )
-             img(3,ii,jj) =  max( 20, min( 255, img(3,ii,jj) ) )
-
-             ! medium boudary
-             img(1,ii,jj) = int( img(1,ii,jj) * medium_bound(i,j) )
-             img(2,ii,jj) = int( img(2,ii,jj) * medium_bound(i,j) )
-             img(3,ii,jj) = int( img(3,ii,jj) * medium_bound(i,j) )
-
-          end do
-       end do
-
-
-
-       if( is_transpose ) then
-          !! surrounding line
-          img(:,1:nys     ,1:2       ) = 0
-          img(:,1:nys     ,nxs-1:nxs ) = 0
-          img(:,1:2       ,1:nxs     ) = 0
-          img(:,nys-1:nys ,1:nxs     ) = 0
-
-          !! timemark
-          call stamp__char("t = "//trim(ct)//' s', 20, nxs-40, nys, nxs, img, .false. )
-
-
-          !! export
-          if( typ == 'ppm' ) then
-             call ppm__write( trim(fn_snp), nys, nxs, img )
-          else if ( typ == 'bmp' ) then
-             call bmp__write( trim(fn_snp), nys, nxs, img )
+          else
+            ii = i-is+1
+            jj = j-js+1
           end if
 
-       else
+          if( hdr%datatype == "ps" ) then
 
-          !! surrounding line
-          img(:,1:nxs     ,1:2       ) = 0
-          img(:,1:nxs     ,nys-1:nys ) = 0
-          img(:,1:2       ,1:nys     ) = 0
-          img(:,nxs-1:nxs ,1:nys     ) = 0
+            ! wave
+            div = amp(1,i,j)
+            rot = sqrt( sum( amp(2:hdr%nsnp,i,j)**2 ) ) ! include psv and 3D
 
-          !! timemark
-          call stamp__char("t = "//trim(ct)//'s', 20, nys-40, nxs, nys, img, .false. )
+            img(1,ii,jj) = cmed(1,i,j) - int( 255*rot ) / 4
+            img(2,ii,jj) = cmed(2,i,j) - int( 255*div ) / 2
+            img(3,ii,jj) = cmed(3,i,j) - int( 255*(div+rot) ) /3
+
+          else if ( hdr%datatype == "v3" .or. hdr%datatype == "u3"  ) then
+
+            if( is_abs ) then
+
+              !! absolute value plot by hot color palette
+              call color__interpolate( cp_hot, dble(sqrt( sum(amp(:,i,j)**2) )), ctmp(:) )
+
+              !! reducing color
+              img(1,ii,jj) = cmed(1,i,j) - ( 255 - ctmp(1) )
+              img(2,ii,jj) = cmed(2,i,j) - ( 255 - ctmp(2) )
+              img(3,ii,jj) = cmed(3,i,j) - ( 255 - ctmp(3) )
+
+            else
+
+              ud = abs(amp(3,i,j))
+              horiz = sqrt(amp(1,i,j)**2 + amp(2,i,j)**2)
+
+              img(1,ii,jj) = cmed(1,i,j) - int( 255*horiz      ) / 4
+              img(2,ii,jj) = cmed(2,i,j) - int( 255*ud         ) / 2
+              img(3,ii,jj) = cmed(3,i,j) - int( 255*(ud+horiz) ) / 3
 
 
-          !! export
-          if( typ == 'ppm' ) then
-             call ppm__write( trim(fn_snp), nxs, nys, img )
-          else if ( typ == 'bmp' ) then
-             call bmp__write( trim(fn_snp), nxs, nys, img )
+            end if
+
+
+          else if ( hdr%datatype == "v2" .or. hdr%datatype == "u2" ) then
+
+            if( is_abs ) then
+
+              !! absolute value plot by hot color palette
+              call color__interpolate( cp_hot, dble( sqrt( sum(amp(:,i,j)**2) )), ctmp(:) )
+
+              !! reducing color
+              img(1,ii,jj) = cmed(1,i,j) - ( 255 - ctmp(1) )
+              img(2,ii,jj) = cmed(2,i,j) - ( 255 - ctmp(2) )
+              img(3,ii,jj) = cmed(3,i,j) - ( 255 - ctmp(3) )
+
+            else
+
+              ud = abs(amp(2,i,j))
+              horiz = abs(amp(1,i,j))
+
+              img(1,ii,jj) = cmed(1,i,j) - int( 255*horiz      ) / 4
+              img(2,ii,jj) = cmed(2,i,j) - int( 255* ud        ) / 2
+              img(3,ii,jj) = cmed(3,i,j) - int( 255*(ud+horiz) ) / 3
+
+
+
+            end if
+
+          else if ( hdr%datatype == "vy" .or. hdr%datatype == "uy" ) then
+
+
+            ud = 0
+            horiz = abs(amp(1,i,j))
+
+            img(1,ii,jj) = cmed(1,i,j) - int( 255*horiz      ) / 4
+            img(2,ii,jj) = cmed(2,i,j) - int( 255* ud        ) / 2
+            img(3,ii,jj) = cmed(3,i,j) - int( 255*(ud+horiz) ) / 3
+
+
           end if
 
-       end if
+          ! normalize
+          img(1,ii,jj) =  max( 20, min( 255, img(1,ii,jj) ) )
+          img(2,ii,jj) =  max( 20, min( 255, img(2,ii,jj) ) )
+          img(3,ii,jj) =  max( 20, min( 255, img(3,ii,jj) ) )
 
-       it = it + 1
+          ! medium boudary
+          img(1,ii,jj) = int( img(1,ii,jj) * medium_bound(i,j) )
+          img(2,ii,jj) = int( img(2,ii,jj) * medium_bound(i,j) )
+          img(3,ii,jj) = int( img(3,ii,jj) * medium_bound(i,j) )
+
+        end do
+      end do
+
+
+
+      if( is_transpose ) then
+        !! surrounding line
+        img(:,1:nys     ,1:2       ) = 0
+        img(:,1:nys     ,nxs-1:nxs ) = 0
+        img(:,1:2       ,1:nxs     ) = 0
+        img(:,nys-1:nys ,1:nxs     ) = 0
+
+        !! timemark
+        call stamp__char("t = "//trim(ct)//' s', 20, nxs-40, nys, nxs, img, .false. )
+
+
+        !! export
+        if( typ == 'ppm' ) then
+          call ppm__write( trim(fn_snp), nys, nxs, img )
+        else if ( typ == 'bmp' ) then
+          call bmp__write( trim(fn_snp), nys, nxs, img )
+        end if
+
+      else
+
+        !! surrounding line
+        img(:,1:nxs     ,1:2       ) = 0
+        img(:,1:nxs     ,nys-1:nys ) = 0
+        img(:,1:2       ,1:nys     ) = 0
+        img(:,nxs-1:nxs ,1:nys     ) = 0
+
+        !! timemark
+        call stamp__char("t = "//trim(ct)//'s', 20, nys-40, nxs, nys, img, .false. )
+
+
+        !! export
+        if( typ == 'ppm' ) then
+          call ppm__write( trim(fn_snp), nxs, nys, img )
+        else if ( typ == 'bmp' ) then
+          call bmp__write( trim(fn_snp), nxs, nys, img )
+        end if
+
+      end if
+
+      it = it + 1
     end do
 
 
@@ -820,7 +820,7 @@ contains
     real :: f
     real :: p1, p2, p3
     character(10) :: cr, cg, cb
-  !--
+    !--
     hh = h
 
     ss = s

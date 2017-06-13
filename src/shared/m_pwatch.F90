@@ -3,7 +3,7 @@
 !! Stopwatch module for MPI parallel computation environment
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 module m_pwatch
@@ -66,7 +66,7 @@ contains
 
     !! initializze
     do i = 1, NBLOCK_MAX
-       tim(i) = 0
+      tim(i) = 0
     end do
 
     c0(:) = 0
@@ -101,15 +101,15 @@ contains
     !! table search by name
     iblock(irank) = 0
     do i=1, nblock
-       if( trim(block_name(i)) == trim(name) ) then
-          iblock(irank) = i
-          exit
-       end if
+      if( trim(block_name(i)) == trim(name) ) then
+        iblock(irank) = i
+        exit
+      end if
     end do
     if( iblock(irank) == 0 ) then ! generate new block
-       nblock = nblock + 1
-       iblock(irank) = nblock
-       block_name(iblock(irank)) = trim( name )
+      nblock = nblock + 1
+      iblock(irank) = nblock
+      block_name(iblock(irank)) = trim( name )
     end if
 
     !!
@@ -118,14 +118,14 @@ contains
     call system_clock(cc, count_rate, count_max)
 
     if( irank > 1 ) then
-       ib = iblock( irank-1 )
-       !! First stop the time measurement of previous block
+      ib = iblock( irank-1 )
+      !! First stop the time measurement of previous block
 
-       if( cc >= c0(ib) ) then
-          tim(ib) = tim(ib) + ( cc - c0(ib) ) / real( count_rate )
-       else
-          tim(ib) = tim(ib) + ( count_max + cc - c0(ib) ) / real( count_rate )
-       end if
+      if( cc >= c0(ib) ) then
+        tim(ib) = tim(ib) + ( cc - c0(ib) ) / real( count_rate )
+      else
+        tim(ib) = tim(ib) + ( count_max + cc - c0(ib) ) / real( count_rate )
+      end if
 
     end if
 
@@ -162,23 +162,23 @@ contains
     !! search block name
     !!
     if( trim(block_name(iblock(irank)))  == trim(name) ) then
-       ib = iblock(irank)
+      ib = iblock(irank)
 
-       if( cc >= c0(ib) ) then
-          tim(ib) = tim(ib) + ( cc-c0(ib) ) / real( count_rate )
-       else
-          tim(ib) = tim(ib) + ( count_max + cc-c0(ib) ) / real( count_rate )
-       end if
+      if( cc >= c0(ib) ) then
+        tim(ib) = tim(ib) + ( cc-c0(ib) ) / real( count_rate )
+      else
+        tim(ib) = tim(ib) + ( count_max + cc-c0(ib) ) / real( count_rate )
+      end if
 
-       ! stop if it is the highest rank
-       if( irank == 1 ) then
-          return
-       else ! check the upper rank
-          c0(iblock(irank-1)) = cc
-          irank = irank-1
-       end if
+      ! stop if it is the highest rank
+      if( irank == 1 ) then
+        return
+      else ! check the upper rank
+        c0(iblock(irank-1)) = cc
+        irank = irank-1
+      end if
     else
-       write(STDERR,'(A)') 'ERROR [pwatch__off]: name ' // trim(name) // ' does not match with '//trim(block_name(iblock(irank)))
+      write(STDERR,'(A)') 'ERROR [pwatch__off]: name ' // trim(name) // ' does not match with '//trim(block_name(iblock(irank)))
     end if
 
   end subroutine pwatch__off
@@ -217,23 +217,23 @@ contains
     !! MPI data collection
     !!
     do i=1, nblock
-       buf = 0.0
-       buf(myid) = tim0(myid,i)
-       call mpi_reduce( buf(0:nproc-1), buf2(0:nproc-1), nproc, MPI_REAL, MPI_SUM, ionode, mpi_comm_world, ierr )
-       tim0(0:nproc-1,i) = buf2(0:nproc-1)
+      buf = 0.0
+      buf(myid) = tim0(myid,i)
+      call mpi_reduce( buf(0:nproc-1), buf2(0:nproc-1), nproc, MPI_REAL, MPI_SUM, ionode, mpi_comm_world, ierr )
+      tim0(0:nproc-1,i) = buf2(0:nproc-1)
     end do
 
     if( myid == ionode ) then
 
-       write(io,'(A)') '#   CPU     #ID       Procedure Name         Real Time[s]   Total Time[s]   Occupancy[%]  Total Occp.[%] '
-       write(io,'(A)') '# -------+-------+-------------------------+--------------+--------------+--------------+----------------'
+      write(io,'(A)') '#   CPU     #ID       Procedure Name         Real Time[s]   Total Time[s]   Occupancy[%]  Total Occp.[%] '
+      write(io,'(A)') '# -------+-------+-------------------------+--------------+--------------+--------------+----------------'
 
-       do j=0, nproc-1
-          trate(1:nblock) = tim0(j,1:nblock) / tsum(j) * 100.0
-          do i=1, nblock
-             write(io,'(I8.5,I8.5,"    ",A22,4F15.3)') j, i, block_name(i), tim0(j,i), sum(tim0(j,1:i)), trate(i), sum(trate(1:i))
-          end do
-       end do
+      do j=0, nproc-1
+        trate(1:nblock) = tim0(j,1:nblock) / tsum(j) * 100.0
+        do i=1, nblock
+          write(io,'(I8.5,I8.5,"    ",A22,4F15.3)') j, i, block_name(i), tim0(j,i), sum(tim0(j,1:i)), trate(i), sum(trate(1:i))
+        end do
+      end do
 
     end if
 

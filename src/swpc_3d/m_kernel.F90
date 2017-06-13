@@ -3,7 +3,7 @@
 !! Computation kernel for FDM numerical simulation
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -87,21 +87,21 @@ contains
     Sxy (       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0_MP
 
     if( nm > 0 ) then
-       Rxx ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
-       Ryy ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
-       Rzz ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
-       Ryz ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
-       Rxz ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
-       Rxy ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
+      Rxx ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
+      Ryy ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
+      Rzz ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
+      Ryz ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
+      Rxz ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
+      Rxy ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
 
-       do m=1, nm
-          c1(m) = ( 2 * ts(m) - dt ) / ( 2 * ts(m) + dt )
-          c2(m) = ( 2              ) / ( 2 * ts(m) + dt ) / nm
-       end do
-       d2 = sum( dt / ( 2*ts(:) - dt ) ) / nm
-       do m=1, nm
-          d1(m) = 2 * ts(m) / ( 2*ts(m) - dt )
-       end do
+      do m=1, nm
+        c1(m) = ( 2 * ts(m) - dt ) / ( 2 * ts(m) + dt )
+        c2(m) = ( 2              ) / ( 2 * ts(m) + dt ) / nm
+      end do
+      d2 = sum( dt / ( 2*ts(:) - dt ) ) / nm
+      do m=1, nm
+        d1(m) = 2 * ts(m) / ( 2*ts(m) - dt )
+      end do
 
     end if
 
@@ -135,74 +135,74 @@ contains
 #endif
     do j=jbeg_k, jend_k
 
-       do i=ibeg_k, iend_k
+      do i=ibeg_k, iend_k
 
-          !!
-          !! derivateives
-          !!
+        !!
+        !! derivateives
+        !!
 
-          !! stress derivatives
-          do k=kbeg_k, kend_k
-             d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r40x  -  (  Sxx(k  ,i+2,j  ) - Sxx(k  ,i-1,j  )  ) * r41x &
-                      + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r40y  -  (  Sxy(k  ,i  ,j+1) - Sxy(k  ,i  ,j-2)  ) * r41y &
-                      + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r40z  -  (  Sxz(k+1,i  ,j  ) - Sxz(k-2,i  ,j  )  ) * r41z
+        !! stress derivatives
+        do k=kbeg_k, kend_k
+          d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r40x  -  (  Sxx(k  ,i+2,j  ) - Sxx(k  ,i-1,j  )  ) * r41x &
+                   + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r40y  -  (  Sxy(k  ,i  ,j+1) - Sxy(k  ,i  ,j-2)  ) * r41y &
+                   + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r40z  -  (  Sxz(k+1,i  ,j  ) - Sxz(k-2,i  ,j  )  ) * r41z
 
-             d3Sy3(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r40x  -  (  Sxy(k  ,i+1,j  ) - Sxy(k  ,i-2,j  )  ) * r41x &
-                      + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r40y  -  (  Syy(k  ,i  ,j+2) - Syy(k  ,i  ,j-1)  ) * r41y &
-                      + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r40z  -  (  Syz(k+1,i  ,j  ) - Syz(k-2,i  ,j  )  ) * r41z
+          d3Sy3(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r40x  -  (  Sxy(k  ,i+1,j  ) - Sxy(k  ,i-2,j  )  ) * r41x &
+                   + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r40y  -  (  Syy(k  ,i  ,j+2) - Syy(k  ,i  ,j-1)  ) * r41y &
+                   + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r40z  -  (  Syz(k+1,i  ,j  ) - Syz(k-2,i  ,j  )  ) * r41z
 
-             d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r40x  -  (  Sxz(k  ,i+1,j  ) - Sxz(k  ,i-2,j  )  ) * r41x &
-                      + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r40y  -  (  Syz(k  ,i  ,j+1) - Syz(k  ,i  ,j-2)  ) * r41y &
-                      + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r40z  -  (  Szz(k+2,i  ,j  ) - Szz(k-1,i  ,j  )  ) * r41z
-          end do
+          d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r40x  -  (  Sxz(k  ,i+1,j  ) - Sxz(k  ,i-2,j  )  ) * r41x &
+                   + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r40y  -  (  Syz(k  ,i  ,j+1) - Syz(k  ,i  ,j-2)  ) * r41y &
+                   + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r40z  -  (  Szz(k+2,i  ,j  ) - Szz(k-1,i  ,j  )  ) * r41z
+        end do
 
-          !! overwrite around free surface
+        !! overwrite around free surface
 #ifdef _ES
-!CDIR NOVECTOR
+        !CDIR NOVECTOR
 #endif
-          do k=kfs_top(i,j), kfs_bot(i,j)
-             d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
-                      + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
-                      + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
+        do k=kfs_top(i,j), kfs_bot(i,j)
+          d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
+                   + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
+                   + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
 
-             d3Sy3(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r20x  &
-                      + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y  &
-                      + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
+          d3Sy3(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r20x  &
+                   + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y  &
+                   + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
 
-             d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r20x  &
-                      + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y  &
-                      + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
-          end do
+          d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r20x  &
+                   + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y  &
+                   + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
+        end do
 
-          !! overwrite around seafloor
+        !! overwrite around seafloor
 #ifdef _ES
-!CDIR NOVECTOR
+        !CDIR NOVECTOR
 #endif
-          do k=kob_top(i,j), kob_bot(i,j)
-             d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
-                      + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
-                      + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
+        do k=kob_top(i,j), kob_bot(i,j)
+          d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
+                   + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
+                   + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
 
-             d3Sy3(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r20x  &
-                      + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y  &
-                      + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
+          d3Sy3(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r20x  &
+                   + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y  &
+                   + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
 
-             d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r20x  &
-                      + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y  &
-                      + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
-          end do
+          d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r20x  &
+                   + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y  &
+                   + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
+        end do
 
-          !!
-          !! update velocity
-          !!
-          do k=kbeg_k, kend_k
+        !!
+        !! update velocity
+        !!
+        do k=kbeg_k, kend_k
 
-             Vx(k,i,j) = Vx(k,i,j) + bx(k,i,j) * d3Sx3(k) * dt
-             Vy(k,i,j) = Vy(k,i,j) + by(k,i,j) * d3Sy3(k) * dt
-             Vz(k,i,j) = Vz(k,i,j) + bz(k,i,j) * d3Sz3(k) * dt
+          Vx(k,i,j) = Vx(k,i,j) + bx(k,i,j) * d3Sx3(k) * dt
+          Vy(k,i,j) = Vy(k,i,j) + by(k,i,j) * d3Sy3(k) * dt
+          Vz(k,i,j) = Vz(k,i,j) + bz(k,i,j) * d3Sz3(k) * dt
 
-          end do
-       end do
+        end do
+      end do
     end do
     !$omp end do nowait
     !$omp end parallel
@@ -249,100 +249,100 @@ contains
     !$omp schedule(static,1)
 #endif
     do j=jbeg_k, jend_k
-       do i=ibeg_k, iend_k
+      do i=ibeg_k, iend_k
 
-          !! Derivatives
-          !!
+        !! Derivatives
+        !!
 
-          do k=kbeg_k, kend_k
+        do k=kbeg_k, kend_k
 
-             dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r40x  -  (  Vx(k  ,i+1,j  ) - Vx(k  ,i-2,j  )  ) * r41x
-             dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r40y  -  (  Vy(k  ,i  ,j+1) - Vy(k  ,i  ,j-2)  ) * r41y
-             dzVz(k) = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r40z  -  (  Vz(k+1,i  ,j  ) - Vz(k-2,i  ,j  )  ) * r41z
+          dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r40x  -  (  Vx(k  ,i+1,j  ) - Vx(k  ,i-2,j  )  ) * r41x
+          dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r40y  -  (  Vy(k  ,i  ,j+1) - Vy(k  ,i  ,j-2)  ) * r41y
+          dzVz(k) = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r40z  -  (  Vz(k+1,i  ,j  ) - Vz(k-2,i  ,j  )  ) * r41z
 
-          end do
+        end do
 
-          !! overwrite around free surface
+        !! overwrite around free surface
 #ifdef _ES
-!CDIR NOVECTOR
+        !CDIR NOVECTOR
 #endif
-          do k=kfs_top(i,j), kfs_bot(i,j)
+        do k=kfs_top(i,j), kfs_bot(i,j)
 
-             dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
-             dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
-             dzVz(k) = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r20z
+          dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
+          dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
+          dzVz(k) = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r20z
 
-          end do
+        end do
 
-          !! overwrite around seafloor
+        !! overwrite around seafloor
 #ifdef _ES
-!CDIR NOVECTOR
+        !CDIR NOVECTOR
 #endif
-          do k=kob_top(i,j), kob_bot(i,j)
+        do k=kob_top(i,j), kob_bot(i,j)
 
-             dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
-             dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
-             dzVz(k) = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r20z
+          dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
+          dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
+          dzVz(k) = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r20z
 
-          end do
+        end do
 
 
-          !!
-          !! update memory variables and stress tensors: normal stress components
-          !!
+        !!
+        !! update memory variables and stress tensors: normal stress components
+        !!
 
 #ifdef _FX
-!ocl unroll('full')
+        !ocl unroll('full')
 #endif
-          do k=kbeg_k, kend_k
+        do k=kbeg_k, kend_k
 
-             !!
-             !! medium copy
-             !!
-             mu2    = 2*mu (k,i,j)
-             lam2mu = lam(k,i,j) + mu2
+          !!
+          !! medium copy
+          !!
+          mu2    = 2*mu (k,i,j)
+          lam2mu = lam(k,i,j) + mu2
 
-             taup1 = taup(k,i,j)
-             taus1 = taus(k,i,j)
-
-
-             !!
-             !! update memory variables
-             !!
-
-             !! working variables for combinations of velocity derivatives
-             d3v3      = dxVx(k) + dyVy(k) + dzVz(k)
-             dyVy_dzVz = dyVy(k) + dzVz(k)
-             dxVx_dzVz = dxVx(k) + dzVz(k)
-             dxVx_dyVy = dxVx(k) + dyVy(k)
+          taup1 = taup(k,i,j)
+          taus1 = taus(k,i,j)
 
 
-             Rxx_n = 0.0
-             Ryy_n = 0.0
-             Rzz_n = 0.0
-             do m=1, nm
-                Rxx(k,i,j,m) = c1(m) * Rxx(k,i,j,m) - c2(m) * ( lam2mu * taup1 * d3v3 - mu2 * taus1 * dyVy_dzVz ) * dt
-                Ryy(k,i,j,m) = c1(m) * Ryy(k,i,j,m) - c2(m) * ( lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dzVz ) * dt
-                Rzz(k,i,j,m) = c1(m) * Rzz(k,i,j,m) - c2(m) * ( lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dyVy ) * dt
-                Rxx_n = Rxx_n + d1(m) * Rxx(k,i,j,m)
-                Ryy_n = Ryy_n + d1(m) * Ryy(k,i,j,m)
-                Rzz_n = Rzz_n + d1(m) * Rzz(k,i,j,m)
-             end do
+          !!
+          !! update memory variables
+          !!
 
-             !!
-             !! update stress components
-             !!
-             taup_plus1 = 1 + taup1 * ( 1 + d2 )
-             taus_plus1 = 1 + taus1 * ( 1 + d2 )
-
-             Sxx (k,i,j) = Sxx (k,i,j) + ( lam2mu * taup_plus1 * d3v3 - mu2 * taus_plus1 * dyVy_dzVz + Rxx_n ) * dt
-             Syy (k,i,j) = Syy (k,i,j) + ( lam2mu * taup_plus1 * d3v3 - mu2 * taus_plus1 * dxVx_dzVz + Ryy_n ) * dt
-             Szz (k,i,j) = Szz (k,i,j) + ( lam2mu * taup_plus1 * d3v3 - mu2 * taus_plus1 * dxVx_dyVy + Rzz_n ) * dt
+          !! working variables for combinations of velocity derivatives
+          d3v3      = dxVx(k) + dyVy(k) + dzVz(k)
+          dyVy_dzVz = dyVy(k) + dzVz(k)
+          dxVx_dzVz = dxVx(k) + dzVz(k)
+          dxVx_dyVy = dxVx(k) + dyVy(k)
 
 
+          Rxx_n = 0.0
+          Ryy_n = 0.0
+          Rzz_n = 0.0
+          do m=1, nm
+            Rxx(k,i,j,m) = c1(m) * Rxx(k,i,j,m) - c2(m) * ( lam2mu * taup1 * d3v3 - mu2 * taus1 * dyVy_dzVz ) * dt
+            Ryy(k,i,j,m) = c1(m) * Ryy(k,i,j,m) - c2(m) * ( lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dzVz ) * dt
+            Rzz(k,i,j,m) = c1(m) * Rzz(k,i,j,m) - c2(m) * ( lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dyVy ) * dt
+            Rxx_n = Rxx_n + d1(m) * Rxx(k,i,j,m)
+            Ryy_n = Ryy_n + d1(m) * Ryy(k,i,j,m)
+            Rzz_n = Rzz_n + d1(m) * Rzz(k,i,j,m)
           end do
 
-       end do
+          !!
+          !! update stress components
+          !!
+          taup_plus1 = 1 + taup1 * ( 1 + d2 )
+          taus_plus1 = 1 + taus1 * ( 1 + d2 )
+
+          Sxx (k,i,j) = Sxx (k,i,j) + ( lam2mu * taup_plus1 * d3v3 - mu2 * taus_plus1 * dyVy_dzVz + Rxx_n ) * dt
+          Syy (k,i,j) = Syy (k,i,j) + ( lam2mu * taup_plus1 * d3v3 - mu2 * taus_plus1 * dxVx_dzVz + Ryy_n ) * dt
+          Szz (k,i,j) = Szz (k,i,j) + ( lam2mu * taup_plus1 * d3v3 - mu2 * taus_plus1 * dxVx_dyVy + Rzz_n ) * dt
+
+
+        end do
+
+      end do
     end do
     !$omp end do nowait
     !$omp end parallel
@@ -361,95 +361,95 @@ contains
 #endif
     do j=jbeg_k, jend_k
 
-       do i=ibeg_k, iend_k
+      do i=ibeg_k, iend_k
 
-          !!
-          !! Derivatives
-          !!
-          do k=kbeg_k, kend_k
+        !!
+        !! Derivatives
+        !!
+        do k=kbeg_k, kend_k
 
-             dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r40x  -  (  Vy(k  ,i+2,j  ) - Vy(k  ,i-1,j  )  ) * r41x &
-                          + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r40y  -  (  Vx(k  ,i  ,j+2) - Vx(k  ,i  ,j-1)  ) * r41y
-             dxVz_dzVx(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r40x  -  (  Vz(k  ,i+2,j  ) - Vz(k  ,i-1,j  )  ) * r41x &
-                          + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r40z  -  (  Vx(k+2,i  ,j  ) - Vx(k-1,i  ,j  )  ) * r41z
-             dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r40y  -  (  Vz(k  ,i  ,j+2) - Vz(k  ,i  ,j-1)  ) * r41y &
-                          + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r40z  -  (  Vy(k+2,i  ,j  ) - Vy(k-1,i  ,j  )  ) * r41z
-          end do
+          dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r40x  -  (  Vy(k  ,i+2,j  ) - Vy(k  ,i-1,j  )  ) * r41x &
+                       + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r40y  -  (  Vx(k  ,i  ,j+2) - Vx(k  ,i  ,j-1)  ) * r41y
+          dxVz_dzVx(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r40x  -  (  Vz(k  ,i+2,j  ) - Vz(k  ,i-1,j  )  ) * r41x &
+                       + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r40z  -  (  Vx(k+2,i  ,j  ) - Vx(k-1,i  ,j  )  ) * r41z
+          dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r40y  -  (  Vz(k  ,i  ,j+2) - Vz(k  ,i  ,j-1)  ) * r41y &
+                       + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r40z  -  (  Vy(k+2,i  ,j  ) - Vy(k-1,i  ,j  )  ) * r41z
+        end do
 
-          !! overwrite around free surface
+        !! overwrite around free surface
 #ifdef _ES
-!CDIR NOVECTOR
+        !CDIR NOVECTOR
 #endif
-          do k=kfs_top(i,j), kfs_bot(i,j)
+        do k=kfs_top(i,j), kfs_bot(i,j)
 
-             dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
-                          + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
-             dxVz_dzVx(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x  &
-                          + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
-             dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y  &
-                          + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
+          dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
+                       + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
+          dxVz_dzVx(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x  &
+                       + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
+          dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y  &
+                       + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
 
-          end do
+        end do
 
-          !! overwrite around seafloor
+        !! overwrite around seafloor
 #ifdef _ES
-!CDIR NOVECTOR
+        !CDIR NOVECTOR
 #endif
-          do k=kob_top(i,j), kob_bot(i,j)
+        do k=kob_top(i,j), kob_bot(i,j)
 
-             dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
-                          + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
-             dxVz_dzVx(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x  &
-                          + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
-             dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y  &
-                          + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
+          dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
+                       + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
+          dxVz_dzVx(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x  &
+                       + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
+          dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y  &
+                       + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
 
-          end do
+        end do
 
 
-          !!
-          !! update memory variables and stress tensors: shear stress components
-          !!
+        !!
+        !! update memory variables and stress tensors: shear stress components
+        !!
 
 #ifdef _FX
-!ocl unroll('full')
+        !ocl unroll('full')
 #endif
-          do k=kbeg_k, kend_k
+        do k=kbeg_k, kend_k
 
-             !!
-             !! medium copy
-             !!
-             mu2    = 2*mu (k,i,j)
-             taus1 = taus(k,i,j)
+          !!
+          !! medium copy
+          !!
+          mu2    = 2*mu (k,i,j)
+          taus1 = taus(k,i,j)
 
 
-             !!
-             !! update memory variables
-             !!
+          !!
+          !! update memory variables
+          !!
 
-             Ryz_n = 0.0
-             Rxz_n = 0.0
-             Rxy_n = 0.0
-             do m=1, nm
-                Ryz(k,i,j,m) = c1(m) * Ryz(k,i,j,m) - c2(m) * muyz(k,i,j) * taus1 * dyVz_dzVy(k) * dt
-                Rxz(k,i,j,m) = c1(m) * Rxz(k,i,j,m) - c2(m) * muxz(k,i,j) * taus1 * dxVz_dzVx(k) * dt
-                Rxy(k,i,j,m) = c1(m) * Rxy(k,i,j,m) - c2(m) * muxy(k,i,j) * taus1 * dxVy_dyVx(k) * dt
-                Ryz_n = Ryz_n + d1(m) * Ryz(k,i,j,m)
-                Rxz_n = Rxz_n + d1(m) * Rxz(k,i,j,m)
-                Rxy_n = Rxy_n + d1(m) * Rxy(k,i,j,m)
-             end do
-
-             !!
-             !! update stress components
-             !!
-             taus_plus1 = 1 + taus1 * ( 1 + d2 )
-
-             Syz (k,i,j) = Syz (k,i,j) + ( muyz(k,i,j) * taus_plus1 * dyVz_dzVy(k) + Ryz_n ) * dt
-             Sxz (k,i,j) = Sxz (k,i,j) + ( muxz(k,i,j) * taus_plus1 * dxVz_dzVx(k) + Rxz_n ) * dt
-             Sxy (k,i,j) = Sxy (k,i,j) + ( muxy(k,i,j) * taus_plus1 * dxVy_dyVx(k) + Rxy_n ) * dt
-
+          Ryz_n = 0.0
+          Rxz_n = 0.0
+          Rxy_n = 0.0
+          do m=1, nm
+            Ryz(k,i,j,m) = c1(m) * Ryz(k,i,j,m) - c2(m) * muyz(k,i,j) * taus1 * dyVz_dzVy(k) * dt
+            Rxz(k,i,j,m) = c1(m) * Rxz(k,i,j,m) - c2(m) * muxz(k,i,j) * taus1 * dxVz_dzVx(k) * dt
+            Rxy(k,i,j,m) = c1(m) * Rxy(k,i,j,m) - c2(m) * muxy(k,i,j) * taus1 * dxVy_dyVx(k) * dt
+            Ryz_n = Ryz_n + d1(m) * Ryz(k,i,j,m)
+            Rxz_n = Rxz_n + d1(m) * Rxz(k,i,j,m)
+            Rxy_n = Rxy_n + d1(m) * Rxy(k,i,j,m)
           end do
-       end do
+
+          !!
+          !! update stress components
+          !!
+          taus_plus1 = 1 + taus1 * ( 1 + d2 )
+
+          Syz (k,i,j) = Syz (k,i,j) + ( muyz(k,i,j) * taus_plus1 * dyVz_dzVy(k) + Ryz_n ) * dt
+          Sxz (k,i,j) = Sxz (k,i,j) + ( muxz(k,i,j) * taus_plus1 * dxVz_dzVx(k) + Rxz_n ) * dt
+          Sxy (k,i,j) = Sxy (k,i,j) + ( muxy(k,i,j) * taus_plus1 * dxVy_dyVx(k) + Rxy_n ) * dt
+
+        end do
+      end do
     end do
     !$omp end do nowait
     !$omp end parallel
@@ -478,11 +478,11 @@ contains
 
     !! avoid nearby the absorbing boundary
     do j=max(na+margin+1,jbeg_k), min(ny-na-margin, jend_k)
-       do i=max(na+margin+1,ibeg_k), min(ny-na-margin, iend_k)
-          xmax = max( xmax, real( abs( vx(kob(i,j)+1,i,j) ) ) )
-          ymax = max( ymax, real( abs( vy(kob(i,j)+1,i,j) ) ) )
-          zmax = max( zmax, real( abs( vz(kob(i,j)+1,i,j) ) ) )
-       end do
+      do i=max(na+margin+1,ibeg_k), min(ny-na-margin, iend_k)
+        xmax = max( xmax, real( abs( vx(kob(i,j)+1,i,j) ) ) )
+        ymax = max( ymax, real( abs( vy(kob(i,j)+1,i,j) ) ) )
+        zmax = max( zmax, real( abs( vz(kob(i,j)+1,i,j) ) ) )
+      end do
     end do
 
   end subroutine kernel__vmax
@@ -512,19 +512,19 @@ contains
     do j=jbeg_m,jend_m; write(io) Sxy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Sxy )
 
     if( nm > 0 ) then
-       write(io) c1(1:nm)
-       write(io) c2(1:nm)
-
-       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxx(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxx )
-       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Ryy(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Ryy )
-       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rzz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rzz )
-       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Ryz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Ryz )
-       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxz )
-       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxy(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxy )
-
+      write(io) c1(1:nm)
+      write(io) c2(1:nm)
+      
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxx(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxx )
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Ryy(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Ryy )
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rzz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rzz )
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Ryz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Ryz )
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxz )
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxy(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxy )
+        
     end if
 
-
+    
   end subroutine kernel__checkpoint
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -535,16 +535,16 @@ contains
   !<
   !! --
   subroutine kernel__restart( io )
-
+    
     integer, intent(in) :: io
     integer :: i, j
     !! --
-
-
+    
+    
     call memory_allocate()
-
+    
     read(io) r40x, r40y, r40z, r41x, r41y, r41z, r20x, r20y, r20z
-
+    
     do j=jbeg_m,jend_m; read(io)  Vx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
     do j=jbeg_m,jend_m; read(io)  Vy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
     do j=jbeg_m,jend_m; read(io)  Vz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
@@ -554,25 +554,25 @@ contains
     do j=jbeg_m,jend_m; read(io) Syz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
     do j=jbeg_m,jend_m; read(io) Sxz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
     do j=jbeg_m,jend_m; read(io) Sxy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-
+                      
     if( nm > 0 ) then
-       read(io) c1(1:nm)
-       read(io) c2(1:nm)
-
-       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxx(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Ryy(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rzz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Ryz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxy(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-
+      read(io) c1(1:nm)
+      read(io) c2(1:nm)
+                                                      
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxx(kbeg_k:kend_k,i,j,1:nm); end do; end do;
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Ryy(kbeg_k:kend_k,i,j,1:nm); end do; end do;
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rzz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Ryz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
+      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxy(kbeg_k:kend_k,i,j,1:nm); end do; end do;
+        
     end if
-
+    
   end subroutine kernel__restart
   !! --------------------------------------------------------------------------------------------------------------------------- !!
+  
 
-
-
+  
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine memory_allocate
     !!
@@ -581,27 +581,27 @@ contains
     allocate(  Vx(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate(  Vy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate(  Vz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-
+    
     allocate( Sxx(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate( Syy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate( Szz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate( Syz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate( Sxz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate( Sxy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-
+    
     if( nm > 0 ) then
-       allocate( c1(nm), c2(nm), d1(nm) )
-       allocate( Rxx( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-       allocate( Ryy( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-       allocate( Rzz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-       allocate( Ryz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-       allocate( Rxz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-       allocate( Rxy( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
+      allocate( c1(nm), c2(nm), d1(nm) )
+      allocate( Rxx( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
+      allocate( Ryy( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
+      allocate( Rzz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
+      allocate( Ryz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
+      allocate( Rxz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
+      allocate( Rxy( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
     end if
-
+    
   end subroutine memory_allocate
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
+  
+  
 end module m_kernel
 !! ----------------------------------------------------------------------------------------------------------------------------- !!

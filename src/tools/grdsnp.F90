@@ -3,7 +3,7 @@
 !! Extract x-y-z data of velocity discontinuity from a specified grd dat
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 #include "m_debug.h"
@@ -59,16 +59,16 @@ program grdsnp
   allocate( xc(nx), yc(ny) )
   allocate( glon(nx,ny), glat(nx,ny) )
   do i=1, nx
-     xc(i) = i2x( i, xbeg, real(dx) )
+    xc(i) = i2x( i, xbeg, real(dx) )
   end do
   do j=1, ny
-     yc(j) = j2y( j, ybeg, real(dy) )
+    yc(j) = j2y( j, ybeg, real(dy) )
   end do
 
   do j=1, ny
-     do i=1, nx
-        call geomap__c2g( xc(i), yc(j), clon, clat, phi, glon(i,j), glat(i,j) )
-     end do
+    do i=1, nx
+      call geomap__c2g( xc(i), yc(j), clon, clat, phi, glon(i,j), glat(i,j) )
+    end do
   end do
 
 
@@ -103,17 +103,17 @@ program grdsnp
   call bicubic__init( bcd, nlon, nlat, lon(1), lat(1), lon(2)-lon(1), lat(2)-lat(1), grddep )
 
   do j=1, ny
-     do i=1, nx
-        call bicubic__interp( bcd, glon(i,j), glat(i,j), zgrd )
+    do i=1, nx
+      call bicubic__interp( bcd, glon(i,j), glat(i,j), zgrd )
 
-        kgrd = z2k( real(zgrd), zbeg, real(dz) ) !! boxel boundary : zc+dz/2
+      kgrd = z2k( real(zgrd), zbeg, real(dz) ) !! boxel boundary : zc+dz/2
 
-        if( kgrd == 1 ) then
-           kgrd = kgrd + 1
-        end if
-        write(STDOUT,'(2I6,4F12.4,ES12.4,I12)') i, j, xc(i), yc(j), glon(i,j), glat(i,j), zgrd, kgrd
-     end do
-     write(STDOUT,*)
+      if( kgrd == 1 ) then
+        kgrd = kgrd + 1
+      end if
+      write(STDOUT,'(2I6,4F12.4,ES12.4,I12)') i, j, xc(i), yc(j), glon(i,j), glat(i,j), zgrd, kgrd
+    end do
+    write(STDOUT,*)
   end do
 
   call bicubic__terminate(bcd)

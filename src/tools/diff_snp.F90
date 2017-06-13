@@ -3,7 +3,7 @@
 !! Generate differential snapfile from two inputs
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
 #include "m_debug.h"
@@ -113,21 +113,21 @@ program diff_snp
 
     !! medium info
     do i=1, hdr_in1%nmed
-       read( io_in1 ) amp1
-       read( io_in2 ) amp2
-       write( io_out ) amp1
-       write(STDERR,*) maxval(amp1), minval(amp1)
+      read( io_in1 ) amp1
+      read( io_in2 ) amp2
+      write( io_out ) amp1
+      write(STDERR,*) maxval(amp1), minval(amp1)
     end do
 
     it = 0
     do
-       it = it + 1
-       do i=1, hdr_in1%nsnp
-          read( io_in1, iostat=ierr ) amp1; if( ierr /= 0 ) call close_exit()
-          read( io_in2, iostat=ierr ) amp2; if( ierr /= 0 ) call close_exit()
-          write(STDERR,*) it, maxval(amp1-amp2), minval(amp1-amp2)
-          write( io_out ) amp1 - amp2
-       end do
+      it = it + 1
+      do i=1, hdr_in1%nsnp
+        read( io_in1, iostat=ierr ) amp1; if( ierr /= 0 ) call close_exit()
+        read( io_in2, iostat=ierr ) amp2; if( ierr /= 0 ) call close_exit()
+        write(STDERR,*) it, maxval(amp1-amp2), minval(amp1-amp2)
+        write( io_out ) amp1 - amp2
+      end do
     end do
 
   endif

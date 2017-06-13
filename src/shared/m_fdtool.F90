@@ -3,7 +3,7 @@
 !! individual utility subroutines / functions working without global-variables/parameters
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 module m_fdtool
@@ -31,19 +31,19 @@ contains
 
     !! velocity check
     if( vp > vmax .or. vs > vmax ) then
-       is_vmax_over = .true.
+      is_vmax_over = .true.
 
-       xi2 = ( 1 + xi ) * vmax / vp - 1
-       vp = vmax
-       vp = vmax
-       vs = vmax / gamma
-       rho = rho * ( 1 + 0.8 * xi2 ) / ( 1 + 0.8 * xi )
+      xi2 = ( 1 + xi ) * vmax / vp - 1
+      vp = vmax
+      vp = vmax
+      vs = vmax / gamma
+      rho = rho * ( 1 + 0.8 * xi2 ) / ( 1 + 0.8 * xi )
     end if
 
     if( vp < vmin .or. vs < vmin ) then
-       is_vmin_under = .true.
-       vs = vmin
-       vp = vmin * gamma
+      is_vmin_under = .true.
+      vs = vmin
+      vp = vmin * gamma
     end if
 
     if( rho < rhomin ) then
@@ -300,7 +300,7 @@ contains
     else
       moment_magnitude = (log10( m0 ) - 9.1 ) * 2.0 / 3.0
     end if
-    
+
   end function moment_magnitude
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -378,9 +378,9 @@ contains
     !! ----
 
     if ( ts <= t .and. t <= ts + tr ) then
-       kupper = 3 * Pi * ( sin( Pi*(t-ts)/tr ) )**3 / ( 4 * tr )
+      kupper = 3 * Pi * ( sin( Pi*(t-ts)/tr ) )**3 / ( 4 * tr )
     else
-       kupper = 0.0
+      kupper = 0.0
     end if
 
   end function kupper
@@ -404,10 +404,10 @@ contains
     !! ----
 
     if ( ts <= t ) then
-       tt = t-ts
-       texp = (2*PI)**2 * tt / (tr*tr) * exp( -2*PI*tt / tr )
+      tt = t-ts
+      texp = (2*PI)**2 * tt / (tr*tr) * exp( -2*PI*tt / tr )
     else
-       texp = 0.0
+      texp = 0.0
     end if
 
   end function texp
@@ -430,9 +430,9 @@ contains
     !! ----
 
     if ( ts <= t .and. t <= ts + tr ) then
-       cosine = ( 1 - cos( 2*PI*(t-ts)/tr ) ) / tr
+      cosine = ( 1 - cos( 2*PI*(t-ts)/tr ) ) / tr
     else
-       cosine = 0.0
+      cosine = 0.0
     end if
 
   end function cosine
@@ -455,9 +455,9 @@ contains
     !! ----
 
     if ( ts <= t .and. t <= ts + tr ) then
-       boxcar = 1.0 / tr
+      boxcar = 1.0 / tr
     else
-       boxcar = 0.0
+      boxcar = 0.0
     end if
 
   end function boxcar
@@ -480,11 +480,11 @@ contains
     !! ----
 
     if ( ts <= t .and. t <= ts + tr/2) then
-       triangle = 4 * ( t-ts ) / ( tr*tr )
+      triangle = 4 * ( t-ts ) / ( tr*tr )
     else if ( ts + tr/2 < t .and. t <= ts + tr ) then
-       triangle = - 4 * ( t - ts - tr ) / ( tr * tr )
+      triangle = - 4 * ( t - ts - tr ) / ( tr * tr )
     else
-       triangle = 0.0
+      triangle = 0.0
     end if
 
   end function triangle
@@ -513,13 +513,13 @@ contains
     t2 = ts + 3 * tr / 4
 
     if( ts <= t .and. t < t1 ) then
-       herrmann = 16 * ( t - ts )**2 / ( tr**3 )
+      herrmann = 16 * ( t - ts )**2 / ( tr**3 )
     else if ( t1 <= t .and. t < t2 ) then
-       herrmann = -2 * ( 8*( t*t + tr*ts + ts*ts- t*tr -2*t*ts ) + tr*tr ) / ( tr**3 )
+      herrmann = -2 * ( 8*( t*t + tr*ts + ts*ts- t*tr -2*t*ts ) + tr*tr ) / ( tr**3 )
     else if ( t2 <= t .and. t <= ts + tr ) then
-       herrmann = 16 * ( ts + tr - t ) **2 / ( tr**3 )
+      herrmann = 16 * ( ts + tr - t ) **2 / ( tr**3 )
     else
-       herrmann = 0.0
+      herrmann = 0.0
     end if
 
   end function herrmann
@@ -542,11 +542,11 @@ contains
     !! ----
 
     if( t < ts ) then
-       iboxcar = 0.0
+      iboxcar = 0.0
     else if ( ts <= t .and. t <= ts + tr ) then
-       iboxcar = (t-ts) / tr
+      iboxcar = (t-ts) / tr
     else
-       iboxcar = 1.0
+      iboxcar = 1.0
     end if
 
   end function iboxcar
@@ -569,13 +569,13 @@ contains
     !! ----
 
     if( t-ts < 0 ) then
-       itriangle = 0
+      itriangle = 0
     else if ( 0 <= t-ts .and. t-ts <= tr/2) then
-       itriangle = (2*(t - ts)**2)/tr**2
+      itriangle = (2*(t - ts)**2)/tr**2
     else if ( ts + tr/2 < t .and. t <= ts + tr ) then
-       itriangle = -1 + (4*(t - ts))/tr - (2*(t - ts)**2)/tr**2
+      itriangle = -1 + (4*(t - ts))/tr - (2*(t - ts)**2)/tr**2
     else
-       itriangle = 1.0
+      itriangle = 1.0
     end if
 
   end function itriangle
@@ -604,15 +604,15 @@ contains
     t2 = ts + 3 * tr / 4
 
     if( t-ts < 0 ) then
-       iherrmann = 0
+      iherrmann = 0
     else if( 0 <= t -ts .and. t -ts < tr / 4 ) then
-       iherrmann = (16*(t - ts)**3)/(3*tr**3)
+      iherrmann = (16*(t - ts)**3)/(3*tr**3)
     else if ( tr/4 <= t-ts .and. t-ts < 3*tr/4 ) then
-       iherrmann = (tr**3 - 12*tr**2*(t - ts) + 48*tr*(t - ts)**2 - 32*(t - ts)**3)/(6*tr**3)
+      iherrmann = (tr**3 - 12*tr**2*(t - ts) + 48*tr*(t - ts)**2 - 32*(t - ts)**3)/(6*tr**3)
     else if ( 3*tr/4 <= t-ts .and. t <= ts + tr ) then
-       iherrmann = (-13*tr**3 + 48*tr**2*(t - ts) - 48*tr*(t - ts)**2 + 16*(t - ts)**3)/(3*tr**3)
+      iherrmann = (-13*tr**3 + 48*tr**2*(t - ts) - 48*tr*(t - ts)**2 + 16*(t - ts)**3)/(3*tr**3)
     else
-       iherrmann = 1.0
+      iherrmann = 1.0
     end if
 
   end function iherrmann
@@ -635,11 +635,11 @@ contains
     !! ----
 
     if ( t< ts ) then
-       ikupper = 0.0
+      ikupper = 0.0
     else if ( ts <= t .and. t <= ts + tr ) then
-       ikupper = (2 + cos(( PI * (t - ts)) / tr )) * sin(( PI *(t - ts) ) / (2*tr) )**4
+      ikupper = (2 + cos(( PI * (t - ts)) / tr )) * sin(( PI *(t - ts) ) / (2*tr) )**4
     else
-       ikupper = 1.0
+      ikupper = 1.0
     end if
 
   end function ikupper
@@ -797,16 +797,16 @@ contains
 
     case( 1 )  ! single Zener body: set center frequency
 
-       omega = sqrt( omega_a * omega_b )
-       ts(1) = 1.0 / omega
+      omega = sqrt( omega_a * omega_b )
+      ts(1) = 1.0 / omega
 
     case default ! generalized zener body
 
-       ! evenly-spaced relaxed time in logarithmic scale from 1/omega_a to 1/omega_b
-       do im = 1, nm
-          omega = omega_a * ( omega_b / omega_a )**( dble(im-1)/dble(nm-1) )
-          ts(im) = 1.0 / omega
-       end do
+      ! evenly-spaced relaxed time in logarithmic scale from 1/omega_a to 1/omega_b
+      do im = 1, nm
+        omega = omega_a * ( omega_b / omega_a )**( dble(im-1)/dble(nm-1) )
+        ts(im) = 1.0 / omega
+      end do
 
     end select
 
@@ -835,7 +835,7 @@ contains
     omega = 2 * Pi * f
     cc = 0.0
     do im=1, nm
-       cc = cc + ( 1 - EI * omega * ts(im) * ( 1 + tau ) ) / ( 1 - EI * omega * ts(im) )
+      cc = cc + ( 1 - EI * omega * ts(im) * ( 1 + tau ) ) / ( 1 - EI * omega * ts(im) )
     end do
     cc = cc / nm
 
@@ -870,41 +870,41 @@ contains
     !! ----
 
     if( nm==0 ) then
-       visco_constq_zeta = 0.0
+      visco_constq_zeta = 0.0
     else
 
-       !! angular frequency
-       om_a = 2 * PI * fmin
-       om_b = 2 * PI * fmax
+      !! angular frequency
+      om_a = 2 * PI * fmin
+      om_b = 2 * PI * fmax
 
-       !! Integrants required for tau-method by Blanch
-       do im=1, nm
+      !! Integrants required for tau-method by Blanch
+      do im=1, nm
 
-          i0(im) = ( log( 1.0 + om_b**2 * ts(im)**2 )  -  log(1.0 + om_a**2 * ts(im)**2 ) )  /  ( 2 * ts(im) )
+        i0(im) = ( log( 1.0 + om_b**2 * ts(im)**2 )  -  log(1.0 + om_a**2 * ts(im)**2 ) )  /  ( 2 * ts(im) )
 
-          i1(im) = ( ( atan( om_b*ts(im) ) - om_b*ts(im) / ( 1 + om_b**2 * ts(im)**2 ) ) &
-               - ( atan( om_a*ts(im) ) - om_a*ts(im) / ( 1 + om_a**2 * ts(im)**2 ) ) ) / ( 2 * ts(im ) )
+        i1(im) = ( ( atan( om_b*ts(im) ) - om_b*ts(im) / ( 1 + om_b**2 * ts(im)**2 ) ) &
+            - ( atan( om_a*ts(im) ) - om_a*ts(im) / ( 1 + om_a**2 * ts(im)**2 ) ) ) / ( 2 * ts(im ) )
 
-       end do
+      end do
 
-       do im=1, nm-1
-          do km=im+1, nm
-             wk1 = atan( om_b*ts(im) ) / ts(im) - atan( om_b*ts(km) ) / ts(km)
-             wk2 = atan( om_a*ts(im) ) / ts(im) - atan( om_a*ts(km) ) / ts(km)
-             i2(km,im) = ts(im) * ts(km) / ( ts(km)**2 - ts(im)**2 ) * ( wk1 - wk2 )
-          end do
-       end do
+      do im=1, nm-1
+        do km=im+1, nm
+          wk1 = atan( om_b*ts(im) ) / ts(im) - atan( om_b*ts(km) ) / ts(km)
+          wk2 = atan( om_a*ts(im) ) / ts(im) - atan( om_a*ts(km) ) / ts(km)
+          i2(km,im) = ts(im) * ts(km) / ( ts(km)**2 - ts(im)**2 ) * ( wk1 - wk2 )
+        end do
+      end do
 
-       i0sum = sum(i0(:))
-       i1sum = sum(i1(:))
-       i2sum = 0.0
-       do im = 1, nm-1
-          do km = im+1, nm
-             i2sum = i2sum + i2(km,im)
-          end do
-       end do
+      i0sum = sum(i0(:))
+      i1sum = sum(i1(:))
+      i2sum = 0.0
+      do im = 1, nm-1
+        do km = im+1, nm
+          i2sum = i2sum + i2(km,im)
+        end do
+      end do
 
-       visco_constq_zeta = i0sum / ( i1sum + 2*i2sum )
+      visco_constq_zeta = i0sum / ( i1sum + 2*i2sum )
 
     end if
 
@@ -934,23 +934,23 @@ contains
     nind    = 1
 
     do i=2, nin
-       is_independent = .true. ! initialize flag
+      is_independent = .true. ! initialize flag
 
-       !! check duplication
-       do j=1, nind
-          if( trim( list(i) ) == trim( list_ind(j) ) ) then
-             is_independent   = .false.
-             ptr(i) = j
-             exit
-          end if
-       end do
+      !! check duplication
+      do j=1, nind
+        if( trim( list(i) ) == trim( list_ind(j) ) ) then
+          is_independent   = .false.
+          ptr(i) = j
+          exit
+        end if
+      end do
 
-       !! add independent component
-       if( is_independent ) then
-          nind   = nind + 1
-          ptr(i) = nind
-          list_ind(nind) = list(i)
-       end if
+      !! add independent component
+      if( is_independent ) then
+        nind   = nind + 1
+        ptr(i) = nind
+        list_ind(nind) = list(i)
+      end if
 
     end do
 

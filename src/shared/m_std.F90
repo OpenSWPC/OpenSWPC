@@ -3,7 +3,7 @@
 !! Definition of standard constants, in/out io numbers, precision constants
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 module m_std
@@ -42,11 +42,11 @@ module m_std
 
 
   interface std__deg2rad
-     module procedure d2r_s, d2r_d
-  end interface
+    module procedure d2r_s, d2r_d
+  end interface std__deg2rad
   interface std__rad2deg
-     module procedure r2d_s, r2d_d
-  end interface
+    module procedure r2d_s, r2d_d
+  end interface std__rad2deg
 
 
   !! -- Private variables
@@ -67,10 +67,10 @@ module m_std
   !<
   !--
   interface std__getio
-     module procedure getio_0, &  !< default/number specific
-                      getio_big   !< big_endian
+    module procedure getio_0, &  !< default/number specific
+        getio_big   !< big_endian
 
-  end interface
+  end interface std__getio
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 contains
@@ -140,15 +140,15 @@ contains
 
     i=0
     do
-       write(ci,'(I4.4)') i
-       fname = adjustl(trim(base))//'.'//adjustl(trim(ci))&
-            //'.'//adjustl(trim(ext))
-       inquire(file=trim(fname), exist=isExist)
-       if( isExist ) then
-          i=i+1
-       else
-          exit
-       end if
+      write(ci,'(I4.4)') i
+      fname = adjustl(trim(base))//'.'//adjustl(trim(ci))&
+          //'.'//adjustl(trim(ext))
+      inquire(file=trim(fname), exist=isExist)
+      if( isExist ) then
+        i=i+1
+      else
+        exit
+      end if
     end do
 
   end subroutine std__genfname
@@ -175,16 +175,16 @@ contains
     n = 0
     rewind(io)
     do
-       read( io, '(A256)', iostat=stat) line
-       if( stat /= 0 ) exit
+      read( io, '(A256)', iostat=stat) line
+      if( stat /= 0 ) exit
 
-       if( present( comment ) ) then
-          if( line(1:1) == comment ) cycle
-       end if
+      if( present( comment ) ) then
+        if( line(1:1) == comment ) cycle
+      end if
 
-       if( trim(line) /= '' ) then
-          n = n + 1
-       end if
+      if( trim(line) /= '' ) then
+        n = n + 1
+      end if
 
     end do
     rewind( io )
@@ -209,17 +209,17 @@ contains
     !--
 
     if( present( io00 ) ) then
-       io = io00
+      io = io00
     else
-       io = io0
+      io = io0
     end if
 
     isOpen = .true.
 
     do
-       inquire( io, opened = isOpen )
-       if( .not. isOpen ) exit
-       io = io + 1
+      inquire( io, opened = isOpen )
+      if( .not. isOpen ) exit
+      io = io + 1
     end do
 
   end subroutine getio_0
@@ -243,17 +243,17 @@ contains
     !--
 
     if( is_big) then
-       io = IOBIG0
+      io = IOBIG0
     else
-       io = io0
+      io = io0
     end if
 
     isOpen = .true.
 
     do
-       inquire( io, opened = isOpen )
-       if( .not. isOpen ) exit
-       io = io + 1
+      inquire( io, opened = isOpen )
+      if( .not. isOpen ) exit
+      io = io + 1
     end do
 
   end subroutine getio_big

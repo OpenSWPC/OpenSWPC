@@ -3,7 +3,7 @@
 !! Bicubic interpolation
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
 module m_bicubic
@@ -15,13 +15,13 @@ module m_bicubic
   save
 
   type bicubic__data
-     real(DP), allocatable :: f(:,:), fx(:,:), fy(:,:), fxy(:,:)
-     real(DP) :: x0, y0, dx, dy
-     integer  :: nx, ny
-     logical  :: is_init  = .false.
-     logical  :: is_first = .true.
-     integer  :: ii0, jj0
-     real(DP) :: aa(0:3,0:3)
+    real(DP), allocatable :: f(:,:), fx(:,:), fy(:,:), fxy(:,:)
+    real(DP) :: x0, y0, dx, dy
+    integer  :: nx, ny
+    logical  :: is_init  = .false.
+    logical  :: is_first = .true.
+    integer  :: ii0, jj0
+    real(DP) :: aa(0:3,0:3)
   end type bicubic__data
 
   logical :: is_global_first = .true.
@@ -36,18 +36,18 @@ module m_bicubic
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   interface bicubic__init
 
-     module procedure   bicubic__init_s, bicubic__init_d
+    module procedure   bicubic__init_s, bicubic__init_d
 
-  end interface
+  end interface bicubic__init
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   interface bicubic__interp
 
-     module procedure   bicubic__interp_s, bicubic__interp_d
+    module procedure   bicubic__interp_s, bicubic__interp_d
 
-  end interface
+  end interface bicubic__interp
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 contains
@@ -162,9 +162,9 @@ contains
     !! --
 
     if(present(default)) then
-       call bicubic__interp_d( bd, dble(xi), dble(yi), vv, dble(default) )
+      call bicubic__interp_d( bd, dble(xi), dble(yi), vv, dble(default) )
     else
-       call bicubic__interp_d( bd, dble(xi), dble(yi), vv )
+      call bicubic__interp_d( bd, dble(xi), dble(yi), vv )
     end if
 
     v = real( vv )
@@ -215,32 +215,32 @@ contains
     yi2 = yi
 
     if( ii < 1 .or. ii > nx-1 .or. jj <= 0 .or. jj > ny-1 ) then
-       if( present( default ) ) then
-          v = default
-          return
-       else
+      if( present( default ) ) then
+        v = default
+        return
+      else
 
-          if( ii < 1   ) then
-             ii =   1
-             xi2 = x0
-          end if
-          if( ii > nx-1 ) then
-             ii = nx-1
-             xi2 = x0+(nx-1)*Dx
-          end if
-          if( jj < 1   ) then
-             jj =    1
-             yi2 = y0
-          end if
-          if( jj > ny-1 ) then
-             jj = ny-1
-             yi2 = y0+(ny-1)*Dy
-          end if
-       end if
+        if( ii < 1   ) then
+          ii =   1
+          xi2 = x0
+        end if
+        if( ii > nx-1 ) then
+          ii = nx-1
+          xi2 = x0+(nx-1)*Dx
+        end if
+        if( jj < 1   ) then
+          jj =    1
+          yi2 = y0
+        end if
+        if( jj > ny-1 ) then
+          jj = ny-1
+          yi2 = y0+(ny-1)*Dy
+        end if
+      end if
     end if
 
     if( ( bd%ii0 /= ii ) .or. ( bd%jj0 /= jj ) .or. bd%is_first ) then
-       call bicubic__coef( bd, ii, jj )
+      call bicubic__coef( bd, ii, jj )
     end if
 
     ! in-pixel distance
@@ -259,9 +259,9 @@ contains
 
     v = 0.0_DP
     do j=0, 3
-       do i=0, 3
-          v = v + bd%aa(i,j)*xda(i)*yda(j)
-       end do
+      do i=0, 3
+        v = v + bd%aa(i,j)*xda(i)*yda(j)
+      end do
     end do
 
     bd%is_first = .false.
@@ -290,23 +290,23 @@ contains
 
 
     if( is_global_first ) then
-       mat( 1,:) = (/  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /)
-       mat( 2,:) = (/  0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /)
-       mat( 3,:) = (/ -3, 3, 0, 0,-2,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /)
-       mat( 4,:) = (/  2,-2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /)
-       mat( 5,:) = (/  0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 /)
-       mat( 6,:) = (/  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 /)
-       mat( 7,:) = (/  0, 0, 0, 0, 0, 0, 0, 0,-3, 3, 0, 0,-2,-1, 0, 0 /)
-       mat( 8,:) = (/  0, 0, 0, 0, 0, 0, 0, 0, 2,-2, 0, 0, 1, 1, 0, 0 /)
-       mat( 9,:) = (/ -3, 0, 3, 0, 0, 0, 0, 0,-2, 0,-1, 0, 0, 0, 0, 0 /)
-       mat(10,:) = (/  0, 0, 0, 0,-3, 0, 3, 0, 0, 0, 0, 0,-2, 0,-1, 0 /)
-       mat(11,:) = (/  9,-9,-9, 9, 6, 3,-6,-3, 6,-6, 3,-3, 4, 2, 2, 1 /)
-       mat(12,:) = (/ -6, 6, 6,-6,-3,-3, 3, 3,-4, 4,-2, 2,-2,-2,-1,-1 /)
-       mat(13,:) = (/  2, 0,-2, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0 /)
-       mat(14,:) = (/  0, 0, 0, 0, 2, 0,-2, 0, 0, 0, 0, 0, 1, 0, 1, 0 /)
-       mat(15,:) = (/ -6, 6, 6,-6,-4,-2, 4, 2,-3, 3,-3, 3,-2,-1,-2,-1 /)
-       mat(16,:) = (/  4,-4,-4, 4, 2, 2,-2,-2, 2,-2, 2,-2, 1, 1, 1, 1 /)
-       is_global_first = .false.
+      mat( 1,:) = (/  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /)
+      mat( 2,:) = (/  0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /)
+      mat( 3,:) = (/ -3, 3, 0, 0,-2,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /)
+      mat( 4,:) = (/  2,-2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /)
+      mat( 5,:) = (/  0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 /)
+      mat( 6,:) = (/  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 /)
+      mat( 7,:) = (/  0, 0, 0, 0, 0, 0, 0, 0,-3, 3, 0, 0,-2,-1, 0, 0 /)
+      mat( 8,:) = (/  0, 0, 0, 0, 0, 0, 0, 0, 2,-2, 0, 0, 1, 1, 0, 0 /)
+      mat( 9,:) = (/ -3, 0, 3, 0, 0, 0, 0, 0,-2, 0,-1, 0, 0, 0, 0, 0 /)
+      mat(10,:) = (/  0, 0, 0, 0,-3, 0, 3, 0, 0, 0, 0, 0,-2, 0,-1, 0 /)
+      mat(11,:) = (/  9,-9,-9, 9, 6, 3,-6,-3, 6,-6, 3,-3, 4, 2, 2, 1 /)
+      mat(12,:) = (/ -6, 6, 6,-6,-3,-3, 3, 3,-4, 4,-2, 2,-2,-2,-1,-1 /)
+      mat(13,:) = (/  2, 0,-2, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0 /)
+      mat(14,:) = (/  0, 0, 0, 0, 2, 0,-2, 0, 0, 0, 0, 0, 1, 0, 1, 0 /)
+      mat(15,:) = (/ -6, 6, 6,-6,-4,-2, 4, 2,-3, 3,-3, 3,-2,-1,-2,-1 /)
+      mat(16,:) = (/  4,-4,-4, 4, 2, 2,-2,-2, 2,-2, 2,-2, 1, 1, 1, 1 /)
+      is_global_first = .false.
     end if
 
 
@@ -361,13 +361,13 @@ contains
     !! --
 
     do j=1, ny
-       do i=2, nx-1
-          ffx(i,j) = ( ff(i+1,j) - ff(i-1,j) ) / ( 2 * dx )
-       end do
+      do i=2, nx-1
+        ffx(i,j) = ( ff(i+1,j) - ff(i-1,j) ) / ( 2 * dx )
+      end do
 
-       ! approximate by one-sided derivatives around the boudnary
-       ffx(1,j) = ( ff(2,j) - ff(1,j) ) / dx
-       ffx(nx,j) = ( ff(nx,j) - ff(nx-1,j) ) / dx
+      ! approximate by one-sided derivatives around the boudnary
+      ffx(1,j) = ( ff(2,j) - ff(1,j) ) / dx
+      ffx(nx,j) = ( ff(nx,j) - ff(nx-1,j) ) / dx
     end do
 
   end subroutine diffx
@@ -389,12 +389,12 @@ contains
     !! --
 
     do i=1, nx
-       do j=2, ny-1
-          ffy(i,j) = ( ff(i,j+1) - ff(i,j-1) ) / ( 2 * dy )
-       end do
-       !  approximate by one-sided derivatives
-       ffy(i,1) = ( ffy(i,2) - ffy(i,1) ) / dy
-       ffy(i,ny) = ( ffy(i,ny) - ffy(i,ny-1) ) / dy
+      do j=2, ny-1
+        ffy(i,j) = ( ff(i,j+1) - ff(i,j-1) ) / ( 2 * dy )
+      end do
+      !  approximate by one-sided derivatives
+      ffy(i,1) = ( ffy(i,2) - ffy(i,1) ) / dy
+      ffy(i,ny) = ( ffy(i,ny) - ffy(i,ny-1) ) / dy
     end do
   end subroutine diffy
   !! --------------------------------------------------------------------------------------------------------------------------- !!

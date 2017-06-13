@@ -3,7 +3,7 @@
 !! Boundary absorber module: Cerjan's Sponge
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -80,41 +80,41 @@ contains
     !! Calculate attenuator based on distance
     !!
     do i=ibeg, iend
-       if( i <= na ) then
-          gx_c(i) = exp( - alpha * ( 1.0 -  (   i2x(i, 0.0, real(dx))                ) / Lx )**2 )
-          gx_b(i) = exp( - alpha * ( 1.0 -  ( ( i2x(i, 0.0, real(dx)) + real(dx)/2 ) ) / Lx )**2 )
-       else if( i >= nx-na+1 ) then
-          gx_c(i) = exp( - alpha * ( 1.0 -  (   i2x(i, Nx*real(dx), -real(dx)) + real(dx)/2    ) / Lx )**2 )
-          gx_b(i) = exp( - alpha * ( 1.0 -  ( ( i2x(i, Nx*real(dx), -real(dx))               ) ) / Lx )**2 )
-       else
-          gx_c(i) = 1.0
-          gx_b(i) = 1.0
-       end if
+      if( i <= na ) then
+        gx_c(i) = exp( - alpha * ( 1.0 -  (   i2x(i, 0.0, real(dx))                ) / Lx )**2 )
+        gx_b(i) = exp( - alpha * ( 1.0 -  ( ( i2x(i, 0.0, real(dx)) + real(dx)/2 ) ) / Lx )**2 )
+      else if( i >= nx-na+1 ) then
+        gx_c(i) = exp( - alpha * ( 1.0 -  (   i2x(i, Nx*real(dx), -real(dx)) + real(dx)/2    ) / Lx )**2 )
+        gx_b(i) = exp( - alpha * ( 1.0 -  ( ( i2x(i, Nx*real(dx), -real(dx))               ) ) / Lx )**2 )
+      else
+        gx_c(i) = 1.0
+        gx_b(i) = 1.0
+      end if
     end do
     do j=jbeg, jend
-       if( j <= na ) then
-          gy_c(j) = exp( - alpha * ( 1.0 -  (   j2y(j, 0.0, real(dy)) )                / Ly )**2 )
-          gy_b(j) = exp( - alpha * ( 1.0 -  ( ( j2y(j, 0.0, real(dy)) + real(dy)/2 ) ) / Ly )**2 )
-       else if( j >= ny-na+1 ) then
-          gy_c(j) = exp( - alpha * ( 1.0 -  (   j2y(j, Ny*real(dy), -real(dy)) + real(dy)/2  ) / Ly )**2 )
-          gy_b(j) = exp( - alpha * ( 1.0 -  ( ( j2y(j, Ny*real(dy), -real(dy))             ) ) / Ly )**2 )
-       else
-          gy_c(j) = 1.0
-          gy_b(j) = 1.0
-       end if
+      if( j <= na ) then
+        gy_c(j) = exp( - alpha * ( 1.0 -  (   j2y(j, 0.0, real(dy)) )                / Ly )**2 )
+        gy_b(j) = exp( - alpha * ( 1.0 -  ( ( j2y(j, 0.0, real(dy)) + real(dy)/2 ) ) / Ly )**2 )
+      else if( j >= ny-na+1 ) then
+        gy_c(j) = exp( - alpha * ( 1.0 -  (   j2y(j, Ny*real(dy), -real(dy)) + real(dy)/2  ) / Ly )**2 )
+        gy_b(j) = exp( - alpha * ( 1.0 -  ( ( j2y(j, Ny*real(dy), -real(dy))             ) ) / Ly )**2 )
+      else
+        gy_c(j) = 1.0
+        gy_b(j) = 1.0
+      end if
     end do
 
     do k=kbeg, kend
-       if( k <= na ) then
-          gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, 0.0, real(dz)) )                / Lz )**2 )
-          gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, 0.0, real(dz)) + real(dz)/2 ) ) / Lz )**2 )
-       else if( k >= nz-na+1 ) then
-          gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, Nz*real(dz), -real(dz))  + real(dz)/2  ) / Lz )**2 )
-          gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, Nz*real(dz), -real(dz))              ) ) / Lz )**2 )
-       else
-          gz_c(k) = 1.0
-          gz_b(k) = 1.0
-       end if
+      if( k <= na ) then
+        gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, 0.0, real(dz)) )                / Lz )**2 )
+        gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, 0.0, real(dz)) + real(dz)/2 ) ) / Lz )**2 )
+      else if( k >= nz-na+1 ) then
+        gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, Nz*real(dz), -real(dz))  + real(dz)/2  ) / Lz )**2 )
+        gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, Nz*real(dz), -real(dz))              ) ) / Lz )**2 )
+      else
+        gz_c(k) = 1.0
+        gz_b(k) = 1.0
+      end if
     end do
 
 
@@ -131,20 +131,20 @@ contains
 
     !$omp parallel do schedule(dynamic) private( i, j, k, gcc )
     do j=jbeg_k, jend_k
-       do i=ibeg_k, iend_k
-          do k=kbeg_a(i,j), kend_k
+      do i=ibeg_k, iend_k
+        do k=kbeg_a(i,j), kend_k
 
-             gcc = gx_c(i) * gy_c(j) * gz_c(k)
-             Sxx(k,i,j) = Sxx(k,i,j) * gcc
-             Syy(k,i,j) = Syy(k,i,j) * gcc
-             Szz(k,i,j) = Szz(k,i,j) * gcc
+          gcc = gx_c(i) * gy_c(j) * gz_c(k)
+          Sxx(k,i,j) = Sxx(k,i,j) * gcc
+          Syy(k,i,j) = Syy(k,i,j) * gcc
+          Szz(k,i,j) = Szz(k,i,j) * gcc
 
-             Syz(k,i,j) = Syz(k,i,j) * gx_c(i) * gy_b(j) * gz_b(k)
-             Sxz(k,i,j) = Sxz(k,i,j) * gx_b(i) * gy_c(j) * gz_b(k)
-             Sxy(k,i,j) = Sxy(k,i,j) * gx_b(i) * gy_b(j) * gz_c(k)
+          Syz(k,i,j) = Syz(k,i,j) * gx_c(i) * gy_b(j) * gz_b(k)
+          Sxz(k,i,j) = Sxz(k,i,j) * gx_b(i) * gy_c(j) * gz_b(k)
+          Sxy(k,i,j) = Sxy(k,i,j) * gx_b(i) * gy_b(j) * gz_c(k)
 
-          end do
-       end do
+        end do
+      end do
     end do
     !$omp end parallel do
 
@@ -158,15 +158,15 @@ contains
 
     !$omp parallel do schedule(dynamic) private(i,j,k)
     do j=jbeg_k, jend_k
-       do i=ibeg_k, iend_k
-          do k=kbeg_a(i,j), kend_k
+      do i=ibeg_k, iend_k
+        do k=kbeg_a(i,j), kend_k
 
-             Vx(k,i,j) = Vx(k,i,j) * gx_b(i) * gy_c(j) * gz_c(k)
-             Vy(k,i,j) = Vy(k,i,j) * gx_c(i) * gy_b(j) * gz_c(k)
-             Vz(k,i,j) = Vz(k,i,j) * gx_c(i) * gy_c(j) * gz_b(k)
+          Vx(k,i,j) = Vx(k,i,j) * gx_b(i) * gy_c(j) * gz_c(k)
+          Vy(k,i,j) = Vy(k,i,j) * gx_c(i) * gy_b(j) * gz_c(k)
+          Vz(k,i,j) = Vz(k,i,j) * gx_c(i) * gy_c(j) * gz_b(k)
 
-          end do
-       end do
+        end do
+      end do
     end do
 
   end subroutine absorb_c__update_vel

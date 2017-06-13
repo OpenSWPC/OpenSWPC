@@ -3,7 +3,7 @@
 !! Generate random velocity flucuation model in 3D space
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 #include "m_debug.h"

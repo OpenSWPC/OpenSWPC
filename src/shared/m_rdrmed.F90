@@ -4,7 +4,7 @@
 !! Read random media volume
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 module m_rdrmed
@@ -52,26 +52,26 @@ contains
 
     do k=kb, min(ke,nzc)
 
-       if( k <= 0 ) then
-          kk = k + nzc
-       else
-          kk = k
-       end if
+      if( k <= 0 ) then
+        kk = k + nzc
+      else
+        kk = k
+      end if
 
-       do i=ib, ie
-          ii = mod(i,nxc)
-          if( ii<=0 ) ii = ii + nxc
-          vol(k,i) = hh(ii,kk)
-       end do
+      do i=ib, ie
+        ii = mod(i,nxc)
+        if( ii<=0 ) ii = ii + nxc
+        vol(k,i) = hh(ii,kk)
+      end do
     end do
 
     deallocate( hh )
 
     !! bottom cyclic part
     do k=nzc+1, ke
-       kk = mod(k,nzc)
-       if( kk<=0 ) kk = kk + nzc
-       vol(k,ib:ie) = vol(kk,ib:ie)
+      kk = mod(k,nzc)
+      if( kk<=0 ) kk = kk + nzc
+      vol(k,ib:ie) = vol(kk,ib:ie)
     end do
 
 
@@ -114,27 +114,27 @@ contains
 
     do k=kb, min(ke,nzc)
 
-       if( k <= 0 ) then
-          kk = k + nzc
-       else
-          kk = k
-       end if
+      if( k <= 0 ) then
+        kk = k + nzc
+      else
+        kk = k
+      end if
 
-       st(3) = kk
-       call assert( nf90_get_var(ncid, vid, hh, start=st, count=ct ) == NF90_NOERR )
+      st(3) = kk
+      call assert( nf90_get_var(ncid, vid, hh, start=st, count=ct ) == NF90_NOERR )
 
-       do j=jb, je
+      do j=jb, je
 
-          jj = mod(j,nyc)
-          if( jj<=0 ) jj = jj + nyc
+        jj = mod(j,nyc)
+        if( jj<=0 ) jj = jj + nyc
 
-          do i=ib, ie
-             ii = mod(i,nxc)
-             if( ii<=0 ) ii = ii + nxc
-             vol(k,i,j) = hh(ii,jj)
+        do i=ib, ie
+          ii = mod(i,nxc)
+          if( ii<=0 ) ii = ii + nxc
+          vol(k,i,j) = hh(ii,jj)
 
-          end do
-       end do
+        end do
+      end do
 
     end do
 
@@ -142,8 +142,8 @@ contains
 
     !! bottom cyclic part
     do k=nzc+1, ke
-       kk = mod(k,nzc)
-       vol(k,ib:ie,jb:je) = vol(kk,ib:ie,jb:je)
+      kk = mod(k,nzc)
+      vol(k,ib:ie,jb:je) = vol(kk,ib:ie,jb:je)
     end do
 
 #endif

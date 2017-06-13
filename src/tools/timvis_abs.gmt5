@@ -38,7 +38,7 @@ ncpu2=`echo $ncpu | awk '{print $1+0.9999}'`
 nproc=` sort -n -k 2 ${infile} | tail -1 | awk '{printf("%d",$2)}' `
 nproc2=`echo $nproc | awk '{print $1+1}'`
 
-gmt makecpt -Cpaired  > col.cpt
+gmt makecpt -Cpaired -T0/12/1 > col.cpt
 
 title=`basename $infile .tim`
 echo "title = " $title

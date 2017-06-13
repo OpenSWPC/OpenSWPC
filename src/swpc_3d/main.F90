@@ -7,7 +7,7 @@
 !!   elastic/visco-elastic medium by finite difference method (FDM).
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !!
 !! @see
 !!   - Noguchi et al.     (2016) GJI     doi:10.1093/gji/ggw074
@@ -81,23 +81,23 @@ program SWPC_3D
   !!
   if( it0 == 1 ) then
 
-     !!
-     !! stopwatch start
-     !!
-     call pwatch__setup( stopwatch_mode )
+    !!
+    !! stopwatch start
+    !!
+    call pwatch__setup( stopwatch_mode )
 
-     !!
-     !! set-up each module
-     !!
-     call global__setup2( )
-     call medium__setup( io_prm )
-     call mpi_barrier( mpi_comm_world, ierr ) !! wait until deallocation by medium__setup
-     call kernel__setup( )
-     call source__setup( io_prm )
-     call absorb__setup( io_prm )
-     call output__setup( io_prm )
-     call green__setup( io_prm )
-     call report__setup( io_prm )
+    !!
+    !! set-up each module
+    !!
+    call global__setup2( )
+    call medium__setup( io_prm )
+    call mpi_barrier( mpi_comm_world, ierr ) !! wait until deallocation by medium__setup
+    call kernel__setup( )
+    call source__setup( io_prm )
+    call absorb__setup( io_prm )
+    call output__setup( io_prm )
+    call green__setup( io_prm )
+    call report__setup( io_prm )
 
   end if
 
@@ -109,28 +109,28 @@ program SWPC_3D
   !! mainloop
   do it = it0, nt
 
-     call report__progress(it)
+    call report__progress(it)
 
-     call green__store( it )
-     call output__store_wav ( it )
-     call output__write_snap( it )
+    call green__store( it )
+    call output__store_wav ( it )
+    call output__write_snap( it )
 
-     call kernel__update_stress()
-     call absorb__update_stress()
+    call kernel__update_stress()
+    call absorb__update_stress()
 
-     call source__stressdrop(it)
-     call global__comm_stress()
+    call source__stressdrop(it)
+    call global__comm_stress()
 
-     call kernel__update_vel()
-     call absorb__update_vel()
+    call kernel__update_vel()
+    call absorb__update_vel()
 
-     call source__bodyforce(it)
+    call source__bodyforce(it)
 
-     call green__source( it )
+    call green__source( it )
 
-     call global__comm_vel()
+    call global__comm_vel()
 
-     call ckprst__checkpoint( it )
+    call ckprst__checkpoint( it )
 
 
   end do
@@ -154,11 +154,11 @@ program SWPC_3D
   !! stopwatch report from 0-th node
   !!
   if( stopwatch_mode ) then
-     if( myid == 0 ) then
-        call std__getio( io_watch )
-        open( io_watch, file=trim( odir ) // '/' // trim( title ) //  '.tim', action='write', status='unknown' )
-     end if
-     call pwatch__report( io_watch, 0 )
+    if( myid == 0 ) then
+      call std__getio( io_watch )
+      open( io_watch, file=trim( odir ) // '/' // trim( title ) //  '.tim', action='write', status='unknown' )
+    end if
+    call pwatch__report( io_watch, 0 )
   end if
 
   !!

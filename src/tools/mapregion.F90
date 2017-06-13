@@ -3,7 +3,7 @@
 !! Obtains projected area for FDM simulation from input parameter file
 !!
 !! @copyright
-!!   Copyright 2013-2016 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
 program mapregion
@@ -45,10 +45,10 @@ program mapregion
 
   call getopt( 'i', is_given, fn_prm )
   if( .not. is_given ) then
-     write(STDERR,*)
-     write(STDERR,'(A)') ' mapregion.x [-i input_prm] [-o output (default=stdout)] '
-     write(STDERR,*)
-     stop
+    write(STDERR,*)
+    write(STDERR,'(A)') ' mapregion.x [-i input_prm] [-o output (default=stdout)] '
+    write(STDERR,*)
+    stop
   end if
 
   call getopt( 'o', is_given, fn_out, '' )
@@ -57,8 +57,8 @@ program mapregion
 
   open( io_prm, file=trim(fn_prm), action='read', status='old', iostat=ierr )
   if( ierr /= 0 ) then
-     write(STDERR,*) 'ERROR [mapregion]: Could not open file ' // trim( fn_prm )
-     stop
+    write(STDERR,*) 'ERROR [mapregion]: Could not open file ' // trim( fn_prm )
+    stop
   end if
 
   call readini( io_prm, 'nproc_x', nproc_x, 1        )
@@ -86,45 +86,45 @@ program mapregion
   allocate( lon(nn), lat(nn) )
   k = 1
   do i=1, nx
-     j = 1
-     x = xbeg + (i-1)*dx
-     y = ybeg + (j-1)*dy
-     call geomap__c2g( x, y, clon, clat, phi, lon(k), lat(k) )
-     k = k + 1
+    j = 1
+    x = xbeg + (i-1)*dx
+    y = ybeg + (j-1)*dy
+    call geomap__c2g( x, y, clon, clat, phi, lon(k), lat(k) )
+    k = k + 1
   end do
   do j=2, ny
-     i = nx
-     x = xbeg + (i-1)*dx
-     y = ybeg + (j-1)*dy
-     call geomap__c2g( x, y, clon, clat, phi, lon(k), lat(k) )
-     k = k + 1
+    i = nx
+    x = xbeg + (i-1)*dx
+    y = ybeg + (j-1)*dy
+    call geomap__c2g( x, y, clon, clat, phi, lon(k), lat(k) )
+    k = k + 1
   end do
   do i=nx-1,1,-1
-     j = ny
-     x = xbeg + (i-1)*dx
-     y = ybeg + (j-1)*dy
-     call geomap__c2g( x, y, clon, clat, phi, lon(k), lat(k) )
-     k = k + 1
+    j = ny
+    x = xbeg + (i-1)*dx
+    y = ybeg + (j-1)*dy
+    call geomap__c2g( x, y, clon, clat, phi, lon(k), lat(k) )
+    k = k + 1
   end do
   do j=ny-1,1,-1
-     i = 1
-     x = xbeg + (i-1)*dx
-     y = ybeg + (j-1)*dy
-     call geomap__c2g( x, y, clon, clat, phi, lon(k), lat(k) )
-     k = k + 1
+    i = 1
+    x = xbeg + (i-1)*dx
+    y = ybeg + (j-1)*dy
+    call geomap__c2g( x, y, clon, clat, phi, lon(k), lat(k) )
+    k = k + 1
   end do
 
   if( is_given ) then
-     call std__getio( io )
-     open( io, file=trim(fn_out), action='write', status='unknown' )
-     do k=1, nn
-        write(io,*) lon(k), lat(k)
-     end do
-     close( io )
+    call std__getio( io )
+    open( io, file=trim(fn_out), action='write', status='unknown' )
+    do k=1, nn
+      write(io,*) lon(k), lat(k)
+    end do
+    close( io )
   else
-     do k=1, nn
-        write(*,*) lon(k), lat(k)
-     end do
+    do k=1, nn
+      write(*,*) lon(k), lat(k)
+    end do
   end if
 
 end program mapregion
