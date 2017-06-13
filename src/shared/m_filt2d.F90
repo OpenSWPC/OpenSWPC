@@ -52,16 +52,16 @@ contains
 
     !! filtering
     do j=1, ny2
-       do i=1, nx2
+      do i=1, nx2
 
-          !! absolute value of wavenumber
-          k = sqrt( kx(i)**2 + ky(j)**2 )
+        !! absolute value of wavenumber
+        k = sqrt( kx(i)**2 + ky(j)**2 )
 
-          !! filter response
-          H = 1 / sqrt( 1.0_DP + (k/kmax)**(2*np) )
-          kdom(i,j) = kdom(i,j) * H
+        !! filter response
+        H = 1 / sqrt( 1.0_DP + (k/kmax)**(2*np) )
+        kdom(i,j) = kdom(i,j) * H
 
-       end do
+      end do
     end do
 
     !! back to the space domain
