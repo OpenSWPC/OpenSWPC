@@ -198,33 +198,33 @@ contains
 
     !! some parameters are fixed for benchmark mode
     if( benchmark_mode ) then
-       dx = 0.5
-       dy = 0.5
-       dz = 0.5
-       dt = 0.04
-       na = 20
-       xbeg = -nx/2.0 * dx ! force x=0 at center
-       ybeg = -ny/2.0 * dy ! force x=0 at center
-       zbeg = - 30 * dz
-       tbeg = 0.0
-       clon = 139.7604
-       clat = 35.7182
-       phi  = 0.0
-       abc_type = 'pml'
+      dx = 0.5
+      dy = 0.5
+      dz = 0.5
+      dt = 0.04
+      na = 20
+      xbeg = -nx/2.0 * dx ! force x=0 at center
+      ybeg = -ny/2.0 * dy ! force x=0 at center
+      zbeg = - 30 * dz
+      tbeg = 0.0
+      clon = 139.7604
+      clat = 35.7182
+      phi  = 0.0
+      abc_type = 'pml'
     else !! or read from file for regular run
-       call readini( io_prm, 'dx',             dx,              0.5_MP         )
-       call readini( io_prm, 'dy',             dy,              0.5_MP         )
-       call readini( io_prm, 'dz',             dz,              0.5_MP         )
-       call readini( io_prm, 'dt',             dt,              0.01           )
-       call readini( io_prm, 'na',             na,              20             )
-       call readini( io_prm, 'xbeg',           xbeg,            -nx/2*real(dx) )
-       call readini( io_prm, 'ybeg',           ybeg,            -ny/2*real(dy) )
-       call readini( io_prm, 'zbeg',           zbeg,            -30*real(dz)   )
-       call readini( io_prm, 'tbeg',           tbeg,            0.0            )
-       call readini( io_prm, 'clon',           clon,            139.7604       )
-       call readini( io_prm, 'clat',           clat,            35.7182        )
-       call readini( io_prm, 'phi',            phi,             0.0            )
-       call readini( io_prm, 'abc_type',       abc_type,        'pml'          )
+      call readini( io_prm, 'dx',             dx,              0.5_MP         )
+      call readini( io_prm, 'dy',             dy,              0.5_MP         )
+      call readini( io_prm, 'dz',             dz,              0.5_MP         )
+      call readini( io_prm, 'dt',             dt,              0.01           )
+      call readini( io_prm, 'na',             na,              20             )
+      call readini( io_prm, 'xbeg',           xbeg,            -nx/2*real(dx) )
+      call readini( io_prm, 'ybeg',           ybeg,            -ny/2*real(dy) )
+      call readini( io_prm, 'zbeg',           zbeg,            -30*real(dz)   )
+      call readini( io_prm, 'tbeg',           tbeg,            0.0            )
+      call readini( io_prm, 'clon',           clon,            139.7604       )
+      call readini( io_prm, 'clat',           clat,            35.7182        )
+      call readini( io_prm, 'phi',            phi,             0.0            )
+      call readini( io_prm, 'abc_type',       abc_type,        'pml'          )
 
     end if
 
@@ -249,9 +249,9 @@ contains
     !!
     call mpi_comm_rank( mpi_comm_world, myid, ierr )
     if( MP == DP ) then
-       mpi_precision = MPI_DOUBLE_PRECISION
+      mpi_precision = MPI_DOUBLE_PRECISION
     else
-       mpi_precision = MPI_REAL
+      mpi_precision = MPI_REAL
     end if
 
 
@@ -375,13 +375,13 @@ contains
     allocate( xc(ibeg_m:iend_m), yc(jbeg_m:jend_m), zc(kbeg_m:kend_m) )
 
     do i=ibeg_m, iend_m
-       xc(i) = i2x( i, xbeg, real(dx) )
+      xc(i) = i2x( i, xbeg, real(dx) )
     end do
     do j=jbeg_m, jend_m
-       yc(j) = j2y( j, ybeg, real(dy) )
+      yc(j) = j2y( j, ybeg, real(dy) )
     end do
     do k=kbeg_m, kend_m
-       zc(k) = k2z( k, zbeg, real(dz) )
+      zc(k) = k2z( k, zbeg, real(dz) )
     end do
 
 
@@ -410,13 +410,13 @@ contains
 
     allocate( kbeg_a(ibeg_m:iend_m,jbeg_m:jend_m) )
     do j=jbeg_m, jend_m
-       do i=ibeg_m, iend_m
-          if( i <= na .or. nx-na+1 <= i .or. j <= na .or. ny-na+1 <= j ) then
-             kbeg_a(i,j) = kbeg
-          else
-             kbeg_a(i,j) = kend-na+1
-          end if
-       end do
+      do i=ibeg_m, iend_m
+        if( i <= na .or. nx-na+1 <= i .or. j <= na .or. ny-na+1 <= j ) then
+          kbeg_a(i,j) = kbeg
+        else
+          kbeg_a(i,j) = kend-na+1
+        end if
+      end do
     end do
 
     !!
@@ -432,22 +432,22 @@ contains
     kend_k = kend
 
     if( abc_type == 'pml' ) then
-       if      ( iend <= na      ) then; ibeg_k = iend+1;  ! no kernel integration
-       else if ( ibeg <= na      ) then; ibeg_k = na+1  ;  ! pertial kernel
-       end if
+      if      ( iend <= na      ) then; ibeg_k = iend+1;  ! no kernel integration
+      else if ( ibeg <= na      ) then; ibeg_k = na+1  ;  ! pertial kernel
+      end if
 
-       if      ( ibeg >= nx-na+1 ) then; iend_k = ibeg-1;  ! no kernel integartion
-       else if ( iend >= nx-na+1 ) then; iend_k = nx-na;
-       end if
+      if      ( ibeg >= nx-na+1 ) then; iend_k = ibeg-1;  ! no kernel integartion
+      else if ( iend >= nx-na+1 ) then; iend_k = nx-na;
+      end if
 
-       if      ( jend <= na      ) then; jbeg_k = jend+1;  ! no kernel integration
-       else if ( jbeg <= na      ) then; jbeg_k = na+1;    ! pertial kernel
-       end if
+      if      ( jend <= na      ) then; jbeg_k = jend+1;  ! no kernel integration
+      else if ( jbeg <= na      ) then; jbeg_k = na+1;    ! pertial kernel
+      end if
 
-       if      ( jbeg >= ny-na+1 ) then; jend_k = jbeg-1;  ! no kernel integartion
-       else if ( jend >= ny-na+1 ) then; jend_k = ny-na;
-       end if
-       kend_k = nz-na
+      if      ( jbeg >= ny-na+1 ) then; jend_k = jbeg-1;  ! no kernel integartion
+      else if ( jend >= ny-na+1 ) then; jend_k = ny-na;
+      end if
+      kend_k = nz-na
     end if
 
 
@@ -486,20 +486,20 @@ contains
     !$omp parallel do private(j,k,ptr)
     do j=jbeg, jend
 #ifdef _ES
-!cdir nodep,nosync
+      !cdir nodep,nosync
 #endif
-       do k=kbeg, kend
-          ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
+      do k=kbeg, kend
+        ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
 
-          sbuf_ip(        ptr:        ptr+Nsl-1) = Vx(k,iend-Nsl+1:iend,j)
-          sbuf_ip(  isize+ptr:  isize+ptr+Nsl-1) = Vy(k,iend-Nsl+1:iend,j)
-          sbuf_ip(2*isize+ptr:2*isize+ptr+Nsl-1) = Vz(k,iend-Nsl+1:iend,j)
+        sbuf_ip(        ptr:        ptr+Nsl-1) = Vx(k,iend-Nsl+1:iend,j)
+        sbuf_ip(  isize+ptr:  isize+ptr+Nsl-1) = Vy(k,iend-Nsl+1:iend,j)
+        sbuf_ip(2*isize+ptr:2*isize+ptr+Nsl-1) = Vz(k,iend-Nsl+1:iend,j)
 
-          sbuf_im(        ptr:        ptr+Nsl-1) = Vx(k,ibeg:ibeg+Nsl-1,j)
-          sbuf_im(  isize+ptr:  isize+ptr+Nsl-1) = Vy(k,ibeg:ibeg+Nsl-1,j)
-          sbuf_im(2*isize+ptr:2*isize+ptr+Nsl-1) = Vz(k,ibeg:ibeg+Nsl-1,j)
+        sbuf_im(        ptr:        ptr+Nsl-1) = Vx(k,ibeg:ibeg+Nsl-1,j)
+        sbuf_im(  isize+ptr:  isize+ptr+Nsl-1) = Vy(k,ibeg:ibeg+Nsl-1,j)
+        sbuf_im(2*isize+ptr:2*isize+ptr+Nsl-1) = Vz(k,ibeg:ibeg+Nsl-1,j)
 
-       end do
+      end do
     end do
     !$omp end parallel do
 
@@ -518,20 +518,20 @@ contains
     !$omp parallel do private(ptr)
     do i=ibeg,iend
 #ifdef _ES
-!cdir nodep,nosync
+      !cdir nodep,nosync
 #endif
-       do k=kbeg,kend
-          ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
+      do k=kbeg,kend
+        ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
-          sbuf_jp(        ptr:        ptr+Nsl-1) = Vx(k,i,jend-Nsl+1:jend)
-          sbuf_jp(  jsize+ptr:  jsize+ptr+Nsl-1) = Vy(k,i,jend-Nsl+1:jend)
-          sbuf_jp(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Vz(k,i,jend-Nsl+1:jend)
+        sbuf_jp(        ptr:        ptr+Nsl-1) = Vx(k,i,jend-Nsl+1:jend)
+        sbuf_jp(  jsize+ptr:  jsize+ptr+Nsl-1) = Vy(k,i,jend-Nsl+1:jend)
+        sbuf_jp(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Vz(k,i,jend-Nsl+1:jend)
 
-          sbuf_jm(        ptr:        ptr+Nsl-1) = Vx(k,i,jbeg:jbeg+Nsl-1)
-          sbuf_jm(  jsize+ptr:  jsize+ptr+Nsl-1) = Vy(k,i,jbeg:jbeg+Nsl-1)
-          sbuf_jm(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Vz(k,i,jbeg:jbeg+Nsl-1)
+        sbuf_jm(        ptr:        ptr+Nsl-1) = Vx(k,i,jbeg:jbeg+Nsl-1)
+        sbuf_jm(  jsize+ptr:  jsize+ptr+Nsl-1) = Vy(k,i,jbeg:jbeg+Nsl-1)
+        sbuf_jm(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Vz(k,i,jbeg:jbeg+Nsl-1)
 
-       end do
+      end do
     end do
     !$omp end parallel do
 
@@ -552,21 +552,21 @@ contains
     !!
     !$omp parallel do private(ptr,i,j,k)
     do j=jbeg, jend
-       do k=kbeg, kend
+      do k=kbeg, kend
 
-          ptr = ( (k-kbeg) + (j-jbeg)*nz ) * Nsl + 1
+        ptr = ( (k-kbeg) + (j-jbeg)*nz ) * Nsl + 1
 
-          do i=1,Nsl
-             Vx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
-             Vy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
-             Vz(k,iend+i,j) = rbuf_ip(2*isize+ptr+i-1)
+        do i=1,Nsl
+          Vx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
+          Vy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
+          Vz(k,iend+i,j) = rbuf_ip(2*isize+ptr+i-1)
 
-             Vx(k,ibeg-Nsl+i-1,j) = rbuf_im(        ptr+i-1)
-             Vy(k,ibeg-Nsl+i-1,j) = rbuf_im(  isize+ptr+i-1 )
-             Vz(k,ibeg-Nsl+i-1,j) = rbuf_im(2*isize+ptr+i-1 )
-          end do
+          Vx(k,ibeg-Nsl+i-1,j) = rbuf_im(        ptr+i-1)
+          Vy(k,ibeg-Nsl+i-1,j) = rbuf_im(  isize+ptr+i-1 )
+          Vz(k,ibeg-Nsl+i-1,j) = rbuf_im(2*isize+ptr+i-1 )
+        end do
 
-       end do
+      end do
     end do
     !$omp end parallel do
 
@@ -578,21 +578,21 @@ contains
     !!
     !$omp parallel do private(ptr,i,j,k)
     do i=ibeg,iend
-       do k=kbeg,kend
+      do k=kbeg,kend
 
-          ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
+        ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
-          do j=1, Nsl
-             Vx(k,i,jend+j) = rbuf_jp(ptr+j-1)
-             Vy(k,i,jend+j) = rbuf_jp(jsize+ptr+j-1)
-             Vz(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
+        do j=1, Nsl
+          Vx(k,i,jend+j) = rbuf_jp(ptr+j-1)
+          Vy(k,i,jend+j) = rbuf_jp(jsize+ptr+j-1)
+          Vz(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
 
-             Vx(k,i,jbeg-Nsl+j-1) = rbuf_jm(ptr+j-1)
-             Vy(k,i,jbeg-Nsl+j-1) = rbuf_jm(jsize+ptr+j-1)
-             Vz(k,i,jbeg-Nsl+j-1) = rbuf_jm(2*jsize+ptr+j-1)
-          end do
+          Vx(k,i,jbeg-Nsl+j-1) = rbuf_jm(ptr+j-1)
+          Vy(k,i,jbeg-Nsl+j-1) = rbuf_jm(jsize+ptr+j-1)
+          Vz(k,i,jbeg-Nsl+j-1) = rbuf_jm(2*jsize+ptr+j-1)
+        end do
 
-       end do
+      end do
     end do
     !$omp end parallel do
 
@@ -630,20 +630,20 @@ contains
     !$omp parallel do private(i,k,ptr)
     do j=jbeg, jend
 #ifdef _ES
-!cdir nodep,nosync
+      !cdir nodep,nosync
 #endif
-       do k=kbeg, kend
-          ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
+      do k=kbeg, kend
+        ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
 
-          sbuf_ip(        ptr:        ptr+Nsl-1) = Sxx(k,iend-Nsl+1:iend,j)
-          sbuf_ip(  isize+ptr:  isize+ptr+Nsl-1) = Sxy(k,iend-Nsl+1:iend,j)
-          sbuf_ip(2*isize+ptr:2*isize+ptr+Nsl-1) = Sxz(k,iend-Nsl+1:iend,j)
+        sbuf_ip(        ptr:        ptr+Nsl-1) = Sxx(k,iend-Nsl+1:iend,j)
+        sbuf_ip(  isize+ptr:  isize+ptr+Nsl-1) = Sxy(k,iend-Nsl+1:iend,j)
+        sbuf_ip(2*isize+ptr:2*isize+ptr+Nsl-1) = Sxz(k,iend-Nsl+1:iend,j)
 
-          sbuf_im(        ptr:        ptr+Nsl-1) = Sxx(k,ibeg:ibeg+Nsl-1,j)
-          sbuf_im(  isize+ptr:  isize+ptr+Nsl-1) = Sxy(k,ibeg:ibeg+Nsl-1,j)
-          sbuf_im(2*isize+ptr:2*isize+ptr+Nsl-1) = Sxz(k,ibeg:ibeg+Nsl-1,j)
+        sbuf_im(        ptr:        ptr+Nsl-1) = Sxx(k,ibeg:ibeg+Nsl-1,j)
+        sbuf_im(  isize+ptr:  isize+ptr+Nsl-1) = Sxy(k,ibeg:ibeg+Nsl-1,j)
+        sbuf_im(2*isize+ptr:2*isize+ptr+Nsl-1) = Sxz(k,ibeg:ibeg+Nsl-1,j)
 
-       end do
+      end do
     end do
     !$omp end parallel do
 
@@ -661,19 +661,19 @@ contains
     !!
     !$omp parallel do private(ptr)
     do i=ibeg,iend
-!cdir nodep,nosync
-       do k=kbeg,kend
-          ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
+      !cdir nodep,nosync
+      do k=kbeg,kend
+        ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
-          sbuf_jp(        ptr:        ptr+Nsl-1) = Syy(k,i,jend-Nsl+1:jend)
-          sbuf_jp(  jsize+ptr:  jsize+ptr+Nsl-1) = Syz(k,i,jend-Nsl+1:jend)
-          sbuf_jp(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Sxy(k,i,jend-Nsl+1:jend)
+        sbuf_jp(        ptr:        ptr+Nsl-1) = Syy(k,i,jend-Nsl+1:jend)
+        sbuf_jp(  jsize+ptr:  jsize+ptr+Nsl-1) = Syz(k,i,jend-Nsl+1:jend)
+        sbuf_jp(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Sxy(k,i,jend-Nsl+1:jend)
 
-          sbuf_jm(        ptr:        ptr+Nsl-1) = Syy(k,i,jbeg:jbeg+Nsl-1)
-          sbuf_jm(  jsize+ptr:  jsize+ptr+Nsl-1) = Syz(k,i,jbeg:jbeg+Nsl-1)
-          sbuf_jm(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Sxy(k,i,jbeg:jbeg+Nsl-1)
+        sbuf_jm(        ptr:        ptr+Nsl-1) = Syy(k,i,jbeg:jbeg+Nsl-1)
+        sbuf_jm(  jsize+ptr:  jsize+ptr+Nsl-1) = Syz(k,i,jbeg:jbeg+Nsl-1)
+        sbuf_jm(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Sxy(k,i,jbeg:jbeg+Nsl-1)
 
-       end do
+      end do
     end do
     !$omp end parallel do
 
@@ -695,22 +695,22 @@ contains
     !!
     !$omp parallel do private(ptr,i,j,k)
     do j=jbeg, jend
-       do k=kbeg, kend
+      do k=kbeg, kend
 
-          ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
+        ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
 
-          do i=1, Nsl
+        do i=1, Nsl
 
-             Sxx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
-             Sxy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
-             Sxz(k,iend+i,j) = rbuf_ip(2*isize+ptr+i-1)
+          Sxx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
+          Sxy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
+          Sxz(k,iend+i,j) = rbuf_ip(2*isize+ptr+i-1)
 
-             Sxx(k,ibeg-Nsl+i-1,j) = rbuf_im(       ptr+i-1)
-             Sxy(k,ibeg-Nsl+i-1,j) = rbuf_im(  isize+ptr+i-1)
-             Sxz(k,ibeg-Nsl+i-1,j) = rbuf_im(2*isize+ptr+i-1)
-          end do
+          Sxx(k,ibeg-Nsl+i-1,j) = rbuf_im(       ptr+i-1)
+          Sxy(k,ibeg-Nsl+i-1,j) = rbuf_im(  isize+ptr+i-1)
+          Sxz(k,ibeg-Nsl+i-1,j) = rbuf_im(2*isize+ptr+i-1)
+        end do
 
-       end do
+      end do
     end do
     !$omp end parallel do
 
@@ -723,21 +723,21 @@ contains
     !!
     !$omp parallel do private(ptr,i,j,k)
     do i=ibeg,iend
-       do k=kbeg,kend
+      do k=kbeg,kend
 
-          ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
+        ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
-          do j=1, Nsl
-             Syy(k,i,jend+j) = rbuf_jp(        ptr+j-1)
-             Syz(k,i,jend+j) = rbuf_jp(  jsize+ptr+j-1)
-             Sxy(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
+        do j=1, Nsl
+          Syy(k,i,jend+j) = rbuf_jp(        ptr+j-1)
+          Syz(k,i,jend+j) = rbuf_jp(  jsize+ptr+j-1)
+          Sxy(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
 
-             Syy(k,i,jbeg-Nsl+j-1) = rbuf_jm(        ptr+j-1)
-             Syz(k,i,jbeg-Nsl+j-1) = rbuf_jm(  jsize+ptr+j-1)
-             Sxy(k,i,jbeg-Nsl+j-1) = rbuf_jm(2*jsize+ptr+j-1)
-          end do
+          Syy(k,i,jbeg-Nsl+j-1) = rbuf_jm(        ptr+j-1)
+          Syz(k,i,jbeg-Nsl+j-1) = rbuf_jm(  jsize+ptr+j-1)
+          Sxy(k,i,jbeg-Nsl+j-1) = rbuf_jm(2*jsize+ptr+j-1)
+        end do
 
-       end do
+      end do
     end do
     !$omp end parallel do
 
@@ -761,9 +761,9 @@ contains
     if( ibeg <= i .and. i<= iend .and. &
         jbeg <= j .and. j<= jend .and. &
         kbeg <= k .and. k<= kend ) then
-       inside_node = .true.
+      inside_node = .true.
     else
-       inside_node = .false.
+      inside_node = .false.
     end if
 
   end function inside_node
@@ -882,10 +882,10 @@ contains
     itbl(-1:nproc_x,-1:nproc_y) = MPI_PROC_NULL
     do i=0, nproc-1
 
-       ii = mod( i, nproc_x )
-       jj = i / nproc_x
+      ii = mod( i, nproc_x )
+      jj = i / nproc_x
 
-       itbl(ii,jj) = i
+      itbl(ii,jj) = i
     end do
 
 

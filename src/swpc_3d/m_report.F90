@@ -60,20 +60,20 @@ contains
 
     if( myid == terminal_output_node ) then
 
-       write(STDERR,*)
-       write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-       if( benchmark_mode ) then
-       write(STDERR,'(A)') "  SWPC_3D (benchmark mode)                                                    "
-       else if ( pw_mode ) then
-       write(STDERR,'(A)') "  SWPC_3D (plane wave mode)                                                   "
-       else if ( bf_mode ) then
-       write(STDERR,'(A)') "  SWPC_3D (body force mode)                                                   "
-       else if ( green_mode ) then
-       write(STDERR,'(A)') "  SWPC_3D (Green's function mode)                                             "
-       else
-       write(STDERR,'(A)') "  SWPC_3D                                                                     "
-       end if
-       write(STDERR,'(A)') " ------------------------------------------------------------------------------"
+      write(STDERR,*)
+      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
+      if( benchmark_mode ) then
+        write(STDERR,'(A)') "  SWPC_3D (benchmark mode)                                                    "
+      else if ( pw_mode ) then
+        write(STDERR,'(A)') "  SWPC_3D (plane wave mode)                                                   "
+      else if ( bf_mode ) then
+        write(STDERR,'(A)') "  SWPC_3D (body force mode)                                                   "
+      else if ( green_mode ) then
+        write(STDERR,'(A)') "  SWPC_3D (Green's function mode)                                             "
+      else
+        write(STDERR,'(A)') "  SWPC_3D                                                                     "
+      end if
+      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
 
     end if
 
@@ -83,45 +83,45 @@ contains
     call fdm_cond_wavelength( real(dx), real(dy), real(dz), vmin, fmax, r )
 
     if( myid == terminal_output_node ) then
-       write(STDERR,*)
-       write(STDERR,'(A,I8,A,I6,A,I6)') "  Grid Size               : ", nx, " x ", ny ," x ", nz
-       write(STDERR,'(A,I8,A,I4)'     ) "  MPI Partitioning        : ", nproc_x, " x ", nproc_y
-       write(STDERR,'(A,F15.3,A)'     ) "  Total Memory Size       : ", mem_all,  "  [GiB]"
-       write(STDERR,'(A,F15.3,A)'     ) "  Node Memory Size        : ", mem_node, "  [GiB]"
-       write(STDERR,'(A,F15.3,A)'     ) "  Stability  Condition c  : ", c,        "  (c<1)"
-       write(STDERR,'(A,F15.3,A)'     ) "  Wavelength Condition r  : ", r       , "  (r>5-10)"
-       write(STDERR,'(A,F15.3,A)'     ) "  Minimum velocity        : ", vmin,     "  [km/s]"
-       write(STDERR,'(A,F15.3,A)'     ) "  Maximum velocity        : ", vmax,     "  [km/s]"
-       write(STDERR,'(A,F15.3,A)'     ) "  Maximum frequency       : ", fmax,     "  [Hz]"
-       write(STDERR,*)
-       write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-       write(STDERR,*)
+      write(STDERR,*)
+      write(STDERR,'(A,I8,A,I6,A,I6)') "  Grid Size               : ", nx, " x ", ny ," x ", nz
+      write(STDERR,'(A,I8,A,I4)'     ) "  MPI Partitioning        : ", nproc_x, " x ", nproc_y
+      write(STDERR,'(A,F15.3,A)'     ) "  Total Memory Size       : ", mem_all,  "  [GiB]"
+      write(STDERR,'(A,F15.3,A)'     ) "  Node Memory Size        : ", mem_node, "  [GiB]"
+      write(STDERR,'(A,F15.3,A)'     ) "  Stability  Condition c  : ", c,        "  (c<1)"
+      write(STDERR,'(A,F15.3,A)'     ) "  Wavelength Condition r  : ", r       , "  (r>5-10)"
+      write(STDERR,'(A,F15.3,A)'     ) "  Minimum velocity        : ", vmin,     "  [km/s]"
+      write(STDERR,'(A,F15.3,A)'     ) "  Maximum velocity        : ", vmax,     "  [km/s]"
+      write(STDERR,'(A,F15.3,A)'     ) "  Maximum frequency       : ", fmax,     "  [Hz]"
+      write(STDERR,*)
+      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
+      write(STDERR,*)
 
-       if( r < 5   ) then
-          call info( 'wavelength condition is violated! ' )
-          call info( 'use smaller grid and/or decrease maximum frequency' )
-       end if
+      if( r < 5   ) then
+        call info( 'wavelength condition is violated! ' )
+        call info( 'use smaller grid and/or decrease maximum frequency' )
+      end if
 
-       if( c < 0.5 ) then
-          call info( 'time step is too small!' )
-          call info( 'consider increase time step up to twice' )
-       end if
+      if( c < 0.5 ) then
+        call info( 'time step is too small!' )
+        call info( 'consider increase time step up to twice' )
+      end if
 
-       if( c > 1.0 ) then
-          call info( 'stability condition is violated!' )
-          call info( 'use smaller time step and/or decrease max velocity' )
-          call assert( c <= 1.0 )
-       end if
+      if( c > 1.0 ) then
+        call info( 'stability condition is violated!' )
+        call info( 'use smaller time step and/or decrease max velocity' )
+        call assert( c <= 1.0 )
+      end if
 
     end if
 
     !! Initialize elapsed time counter
     if( myid == terminal_output_node ) then
 
-       call system_clock( timcount, crate )
-       timcount0 = timcount
-       timprev   = timcount
-       ttotal = 0
+      call system_clock( timcount, crate )
+      timcount0 = timcount
+      timprev   = timcount
+      ttotal = 0
 
     end if
 
@@ -160,46 +160,46 @@ contains
 
     !! check numerical divergence
     if( max( vxa, vya, vza ) * UC > TOL ) then
-       if( myid == terminal_output_node ) then
-          write(STDERR,'(A)') 'numerical divergence detected with max amp =  ', max( vxa, vya, vza ) * UC, '[(m/s)/moment]'
-          write(STDERR,'(A)') 'aborting ... '
-       end if
+      if( myid == terminal_output_node ) then
+        write(STDERR,'(A)') 'numerical divergence detected with max amp =  ', max( vxa, vya, vza ) * UC, '[(m/s)/moment]'
+        write(STDERR,'(A)') 'aborting ... '
+      end if
 
-       call mpi_finalize( ierr )
-       stop
+      call mpi_finalize( ierr )
+      stop
     end if
 
 
     if( myid == terminal_output_node ) then
 
-       !! convert to the physical domain
-       vxa = vxa * UC * M0
-       vya = vya * UC * M0
-       vza = vza * UC * M0
+      !! convert to the physical domain
+      vxa = vxa * UC * M0
+      vya = vya * UC * M0
+      vza = vza * UC * M0
 
-       !!
-       !! eta count
-       !!
-       call system_clock( timcount, crate, cmax )
-       if( timcount >= timprev ) then
-          tstep = real( timcount - timprev ) / real( crate )
-       else
-          tstep = real( cmax + timcount - timprev ) / real( crate )
-       end if
+      !!
+      !! eta count
+      !!
+      call system_clock( timcount, crate, cmax )
+      if( timcount >= timprev ) then
+        tstep = real( timcount - timprev ) / real( crate )
+      else
+        tstep = real( cmax + timcount - timprev ) / real( crate )
+      end if
 
-       ttotal = ttotal + tstep
+      ttotal = ttotal + tstep
 
-       etas   = real(nt-it)/ real(it) * ttotal
+      etas   = real(nt-it)/ real(it) * ttotal
 
-       etah = int( etas/(   60*60) ); etas = etas - etah   *60*60
-       etam = int( etas/(      60) ); etas = etas - etam      *60
-       etasi = int(etas)
-       timprev = timcount
+      etah = int( etas/(   60*60) ); etas = etas - etah   *60*60
+      etam = int( etas/(      60) ); etas = etas - etam      *60
+      etasi = int(etas)
+      timprev = timcount
 
-       write(STDERR,'(A,I7.7,  A,F6.3,A,   A,I3.3,A,I2.2,A,I2.2,A, 3(ES9.2,A))') &
-            "  it=", it, ",", &
-            ttotal/it, " s/loop,", &
-            " eta ", etah,":",etam,":",etasi ,", (", vxa, " ",vya," ", vza," )"
+      write(STDERR,'(A,I7.7,  A,F6.3,A,   A,I3.3,A,I2.2,A,I2.2,A, 3(ES9.2,A))') &
+          "  it=", it, ",", &
+          ttotal/it, " s/loop,", &
+          " eta ", etah,":",etam,":",etasi ,", (", vxa, " ",vya," ", vza," )"
 
     end if
 
@@ -213,12 +213,12 @@ contains
 
     if( myid == terminal_output_node ) then
 
-       write(STDERR,*)
-       write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-       write(STDERR,*) ""
-       write(STDERR,'(A,F15.3,A)')        "  Total time             : ", ttotal, " s"
-       write(STDERR,*)
-       write(STDERR,'(A)') " ------------------------------------------------------------------------------"
+      write(STDERR,*)
+      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
+      write(STDERR,*) ""
+      write(STDERR,'(A,F15.3,A)')        "  Total time             : ", ttotal, " s"
+      write(STDERR,*)
+      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
 
     end if
 
@@ -248,9 +248,9 @@ contains
     !! Initialize elapsed time counter
     if( myid == terminal_output_node ) then
 
-       call system_clock( timcount, crate )
-       timcount0 = timcount
-       timprev   = timcount
+      call system_clock( timcount, crate )
+      timcount0 = timcount
+      timprev   = timcount
 
     end if
 
