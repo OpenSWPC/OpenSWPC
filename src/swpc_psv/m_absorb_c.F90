@@ -113,7 +113,7 @@ contains
 
     integer :: i, k
     real(SP) :: gc, gb
-    
+
     !$omp parallel private(i,k,gc,gb)
     !$omp do schedule(dynamic)
     do i=ibeg_k, iend_k
@@ -135,7 +135,7 @@ contains
   subroutine absorb_c__update_vel
 
     integer :: i, k
-    
+
     !$omp parallel private(i,k)
     !$omp do schedule(dynamic)
     do i=ibeg_k, iend_k

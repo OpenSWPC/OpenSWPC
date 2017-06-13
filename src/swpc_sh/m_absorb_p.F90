@@ -151,7 +151,7 @@ contains
         !$omp end do nowait
         !$omp end parallel
       end if
-      
+
       if( idx == nproc_x -1 ) then
         !$omp parallel private(k)
         !$omp do schedule(dynamic)
@@ -163,7 +163,7 @@ contains
         !$omp end parallel
       end if
     end if
-    
+
     !!
     !! time-marching
     !!
@@ -242,7 +242,7 @@ contains
         !$omp end do nowait
         !$omp end parallel
       end if
-      
+
       if( idx == nproc_x -1 ) then
         !$omp parallel private(k)
         !$omp do schedule(dynamic)
@@ -253,7 +253,7 @@ contains
         !$omp end parallel
       end if
     end if
-    
+
     !!
     !! Time-marching
     !!
@@ -261,7 +261,7 @@ contains
     !$omp private(i, k, gxe0, gze0, dxVy, dzVy, nnn, pnn, npn, muxy, muyz )
     !$omp do schedule(dynamic)
     do i=ibeg, iend
-      
+
       gxe0(1:4) = gxe(1:4,i)
 
       !!
@@ -389,15 +389,15 @@ contains
     a0 = 0!PI * fcut
 
     if( x <= xbeg + H ) then
-       xx = ( xbeg + H ) - x
+      xx = ( xbeg + H ) - x
     else if ( x >= xend - H ) then
-       xx = x - ( xend - H )
+      xx = x - ( xend - H )
     else
-       xx = 0.0 !! no absorption
+      xx = 0.0 !! no absorption
     end if
 
     d = d0 * abs( xx / H )**pd
-!    a = a0* ( 1.0 - abs( xx / H )**pa )
+    !    a = a0* ( 1.0 - abs( xx / H )**pa )
     b = 1.0 + ( b0 - 1.0 ) * abs( xx / H )**pb
     a = 0.02 * d / b
 

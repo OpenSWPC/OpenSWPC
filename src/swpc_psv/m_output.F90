@@ -50,23 +50,23 @@ module m_output
 
   !! -- Internal variables
   type snp
-     logical :: sw     ! true for output
-     integer :: io     ! file I/O number (or netcdf file id)
-     integer :: ionode ! output MPI node
-     integer :: nsnp
-     character(2) :: snaptype ! snapshot type
-     character(2) :: coordinate = 'xz'
-     integer :: nmed = 3
-     integer :: na1, na2 ! absorbing layer
+    logical :: sw     ! true for output
+    integer :: io     ! file I/O number (or netcdf file id)
+    integer :: ionode ! output MPI node
+    integer :: nsnp
+    character(2) :: snaptype ! snapshot type
+    character(2) :: coordinate = 'xz'
+    integer :: nmed = 3
+    integer :: na1, na2 ! absorbing layer
 
-     !! variables for netcdf mode
-     integer :: did_x1, did_x2, did_t ! dimension id for independent vars
-     integer :: vid_x1, vid_x2, vid_t ! variable  id for independent vars
-     integer :: varid(10)           ! variable  id for dependent vars
-     integer :: medid(10)            ! medium array id
-     real    :: vmax(10), vmin(10)  ! max/min of dependent vars
-     character(10) :: vname(10)
-     character(10) :: vunit(10)
+    !! variables for netcdf mode
+    integer :: did_x1, did_x2, did_t ! dimension id for independent vars
+    integer :: vid_x1, vid_x2, vid_t ! variable  id for independent vars
+    integer :: varid(10)           ! variable  id for dependent vars
+    integer :: medid(10)            ! medium array id
+    real    :: vmax(10), vmin(10)  ! max/min of dependent vars
+    character(10) :: vname(10)
+    character(10) :: vunit(10)
   end type snp
 
 
@@ -146,9 +146,9 @@ contains
 
     sw_wav = ( sw_wav_v .or. sw_wav_u )
 
-    !!!!
-    !!!! snapshot
-    !!!!
+!!!!
+!!!! snapshot
+!!!!
 
     !!
     !! snapshot size #2013-0440
@@ -161,12 +161,12 @@ contains
     !!
     allocate( xsnp(nxs), zsnp(nzs) )
     do i=1, nxs
-       ii = i*idec - (idec/2)
-       xsnp(i) = i2x( ii, xbeg, real(dx) )
+      ii = i*idec - (idec/2)
+      xsnp(i) = i2x( ii, xbeg, real(dx) )
     end do
     do k=1, nzs
-       kk = k*kdec - (kdec/2)
-       zsnp(k) = k2z( kk, zbeg, real(dz) )
+      kk = k*kdec - (kdec/2)
+      zsnp(k) = k2z( kk, zbeg, real(dz) )
     end do
 
     !! snapshot region covered by the MPI node
@@ -212,13 +212,13 @@ contains
     !! output settings
     !!
     if( snp_format == 'native' ) then
-       if( xz_ps%sw ) call newfile_xz(   trim(odir) // '/' // trim(title) //'.xz.ps.snp',  xz_ps )
-       if( xz_v%sw  ) call newfile_xz(   trim(odir) // '/' // trim(title) //'.xz.v.snp',   xz_v )
-       if( xz_u%sw  ) call newfile_xz(   trim(odir) // '/' // trim(title) //'.xz.u.snp',   xz_u )
+      if( xz_ps%sw ) call newfile_xz(   trim(odir) // '/' // trim(title) //'.xz.ps.snp',  xz_ps )
+      if( xz_v%sw  ) call newfile_xz(   trim(odir) // '/' // trim(title) //'.xz.v.snp',   xz_v )
+      if( xz_u%sw  ) call newfile_xz(   trim(odir) // '/' // trim(title) //'.xz.u.snp',   xz_u )
     else
-       if( xz_ps%sw ) call newfile_xz_nc( trim(odir) // '/' // trim(title) //'.xz.ps.nc', xz_ps )
-       if( xz_v%sw  ) call newfile_xz_nc( trim(odir) // '/' // trim(title) //'.xz.v.nc',  xz_v )
-       if( xz_u%sw  ) call newfile_xz_nc( trim(odir) // '/' // trim(title) //'.xz.u.nc',  xz_u )
+      if( xz_ps%sw ) call newfile_xz_nc( trim(odir) // '/' // trim(title) //'.xz.ps.nc', xz_ps )
+      if( xz_v%sw  ) call newfile_xz_nc( trim(odir) // '/' // trim(title) //'.xz.v.nc',  xz_v )
+      if( xz_u%sw  ) call newfile_xz_nc( trim(odir) // '/' // trim(title) //'.xz.u.nc',  xz_u )
     end if
 
     !! always allocate displacement buffer
@@ -229,15 +229,15 @@ contains
     r20x = 1 / dx
     r20z = 1 / dz
 
-    !!!!
-    !!!! waveform
-    !!!!
+!!!!
+!!!! waveform
+!!!!
 
     if( sw_wav ) then
 
-       ntw = floor( real(nt-1)/real(ntdec_w) + 1.0 )
+      ntw = floor( real(nt-1)/real(ntdec_w) + 1.0 )
 
-       call read_stinfo()
+      call read_stinfo()
 
     end if
 
@@ -263,24 +263,24 @@ contains
 
     if( wav_format == 'sac' ) then
       do i=1, nst
-        
+
         if( sw_wav_v ) then
-          
+
           fn1 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Vx.sac'
           fn2 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Vz.sac'
-          
+
           call sac__write( fn1, sh(1,i), vxst(:,i), .true. )
           call sac__write( fn2, sh(2,i), vzst(:,i), .true. )
-          
+
         end if
-        
+
         if( sw_wav_u ) then
           fn3 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Ux.sac'
           fn4 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Uz.sac'
           call sac__write( fn3, sh(3,i), uxst(:,i), .true. )
           call sac__write( fn4, sh(4,i), uzst(:,i), .true. )
         end if
-        
+
       end do
 
     else if ( wav_format == 'csf' ) then
@@ -319,14 +319,14 @@ contains
         write(io) nst, ntw, title, sh(1,:), vxst(:,:)
         write(io) nst, ntw, title, sh(2,:), vzst(:,:)
       end if
-      
+
       if( sw_wav_u ) then
         write(io) nst, ntw, title, sh(3,:), uxst(:,:)
         write(io) nst, ntw, title, sh(4,:), uzst(:,:)
       end if
 
       close(io)
-      
+
     end if
 
     call pwatch__off("output__export_wav")
@@ -356,24 +356,24 @@ contains
     real(SP) :: mw
     !! ----
 
-    !!!!
-    !!!! Read station location file
-    !!!!
+!!!!
+!!!! Read station location file
+!!!!
 
     call std__getio(io_stlst)
     open(io_stlst, file=trim(fn_stloc), action='read', iostat = ierr, status='old' )
 
     if( ierr /= 0 ) then
 
-       nst_g = 0          ! not exist
-       sw_wav = .false.
-       if( myid == 0 ) then
-          write(STDERR,'(A)') "[INFO] output--read_stinfo: Station file does not exist. WAV file will not be created"
-       end if
-       return
+      nst_g = 0          ! not exist
+      sw_wav = .false.
+      if( myid == 0 ) then
+        write(STDERR,'(A)') "[INFO] output--read_stinfo: Station file does not exist. WAV file will not be created"
+      end if
+      return
 
     else
-       call std__countline( io_stlst, nst_g, "#" )
+      call std__countline( io_stlst, nst_g, "#" )
     end if
 
     !! allocate temp memory
@@ -395,68 +395,68 @@ contains
     mw = moment_magnitude( m0 )
 
     do
-       read(io_stlst,'(A256)', iostat=ierr) abuf
-       if( ierr /= 0)  exit
-       if( adjustl(abuf(1:1)) == "#" ) cycle ! neglect comment line
-       if( trim(adjustl(abuf)) == "" ) cycle ! neglect blank line
+      read(io_stlst,'(A256)', iostat=ierr) abuf
+      if( ierr /= 0)  exit
+      if( adjustl(abuf(1:1)) == "#" ) cycle ! neglect comment line
+      if( trim(adjustl(abuf)) == "" ) cycle ! neglect blank line
 
-       i = i + 1
+      i = i + 1
 
-       select case ( st_format )
+      select case ( st_format )
 
-         case( 'xy' )
+      case( 'xy' )
 
-            read(abuf,*) xst_g(i), rdum, zst_g(i), stnm_g(i), zsw_g(i)
-            call geomap__c2g( xst_g(i), 0.0, clon, clat, phi, stlo_g(i), stla_g(i) )
-
-
-         case( 'll' )
-
-            read(abuf,*) stlo_g(i), stla_g(i), zst_g(i), stnm_g(i), zsw_g(i)
-            call geomap__g2c( stlo_g(i), stla_g(i), clon, clat, phi, xst_g(i), rdum )
-
-         case default
-
-            write(STDERR,'(A)') "ERROR [output__stinfo]: unrecognized station format."
-            stop
-
-       end select
+        read(abuf,*) xst_g(i), rdum, zst_g(i), stnm_g(i), zsw_g(i)
+        call geomap__c2g( xst_g(i), 0.0, clon, clat, phi, stlo_g(i), stla_g(i) )
 
 
-       ! digitize
-       ist_g(i) = x2i ( xst_g(i), xbeg, real(dx) )
-       kst_g(i) = z2k ( zst_g(i), zbeg, real(dz) )
+      case( 'll' )
+
+        read(abuf,*) stlo_g(i), stla_g(i), zst_g(i), stnm_g(i), zsw_g(i)
+        call geomap__g2c( stlo_g(i), stla_g(i), clon, clat, phi, xst_g(i), rdum )
+
+      case default
+
+        write(STDERR,'(A)') "ERROR [output__stinfo]: unrecognized station format."
+        stop
+
+      end select
 
 
-       !! check if the station is in the computational domain
-       if(  i2x( 1, xbeg, real(dx) ) < xst_g(i) .and. xst_g(i) < i2x( nx, xbeg, real(dx) ) .and. &
-                    kbeg             < kst_g(i) .and. kst_g(i) <          kend           )  then
+      ! digitize
+      ist_g(i) = x2i ( xst_g(i), xbeg, real(dx) )
+      kst_g(i) = z2k ( zst_g(i), zbeg, real(dz) )
 
 
-          !! memorize station location
-          nst_g = nst_g + 1
+      !! check if the station is in the computational domain
+      if(  i2x( 1, xbeg, real(dx) ) < xst_g(i) .and. xst_g(i) < i2x( nx, xbeg, real(dx) ) .and. &
+          kbeg             < kst_g(i) .and. kst_g(i) <          kend           )  then
 
-          !! MPI region check: memorize station number
-          if( ibeg <= ist_g(i) .and. ist_g(i) <= iend ) then
 
-             nst = nst + 1
-             stid(nst) = i
+        !! memorize station location
+        nst_g = nst_g + 1
 
-           end if
+        !! MPI region check: memorize station number
+        if( ibeg <= ist_g(i) .and. ist_g(i) <= iend ) then
 
-       else
-          if( myid == 0 )  write(STDERR,*) "WARNING [output__setup]: station " // trim( stnm_g(i) ) // " is out of the region"
-       end if
+          nst = nst + 1
+          stid(nst) = i
+
+        end if
+
+      else
+        if( myid == 0 )  write(STDERR,*) "WARNING [output__setup]: station " // trim( stnm_g(i) ) // " is out of the region"
+      end if
     end do
 
     close( io_stlst )
 
     if( nst_g == 0 ) then
-       sw_wav = .false.
-       if( myid == 0 ) then
-          write(STDERR,*) "[INFO] output--read_stinfo: No station is detected. WAV file will not be created"
-       end if
-       return
+      sw_wav = .false.
+      if( myid == 0 ) then
+        write(STDERR,*) "[INFO] output--read_stinfo: No station is detected. WAV file will not be created"
+      end if
+      return
     end if
 
 
@@ -468,45 +468,45 @@ contains
 
     do i = 1, nst
 
-       ii = stid(i)
+      ii = stid(i)
 
-       xst(i) = xst_g(ii)
-       zst(i) = zst_g(ii)
-       ist(i) = ist_g(ii)
-       ist(i) = ist_g(ii)
-       stnm(i) = stnm_g(ii)
-       stlo(i) = stlo_g(ii)
-       stla(i) = stla_g(ii)
+      xst(i) = xst_g(ii)
+      zst(i) = zst_g(ii)
+      ist(i) = ist_g(ii)
+      ist(i) = ist_g(ii)
+      stnm(i) = stnm_g(ii)
+      stlo(i) = stlo_g(ii)
+      stla(i) = stla_g(ii)
 
-       !! station depth setting
-       !! this is done only for MPI-node because of the definition of kfs and kob
-       select case ( zsw_g(ii) )
-         case( 'dep' );    kst(i) = kst_g(ii)
-         case( 'fsb' );    kst(i) = kfs( ist(i) ) + 1   !! free surface: one-grid below for avoiding vacuum
-         case( 'obb' );    kst(i) = kob( ist(i) ) + 1   !! ocean column: below seafloor
-         case( 'oba' );    kst(i) = kob( ist(i) ) - 1   !! ocean column: above seafloor
-         case( 'bd0' );    kst(i) = z2k( bddep(ist(i),0), zbeg, real(dz) ) !! Boundary interface
-         case( 'bd1' );    kst(i) = z2k( bddep(ist(i),1), zbeg, real(dz) ) !! Boundary interface
-         case( 'bd2' );    kst(i) = z2k( bddep(ist(i),2), zbeg, real(dz) ) !! Boundary interface
-         case( 'bd3' );    kst(i) = z2k( bddep(ist(i),3), zbeg, real(dz) ) !! Boundary interface
-         case( 'bd4' );    kst(i) = z2k( bddep(ist(i),4), zbeg, real(dz) ) !! Boundary interface
-         case( 'bd5' );    kst(i) = z2k( bddep(ist(i),5), zbeg, real(dz) ) !! Boundary interface
-         case( 'bd6' );    kst(i) = z2k( bddep(ist(i),6), zbeg, real(dz) ) !! Boundary interface
-         case( 'bd7' );    kst(i) = z2k( bddep(ist(i),7), zbeg, real(dz) ) !! Boundary interface
-         case( 'bd8' );    kst(i) = z2k( bddep(ist(i),8), zbeg, real(dz) ) !! Boundary interface
-         case( 'bd9' );    kst(i) = z2k( bddep(ist(i),9), zbeg, real(dz) ) !! Boundary interface
-         case default; kst(i) = kst_g(ii)
-       end select
+      !! station depth setting
+      !! this is done only for MPI-node because of the definition of kfs and kob
+      select case ( zsw_g(ii) )
+      case( 'dep' );    kst(i) = kst_g(ii)
+      case( 'fsb' );    kst(i) = kfs( ist(i) ) + 1   !! free surface: one-grid below for avoiding vacuum
+      case( 'obb' );    kst(i) = kob( ist(i) ) + 1   !! ocean column: below seafloor
+      case( 'oba' );    kst(i) = kob( ist(i) ) - 1   !! ocean column: above seafloor
+      case( 'bd0' );    kst(i) = z2k( bddep(ist(i),0), zbeg, real(dz) ) !! Boundary interface
+      case( 'bd1' );    kst(i) = z2k( bddep(ist(i),1), zbeg, real(dz) ) !! Boundary interface
+      case( 'bd2' );    kst(i) = z2k( bddep(ist(i),2), zbeg, real(dz) ) !! Boundary interface
+      case( 'bd3' );    kst(i) = z2k( bddep(ist(i),3), zbeg, real(dz) ) !! Boundary interface
+      case( 'bd4' );    kst(i) = z2k( bddep(ist(i),4), zbeg, real(dz) ) !! Boundary interface
+      case( 'bd5' );    kst(i) = z2k( bddep(ist(i),5), zbeg, real(dz) ) !! Boundary interface
+      case( 'bd6' );    kst(i) = z2k( bddep(ist(i),6), zbeg, real(dz) ) !! Boundary interface
+      case( 'bd7' );    kst(i) = z2k( bddep(ist(i),7), zbeg, real(dz) ) !! Boundary interface
+      case( 'bd8' );    kst(i) = z2k( bddep(ist(i),8), zbeg, real(dz) ) !! Boundary interface
+      case( 'bd9' );    kst(i) = z2k( bddep(ist(i),9), zbeg, real(dz) ) !! Boundary interface
+      case default; kst(i) = kst_g(ii)
+      end select
 
-       !! depth check
-       if( kst(i) > kend ) then
-          write(STDERR,*) 'WARNING[output__setup]: station depth exceeds kend at station ' // trim(stnm(i))
-          kst(i) = kend - 1
-       end if
-       if( kst(i) < kbeg ) then
-          write(STDERR,*) 'WARNING[output__setup]: station depth exceeds kbeg at station ' // trim(stnm(i))
-          kst(i) = kbeg + 1
-       end if
+      !! depth check
+      if( kst(i) > kend ) then
+        write(STDERR,*) 'WARNING[output__setup]: station depth exceeds kend at station ' // trim(stnm(i))
+        kst(i) = kend - 1
+      end if
+      if( kst(i) < kbeg ) then
+        write(STDERR,*) 'WARNING[output__setup]: station depth exceeds kbeg at station ' // trim(stnm(i))
+        kst(i) = kbeg + 1
+      end if
 
     end do
 
@@ -522,66 +522,66 @@ contains
     allocate( sh(6,nst) )
     do i=1, nst
 
-       !! first initialize header type
-       do j=1, 4
-          call sac__init(sh(j,i))
-       end do
+      !! first initialize header type
+      do j=1, 4
+        call sac__init(sh(j,i))
+      end do
 
-       !! common header
-       sh(:,i)%evlo    = evlo
-       sh(:,i)%evla    = evla
-       sh(:,i)%evdp    = evdp*1000
-       sh(:,i)%tim     = exedate
-       sh(:,i)%b       = tbeg
-       sh(:,i)%delta   = ntdec_w * dt
-       sh(:,i)%npts    = ntw
-       sh(:,i)%mag     = mw
-       if( bf_mode ) then
-          sh(:,i)%user0   = fx0
-          sh(:,i)%user1   = fy0
-          sh(:,i)%user2   = fz0
-       else
-          sh(:,i)%user0   = mxx0
-          sh(:,i)%user1   = myy0
-          sh(:,i)%user2   = mzz0
-          sh(:,i)%user3   = myz0
-          sh(:,i)%user4   = mxz0
-          sh(:,i)%user5   = mxy0
-       end if
+      !! common header
+      sh(:,i)%evlo    = evlo
+      sh(:,i)%evla    = evla
+      sh(:,i)%evdp    = evdp*1000
+      sh(:,i)%tim     = exedate
+      sh(:,i)%b       = tbeg
+      sh(:,i)%delta   = ntdec_w * dt
+      sh(:,i)%npts    = ntw
+      sh(:,i)%mag     = mw
+      if( bf_mode ) then
+        sh(:,i)%user0   = fx0
+        sh(:,i)%user1   = fy0
+        sh(:,i)%user2   = fz0
+      else
+        sh(:,i)%user0   = mxx0
+        sh(:,i)%user1   = myy0
+        sh(:,i)%user2   = mzz0
+        sh(:,i)%user3   = myz0
+        sh(:,i)%user4   = mxz0
+        sh(:,i)%user5   = mxy0
+      end if
 
-       sh(:,i)%user6   = clon !< coordinate
-       sh(:,i)%user7   = clat !< coordinate
-       sh(:,i)%user8   = phi
-       sh(:,i)%o       = otim
+      sh(:,i)%user6   = clon !< coordinate
+      sh(:,i)%user7   = clat !< coordinate
+      sh(:,i)%user8   = phi
+      sh(:,i)%o       = otim
 
-       !! exedate -> time
-       do j=1, 4
-          call daytim__localtime( sh(j,i)%tim, &
-                                  sh(j,i)%nzyear, sh(j,i)%nzmonth, sh(j,i)%nzday, sh(j,i)%nzhour, sh(j,i)%nzmin, sh(j,i)%nzsec )
-          call daytim__ymd2jul  ( sh(j,i)%nzyear, sh(j,i)%nzmonth, sh(j,i)%nzday, sh(j,i)%nzjday )
-       end do
+      !! exedate -> time
+      do j=1, 4
+        call daytim__localtime( sh(j,i)%tim, &
+            sh(j,i)%nzyear, sh(j,i)%nzmonth, sh(j,i)%nzday, sh(j,i)%nzhour, sh(j,i)%nzmin, sh(j,i)%nzsec )
+        call daytim__ymd2jul  ( sh(j,i)%nzyear, sh(j,i)%nzmonth, sh(j,i)%nzday, sh(j,i)%nzjday )
+      end do
 
-       !! station dependent
-       sh(:,i)%kevnm = trim(adjustl( title(1:16) ))
-       sh(:,i)%kstnm = trim(stnm(i))
-       sh(:,i)%stlo  = stlo(i)
-       sh(:,i)%stla  = stla(i)
-       sh(:,i)%stdp  = zst(i)*1000 ! in meter unit
+      !! station dependent
+      sh(:,i)%kevnm = trim(adjustl( title(1:16) ))
+      sh(:,i)%kstnm = trim(stnm(i))
+      sh(:,i)%stlo  = stlo(i)
+      sh(:,i)%stla  = stla(i)
+      sh(:,i)%stdp  = zst(i)*1000 ! in meter unit
 
 
-       !! component dependent
-       sh(1,i)%kcmpnm = "Vx"
-       sh(2,i)%kcmpnm = "Vz"
-       sh(3,i)%kcmpnm = "Ux"
-       sh(4,i)%kcmpnm = "Uz"
+      !! component dependent
+      sh(1,i)%kcmpnm = "Vx"
+      sh(2,i)%kcmpnm = "Vz"
+      sh(3,i)%kcmpnm = "Ux"
+      sh(4,i)%kcmpnm = "Uz"
 
-       sh(1,i)%cmpinc = 90.0;  sh(1,i)%cmpaz  =  0.0 + phi
-       sh(2,i)%cmpinc =  0.0;  sh(2,i)%cmpaz  =  0.0
-       sh(3,i)%cmpinc = 90.0;  sh(3,i)%cmpaz  =  0.0 + phi
-       sh(4,i)%cmpinc =  0.0;  sh(4,i)%cmpaz  =  0.0
+      sh(1,i)%cmpinc = 90.0;  sh(1,i)%cmpaz  =  0.0 + phi
+      sh(2,i)%cmpinc =  0.0;  sh(2,i)%cmpaz  =  0.0
+      sh(3,i)%cmpinc = 90.0;  sh(3,i)%cmpaz  =  0.0 + phi
+      sh(4,i)%cmpinc =  0.0;  sh(4,i)%cmpaz  =  0.0
 
-       sh(1:2,i)%idep = 7 ! velocity [nm/s]
-       sh(3:4,i)%idep = 6 ! displacement [nm]
+      sh(1:2,i)%idep = 7 ! velocity [nm/s]
+      sh(3:4,i)%idep = 6 ! displacement [nm]
 
     end do
 
@@ -612,28 +612,28 @@ contains
 
     if( myid == hdr%ionode ) then
 
-       call std__getio( hdr%io, is_big=.true. )
+      call std__getio( hdr%io, is_big=.true. )
 #ifdef _ES
-       open( hdr%io, file=trim(fname), action='write', status='replace', form='unformatted' )
+      open( hdr%io, file=trim(fname), action='write', status='replace', form='unformatted' )
 #else
-       open( hdr%io, file=trim(fname), access='stream', action='write', status='replace', form='unformatted' )
+      open( hdr%io, file=trim(fname), access='stream', action='write', status='replace', form='unformatted' )
 #endif
-       call write_snp_header( hdr, nxs, nzs, xsnp(1:nxs), zsnp(1:nzs) )
+      call write_snp_header( hdr, nxs, nzs, xsnp(1:nxs), zsnp(1:nzs) )
 
     end if
 
     buf = 0.0
     do i = is0, is1
-       do k = ks0, ks1
+      do k = ks0, ks1
 
-          ii = i * idec - idec/2
-          kk = k * kdec - kdec/2
+        ii = i * idec - idec/2
+        kk = k * kdec - kdec/2
 
-          buf(i,k,1) = rho( kk, ii )
-          buf(i,k,2) = lam( kk, ii )
-          buf(i,k,3) = mu ( kk, ii )
+        buf(i,k,1) = rho( kk, ii )
+        buf(i,k,2) = lam( kk, ii )
+        buf(i,k,3) = mu ( kk, ii )
 
-       end do
+      end do
     end do
 
     call write_reduce_array2d_r( nxs, nzs, hdr%ionode, hdr%io, buf(:,:,1) )
@@ -656,29 +656,29 @@ contains
 
     if( myid == hdr%ionode ) then
 
-       !! initialize
-       hdr%vmax = 0.0
-       hdr%vmin = 0.0
-       hdr%na1  = na / idec
-       hdr%na2  = na / kdec
+      !! initialize
+      hdr%vmax = 0.0
+      hdr%vmin = 0.0
+      hdr%na1  = na / idec
+      hdr%na2  = na / kdec
 
-       call nc_chk( nf90_create( trim(fname), NF90_CLOBBER, hdr%io ) )
-       call write_nc_header( hdr, nxs, nzs, xsnp, zsnp )
+      call nc_chk( nf90_create( trim(fname), NF90_CLOBBER, hdr%io ) )
+      call write_nc_header( hdr, nxs, nzs, xsnp, zsnp )
     end if
 
     allocate( buf(nxs,nzs,3) )
     buf = 0.0
     do i = is0, is1
-       do k = ks0, ks1
+      do k = ks0, ks1
 
-          ii = i * idec - idec/2
-          kk = k * kdec - kdec/2
+        ii = i * idec - idec/2
+        kk = k * kdec - kdec/2
 
-          buf(i,k,1) = rho( kk, ii )
-          buf(i,k,2) = lam( kk, ii )
-          buf(i,k,3) = mu ( kk, ii )
+        buf(i,k,1) = rho( kk, ii )
+        buf(i,k,2) = lam( kk, ii )
+        buf(i,k,3) = mu ( kk, ii )
 
-       end do
+      end do
     end do
 
     !! medium
@@ -692,17 +692,17 @@ contains
 
     if( myid == hdr%ionode ) then
 
-       call nc_chk( nf90_put_att( hdr%io, hdr%medid(1), 'actual_range', (/minval(rbuf1), maxval(rbuf1)/) ) )
-       call nc_chk( nf90_put_att( hdr%io, hdr%medid(2), 'actual_range', (/minval(rbuf2), maxval(rbuf2)/) ) )
-       call nc_chk( nf90_put_att( hdr%io, hdr%medid(3), 'actual_range', (/minval(rbuf3), maxval(rbuf3)/) ) )
+      call nc_chk( nf90_put_att( hdr%io, hdr%medid(1), 'actual_range', (/minval(rbuf1), maxval(rbuf1)/) ) )
+      call nc_chk( nf90_put_att( hdr%io, hdr%medid(2), 'actual_range', (/minval(rbuf2), maxval(rbuf2)/) ) )
+      call nc_chk( nf90_put_att( hdr%io, hdr%medid(3), 'actual_range', (/minval(rbuf3), maxval(rbuf3)/) ) )
 
-       call nc_chk( nf90_enddef( hdr%io ) )
+      call nc_chk( nf90_enddef( hdr%io ) )
 
-       call nc_chk( nf90_put_var( hdr%io, hdr%vid_x1, xsnp ) )
-       call nc_chk( nf90_put_var( hdr%io, hdr%vid_x2, zsnp ) )
-       call nc_chk( nf90_put_var( hdr%io, hdr%medid(1), reshape(rbuf1,shape(buf(:,:,1)) ) ) )
-       call nc_chk( nf90_put_var( hdr%io, hdr%medid(2), reshape(rbuf2,shape(buf(:,:,1)) ) ) )
-       call nc_chk( nf90_put_var( hdr%io, hdr%medid(3), reshape(rbuf3,shape(buf(:,:,1)) ) ) )
+      call nc_chk( nf90_put_var( hdr%io, hdr%vid_x1, xsnp ) )
+      call nc_chk( nf90_put_var( hdr%io, hdr%vid_x2, zsnp ) )
+      call nc_chk( nf90_put_var( hdr%io, hdr%medid(1), reshape(rbuf1,shape(buf(:,:,1)) ) ) )
+      call nc_chk( nf90_put_var( hdr%io, hdr%medid(2), reshape(rbuf2,shape(buf(:,:,1)) ) ) )
+      call nc_chk( nf90_put_var( hdr%io, hdr%medid(3), reshape(rbuf3,shape(buf(:,:,1)) ) ) )
 
     end if
 
@@ -791,9 +791,9 @@ contains
 
     !! variables
     do i=1, hdr%nsnp
-       call nc_chk( nf90_def_var( hdr%io, trim(hdr%vname(i)), NF90_REAL, (/hdr%did_x1, hdr%did_x2, hdr%did_t/), hdr%varid(i) ) )
-       call nc_chk( nf90_put_att( hdr%io, hdr%varid(i), 'long_name', trim(hdr%vname(i)) ) )
-       call nc_chk( nf90_put_att( hdr%io, hdr%varid(i), 'units', trim(hdr%vunit(i)) ) )
+      call nc_chk( nf90_def_var( hdr%io, trim(hdr%vname(i)), NF90_REAL, (/hdr%did_x1, hdr%did_x2, hdr%did_t/), hdr%varid(i) ) )
+      call nc_chk( nf90_put_att( hdr%io, hdr%varid(i), 'long_name', trim(hdr%vname(i)) ) )
+      call nc_chk( nf90_put_att( hdr%io, hdr%varid(i), 'units', trim(hdr%vunit(i)) ) )
     end do
 
     !! global attribute
@@ -894,16 +894,16 @@ contains
     sbuf = reshape( array, shape(sbuf) )
 
     !! gather to io_node
-3    call mpi_reduce( sbuf, rbuf, nx1*nx2, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+3   call mpi_reduce( sbuf, rbuf, nx1*nx2, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
 
     !! write
     if( myid == hdr%ionode ) then
-       count = (/ nxs, nzs, 1/)
-       start = (/ 1, 1, it/ntdec_s+1 /)
-       call nc_chk( nf90_put_var( hdr%io, hdr%varid(vid), reshape(rbuf,shape(array)), start, count ))
-       call nc_chk( nf90_put_var( hdr%io, hdr%vid_t, it*dt, start=(/ it/ntdec_s+1 /) ) )
-       hdr%vmax(vid) = max( hdr%vmax(vid), maxval(rbuf) )
-       hdr%vmin(vid) = min( hdr%vmin(vid), minval(rbuf) )
+      count = (/ nxs, nzs, 1/)
+      start = (/ 1, 1, it/ntdec_s+1 /)
+      call nc_chk( nf90_put_var( hdr%io, hdr%varid(vid), reshape(rbuf,shape(array)), start, count ))
+      call nc_chk( nf90_put_var( hdr%io, hdr%vid_t, it*dt, start=(/ it/ntdec_s+1 /) ) )
+      hdr%vmax(vid) = max( hdr%vmax(vid), maxval(rbuf) )
+      hdr%vmin(vid) = min( hdr%vmin(vid), minval(rbuf) )
     end if
 
 
@@ -988,27 +988,27 @@ contains
 
     !$omp parallel do private( ii, kk, i, k, div, rot )
     do ii = is0, is1
-       do kk= ks0, ks1
-          k = kk * kdec - kdec/2
-          i = ii * idec - idec/2
+      do kk= ks0, ks1
+        k = kk * kdec - kdec/2
+        i = ii * idec - idec/2
 
-          call divrot( k, i, div, rot )
-          buf(ii,kk,1) = div
-          buf(ii,kk,2) = rot
+        call divrot( k, i, div, rot )
+        buf(ii,kk,1) = div
+        buf(ii,kk,2) = rot
 
-       end do
+      end do
     end do
     !$omp end parallel do
-    
+
     !! dx, dz have km unit. correction for 1e3 factor.
     buf =  buf * UC * M0 * 1e-3
 
     if( snp_format == 'native' ) then
-       call write_reduce_array2d_r( nxs, nzs, xz_ps%ionode, xz_ps%io, buf(:,:,1) )
-       call write_reduce_array2d_r( nxs, nzs, xz_ps%ionode, xz_ps%io, buf(:,:,2) )
+      call write_reduce_array2d_r( nxs, nzs, xz_ps%ionode, xz_ps%io, buf(:,:,1) )
+      call write_reduce_array2d_r( nxs, nzs, xz_ps%ionode, xz_ps%io, buf(:,:,2) )
     else
-       call write_reduce_array2d_r_nc( it, 1, nxs, nzs, xz_ps, buf(:,:,1) )
-       call write_reduce_array2d_r_nc( it, 2, nxs, nzs, xz_ps, buf(:,:,2) )
+      call write_reduce_array2d_r_nc( it, 1, nxs, nzs, xz_ps, buf(:,:,1) )
+      call write_reduce_array2d_r_nc( it, 2, nxs, nzs, xz_ps, buf(:,:,2) )
     end if
 
   end subroutine wbuf_xz_ps
@@ -1028,24 +1028,24 @@ contains
 
     !$omp parallel do private( ii, kk, i, k )
     do ii = is0, is1
-       do kk= ks0, ks1
-          k = kk * kdec - kdec/2
-          i = ii * idec - idec/2
+      do kk= ks0, ks1
+        k = kk * kdec - kdec/2
+        i = ii * idec - idec/2
 
-          buf(ii,kk,1) = Vx(k,i) * UC * M0
-          buf(ii,kk,2) = Vz(k,i) * UC * M0
+        buf(ii,kk,1) = Vx(k,i) * UC * M0
+        buf(ii,kk,2) = Vz(k,i) * UC * M0
 
-       end do
-     end do
-     !$omp end parallel do
+      end do
+    end do
+    !$omp end parallel do
 
 
     if( snp_format == 'native' ) then
-       call write_reduce_array2d_r( nxs, nzs, xz_v%ionode, xz_v%io, buf(:,:,1) )
-       call write_reduce_array2d_r( nxs, nzs, xz_v%ionode, xz_v%io, buf(:,:,2) )
+      call write_reduce_array2d_r( nxs, nzs, xz_v%ionode, xz_v%io, buf(:,:,1) )
+      call write_reduce_array2d_r( nxs, nzs, xz_v%ionode, xz_v%io, buf(:,:,2) )
     else
-       call write_reduce_array2d_r_nc( it, 1, nxs, nzs, xz_v, buf(:,:,1) )
-       call write_reduce_array2d_r_nc( it, 2, nxs, nzs, xz_v, buf(:,:,2) )
+      call write_reduce_array2d_r_nc( it, 1, nxs, nzs, xz_v, buf(:,:,1) )
+      call write_reduce_array2d_r_nc( it, 2, nxs, nzs, xz_v, buf(:,:,2) )
     end if
 
   end subroutine wbuf_xz_v
@@ -1061,26 +1061,26 @@ contains
 
     !$omp parallel do private(ii,kk,i,k)
     do ii = is0, is1
-       do kk= ks0, ks1
-          k = kk * kdec - kdec/2
-          i = ii * idec - idec/2
+      do kk= ks0, ks1
+        k = kk * kdec - kdec/2
+        i = ii * idec - idec/2
 
-          buf_u(ii,kk,1) = buf_u(ii,kk,1) + Vx(k,i) * UC * M0 * dt
-          buf_u(ii,kk,2) = buf_u(ii,kk,2) + Vz(k,i) * UC * M0 * dt
+        buf_u(ii,kk,1) = buf_u(ii,kk,1) + Vx(k,i) * UC * M0 * dt
+        buf_u(ii,kk,2) = buf_u(ii,kk,2) + Vz(k,i) * UC * M0 * dt
 
-       end do
-     end do
-     !$omp end parallel do
+      end do
+    end do
+    !$omp end parallel do
 
     if( mod( it-1, ntdec_s ) == 0 ) then
 
-       if( snp_format == 'native' ) then
-          call write_reduce_array2d_r( nxs, nzs, xz_u%ionode, xz_u%io, buf_u(:,:,1) )
-          call write_reduce_array2d_r( nxs, nzs, xz_u%ionode, xz_u%io, buf_u(:,:,2) )
-       else
-          call write_reduce_array2d_r_nc( it, 1, nxs, nzs, xz_u, buf_u(:,:,1) )
-          call write_reduce_array2d_r_nc( it, 2, nxs, nzs, xz_u, buf_u(:,:,2) )
-       end if
+      if( snp_format == 'native' ) then
+        call write_reduce_array2d_r( nxs, nzs, xz_u%ionode, xz_u%io, buf_u(:,:,1) )
+        call write_reduce_array2d_r( nxs, nzs, xz_u%ionode, xz_u%io, buf_u(:,:,2) )
+      else
+        call write_reduce_array2d_r_nc( it, 1, nxs, nzs, xz_u, buf_u(:,:,1) )
+        call write_reduce_array2d_r_nc( it, 2, nxs, nzs, xz_u, buf_u(:,:,2) )
+      end if
 
     end if
 
@@ -1099,8 +1099,8 @@ contains
     if( .not. sw_wav ) return
 
     call pwatch__on( "output__store_wav" )
-    
-    
+
+
     if( it == 1 ) then
       allocate( ux(nst), uz(nst) )
       ux(:) = 0.0
@@ -1168,27 +1168,27 @@ contains
     write( io ) buf_u(is0:is1,ks0:ks1,1:2)
 
     if( sw_wav ) then
-       write( io ) ntdec_w
-       write( io ) nst
-       write( io ) ntw
+      write( io ) ntdec_w
+      write( io ) nst
+      write( io ) ntw
 
-       if( nst > 0 ) then
-          write( io ) xst(1:nst)
-          write( io ) zst(1:nst)
-          write( io ) ist(1:nst)
-          write( io ) kst(1:nst)
-          write( io ) stlo(1:nst)
-          write( io ) stla(1:nst)
-          write( io ) stnm(1:nst)
+      if( nst > 0 ) then
+        write( io ) xst(1:nst)
+        write( io ) zst(1:nst)
+        write( io ) ist(1:nst)
+        write( io ) kst(1:nst)
+        write( io ) stlo(1:nst)
+        write( io ) stla(1:nst)
+        write( io ) stnm(1:nst)
 
-          write( io ) vxst(1:ntw,1:nst)
-          write( io ) vzst(1:ntw,1:nst)
-          write( io ) uxst(1:ntw,1:nst)
-          write( io ) uzst(1:ntw,1:nst)
-          write( io ) sh(1:4,1:nst)
-          write( io ) ux(1:nst)
-          write( io ) uz(1:nst)
-       end if
+        write( io ) vxst(1:ntw,1:nst)
+        write( io ) vzst(1:ntw,1:nst)
+        write( io ) uxst(1:ntw,1:nst)
+        write( io ) uzst(1:ntw,1:nst)
+        write( io ) sh(1:4,1:nst)
+        write( io ) ux(1:nst)
+        write( io ) uz(1:nst)
+      end if
 
     end if
 
@@ -1223,85 +1223,85 @@ contains
     read( io ) buf_u(is0:is1,ks0:ks1,1:2)
 
     if( sw_wav ) then
-       read( io ) ntdec_w
-       read( io ) nst
-       read( io ) ntw
+      read( io ) ntdec_w
+      read( io ) nst
+      read( io ) ntw
 
-       if( nst > 0 ) then
-          allocate( xst(nst), zst(nst) )
-          allocate( ist(nst), kst(nst) )
-          allocate( stnm(nst) )
-          allocate( stlo(nst), stla(nst) )
+      if( nst > 0 ) then
+        allocate( xst(nst), zst(nst) )
+        allocate( ist(nst), kst(nst) )
+        allocate( stnm(nst) )
+        allocate( stlo(nst), stla(nst) )
 
-          read( io ) xst(1:nst)
-          read( io ) zst(1:nst)
-          read( io ) ist(1:nst)
-          read( io ) kst(1:nst)
-          read( io ) stlo(1:nst)
-          read( io ) stla(1:nst)
-          read( io ) stnm(1:nst)
+        read( io ) xst(1:nst)
+        read( io ) zst(1:nst)
+        read( io ) ist(1:nst)
+        read( io ) kst(1:nst)
+        read( io ) stlo(1:nst)
+        read( io ) stla(1:nst)
+        read( io ) stnm(1:nst)
 
-          allocate( vxst(ntw,nst), vzst(ntw,nst) )
-          allocate( uxst(ntw,nst), uzst(ntw,nst) )
-          allocate( ux(nst), uz(nst) )
-          allocate( sh(4,nst) )
-          read( io ) vxst(1:ntw,1:nst)
-          read( io ) vzst(1:ntw,1:nst)
-          read( io ) uxst(1:ntw,1:nst)
-          read( io ) uzst(1:ntw,1:nst)
-          read( io ) sh(1:4,1:nst)
-          read( io ) ux(1:nst)
-          read( io ) uz(1:nst)
-       end if
+        allocate( vxst(ntw,nst), vzst(ntw,nst) )
+        allocate( uxst(ntw,nst), uzst(ntw,nst) )
+        allocate( ux(nst), uz(nst) )
+        allocate( sh(4,nst) )
+        read( io ) vxst(1:ntw,1:nst)
+        read( io ) vzst(1:ntw,1:nst)
+        read( io ) uxst(1:ntw,1:nst)
+        read( io ) uzst(1:ntw,1:nst)
+        read( io ) sh(1:4,1:nst)
+        read( io ) ux(1:nst)
+        read( io ) uz(1:nst)
+      end if
 
     end if
 
     if( snp_format == 'native' ) then
 
 #ifdef _ES
-       if( xz_ps%sw .and. myid == xz_ps%ionode ) then
-          open( xz_ps%io, file=trim(odir) //'/'// trim(title) //'.xz.ps.snp', &
-               position='append', form='unformatted', status='old' )
-       end if
+      if( xz_ps%sw .and. myid == xz_ps%ionode ) then
+        open( xz_ps%io, file=trim(odir) //'/'// trim(title) //'.xz.ps.snp', &
+            position='append', form='unformatted', status='old' )
+      end if
 
-       if( xz_v%sw .and. myid == xz_v%ionode ) then
-          open( xz_v%io, file=trim(odir) //'/'// trim(title) //'.xz.v.snp', &
-               position='append', form='unformatted', status='old' )
-       end if
+      if( xz_v%sw .and. myid == xz_v%ionode ) then
+        open( xz_v%io, file=trim(odir) //'/'// trim(title) //'.xz.v.snp', &
+            position='append', form='unformatted', status='old' )
+      end if
 
-       if( xz_u%sw .and. myid == xz_u%ionode ) then
-          open( xz_u%io, file=trim(odir) //'/'// trim(title) //'.xz.u.snp', &
-               position='append', form='unformatted', status='old' )
-       end if
+      if( xz_u%sw .and. myid == xz_u%ionode ) then
+        open( xz_u%io, file=trim(odir) //'/'// trim(title) //'.xz.u.snp', &
+            position='append', form='unformatted', status='old' )
+      end if
 #else
-       if( xz_ps%sw .and. myid == xz_ps%ionode ) then
-          open( xz_ps%io, file=trim(odir) //'/'// trim(title) //'.xz.ps.snp', &
-               access='stream', position='append', form='unformatted', status='old' )
-       end if
+      if( xz_ps%sw .and. myid == xz_ps%ionode ) then
+        open( xz_ps%io, file=trim(odir) //'/'// trim(title) //'.xz.ps.snp', &
+            access='stream', position='append', form='unformatted', status='old' )
+      end if
 
-       if( xz_v%sw .and. myid == xz_v%ionode ) then
-          open( xz_v%io, file=trim(odir) //'/'// trim(title) //'.xz.v.snp', &
-               access='stream', position='append', form='unformatted', status='old' )
-       end if
+      if( xz_v%sw .and. myid == xz_v%ionode ) then
+        open( xz_v%io, file=trim(odir) //'/'// trim(title) //'.xz.v.snp', &
+            access='stream', position='append', form='unformatted', status='old' )
+      end if
 
-       if( xz_u%sw .and. myid == xz_u%ionode ) then
-          open( xz_u%io, file=trim(odir) //'/'// trim(title) //'.xz.u.snp', &
-               access='stream', position='append', form='unformatted', status='old' )
-       end if
+      if( xz_u%sw .and. myid == xz_u%ionode ) then
+        open( xz_u%io, file=trim(odir) //'/'// trim(title) //'.xz.u.snp', &
+            access='stream', position='append', form='unformatted', status='old' )
+      end if
 #endif
     else
 
-       if( xz_ps%sw .and. myid == xz_ps%ionode ) then
-          call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xz.ps.nc', NF90_WRITE, xz_ps%io ) )
-       end if
+      if( xz_ps%sw .and. myid == xz_ps%ionode ) then
+        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xz.ps.nc', NF90_WRITE, xz_ps%io ) )
+      end if
 
-       if( xz_v%sw .and. myid == xz_v%ionode ) then
-          call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xz.v.nc', NF90_WRITE, xz_v%io ) )
-       end if
+      if( xz_v%sw .and. myid == xz_v%ionode ) then
+        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xz.v.nc', NF90_WRITE, xz_v%io ) )
+      end if
 
-       if( xz_u%sw .and. myid == xz_u%ionode ) then
-          call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xz.u.nc', NF90_WRITE, xz_u%io ) )
-       end if
+      if( xz_u%sw .and. myid == xz_u%ionode ) then
+        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xz.u.nc', NF90_WRITE, xz_u%io ) )
+      end if
 
     end if
 
@@ -1313,44 +1313,44 @@ contains
     integer :: vid
 
     if( snp_format == 'native' ) then
-       if( xz_ps%sw .and. myid == xz_ps%ionode ) close( xz_ps%io )
-       if( xz_v%sw .and. myid == xz_v%ionode ) close( xz_v%io )
-       if( xz_u%sw .and. myid == xz_u%ionode ) close( xz_u%io )
+      if( xz_ps%sw .and. myid == xz_ps%ionode ) close( xz_ps%io )
+      if( xz_v%sw .and. myid == xz_v%ionode ) close( xz_v%io )
+      if( xz_u%sw .and. myid == xz_u%ionode ) close( xz_u%io )
     else
 
-       if( xz_ps%sw .and. myid == xz_ps%ionode ) then
+      if( xz_ps%sw .and. myid == xz_ps%ionode ) then
 
-          ! set max & min for each vars
-          call nc_chk( nf90_redef( xz_ps%io ) )
-          do vid=1, 2
-             call nc_chk( nf90_put_att( xz_ps%io, xz_ps%varid(vid), 'actual_range', (/xz_ps%vmin(vid), xz_ps%vmax(vid)/) ) )
-          end do
-          call nc_chk( nf90_enddef( xz_ps%io ) )
-          call nc_chk( nf90_close( xz_ps%io ) )
+        ! set max & min for each vars
+        call nc_chk( nf90_redef( xz_ps%io ) )
+        do vid=1, 2
+          call nc_chk( nf90_put_att( xz_ps%io, xz_ps%varid(vid), 'actual_range', (/xz_ps%vmin(vid), xz_ps%vmax(vid)/) ) )
+        end do
+        call nc_chk( nf90_enddef( xz_ps%io ) )
+        call nc_chk( nf90_close( xz_ps%io ) )
 
-       end if
+      end if
 
-       if( xz_v%sw  .and. myid == xz_v%ionode  ) then
+      if( xz_v%sw  .and. myid == xz_v%ionode  ) then
 
-          ! set max & min for each vars
-          call nc_chk( nf90_redef( xz_v%io ) )
-          do vid=1, 2
-             call nc_chk( nf90_put_att( xz_v%io, xz_v%varid(vid), 'actual_range', (/xz_v%vmin(vid), xz_v%vmax(vid)/) ) )
-          end do
-          call nc_chk( nf90_close( xz_v%io ) )
+        ! set max & min for each vars
+        call nc_chk( nf90_redef( xz_v%io ) )
+        do vid=1, 2
+          call nc_chk( nf90_put_att( xz_v%io, xz_v%varid(vid), 'actual_range', (/xz_v%vmin(vid), xz_v%vmax(vid)/) ) )
+        end do
+        call nc_chk( nf90_close( xz_v%io ) )
 
-       end if
+      end if
 
-       if( xz_u%sw  .and. myid == xz_u%ionode  ) then
+      if( xz_u%sw  .and. myid == xz_u%ionode  ) then
 
-          ! set max & min for each vars
-          call nc_chk( nf90_redef( xz_u%io ) )
-          do vid=1, 2
-             call nc_chk( nf90_put_att( xz_u%io, xz_u%varid(vid), 'actual_range', (/xz_u%vmin(vid), xz_u%vmax(vid)/) ) )
-          end do
-          call nc_chk( nf90_close( xz_u%io ) )
+        ! set max & min for each vars
+        call nc_chk( nf90_redef( xz_u%io ) )
+        do vid=1, 2
+          call nc_chk( nf90_put_att( xz_u%io, xz_u%varid(vid), 'actual_range', (/xz_u%vmin(vid), xz_u%vmax(vid)/) ) )
+        end do
+        call nc_chk( nf90_close( xz_u%io ) )
 
-       end if
+      end if
 
     end if
 

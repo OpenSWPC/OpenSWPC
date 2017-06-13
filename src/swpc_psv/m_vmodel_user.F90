@@ -146,15 +146,15 @@ contains
 
     !! dummy value
     bd(:,1:NBD) = -9999
-    
+
     ! substitute to a dummy variable for avoiding compiler warnings
     dum = xc(i0)
     dum = zc(k0)
     dum = vcut
-    
+
   end subroutine vmodel_user
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
-  
+
+
 end module m_vmodel_user
 !! ----------------------------------------------------------------------------------------------------------------------------- !!

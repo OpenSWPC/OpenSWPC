@@ -60,8 +60,8 @@ contains
     call pwatch__on("kernel__setup")
 
     if( .not. medium__initialized() ) then
-       write(STDERR,'(A)') 'ERROR [kernel__setup]: call medium__setup() before kernel__setup()'
-       stop
+      write(STDERR,'(A)') 'ERROR [kernel__setup]: call medium__setup() before kernel__setup()'
+      stop
     end if
 
     r40x = C40 / dx
@@ -80,13 +80,13 @@ contains
     Syz (       kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0_MP
     Sxy (       kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0_MP
     if( nm > 0 ) then
-       Ryz ( 1:nm, kbeg_k:kend_k, ibeg_k:iend_k ) = 0.0
-       Rxy ( 1:nm, kbeg_k:kend_k, ibeg_k:iend_k ) = 0.0
+      Ryz ( 1:nm, kbeg_k:kend_k, ibeg_k:iend_k ) = 0.0
+      Rxy ( 1:nm, kbeg_k:kend_k, ibeg_k:iend_k ) = 0.0
 
-       do m=1, nm
-          c1(m) = ( 2 * ts(m) - dt ) / ( 2 * ts(m) + dt )
-          c2(m) = ( 2              ) / ( 2 * ts(m) + dt ) / nm
-       end do
+      do m=1, nm
+        c1(m) = ( 2 * ts(m) - dt ) / ( 2 * ts(m) + dt )
+        c2(m) = ( 2              ) / ( 2 * ts(m) + dt ) / nm
+      end do
 
     end if
 
@@ -291,10 +291,10 @@ contains
 
       end do
     end do
-     !$omp end do nowait
-     !$omp end parallel
+    !$omp end do nowait
+    !$omp end parallel
 
-     !$omp barrier
+    !$omp barrier
 
     call pwatch__off("kernel__update_stress")
 
@@ -313,7 +313,7 @@ contains
 
     ymax = 0.0
     do i=ibeg_k, iend_k
-       ymax = max( ymax, abs( vy(kob(i)+1,i) ) )
+      ymax = max( ymax, abs( vy(kob(i)+1,i) ) )
     end do
 
   end subroutine kernel__vmax
@@ -338,9 +338,9 @@ contains
     write(io) Sxy(       kbeg_m:kend_m, ibeg_m:iend_m )
 
     do m=1, nm
-       write(io) c1(m), c2(m)
-       write(io) Ryz( m, kbeg_k:kend_k, ibeg_k:iend_k )
-       write(io) Rxy( m, kbeg_k:kend_k, ibeg_k:iend_k )
+      write(io) c1(m), c2(m)
+      write(io) Ryz( m, kbeg_k:kend_k, ibeg_k:iend_k )
+      write(io) Rxy( m, kbeg_k:kend_k, ibeg_k:iend_k )
     end do
 
   end subroutine kernel__checkpoint
@@ -367,9 +367,9 @@ contains
     read(io) Sxy(       kbeg_m:kend_m, ibeg_m:iend_m )
 
     do m=1, nm
-       read(io) c1(m), c2(m)
-       read(io) Ryz( m, kbeg_k:kend_k, ibeg_k:iend_k )
-       read(io) Rxy( m, kbeg_k:kend_k, ibeg_k:iend_k )
+      read(io) c1(m), c2(m)
+      read(io) Ryz( m, kbeg_k:kend_k, ibeg_k:iend_k )
+      read(io) Rxy( m, kbeg_k:kend_k, ibeg_k:iend_k )
     end do
 
   end subroutine kernel__restart
@@ -388,9 +388,9 @@ contains
     allocate( Sxy(       kbeg_m:kend_m, ibeg_m:iend_m ) )
 
     if( nm > 0 ) then
-       allocate( Ryz( 1:nm, kbeg_k:kend_k, ibeg_k:iend_k ) )
-       allocate( Rxy( 1:nm, kbeg_k:kend_k, ibeg_k:iend_k ) )
-       allocate( c1(1:nm), c2(1:nm) )
+      allocate( Ryz( 1:nm, kbeg_k:kend_k, ibeg_k:iend_k ) )
+      allocate( Rxy( 1:nm, kbeg_k:kend_k, ibeg_k:iend_k ) )
+      allocate( c1(1:nm), c2(1:nm) )
     end if
 
   end subroutine memory_allocate
