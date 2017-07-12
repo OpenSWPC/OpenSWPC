@@ -1921,7 +1921,7 @@ contains
     !! ---
 
     if( mod( it-1, ntdec_s ) /= 0 ) return
-    if( .not. allocated(buf) ) allocate( buf(nx,ny,3) )
+    if( .not. allocated(buf) ) allocate( buf(nxs,nys,3) )
 
     k = k0_xy
     buf = 0.0
