@@ -514,7 +514,8 @@ contains
     if( nm > 0 ) then
       write(io) c1(1:nm)
       write(io) c2(1:nm)
-      
+      write(io) d1(1:nm)
+      write(io) d2
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxx(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxx )
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Ryy(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Ryy )
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rzz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rzz )
@@ -558,7 +559,9 @@ contains
     if( nm > 0 ) then
       read(io) c1(1:nm)
       read(io) c2(1:nm)
-                                                      
+      read(io) d1(1:nm)
+      read(io) d2
+      
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxx(kbeg_k:kend_k,i,j,1:nm); end do; end do;
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Ryy(kbeg_k:kend_k,i,j,1:nm); end do; end do;
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rzz(kbeg_k:kend_k,i,j,1:nm); end do; end do;

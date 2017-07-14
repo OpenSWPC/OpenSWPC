@@ -177,7 +177,6 @@ contains
       sw_wav   = .true.
     end if
 
-
 !!!!
 !!!! snapshot
 !!!!
@@ -366,9 +365,9 @@ contains
     buf_fs_u = 0.0
     buf_ob_u = 0.0
 
-!!!!
-!!!! waveform
-!!!!
+    !!
+    !! waveform
+    !!
     if( sw_wav ) then
 
       ntw = floor( real(nt-1)/real(ntdec_w) + 1.0 )
@@ -377,6 +376,7 @@ contains
       call system__call('mkdir -p '//trim(odir)//'/wav > /dev/null 2>&1' )
 
     end if
+
 
     call mpi_barrier( mpi_comm_world, ierr )
 
@@ -395,7 +395,6 @@ contains
     character(256) :: fn1, fn2, fn3, fn4, fn5, fn6
     character(6) :: cid
     integer :: io
-
 
     call pwatch__on("output__export_wav")
 
@@ -519,6 +518,8 @@ contains
     if( ierr /= 0 ) then
       nst_g = 0          ! not exist
       sw_wav = .false.
+      sw_wav_v = .false.
+      sw_wav_u = .false.
       call info( "No station file found" )
       return
     else
@@ -608,6 +609,8 @@ contains
 
     if( nst_g == 0 ) then
       sw_wav = .false.
+      sw_wav_v = .false.
+      sw_wav_u = .false.
       if( myid == 0 ) call info( "no station is detected. waveform file will not be created" )
       return
     end if
@@ -2250,7 +2253,6 @@ contains
 
     call pwatch__on( "output__store_wav" )
 
-
     if( it == 1 ) then
       allocate( ux(nst), uy(nst), uz(nst) )
       ux(:) = 0.0
@@ -2347,6 +2349,7 @@ contains
 
     write( io ) xy_ps, yz_ps, xz_ps, fs_ps, ob_ps, xy_v, yz_v, xz_v, fs_v, ob_v, xy_u, yz_u, xz_u, fs_u, ob_u
     write( io ) sw_wav, sw_wav_u, sw_wav_v
+    write( io ) wav_format
 
     write( io ) ntdec_s
     write( io ) idec, jdec, kdec
@@ -2411,6 +2414,7 @@ contains
 
     read( io ) xy_ps, yz_ps, xz_ps, fs_ps, ob_ps, xy_v, yz_v, xz_v, fs_v, ob_v, xy_u, yz_u, xz_u, fs_u, ob_u
     read( io ) sw_wav, sw_wav_u, sw_wav_v
+    read( io ) wav_format
 
     read( io ) ntdec_s
     read( io ) idec, jdec, kdec
@@ -2449,7 +2453,6 @@ contains
       read( io ) ntdec_w
       read( io ) nst
       read( io ) ntw
-
       if( nst > 0 ) then
         allocate( xst(nst), yst(nst), zst(nst) )
         allocate( ist(nst), jst(nst), kst(nst) )
