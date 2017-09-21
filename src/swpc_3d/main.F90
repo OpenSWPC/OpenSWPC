@@ -53,6 +53,11 @@ program SWPC_3D
   !! ----
 
   !!
+  !! Launch MPI process
+  !!
+  call mpi_init( ierr )
+
+  !!
   !! option processing
   !!
   call getopt('i', is_opt, fn_prm, './in/input.inf' )
@@ -60,10 +65,6 @@ program SWPC_3D
   open( io_prm, file=trim(fn_prm), action='read', status='old' )
   call readini( io_prm, 'stopwatch_mode', stopwatch_mode, .true.  )
 
-  !!
-  !! Launch MPI process
-  !!
-  call mpi_init( ierr )
 
   !!
   !! Read control parameters
