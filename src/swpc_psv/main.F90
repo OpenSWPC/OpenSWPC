@@ -52,6 +52,11 @@ program SWPC_PSV
   !! ----
 
   !!
+  !! Launch MPI process
+  !!
+  call mpi_init( ierr )
+
+  !!
   !! option processing
   !!
   call getopt('i', is_opt, fn_prm  )
@@ -59,11 +64,6 @@ program SWPC_PSV
   open( io_prm, file=trim(fn_prm), action='read', status='old' )
 
   call readini( io_prm, 'stopwatch_mode', stopwatch_mode, .true.  )
-
-  !!
-  !! Launch MPI process
-  !!
-  call mpi_init( ierr )
 
   !!
   !! Read control parameters
