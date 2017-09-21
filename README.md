@@ -1,10 +1,10 @@
-# OpenSWPC -- A Seismic Wave Propagation Code
+# OpenSWPC -- An Open-source Seismic Wave Propagation Code
 
-Corresponding Author: Takuto Maeda ( maeda (at) eri.u-tokyo.ac.jp )
+Corresponding Author: Takuto Maeda
 
-* * *
+![example](./doc/swpc-demo.gif)
 
-## DESCRIPTION
+## Description
 
 This software simulate seismic wave propagation by
 solving equations of motion with constitutive equations of elastic/viscoelastic
@@ -14,60 +14,97 @@ environment in 3D and 2D (P-SV or SH) media.
 This package also provides a set of tools for visualizing/converting simulation
 output.
 
-## LICENSE
-MIT License. Please see LICENSE for details.
+## License
 
-The author request that the user cite (at least one of) the following papers in any publications that result from the use of this software, although this is not an obligation.
+MIT License. Please see LICENSE file for details.
+
+The author request that the user cite (at least one of) the following accompanying paper or related papers in any publications that result from the use of this software, although this is not an obligation.
+
+## Download
+The newest release and archived versions:
+https://github.com/takuto-maeda/OpenSWPC/releases
+
+The development snapshot: https://github.com/takuto-maeda/OpenSWPC/archive/develop.zip
 
 
-* * *
+## Accompanying Paper
 
-## REFERENCES
+Maeda, T., S. Takemura, and T. Maeda (2017),
+OpenSWPC: An open-source integrated parallel simulation code for modeling seismic wave propagation in 3D heterogeneous viscoelastic media,
+_Earth Planets Space_, 69, 102.
+doi:[10.1186/s40623-017-0687-2](https://doi.org/10.1186/s40623-017-0687-2)
 
 
-(1) Furumura, T. and L. Chen (2004),
-    Large scale parallel simulation and visualization of 3D seismic wavefield
-    using the Earth Simulator,
-    Comp. Model. Eng. Sci., 6, 2, 153-168.
+## Related Papers
 
-(2) Furumura, T. and L. Chen (2005),
-    Parallel simulation of strong ground motions during recent and historical
-    damaging earthquakes in Tokyo, Japan,
-    Parallel Computing, 31, 149-165.
+Furumura, T. and L. Chen (2004),
+Large scale parallel simulation and visualization of 3D seismic wavefield
+using the Earth Simulator,
+_Comp. Model. Eng. Sci._, _6_, 153-168.
+doi:[10.3970/cmes.2004.006.153](https://doi.org/10.3970/cmes.2004.006.153)
 
-(3) Furumura, T. Hayakawa, M. Nakamura, K. Koketsu, and T. Baba (2008),
-    Development of long-period ground motions from the Nankai Trough,
-    Japan, earthquakes: Observations and computer simulation of the 1944
-    Tonankai (Mw8.1) and the 2004 SE Off-Kii Peninsula (Mw7) Earthquakes,
-    Pure Appl. Geophys., 165, 585-607.
+Furumura, T. and L. Chen (2005),
+Parallel simulation of strong ground motions during recent and historical damaging earthquakes in Tokyo, Japan,
+_Parallel Computing_, _31_, 149-165. doi:[10.1016/j.parco.2005.02.003](https://doi.org/10.1016/j.parco.2005.02.003)
 
-(4) Furumura, T. and T. Saito (2009),
-    An integrated simulation of ground motion and tsunami for the 1944
-    Tonankai earthquake using high-performance super computers,
-    Journal of Disaster Research, 4, 2, 118-126.
+Furumura, T. Hayakawa, M. Nakamura, K. Koketsu, and T. Baba (2008),
+Development of long-period ground motions from the Nankai Trough, Japan, earthquakes: Observations and computer simulation of the 1944 Tonankai (Mw 8.1) and the 2004 SE Off-Kii Peninsula (Mw 7.4) earthquakes,
+_Pure Appl. Geophys._, _165_, 585-607. doi:[10.1007/s00024-008-0318-8](https://doi.org/10.1007/s00024-008-0318-8)
 
-(5) Noguchi, S., T. Maeda, and T. Furumura (2013),
-    FDM simulation of an anomalous later phase from the Japan Trench
-    subduction zone earthquakes,
-    Pure Appl. Geophys., 170(1-2), 95-108, doi:10.1007/s00024-011-0412-1.
+Furumura, T. and T. Saito (2009),
+An integrated simulation of ground motion and tsunami for the 1944 Tonankai earthquake using high-performance super computers, _J. Disast. Res._, _4_, 118-126.
+https://www.fujipress.jp/jdr/dr/dsstr000400020118/
 
-(6) Maeda, T., and T. Furumura (2013),
-    FDM simulation of seismic waves, ocean acoustic waves, and tsunamis
-    based on tsunami-coupled equations of motion,
-    Pure Appl. Geophys., 170(1-2), 109-127, doi:10.1007/s00024-011-0430-z.
+Noguchi, S., T. Maeda, and T. Furumura (2013),
+FDM simulation of an anomalous later phase from the Japan Trench subduction zone earthquakes,
+_Pure Appl. Geophys._, _170_, 95-108.
+doi:[10.1007/s00024-011-0412-1](https://doi.org/10.1007/s00024-011-0412-1)
 
-(7) Maeda, T., T. Furumura, S. Noguchi, S. Takemura, S. Sakai,
-    M. Shinohara, K. Iwai, S. J. Lee (2013),
-    Seismic and tsunami wave propagation of the 2011 Off the Pacific Coast of
-    Tohoku Earthquake as inferred from the tsunami-coupled finite difference
-    simulation,
-    Bull. Seism. Soc. Am., 103(2b), 1456-1472, doi:10.1785/0120120118.
+Maeda, T., and T. Furumura (2013),
+FDM simulation of seismic waves, ocean acoustic waves, and tsunamis based on tsunami-coupled equations of motion,
+_Pure Appl. Geophys._, _170_, 109-127.
+doi:[10.1007/s00024-011-0430-z](https://doi.org/10.1007/s00024-011-0430-z)
 
-(8) Maeda, T., T. Furumura, and K. Obara (2014),
-    Scattering of teleseismic P-waves by the Japan Trench:
-    A significant effect of reverberation in the seawater column,
-    Earth Planet. Sci. Lett., 397(1), 101-110, doi:10.1016/j.epsl.2014.04.037.
+Maeda, T., T. Furumura, S. Noguchi, S. Takemura, S. Sakai, M. Shinohara, K. Iwai, S. J. Lee (2013),
+Seismic and tsunami wave propagation of the 2011 Off the Pacific Coast of Tohoku Earthquake as inferred from the tsunami-coupled finite difference simulation,
+_Bull. Seism. Soc. Am._, _103_, 1456-1472.
+doi:[10.1785/0120120118](https://doi.org/10.1785/0120120118)
 
-(9) Noguchi, S., T. Maeda, and T. Furumura (2016),
-    Ocean-influenced Rayleigh waves from outer-rise earthquakes and their effects on durations of long-period ground motion,
-    Geophys. J. Int., 205(2), 1099-1107, doi:10.1093/gji/ggw074.
+Maeda, T., T. Furumura, and K. Obara (2014),
+Scattering of teleseismic P-waves by the Japan Trench: A significant effect of reverberation in the seawater column,
+_Earth Planet. Sci. Lett._, _397_, 101-110.
+doi:[10.1016/j.epsl.2014.04.037](https://doi.org/10.1016/j.epsl.2014.04.037)
+
+Noguchi, S., T. Maeda, and T. Furumura (2016),
+Ocean-influenced Rayleigh waves from outer-rise earthquakes and their effects on durations of long-period ground motion,
+_Geophys. J. Int_., _205_, 1099-1107.
+doi:[10.1093/gji/ggw074](https://doi.org/10.1093/gji/ggw074)
+
+Takemura, S., T. Maeda, T. Furumura, and K. Obara (2016),
+Constraining the source location of the 30 May 2015 (Mw 7.9) Bonin deep-focus earthquake using seismogram envelopes of high-frequency P waveforms: occurrence of deep-focus earthquake at the bottom of a subducting slab,
+_Geophys. Res. Lett._, _43_, 4297-4302.
+doi:[10.1002/2016GL068437](https://doi.org/10.1002/2016GL068437)
+
+Yoshimitsu, N., T. Furumura, and T. Maeda (2016),
+Geometric effect on a laboratory-scale wavefield inferred from a three-dimensional numerical simulation,
+_J. Appl. Geophys._, _132_, 184-192.
+doi:[10.1016/j.jappgeo.2016.07.002](https://doi.org/10.1016/j.jappgeo.2016.07.002)
+
+Maeda, T., K. Nishida, R. Takagi, and K. Obara (2016),
+Reconstruction of a 2D seismic wavefield by seismic gradiometry,
+_Prog. Earth Planet. Sci._, _3_, 31.
+doi:[10.1186/s40645-016-0107-4](https://doi.org/10.1186/s40645-016-0107-4)
+
+Todoriki, M., T. Furumura, and T. Maeda (2017),
+Effects of seawater on elongated duration of ground motion as well as variation in its amplitude for offshore earthquakes,
+_Geophys. J. Int._, _208_, 226-233.
+doi:[10.1093/gji/ggw388](https://doi.org/10.1093/gji/ggw388)
+
+Toya, M., A. Kato, T. Maeda, K. Obara, T. Takeda, and K. Yamaoka (2017),
+Down-dip variations in a subducting low-velocity zone linked to episodic tremor and slip: a new constraint from ScSp waves,
+_Scientific Reports_, _7_, 2868.
+doi:[10.1038/s41598-017-03048-6](https://doi.org/10.1038/s41598-017-03048-6)
+
+Morioka, H., H. Kumagai, and T. Maeda (2017),
+Theoretical basis of the amplitude source location method for volcano-seismic signals, _J. Geophys. Res._, _122_, 6538-6551.
+doi:[10.1002/2017JB013997](https://doi.org/10.1002/2017JB013997)
