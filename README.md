@@ -1,10 +1,10 @@
-# OpenSWPC -- A Seismic Wave Propagation Code
+# OpenSWPC -- An Open-source Seismic Wave Propagation Code
 
 Corresponding Author: Takuto Maeda
 
 ![example](./doc/swpc-demo.gif)
 
-## DESCRIPTION
+## Description
 
 This software simulate seismic wave propagation by
 solving equations of motion with constitutive equations of elastic/viscoelastic
@@ -14,10 +14,17 @@ environment in 3D and 2D (P-SV or SH) media.
 This package also provides a set of tools for visualizing/converting simulation
 output.
 
-## LICENSE
-MIT License. Please see LICENSE for details.
+## License
+
+MIT License. Please see LICENSE file for details.
 
 The author request that the user cite (at least one of) the following accompanying paper or related papers in any publications that result from the use of this software, although this is not an obligation.
+
+## Download
+The newest release and archived versions:
+https://github.com/takuto-maeda/OpenSWPC/releases
+
+The development snapshot: https://github.com/takuto-maeda/OpenSWPC/archive/develop.zip
 
 
 ## Accompanying Paper
