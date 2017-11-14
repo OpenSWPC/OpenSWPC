@@ -29,7 +29,7 @@ The development snapshot: https://github.com/takuto-maeda/OpenSWPC/archive/devel
 
 ## Accompanying Paper
 
-Maeda, T., S. Takemura, and T. Maeda (2017),
+Maeda, T., S. Takemura, and T. Furumura (2017),
 OpenSWPC: An open-source integrated parallel simulation code for modeling seismic wave propagation in 3D heterogeneous viscoelastic media,
 _Earth Planets Space_, 69, 102.
 doi:[10.1186/s40623-017-0687-2](https://doi.org/10.1186/s40623-017-0687-2)
