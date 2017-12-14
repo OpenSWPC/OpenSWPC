@@ -45,6 +45,7 @@ m_color.o   : m_color.F90 m_std.o
 m_fk.o      : m_fk.F90 m_std.o m_rfft.o
 m_rfft.o    : m_rfft.F90 m_std.o
 m_gammaf.o  : m_gammaf.F90 m_std.o
+m_wsac.o    : m_wsac.F90 m_daytim.F90 m_std.o
 
 .SUFFIXES:
 .SUFFIXES: .F90 .o

@@ -676,7 +676,7 @@ contains
     real(SP), intent(in) :: xs1(ns1), xs2(ns2)
     integer :: i
     !! --
-
+#ifdef _NETCDF
     call nc_chk( nf90_def_dim( hdr%io, 'x', nxs, hdr%did_x1 ) )
     call nc_chk( nf90_def_dim( hdr%io, 'z', nzs, hdr%did_x2 ) )
     call nc_chk( nf90_def_dim( hdr%io, 't', NF90_UNLIMITED, hdr%did_t ) )
@@ -737,7 +737,7 @@ contains
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'clon', clon ) )
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'clat', clat ) )
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'phi',  phi  ) )
-
+#endif
   end subroutine write_nc_header
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -945,7 +945,9 @@ contains
     integer  :: ierr
     integer :: count(3)
     integer :: start(3)
-
+    !! ----
+    
+#ifdef _NETCDF
     !! prepare send buffer
     sbuf = reshape( array, shape(sbuf) )
 
@@ -961,7 +963,7 @@ contains
       hdr%vmax(vid) = max( hdr%vmax(vid), maxval(rbuf) )
       hdr%vmin(vid) = min( hdr%vmin(vid), minval(rbuf) )
     end if
-
+#endif
 
   end subroutine write_reduce_array2d_r_nc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -1142,12 +1144,14 @@ contains
 #endif
 
     else
+#ifdef _NETCDF      
       if( xz_v%sw .and. myid == xz_v%ionode ) then
         call nc_chk( nf90_open( trim(odir)//'/'//trim(title) //'.xz.v.nc', NF90_WRITE, xz_v%io ) )
       end if
       if( xz_u%sw .and. myid == xz_u%ionode ) then
         call nc_chk( nf90_open( trim(odir)//'/'//trim(title) //'.xz.u.nc', NF90_WRITE, xz_u%io ) )
       end if
+#endif      
     end if
 
   end subroutine output__restart
@@ -1158,7 +1162,7 @@ contains
       if( xz_v%sw .and. myid == xz_v%ionode ) close( xz_v%io )
       if( xz_u%sw .and. myid == xz_u%ionode ) close( xz_u%io )
     else
-
+#ifdef _NETCDF
       if( xz_v%sw .and. myid == xz_v%ionode ) then
         ! set max & min for each vars
         call nc_chk( nf90_redef( xz_v%io ) )
@@ -1175,8 +1179,7 @@ contains
         call nc_chk( nf90_close( xz_u%io ) )
 
       end if
-
-
+#endif
     end if
 
   end subroutine output__closefiles
