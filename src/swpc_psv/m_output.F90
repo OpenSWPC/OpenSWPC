@@ -146,9 +146,9 @@ contains
 
     sw_wav = ( sw_wav_v .or. sw_wav_u )
 
-!!!!
-!!!! snapshot
-!!!!
+    !!
+    !! snapshot
+    !!
 
     !!
     !! snapshot size #2013-0440
@@ -777,6 +777,7 @@ contains
     integer :: i
     !! --
 
+#ifdef _NETCDF
     call nc_chk( nf90_def_dim( hdr%io, 'x', nxs, hdr%did_x1 ) )
     call nc_chk( nf90_def_dim( hdr%io, 'z', nzs, hdr%did_x2 ) )
     call nc_chk( nf90_def_dim( hdr%io, 't', NF90_UNLIMITED, hdr%did_t ) )
@@ -837,7 +838,7 @@ contains
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'clon', clon ) )
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'clat', clat ) )
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'phi',  phi  ) )
-
+#endif
   end subroutine write_nc_header
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -890,11 +891,12 @@ contains
     integer :: count(3)
     integer :: start(3)
 
+#ifdef _NETCDF    
     !! prepare send buffer
     sbuf = reshape( array, shape(sbuf) )
 
     !! gather to io_node
-3   call mpi_reduce( sbuf, rbuf, nx1*nx2, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf, nx1*nx2, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
 
     !! write
     if( myid == hdr%ionode ) then
@@ -905,7 +907,7 @@ contains
       hdr%vmax(vid) = max( hdr%vmax(vid), maxval(rbuf) )
       hdr%vmin(vid) = min( hdr%vmin(vid), minval(rbuf) )
     end if
-
+#endif
 
   end subroutine write_reduce_array2d_r_nc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -1291,6 +1293,7 @@ contains
 #endif
     else
 
+#ifdef _NETCDF
       if( xz_ps%sw .and. myid == xz_ps%ionode ) then
         call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xz.ps.nc', NF90_WRITE, xz_ps%io ) )
       end if
@@ -1302,7 +1305,7 @@ contains
       if( xz_u%sw .and. myid == xz_u%ionode ) then
         call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xz.u.nc', NF90_WRITE, xz_u%io ) )
       end if
-
+#endif
     end if
 
 
@@ -1317,7 +1320,7 @@ contains
       if( xz_v%sw .and. myid == xz_v%ionode ) close( xz_v%io )
       if( xz_u%sw .and. myid == xz_u%ionode ) close( xz_u%io )
     else
-
+#ifdef _NETCDF
       if( xz_ps%sw .and. myid == xz_ps%ionode ) then
 
         ! set max & min for each vars
@@ -1351,7 +1354,7 @@ contains
         call nc_chk( nf90_close( xz_u%io ) )
 
       end if
-
+#endif
     end if
 
   end subroutine output__closefiles

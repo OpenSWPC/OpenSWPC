@@ -152,9 +152,10 @@ contains
 
     integer, intent(in) :: ierr
     !! --
-
+#ifdef _NETCDF
     if(ierr /= NF90_NOERR)  write(STDERR,*) NF90_STRERROR(ierr)
-
+#endif
+    
   end subroutine nc_chk
   !! ----------------------------------------------------------------------- !!
 
