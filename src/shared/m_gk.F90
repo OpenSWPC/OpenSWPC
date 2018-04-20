@@ -9,7 +9,7 @@
 !! http://surveycalc.gsi.go.jp/sokuchi/surveycalc/algorithm/bl2xy/bl2xy.htm
 !!
 !! @copyright
-!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2018 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 module m_gk

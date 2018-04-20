@@ -3,7 +3,7 @@
 !! Frequency-decimate, out-of-place recursive FFT
 !!
 !! @copyright
-!!   Copyright 2013-2017 Takuto Maeda. All rights reserved.
+!!   Copyright 2013-2018 Takuto Maeda. All rights reserved.
 !!   This project is released under the MIT license.
 !<
 !! --

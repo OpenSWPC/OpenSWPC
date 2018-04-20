@@ -3,7 +3,7 @@
 !! Definition of standard constants, in/out io numbers, precision constants
 !!
 !! @copyright
-!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2018 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 module m_std
