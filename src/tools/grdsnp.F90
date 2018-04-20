@@ -3,7 +3,7 @@
 !! Extract x-y-z data of velocity discontinuity from a specified grd dat
 !!
 !! @copyright
-!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2018 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 #include "m_debug.h"
@@ -23,7 +23,8 @@ program grdsnp
   integer :: nx, ny
   real(SP)  :: dx, dy, dz, clon, clat, phi, xbeg, ybeg, zbeg
   real(SP), allocatable :: xc(:), yc(:), glon(:,:), glat(:,:)
-  real(SP), allocatable ::lon(:), lat(:), grddep(:,:)
+  real(DP), allocatable ::lon(:), lat(:), grddep(:,:)
+  real(DP) :: dlon, dlat
   real(SP) :: zgrd
   logical :: is_opt
   integer :: kgrd
@@ -100,7 +101,9 @@ program grdsnp
 
   grddep(:,:) = grddep(:,:) / 1000 ! m -> km
 
-  call bicubic__init( bcd, nlon, nlat, lon(1), lat(1), lon(2)-lon(1), lat(2)-lat(1), grddep )
+  dlon = (lon(nlon) - lon(1))/(nlon - 1)
+  dlat = (lat(nlat) - lat(1))/(nlat - 1)      
+  call bicubic__init( bcd, nlon, nlat, lon(1), lat(1), dlon, dlat, grddep )
 
   do j=1, ny
     do i=1, nx

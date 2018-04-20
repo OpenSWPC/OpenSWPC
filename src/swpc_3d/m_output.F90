@@ -3,7 +3,7 @@
 !! Snapshot/waveform output
 !!
 !! @copyright
-!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2018 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -112,7 +112,7 @@ module m_output
 
   !! displacement snapshot buffer
   real(SP), allocatable :: buf_yz_u(:,:,:), buf_xz_u(:,:,:), buf_xy_u(:,:,:), buf_fs_u(:,:,:), buf_ob_u(:,:,:)
-
+  real(SP), allocatable :: max_ob_v(:,:,:), max_ob_u(:,:,:), max_fs_v(:,:,:), max_fs_u(:,:,:)
 contains
 
 
@@ -177,9 +177,9 @@ contains
       sw_wav   = .true.
     end if
 
-!!!!
-!!!! snapshot
-!!!!
+    !!
+    !! snapshot
+    !!
 
     !!
     !! snapshot size #2013-0440
@@ -364,6 +364,16 @@ contains
     buf_xy_u = 0.0
     buf_fs_u = 0.0
     buf_ob_u = 0.0
+
+    !! maximum amplitude buffers
+    allocate( max_ob_v(nxs,nys,3) )
+    allocate( max_ob_u(nxs,nys,3) )
+    allocate( max_fs_v(nxs,nys,3) )
+    allocate( max_fs_u(nxs,nys,3) )
+    max_ob_v(:,:,:) = 0.0
+    max_ob_u(:,:,:) = 0.0
+    max_fs_v(:,:,:) = 0.0
+    max_fs_u(:,:,:) = 0.0
 
     !!
     !! waveform
@@ -1964,7 +1974,6 @@ contains
     integer :: ii, jj
     real(SP), allocatable :: buf(:,:,:)
 
-    if( mod( it-1, ntdec_s ) /= 0 ) return
     if( .not. allocated(buf) ) allocate(buf(nxs,nys,3))
     buf = 0.0
 
@@ -1983,6 +1992,18 @@ contains
     end do
     !$omp end parallel do
 
+    !$omp parallel do private(ii,jj)
+    do jj = js0, js1
+      do ii = is0, is1
+        max_fs_v(ii,jj,1) = max( max_fs_v(ii,jj,1), abs(buf(ii,jj,3)) )
+        max_fs_v(ii,jj,2) = max( max_fs_v(ii,jj,2), sqrt( buf(ii,jj,1)**2 + buf(ii,jj,2)**2 ) )
+        max_fs_v(ii,jj,3) = sqrt( max_fs_v(ii,jj,1)**2 + max_fs_v(ii,jj,2)**2 )
+      end do
+    end do
+    !$omp end parallel do
+
+    if( mod( it-1, ntdec_s ) /= 0 ) return
+    
     if( snp_format == 'native' ) then
       call write_reduce_array2d_r( nxs, nys, fs_v%ionode, fs_v%io, buf(:,:,1) )
       call write_reduce_array2d_r( nxs, nys, fs_v%ionode, fs_v%io, buf(:,:,2) )
@@ -1993,6 +2014,7 @@ contains
       call write_reduce_array2d_r_nc( it, 3, nxs, nys, fs_v, buf(:,:,3) )
     end if
 
+    
   end subroutine wbuf_fs_v
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -2004,7 +2026,6 @@ contains
     integer :: ii, jj
     real(SP), allocatable :: buf(:,:,:)
 
-    if( mod( it-1, ntdec_s ) /= 0 ) return
     if( .not. allocated(buf) ) allocate( buf(nxs,nys,3) )
 
     buf = 0.0
@@ -2024,6 +2045,17 @@ contains
     end do
     !$omp end parallel do
 
+    !$omp parallel do private(ii,jj)
+    do jj = js0, js1
+      do ii = is0, is1
+        max_ob_v(ii,jj,1) = max( max_ob_v(ii,jj,1), abs(buf(ii,jj,3)) )
+        max_ob_v(ii,jj,2) = max( max_ob_v(ii,jj,2), sqrt( buf(ii,jj,1)**2 + buf(ii,jj,2)**2 ) )
+        max_ob_v(ii,jj,3) = sqrt( max_ob_v(ii,jj,1)**2 + max_ob_v(ii,jj,2)**2 )
+      end do
+    end do
+    !$omp end parallel do
+    if( mod( it-1, ntdec_s ) /= 0 ) return
+    
     if( snp_format == 'native' ) then
       call write_reduce_array2d_r( nxs, nys, ob_v%ionode, ob_v%io, buf(:,:,1) )
       call write_reduce_array2d_r( nxs, nys, ob_v%ionode, ob_v%io, buf(:,:,2) )
@@ -2033,8 +2065,8 @@ contains
       call write_reduce_array2d_r_nc( it, 2, nxs, nys, ob_v, buf(:,:,2) )
       call write_reduce_array2d_r_nc( it, 3, nxs, nys, ob_v, buf(:,:,3) )
     end if
-
-
+    
+    
   end subroutine wbuf_ob_v
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -2186,6 +2218,16 @@ contains
     end do
     !$omp end parallel do
 
+    !$omp parallel do private(ii,jj)
+    do jj = js0, js1
+      do ii = is0, is1
+        max_fs_u(ii,jj,1) = max( max_fs_u(ii,jj,1), abs(buf_fs_u(ii,jj,3)) )
+        max_fs_u(ii,jj,2) = max( max_fs_u(ii,jj,2), sqrt( buf_fs_u(ii,jj,1)**2 + buf_fs_u(ii,jj,2)**2 ) )
+        max_fs_u(ii,jj,3) = sqrt( max_fs_u(ii,jj,1)**2 + max_fs_u(ii,jj,2)**2 )
+      end do
+    end do
+    !$omp end parallel do
+    
     if( mod( it-1, ntdec_s ) == 0 ) then
       if( snp_format == 'native' ) then
         call write_reduce_array2d_r( nxs, nys, fs_u%ionode, fs_u%io, buf_fs_u(:,:,1) )
@@ -2197,6 +2239,7 @@ contains
         call write_reduce_array2d_r_nc( it, 3, nxs, nys, fs_u, buf_fs_u(:,:,3) )
       end if
     end if
+
 
   end subroutine wbuf_fs_u
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -2223,6 +2266,16 @@ contains
     end do
     !$omp end parallel do
 
+    !$omp parallel do private(ii,jj)
+    do jj = js0, js1
+      do ii = is0, is1
+        max_ob_u(ii,jj,1) = max( max_ob_u(ii,jj,1), abs(buf_ob_u(ii,jj,3)) )
+        max_ob_u(ii,jj,2) = max( max_ob_u(ii,jj,2), sqrt( buf_ob_u(ii,jj,1)**2 + buf_ob_u(ii,jj,2)**2 ) )
+        max_ob_u(ii,jj,3) = sqrt( max_ob_u(ii,jj,1)**2 + max_ob_u(ii,jj,2)**2 )
+      end do
+    end do
+    !$omp end parallel do
+
     if( mod( it-1, ntdec_s ) == 0 ) then
       if( snp_format == 'native' ) then
         call write_reduce_array2d_r( nxs, nys, ob_u%ionode, ob_u%io, buf_ob_u(:,:,1) )
@@ -2234,7 +2287,7 @@ contains
         call write_reduce_array2d_r_nc( it, 3, nxs, nys, ob_u, buf_ob_u(:,:,3) )
       end if
     end if
-
+    
   end subroutine wbuf_ob_u
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -2373,6 +2426,11 @@ contains
 
     write( io ) snp_format
 
+    write( io ) max_ob_v(is0:is1, js0:js1, 1:3 )
+    write( io ) max_ob_u(is0:is1, js0:js1, 1:3 )
+    write( io ) max_fs_v(is0:is1, js0:js1, 1:3 )
+    write( io ) max_fs_u(is0:is1, js0:js1, 1:3 )
+    
     if( sw_wav ) then
       write( io ) ntdec_w
       write( io ) nst
@@ -2402,6 +2460,7 @@ contains
       end if
 
     end if
+
 
   end subroutine output__checkpoint
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -2448,6 +2507,19 @@ contains
     read( io ) buf_ob_u(is0:is1,js0:js1,1:3)
 
     read( io ) snp_format
+
+    allocate( max_ob_v(nxs,nys,3) )
+    allocate( max_ob_u(nxs,nys,3) )
+    allocate( max_fs_v(nxs,nys,3) )
+    allocate( max_fs_u(nxs,nys,3) )
+    max_ob_v(:,:,:) = 0.0
+    max_ob_u(:,:,:) = 0.0
+    max_fs_v(:,:,:) = 0.0
+    max_fs_u(:,:,:) = 0.0
+    read( io ) max_ob_v(is0:is1, js0:js1, 1:3 )
+    read( io ) max_ob_u(is0:is1, js0:js1, 1:3 )
+    read( io ) max_fs_v(is0:is1, js0:js1, 1:3 )
+    read( io ) max_fs_u(is0:is1, js0:js1, 1:3 )    
 
     if( sw_wav ) then
       read( io ) ntdec_w
@@ -2736,20 +2808,91 @@ contains
       if( yz_v%sw .and. myid == yz_v%ionode )   call close_nc( yz_v )
       if( xz_v%sw .and. myid == xz_v%ionode )   call close_nc( xz_v )
       if( xy_v%sw .and. myid == xy_v%ionode )   call close_nc( xy_v )
-      if( fs_v%sw .and. myid == fs_v%ionode )   call close_nc( fs_v )
-      if( ob_v%sw .and. myid == ob_v%ionode )   call close_nc( ob_v )
+      if( fs_v%sw )then
+        call output__put_maxval( fs_v, max_fs_v )
+        if( myid == fs_v%ionode ) then
+          call close_nc( fs_v )
+        end if
+      end if
+      if( ob_v%sw ) then
+        call output__put_maxval( ob_v, max_ob_v )
+        if ( myid == ob_v%ionode ) then
+          call close_nc( ob_v )
+        end if
+      end if
+      
       if( yz_u%sw .and. myid == yz_u%ionode )   call close_nc( yz_u )
       if( xz_u%sw .and. myid == xz_u%ionode )   call close_nc( xz_u )
       if( xy_u%sw .and. myid == xy_u%ionode )   call close_nc( xy_u )
-      if( fs_u%sw .and. myid == fs_u%ionode )   call close_nc( fs_u )
-      if( ob_u%sw .and. myid == ob_u%ionode )   call close_nc( ob_u )
-
+      if( fs_u%sw ) then
+        call output__put_maxval( fs_u, max_fs_u )
+        if( myid == fs_u%ionode ) then
+          call close_nc( fs_u )
+        end if
+      end if
+      if( ob_u%sw ) then
+        call output__put_maxval( ob_u, max_ob_u )
+        if( myid == ob_u%ionode ) then
+          call close_nc( ob_u )
+        end if
+      end if
+      
     end if
 
 
   end subroutine output__closefiles
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  subroutine output__put_maxval( hdr, maxv )
+    type(snp), intent(in) :: hdr
+    real(SP), intent(inout) :: maxv(nxs,nys,3)
+    real(SP) :: sbuf(nxs*nys*3), rbuf(nxs*nys*3)
+    integer :: ierr
+    integer :: vid_V, vid_H, vid_A
+
+    sbuf = reshape( maxv, shape(sbuf) )
+    call mpi_reduce(sbuf, rbuf, nxs*nys*3, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    maxv = reshape( rbuf, shape(maxv) )
+    if( myid == hdr%ionode ) then
+      
+      if( snp_format == 'native' ) then
+        !! pass
+      else
+#ifdef _NETCDF
+        call nc_chk( nf90_redef( hdr%io ) )
+        call nc_chk( nf90_def_var( hdr%io, 'max-V', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), vid_V ) )
+        call nc_chk( nf90_def_var( hdr%io, 'max-H', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), vid_H ) )
+        call nc_chk( nf90_def_var( hdr%io, 'max-A', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), vid_A ) )
+        call nc_chk( nf90_put_att( hdr%io, vid_V, 'long_name', 'Maximum amplitude of the vertical component' ))
+        call nc_chk( nf90_put_att( hdr%io, vid_H, 'long_name', 'Maximum amplitude of the horizontal components' ))
+        call nc_chk( nf90_put_att( hdr%io, vid_A, 'long_name', 'Maximum amplitude of the vector motion' ))
+        call nc_chk( nf90_put_att( hdr%io, vid_V, 'coordinates', 'lat lon' ) )
+        call nc_chk( nf90_put_att( hdr%io, vid_H, 'coordinates', 'lat lon' ) )
+        call nc_chk( nf90_put_att( hdr%io, vid_A, 'coordinates', 'lat lon' ) )
+        if( hdr%snaptype == 'v3' ) then
+          call nc_chk( nf90_put_att( hdr%io, vid_V, 'units', 'm/s' ))
+          call nc_chk( nf90_put_att( hdr%io, vid_H, 'units', 'm/s' ))
+          call nc_chk( nf90_put_att( hdr%io, vid_A, 'units', 'm/s' ))
+        else if( hdr%snaptype == 'u3' ) then
+          call nc_chk( nf90_put_att( hdr%io, vid_V, 'units', 'm' ))
+          call nc_chk( nf90_put_att( hdr%io, vid_H, 'units', 'm' ))
+          call nc_chk( nf90_put_att( hdr%io, vid_A, 'units', 'm' ))
+        end if
+        call nc_chk( nf90_put_att( hdr%io, vid_V, 'actual_range', (/minval(maxv(:,:,1)), maxval(maxv(:,:,1))/)))
+        call nc_chk( nf90_put_att( hdr%io, vid_H, 'actual_range', (/minval(maxv(:,:,2)), maxval(maxv(:,:,2))/)))
+        call nc_chk( nf90_put_att( hdr%io, vid_A, 'actual_range', (/minval(maxv(:,:,3)), maxval(maxv(:,:,3))/)))
+        call nc_chk( nf90_enddef( hdr%io ))
+        call nc_chk( nf90_put_var( hdr%io, vid_V, maxv(:,:,1) ))
+        call nc_chk( nf90_put_var( hdr%io, vid_H, maxv(:,:,2) ))
+        call nc_chk( nf90_put_var( hdr%io, vid_A, maxv(:,:,3) ))
+#endif
+      end if
+    end if
+    
+  end subroutine output__put_maxval
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>

@@ -3,7 +3,7 @@
 !! User-routines for defining velocity/attenuation structure: GMT(netcdf) input
 !!
 !! @copyright
-!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2018 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -62,7 +62,7 @@ contains
     real(SP) :: zgrd
     integer :: ngrd
     integer :: ierr
-    real(SP), allocatable :: lon(:), lat(:), grddep(:,:), grdbuf(:)
+    real(DP), allocatable :: lon(:), lat(:), grddep(:,:), grdbuf(:)
     real(SP), allocatable :: rho1(:), vp1(:), vs1(:), qp1(:), qs1(:)
     integer,  allocatable :: pid(:)
     real(SP) :: glon( i0:i1, j0:j1), glat(i0:i1,j0:j1) !< grid longitude,latitude
@@ -80,6 +80,7 @@ contains
     integer, allocatable :: kgrd(:,:,:)
     integer :: ncid, ndim, nvar, xid, yid, zid
     character(80) :: xname, yname, zname
+    real(DP) :: dlon, dlat
     !! ----
 
     call readini( io_prm, 'fn_grdlst', fn_grdlst, '.' )
@@ -239,9 +240,9 @@ contains
       end if
 
       !! send and receive grd data
-      call mpi_bcast(lon, nlon, MPI_REAL, node_grd, MPI_COMM_WORLD, ierr )
-      call mpi_bcast(lat, nlat, MPI_REAL, node_grd, MPI_COMM_WORLD, ierr )
-      call mpi_bcast(grdbuf, nlon*nlat, MPI_REAL, node_grd, MPI_COMM_WORLD, ierr )
+      call mpi_bcast(lon, nlon, MPI_DOUBLE_PRECISION, node_grd, MPI_COMM_WORLD, ierr )
+      call mpi_bcast(lat, nlat, MPI_DOUBLE_PRECISION, node_grd, MPI_COMM_WORLD, ierr )
+      call mpi_bcast(grdbuf, nlon*nlat, MPI_DOUBLE_PRECISION, node_grd, MPI_COMM_WORLD, ierr )
 
       !! reshape received buffer to 2D array
       if( myid /= node_grd ) grddep = reshape( grdbuf, shape( grddep ) )
@@ -249,8 +250,9 @@ contains
 
 
       grddep(:,:) = grddep(:,:) / 1000 ! m -> km
-
-      call bicubic__init( bcd(n), nlon, nlat, lon(1), lat(1), lon(2)-lon(1), lat(2)-lat(1), grddep )
+      dlon = (lon(nlon) - lon(1)) / (nlon - 1)
+      dlat = (lat(nlat) - lat(1)) / (nlat - 1)
+      call bicubic__init( bcd(n), nlon, nlat, lon(1), lat(1), dlon, dlat, grddep )
 
       do j=j0, j1
         do i=i0, i1

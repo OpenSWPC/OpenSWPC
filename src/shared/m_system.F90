@@ -3,7 +3,7 @@
 !! Linux/Mac system routines, for processig command line argument, environment variables, and system call
 !!
 !! @copyright
-!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2018 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 module m_system

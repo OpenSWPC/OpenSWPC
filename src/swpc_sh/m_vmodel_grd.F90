@@ -3,7 +3,7 @@
 !! User-routines for defining velocity/attenuation structure: Layered medium input
 !!
 !! @copyright
-!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2018 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -56,7 +56,8 @@ contains
     real(SP) :: zgrd
     integer, allocatable  :: kgrd(:,:)
     integer :: ngrd
-    real(SP), allocatable :: lon(:), lat(:), grddep(:,:)
+    real(DP), allocatable :: lon(:), lat(:), grddep(:,:)
+    real(DP) :: dlon, dlat
     real(SP), allocatable :: rho1(:), vp1(:), vs1(:), qp1(:), qs1(:)
     integer,  allocatable :: pid(:)
     real(SP) :: glon(i0:i1), glat(i0:i1) !< grid longitude,latitude
@@ -199,7 +200,9 @@ contains
 
       grddep(:,:) = grddep(:,:) / 1000 ! m -> km
 
-      call bicubic__init( bcd(n), nlon, nlat, lon(1), lat(1), lon(2)-lon(1), lat(2)-lat(1), grddep )
+      dlon = (lon(nlon) - lon(1))/(nlon - 1)
+      dlat = (lat(nlat) - lat(1))/(nlat - 1)      
+      call bicubic__init( bcd(n), nlon, nlat, lon(1), lat(1), dlon, dlat, grddep )
 
       do i=i0, i1
         call bicubic__interp( bcd(n), glon(i), glat(i), zgrd )
