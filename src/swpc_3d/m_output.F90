@@ -2426,6 +2426,11 @@ contains
 
     write( io ) snp_format
 
+    write( io ) max_ob_v(is0:is1, js0:js1, 1:3 )
+    write( io ) max_ob_u(is0:is1, js0:js1, 1:3 )
+    write( io ) max_fs_v(is0:is1, js0:js1, 1:3 )
+    write( io ) max_fs_u(is0:is1, js0:js1, 1:3 )
+    
     if( sw_wav ) then
       write( io ) ntdec_w
       write( io ) nst
@@ -2455,6 +2460,7 @@ contains
       end if
 
     end if
+
 
   end subroutine output__checkpoint
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -2501,6 +2507,19 @@ contains
     read( io ) buf_ob_u(is0:is1,js0:js1,1:3)
 
     read( io ) snp_format
+
+    allocate( max_ob_v(nxs,nys,3) )
+    allocate( max_ob_u(nxs,nys,3) )
+    allocate( max_fs_v(nxs,nys,3) )
+    allocate( max_fs_u(nxs,nys,3) )
+    max_ob_v(:,:,:) = 0.0
+    max_ob_u(:,:,:) = 0.0
+    max_fs_v(:,:,:) = 0.0
+    max_fs_u(:,:,:) = 0.0
+    read( io ) max_ob_v(is0:is1, js0:js1, 1:3 )
+    read( io ) max_ob_u(is0:is1, js0:js1, 1:3 )
+    read( io ) max_fs_v(is0:is1, js0:js1, 1:3 )
+    read( io ) max_fs_u(is0:is1, js0:js1, 1:3 )    
 
     if( sw_wav ) then
       read( io ) ntdec_w
