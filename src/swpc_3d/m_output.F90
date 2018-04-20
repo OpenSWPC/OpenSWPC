@@ -2867,6 +2867,9 @@ contains
         call nc_chk( nf90_put_att( hdr%io, vid_V, 'long_name', 'Maximum amplitude of the vertical component' ))
         call nc_chk( nf90_put_att( hdr%io, vid_H, 'long_name', 'Maximum amplitude of the horizontal components' ))
         call nc_chk( nf90_put_att( hdr%io, vid_A, 'long_name', 'Maximum amplitude of the vector motion' ))
+        call nc_chk( nf90_put_att( hdr%io, vid_V, 'coordinates', 'lat lon' ) )
+        call nc_chk( nf90_put_att( hdr%io, vid_H, 'coordinates', 'lat lon' ) )
+        call nc_chk( nf90_put_att( hdr%io, vid_A, 'coordinates', 'lat lon' ) )
         if( hdr%snaptype == 'v3' ) then
           call nc_chk( nf90_put_att( hdr%io, vid_V, 'units', 'm/s' ))
           call nc_chk( nf90_put_att( hdr%io, vid_H, 'units', 'm/s' ))
