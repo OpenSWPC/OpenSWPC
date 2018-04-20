@@ -4,7 +4,7 @@
 # use mapregion.x to plot computation area on Japan Map
 
 ## @copyright
-##   Copyright 2013-2016 Takuto Maeda. All rights reserved.
+##   Copyright 2013-2018 Takuto Maeda. All rights reserved.
 ##   This project is released under the MIT license.
 
 region=128/146/30/46

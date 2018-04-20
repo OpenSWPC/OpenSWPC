@@ -3,7 +3,7 @@
 !! Read snap files from output of swpc, and export to figure
 !!
 !! @copyright
-!!   Copyright 2013-2017 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2018 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
