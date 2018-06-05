@@ -178,8 +178,10 @@ contains
               vp1  = vp0(l)  * ( 1 +     xi(k,i,j,tbl_rmed(l)) )
               vs1  = vs0(l)  * ( 1 +     xi(k,i,j,tbl_rmed(l)) )
 
-              call vcheck( vp1, vs1, rho1, xi(k,i,j,tbl_rmed(l) ), vmin, vmax, rhomin, vmin_under, vmax_over, rhomin_under )
-
+              if( vp0(l) > 0 .and. vs0(l) > 0 ) then
+                call vcheck( vp1, vs1, rho1, xi(k,i,j,tbl_rmed(l) ), vmin, vmax, rhomin, vmin_under, vmax_over, rhomin_under )
+              end if
+              
               qp1  = qp0(l)
               qs1  = qs0(l)
             end if
