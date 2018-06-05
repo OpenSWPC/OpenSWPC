@@ -352,8 +352,10 @@ contains
             vs2 = vs1(n) * ( 1.0 + xi(kk,i,j,tbl_rmed(n) ) )
             rho2 = rho1(n) * ( 1.0 + 0.8 * xi(kk,i,j,tbl_rmed(n) ) )
 
-            call vcheck(vp2, vs2, rho2, xi(kk,i,j,tbl_rmed(n)), vmin, vmax, rhomin, vmin_under, vmax_over, rhomin_under)
-
+            if( vp1(n) > 0 .and. vs1(n) > 0 ) then
+              call vcheck(vp2, vs2, rho2, xi(kk,i,j,tbl_rmed(n)), vmin, vmax, rhomin, vmin_under, vmax_over, rhomin_under)
+            end if
+            
             rho(k,i,j) = rho2
             lam(k,i,j) = rho2 * ( vp2 * vp2 - 2 * vs2 * vs2 )
             mu (k,i,j) = rho2 * vs2 * vs2

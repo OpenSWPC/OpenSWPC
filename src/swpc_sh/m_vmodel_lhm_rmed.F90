@@ -177,8 +177,10 @@ contains
             qp1  = qp0(l)
             qs1  = qs0(l)
 
-            call vcheck( vp1, vs1, rho1, xi(k,i,tbl_rmed(l)), vmin, vmax, rhomin, is_vmin_under, is_vmax_over, is_rhomin_under)
-
+            if( vp0(l) > 0 .and. vs0(l) > 0 ) then
+              call vcheck( vp1, vs1, rho1, xi(k,i,tbl_rmed(l)), vmin, vmax, rhomin, is_vmin_under, is_vmax_over, is_rhomin_under)
+            end if
+            
           end if
         end do
 
