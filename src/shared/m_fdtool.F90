@@ -26,16 +26,17 @@ contains
     logical, intent(inout) :: is_vmin_under, is_vmax_over, is_rhomin_under
     real :: gamma, xi2
 
-    if( abs(vp) < epsilon(1.0) .or. abs(vs) < epsilon(1.0) ) then
-      is_vmin_under = .false.
-      is_vmax_over = .false.
-      is_rhomin_under = .false.
-      return
-    end if
+!!$    if( abs(vp) < epsilon(1.0) .or. abs(vs) < epsilon(1.0) ) then
+!!$      is_vmin_under = .false.
+!!$      is_vmax_over = .false.
+!!$      is_rhomin_under = .false.
+!!$      return
+!!$    end if
     
     
     !! keep vp/vs ratio
     gamma = vp / vs
+    if( gamma < epsilon(1.0) ) gamma = sqrt(3.)
     
     !! velocity check
     if( vp > vmax .or. vs > vmax ) then
