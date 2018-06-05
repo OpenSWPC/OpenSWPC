@@ -96,19 +96,35 @@ contains
 
     do k = k0, k1
 
-      !! air column
+      !! air/ocean column
       if( zc(k) < depth(1) ) then
 
-        vp1 = 0.0
-        vs1 = 0.0
+        if( zc(k) < 0.0 ) then 
 
-        rho(k,i0:i1) = 0.001
-        mu (k,i0:i1) = 0.0
-        lam(k,i0:i1) = 0.0
-        ! give artificially strong attenuation in air-column
-        qp (k,i0:i1) = 10.0
-        qs (k,i0:i1) = 10.0
+          vp1 = 0.0
+          vs1 = 0.0
+          
+          rho(k,i0:i1) = 0.001
+          mu (k,i0:i1) = 0.0
+          lam(k,i0:i1) = 0.0
+          ! give artificially strong attenuation in air-column
+          qp (k,i0:i1) = 10.0
+          qs (k,i0:i1) = 10.0
+          
+        else
 
+          vp1 = 1.5
+          vs1 = 0.0
+          
+          rho(k,i0:i1) = 1.0
+          mu (k,i0:i1) = 0.0
+          lam(k,i0:i1) = 1.0 * vp1 * vp1
+
+          qp (k,i0:i1) = 1000000.0
+          qs (k,i0:i1) = 1000000.0
+          
+        end if
+        
         cycle
       end if
 
