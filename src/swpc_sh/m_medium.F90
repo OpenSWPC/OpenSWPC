@@ -150,7 +150,6 @@ contains
     end if
 
 
-
     !!
     !! homogenize absorber region
     !!
