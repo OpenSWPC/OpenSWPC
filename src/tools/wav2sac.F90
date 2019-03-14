@@ -3,7 +3,7 @@
 !! Convert waveform binary (.wav) to SAC datafiles
 !!
 !! @copyright
-!!   Copyright 2013-2018 Takuto Maeda. All rights reserved.
+!!   Copyright 2013-2019 Takuto Maeda. All rights reserved.
 !!   This project is released under the MIT license.
 !<
 !! ----
