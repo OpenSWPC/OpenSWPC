@@ -733,7 +733,7 @@ contains
     uzst(:,:) = 0.0
     
     if( sw_wav_stress ) then
-      allocate(stress_st(ntw,6,nst))
+      allocate( stress_st(ntw,6,nst) )
       allocate( sh_stress(6,nst) )
       stress_st(:,:,:) = 0.0
     end if
@@ -759,14 +759,6 @@ contains
       sh(4,i)%kcmpnm = "Ux"
       sh(5,i)%kcmpnm = "Uy"
       sh(6,i)%kcmpnm = "Uz"
-      if( sw_wav_stress ) then
-        sh_stress(1,i)%kcmpnm = "Sxx"
-        sh_stress(2,i)%kcmpnm = "Syy"
-        sh_stress(3,i)%kcmpnm = "Szz"
-        sh_stress(4,i)%kcmpnm = "Syz"
-        sh_stress(5,i)%kcmpnm = "Sxz"
-        sh_stress(6,i)%kcmpnm = "Sxy"
-      end if
 
       sh(1,i)%cmpinc = 90.0;  sh(1,i)%cmpaz  =  0.0 + phi
       sh(2,i)%cmpinc = 90.0;  sh(2,i)%cmpaz  = 90.0 + phi
@@ -777,16 +769,26 @@ contains
 
       sh(1:3,i)%idep = 7 ! velocity [nm/s]
       sh(4:6,i)%idep = 6 ! displacement [nm]
-      
-      sh_stress(:,i)%idep = 5 ! unknown
+
+      if( sw_wav_stress ) then
+        sh_stress(1,i)%kcmpnm = "Sxx"
+        sh_stress(2,i)%kcmpnm = "Syy"
+        sh_stress(3,i)%kcmpnm = "Szz"
+        sh_stress(4,i)%kcmpnm = "Syz"
+        sh_stress(5,i)%kcmpnm = "Sxz"
+        sh_stress(6,i)%kcmpnm = "Sxy"
+
+        sh_stress(:,i)%idep = 5 ! unknown        
+      end if
+
     end do
 
   contains
     
     subroutine setup_sac_header( sh, ist )
 
-      type(sac__hdr), intent(inout) :: sh
-      integer :: ist
+      type(sac__hdr), intent(out) :: sh
+      integer,        intent(in)  :: ist
 
       call sac__init(sh)
       sh%evlo    = evlo
