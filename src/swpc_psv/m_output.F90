@@ -71,7 +71,7 @@ module m_output
 
 
   type(snp) :: xz_ps, xz_v, xz_u
-  logical   :: sw_wav, sw_wav_v, sw_wav_u
+  logical   :: sw_wav, sw_wav_v, sw_wav_u, sw_wav_stress
 
   !! switch
   integer   :: ntdec_s, ntdec_w                                !< time step decimation factor: Snap and Waves
@@ -93,7 +93,8 @@ module m_output
   !! waveform
   integer :: ntw ! number of wave samples
   real(SP), allocatable :: vxst(:,:), vzst(:,:), uxst(:,:), uzst(:,:)
-  type(sac__hdr), allocatable :: sh(:,:)
+  real(SP), allocatable :: stress_st(:,:,:)
+  type(sac__hdr), allocatable :: sh(:,:), sh_stress(:,:)
   real(SP), allocatable :: ux(:), uz(:)
 
   !! I/O area in the node
@@ -140,11 +141,12 @@ contains
     call readini( io_prm, 'fn_stloc',  fn_stloc,  ''      )
     call readini( io_prm, 'sw_wav_v',  sw_wav_v,  .false. )
     call readini( io_prm, 'sw_wav_u',  sw_wav_u,  .false. )
+    call readini( io_prm, 'sw_wav_stress',  sw_wav_stress,  .false. )
 
     call readini( io_prm, 'snp_format', snp_format, 'native' )
     call readini( io_prm, 'wav_format', wav_format, 'sac' )
 
-    sw_wav = ( sw_wav_v .or. sw_wav_u )
+    sw_wav = ( sw_wav_v .or. sw_wav_u .or. sw_wav_stress )
 
     !!
     !! snapshot
@@ -253,7 +255,7 @@ contains
   !<
   !! --
   subroutine output__export_wav()
-    integer :: i
+    integer :: i, j
     character(256) :: fn1, fn2, fn3, fn4
     character(6) :: cid
     integer :: io
@@ -281,6 +283,12 @@ contains
           call sac__write( fn4, sh(4,i), uzst(:,i), .true. )
         end if
 
+        if( sw_wav_stress ) then
+          do j=1, 3
+            call export_wav__sac( sh_stress(j,i), stress_st(:,j,i) )
+          end do
+        end if
+        
       end do
 
     else if ( wav_format == 'csf' ) then
@@ -301,6 +309,8 @@ contains
         call csf__write( fn3, nst, sh(3,1)%npts, sh(3,:), uxst(:,:), .true. )
         call csf__write( fn4, nst, sh(4,1)%npts, sh(4,:), uzst(:,:), .true. )
       end if
+
+      if( sw_wav_stress ) call export_wav__csf(nst, 3, sh_stress, stress_st )
 
     else if ( wav_format == 'wav' ) then
 
@@ -325,13 +335,43 @@ contains
         write(io) nst, ntw, title, sh(4,:), uzst(:,:)
       end if
 
+      if( sw_wav_stress ) then
+        write(io) nst, ntw, title, sh_stress, stress_st
+      end if
+      
       close(io)
 
     end if
 
     call pwatch__off("output__export_wav")
 
+  contains
+    
+    subroutine export_wav__sac( sh, dat )
 
+      type(sac__hdr), intent(in) :: sh
+      real(SP), intent(in) :: dat(:)
+      character(256) :: fn
+      !! --
+      
+      fn = trim(odir) // '/wav/' // trim(title) // '.' // trim(sh%kstnm) // '.' // trim(sh%kcmpnm) // '.sac'
+      call sac__write( fn, sh, dat, .true. )
+      
+    end subroutine export_wav__sac
+
+    subroutine export_wav__csf(nst, ncmp, sh, dat)
+      
+      integer, intent(in) :: nst, ncmp
+      type(sac__hdr), intent(in) :: sh(ncmp, nst)
+      real(SP), intent(in) :: dat(ntw, ncmp, nst)
+
+      character(256) :: fn
+
+      fn = trim(odir) // '/wav/' // trim(title) // '.csf'
+      call csf__write(fn, nst*ncmp, ntw, reshape(sh,(/ncmp*nst/)), reshape(dat, (/ntw, ncmp*nst/)))
+
+    end subroutine export_wav__csf
+    
   end subroutine output__export_wav
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -516,65 +556,40 @@ contains
     uxst(:,:) = 0.0
     uzst(:,:) = 0.0
 
+    if( sw_wav_stress ) then
+      allocate( stress_st(ntw,3,nst) )
+      allocate( sh_stress(3,nst) )
+      stress_st(:,:,:) = 0.0
+    end if
+
     !!
     !! set-up sac header
     !!
     allocate( sh(6,nst) )
     do i=1, nst
 
-      !! first initialize header type
       do j=1, 4
-        call sac__init(sh(j,i))
+        call setup_sac_header( sh(j,i), i )
       end do
-
-      !! common header
-      sh(:,i)%evlo    = evlo
-      sh(:,i)%evla    = evla
-      sh(:,i)%evdp    = evdp*1000
-      sh(:,i)%tim     = exedate
-      sh(:,i)%b       = tbeg
-      sh(:,i)%delta   = ntdec_w * dt
-      sh(:,i)%npts    = ntw
-      sh(:,i)%mag     = mw
-      if( bf_mode ) then
-        sh(:,i)%user0   = fx0
-        sh(:,i)%user1   = fy0
-        sh(:,i)%user2   = fz0
-      else
-        sh(:,i)%user0   = mxx0
-        sh(:,i)%user1   = myy0
-        sh(:,i)%user2   = mzz0
-        sh(:,i)%user3   = myz0
-        sh(:,i)%user4   = mxz0
-        sh(:,i)%user5   = mxy0
+      if( sw_wav_stress ) then
+        do j=1, 3
+          call setup_sac_header( sh_stress(j,i), i )
+        end do
       end if
-
-      sh(:,i)%user6   = clon !< coordinate
-      sh(:,i)%user7   = clat !< coordinate
-      sh(:,i)%user8   = phi
-      sh(:,i)%o       = otim
-
-      !! exedate -> time
-      do j=1, 4
-        call daytim__localtime( sh(j,i)%tim, &
-            sh(j,i)%nzyear, sh(j,i)%nzmonth, sh(j,i)%nzday, sh(j,i)%nzhour, sh(j,i)%nzmin, sh(j,i)%nzsec )
-        call daytim__ymd2jul  ( sh(j,i)%nzyear, sh(j,i)%nzmonth, sh(j,i)%nzday, sh(j,i)%nzjday )
-      end do
-
-      !! station dependent
-      sh(:,i)%kevnm = trim(adjustl( title(1:16) ))
-      sh(:,i)%kstnm = trim(stnm(i))
-      sh(:,i)%stlo  = stlo(i)
-      sh(:,i)%stla  = stla(i)
-      sh(:,i)%stdp  = zst(i)*1000 ! in meter unit
-
 
       !! component dependent
       sh(1,i)%kcmpnm = "Vx"
       sh(2,i)%kcmpnm = "Vz"
       sh(3,i)%kcmpnm = "Ux"
       sh(4,i)%kcmpnm = "Uz"
-
+      if( sw_wav_stress ) then
+        sh_stress(1,i)%kcmpnm = "Sxx"
+        sh_stress(2,i)%kcmpnm = "Szz"
+        sh_stress(3,i)%kcmpnm = "Sxz"
+        
+        sh_stress(:,i)%idep = 5 ! unknown
+      end if
+      
       sh(1,i)%cmpinc = 90.0;  sh(1,i)%cmpaz  =  0.0 + phi
       sh(2,i)%cmpinc =  0.0;  sh(2,i)%cmpaz  =  0.0
       sh(3,i)%cmpinc = 90.0;  sh(3,i)%cmpaz  =  0.0 + phi
@@ -585,7 +600,62 @@ contains
 
     end do
 
+  contains
+    
+    subroutine setup_sac_header( sh, ist )
 
+      type(sac__hdr), intent(out) :: sh
+      integer,        intent(in)  :: ist
+      !! --
+
+      call sac__init(sh)
+
+      !! common header
+      sh%evlo    = evlo
+      sh%evla    = evla
+      sh%evdp    = evdp*1000
+      sh%tim     = exedate
+      sh%b       = tbeg
+      sh%delta   = ntdec_w * dt
+      sh%npts    = ntw
+      sh%mag     = mw
+      
+      if( bf_mode ) then
+        sh%user0   = fx0
+        sh%user1   = fy0
+        sh%user2   = fz0
+      else
+        sh%user0   = mxx0
+        sh%user1   = myy0
+        sh%user2   = mzz0
+        sh%user3   = myz0
+        sh%user4   = mxz0
+        sh%user5   = mxy0
+      end if
+
+      sh%user6   = clon !< coordinate
+      sh%user7   = clat !< coordinate
+      sh%user8   = phi
+      sh%o       = otim
+      
+      sh%user6   = clon  !< coordinate
+      sh%user7   = clat  !< coordinate
+      sh%user8   = phi
+      sh%o       = otim
+
+      call daytim__localtime( sh%tim, sh%nzyear, sh%nzmonth, sh%nzday, sh%nzhour, sh%nzmin, sh%nzsec )
+      call daytim__ymd2jul  ( sh%nzyear, sh%nzmonth, sh%nzday, sh%nzjday )
+      sh%nzmsec = 0
+
+      !! station dependent
+      sh%kevnm = trim(adjustl( title(1:16) ))
+      sh%kstnm = trim(stnm(ist))
+      sh%stlo  = stlo(ist)
+      sh%stla  = stla(ist)
+      sh%stdp  = zst(ist)*1000 ! in meter unit
+      
+    end subroutine setup_sac_header
+    
   end subroutine read_stinfo
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -1140,6 +1210,18 @@ contains
         end do
         !$omp end parallel do
       end if
+
+      if( sw_wav_stress ) then
+        !! [TODO] confirm unit conversion coefficient
+        !$omp parallel do private(i)
+        do i=1, nst
+          stess_st(itw,1,i) = Sxx(kst(i),ist(i)) * M0 * 1e-9
+          stess_st(itw,2,i) = Szz(kst(i),ist(i)) * M0 * 1e-9
+          stess_st(itw,3,i) = (Sxz(kst(i),  ist(i)) + Sxz(kst(i),  ist(i)-1)  &
+                             + Sxz(kst(i)-1,ist(i)) + Sxz(kst(i)-1,ist(i)-1)  ) * 0.25 * M0 * 1e-9
+        end do
+      end if
+      
     end if
 
     call pwatch__off( "output__store_wav" )
