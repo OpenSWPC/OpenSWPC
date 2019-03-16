@@ -2421,15 +2421,15 @@ contains
         !! Use 1e-9 instead of UC for the case of stress tensor. Output is in SI unit
         !$omp parallel do private(i)
         do i=1, nst
-          stress_st(itw,1,i) = Sxx(kst(i), ist(i), jst(i)) * M0 * 1e-9
-          stress_st(itw,2,i) = Syy(kst(i), ist(i), jst(i)) * M0 * 1e-9
-          stress_st(itw,3,i) = Szz(kst(i), ist(i), jst(i)) * M0 * 1e-9
+          stress_st(itw,1,i) = Sxx(kst(i), ist(i), jst(i)) * M0 * UC * 1e6
+          stress_st(itw,2,i) = Syy(kst(i), ist(i), jst(i)) * M0 * UC * 1e6
+          stress_st(itw,3,i) = Szz(kst(i), ist(i), jst(i)) * M0 * 1e6
           stress_st(itw,4,i) = ( Syz(kst(i),   ist(i), jst(i)) + Syz(kst(i),   ist(i), jst(i)-1)  &
-                               + Syz(kst(i)-1, ist(i), jst(i)) + Syz(kst(i)-1, ist(i), jst(i)-1) ) * 0.25 * M0 * 1e-9
+                               + Syz(kst(i)-1, ist(i), jst(i)) + Syz(kst(i)-1, ist(i), jst(i)-1) ) * 0.25 * M0 * UC * 1e6
           stress_st(itw,5,i) = ( Sxz(kst(i),   ist(i), jst(i)) + Sxz(kst(i),   ist(i)-1, jst(i))  &
-                               + Sxz(kst(i)-1, ist(i), jst(i)) + Sxz(kst(i)-1, ist(i)-1, jst(i)) ) * 0.25 * M0 * 1e-9
+                               + Sxz(kst(i)-1, ist(i), jst(i)) + Sxz(kst(i)-1, ist(i)-1, jst(i)) ) * 0.25 * M0 * UC * 1e6
           stress_st(itw,6,i) = ( Sxy(kst(i), ist(i),   jst(i)) + Sxy(kst(i), ist(i),   jst(i)-1)  &
-                               + Sxy(kst(i), ist(i)-1, jst(i)) + Sxy(kst(i), ist(i)-1, jst(i)-1) ) * 0.25 * M0 * 1e-9
+                               + Sxy(kst(i), ist(i)-1, jst(i)) + Sxy(kst(i), ist(i)-1, jst(i)-1) ) * 0.25 * M0 * UC * 1e6
         end do
         !$omp end parallel do
       end if

@@ -1215,10 +1215,10 @@ contains
         !! [TODO] confirm unit conversion coefficient
         !$omp parallel do private(i)
         do i=1, nst
-          stess_st(itw,1,i) = Sxx(kst(i),ist(i)) * M0 * 1e-9
-          stess_st(itw,2,i) = Szz(kst(i),ist(i)) * M0 * 1e-9
+          stess_st(itw,1,i) = Sxx(kst(i),ist(i)) * M0 * UC * 1e6
+          stess_st(itw,2,i) = Szz(kst(i),ist(i)) * M0 * UC * 1e6
           stess_st(itw,3,i) = (Sxz(kst(i),  ist(i)) + Sxz(kst(i),  ist(i)-1)  &
-                             + Sxz(kst(i)-1,ist(i)) + Sxz(kst(i)-1,ist(i)-1)  ) * 0.25 * M0 * 1e-9
+                             + Sxz(kst(i)-1,ist(i)) + Sxz(kst(i)-1,ist(i)-1)  ) * 0.25 * M0 * UC * 1e6
         end do
       end if
       

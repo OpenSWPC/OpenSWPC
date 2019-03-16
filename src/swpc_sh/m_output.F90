@@ -1088,8 +1088,8 @@ contains
 
       if( sw_wav_stress ) then
         do i=1, nst
-          stress_st(itw,1,i) = (Syz(kst(i),ist(i)) + Syz(kst(i)-1,ist(i))) * 0.5 * M0 * 1e-9
-          stress_st(itw,2,i) = (Sxy(kst(i),ist(i)) + Sxy(kst(i),ist(i)-1)) * 0.5 * M0 * 1e-9
+          stress_st(itw,1,i) = (Syz(kst(i),ist(i)) + Syz(kst(i)-1,ist(i))) * 0.5 * M0 * UC * 1e6
+          stress_st(itw,2,i) = (Sxy(kst(i),ist(i)) + Sxy(kst(i),ist(i)-1)) * 0.5 * M0 * UC * 1e6
         end do
       end if
     end if
