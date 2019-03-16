@@ -1236,7 +1236,9 @@ contains
 
     write( io ) xz_ps, xz_v, xz_u
     write( io ) sw_wav, sw_wav_u, sw_wav_v
-
+    write( io ) sw_wav_stress
+    write( io ) wav_format
+    
     write( io ) ntdec_s
     write( io ) idec, kdec
 
@@ -1276,6 +1278,11 @@ contains
 
     end if
 
+    if( sw_wav_stress .and. nst>0 ) then
+      write( io ) sh_stress
+      write( io ) stress_st
+    end if
+
 
   end subroutine output__checkpoint
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -1287,7 +1294,9 @@ contains
 
     read( io ) xz_ps, xz_v, xz_u
     read( io ) sw_wav, sw_wav_u, sw_wav_v
-
+    read( io ) sw_stress
+    read( io ) wav_format
+    
     read( io ) ntdec_s
     read( io ) idec, kdec
 
@@ -1339,7 +1348,14 @@ contains
       end if
 
     end if
-
+    if( sw_wav_stress .and. nst > 0 ) then
+      allocate( stress_st(ntw,3,nst) )
+      allocate( sh_stress(3,nst) )      
+      read( io ) sh_stress
+      read( io ) stress_st
+    end if
+    
+    
     if( snp_format == 'native' ) then
 
 #ifdef _ES
