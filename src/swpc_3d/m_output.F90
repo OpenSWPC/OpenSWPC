@@ -73,7 +73,7 @@ module m_output
   end type snp
 
   type(snp) :: xy_ps, yz_ps, xz_ps, fs_ps, ob_ps, xy_v, yz_v, xz_v, fs_v, ob_v, xy_u, yz_u, xz_u, fs_u, ob_u
-  logical   :: sw_wav, sw_wav_v, sw_wav_u, sw_wav_stress
+  logical   :: sw_wav, sw_wav_v, sw_wav_u, sw_wav_stress, sw_wav_strain
 
   !! switch
   integer   :: ntdec_s, ntdec_w                                !< time step decimation factor: Snap and Waves
@@ -98,11 +98,12 @@ module m_output
   !! waveform
   integer :: ntw ! number of wave samples
   real(SP), allocatable :: vxst(:,:), vyst(:,:), vzst(:,:), uxst(:,:), uyst(:,:), uzst(:,:)
-  real(SP), allocatable :: stress_st(:,:,:) ! (6,nt,nst)
+  real(SP), allocatable :: stress_st(:,:,:), strain_st(:,:,:) ! (6,nt,nst)
   type(sac__hdr), allocatable :: sh(:,:)
-  type(sac__hdr), allocatable :: sh_stress(:,:)
+  type(sac__hdr), allocatable :: sh_stress(:,:), sh_strain(:,:)
   real(SP), allocatable :: ux(:), uy(:), uz(:)
-
+  real(SP), allocatable :: exx(:), eyy(:), ezz(:), eyz(:), exz(:), exy(:)
+  
   !! I/O area in the node
   integer :: is0, is1, js0, js1, ks0, ks1
 
@@ -115,6 +116,8 @@ module m_output
   !! displacement snapshot buffer
   real(SP), allocatable :: buf_yz_u(:,:,:), buf_xz_u(:,:,:), buf_xy_u(:,:,:), buf_fs_u(:,:,:), buf_ob_u(:,:,:)
   real(SP), allocatable :: max_ob_v(:,:,:), max_ob_u(:,:,:), max_fs_v(:,:,:), max_fs_u(:,:,:)
+
+  real(MP) :: r40x, r40y, r40z, r41x, r41y, r41z
 contains
 
 
@@ -167,17 +170,19 @@ contains
     call readini( io_prm, 'sw_wav_v',   sw_wav_v,   .false. )
     call readini( io_prm, 'sw_wav_u',   sw_wav_u,   .false. )
     call readini( io_prm, 'sw_wav_stress', sw_wav_stress,   .false. )
+    call readini( io_prm, 'sw_wav_stress', sw_wav_strain,   .false. )    
     call readini( io_prm, 'snp_format', snp_format, 'native' )
     call readini( io_prm, 'wav_format', wav_format, 'sac' ) 
 
     !! Do not output waveform for Green's function mode
     call readini( io_prm, 'green_mode', green_mode, .false. )
 
-    sw_wav = ( sw_wav_v .or. sw_wav_u .or. sw_wav_stress )
+    sw_wav = ( sw_wav_v .or. sw_wav_u .or. sw_wav_stress .or. sw_wav_strain )
     if( green_mode ) then
       sw_wav_v = .false.
       sw_wav_u = .false.
-      sw_wav_stress = .false. 
+      sw_wav_stress = .false.
+      sw_wav_strain = .false. 
       sw_wav   = .true.
     end if
 
@@ -391,7 +396,18 @@ contains
 
     end if
 
-
+    !! FDM coefficients
+    r40x = 9.0_MP /  8.0_MP / dx
+    r40y = 9.0_MP /  8.0_MP / dy
+    r40z = 9.0_MP /  8.0_MP / dz
+    r41x = 1.0_MP / 24.0_MP / dx
+    r41y = 1.0_MP / 24.0_MP / dy
+    r41z = 1.0_MP / 24.0_MP / dz
+    r20x = 1.  / dx
+    r20y = 1.  / dy
+    r20z = 1.  / dz
+    
+    
     call mpi_barrier( mpi_comm_world, ierr )
 
     call pwatch__off( "output__setup" )
@@ -448,6 +464,12 @@ contains
           end do
         end if
 
+        if( sw_wav_stress ) then
+          do j=1, 6
+            call export_wav__sac(sh_strain(j,i), strain_st(:,j,i))
+          end do
+        end if
+        
       end do
 
     else if ( wav_format == 'csf' ) then
@@ -474,6 +496,8 @@ contains
       end if
 
       if( sw_wav_stress ) call export_wav__csf(nst, 6, sh_stress, stress_st)
+
+      if( sw_wav_strain ) call export_wav__csf(nst, 6, sh_strain, strain_st)
 
     else if ( wav_format == 'wav' ) then
 
@@ -506,6 +530,10 @@ contains
         write(io) nst, ntw, title, sh_stress(:,:), stress_st(:,:,:)
       end if
 
+      if( sw_wav_strain ) then
+        write(io) nst, ntw, title, sh_strain(:,:), strain_st(:,:,:)
+      end if
+      
       close(io)
     end if
 
@@ -738,6 +766,12 @@ contains
       stress_st(:,:,:) = 0.0
     end if
 
+    if( sw_wav_strain ) then
+      allocate( strain_st(ntw,6,nst) )
+      allocate( sh_strain(6,nst) )
+      strain_st(:,:,:) = 0.0
+    end if
+    
     !!
     !! set-up sac header
     !!
@@ -751,7 +785,12 @@ contains
           call setup_sac_header( sh_stress(j,i), i)
         end do
       end if
-      
+      if( sw_wav_strain ) then
+        do j=1, 6
+          call setup_sac_header( sh_strain(j,i), i)
+        end do
+      end if
+
       !! component dependent
       sh(1,i)%kcmpnm = "Vx"
       sh(2,i)%kcmpnm = "Vy"
@@ -781,6 +820,17 @@ contains
         sh_stress(:,i)%idep = 5 ! unknown        
       end if
 
+      if( sw_wav_strain ) then
+        sh_stress(1,i)%kcmpnm = "Exx"
+        sh_stress(2,i)%kcmpnm = "Eyy"
+        sh_stress(3,i)%kcmpnm = "Ezz"
+        sh_stress(4,i)%kcmpnm = "Eyz"
+        sh_stress(5,i)%kcmpnm = "Exz"
+        sh_stress(6,i)%kcmpnm = "Exy"
+
+        sh_stress(:,i)%idep = 5 ! unknown        
+      end if
+      
     end do
 
   contains
@@ -2370,8 +2420,10 @@ contains
   subroutine output__store_wav(it)
     integer, intent(in) :: it
     integer :: i, itw
+    real(MP) :: dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz
+    integer :: ii, jj, kk
 
-    if( .not. ( sw_wav_v .or. sw_wav_u ) ) return
+    if( sw_wav ) return
 
     call pwatch__on( "output__store_wav" )
 
@@ -2380,6 +2432,16 @@ contains
       ux(:) = 0.0
       uy(:) = 0.0
       uz(:) = 0.0
+
+      if( sw_wav_strain ) then
+        allocate( exx(nst), eyy(nst), ezz(nst), eyz(nst), exz(nst), exy(nst) )
+        exx(:) = 0.0
+        eyy(:) = 0.0
+        ezz(:) = 0.0
+        eyz(:) = 0.0
+        exy(:) = 0.0
+      end if
+      
     end if
 
     !! integrate waveform
@@ -2393,7 +2455,60 @@ contains
       !$omp end parallel do
     end if
 
+    if( sw_wav_strain ) then
+      !$omp parallel do private(i, ii, jj, kk, dxVx, dyVy, dzVz, dyVz, dzVy, dxVz, dzVx, dxVy, dyVx)
+      do i=1, nst
+        ii = ist(i)
+        jj = jst(i)
+        kk = kst(i)
 
+        dxVx = (Vx(kk  ,ii  ,jj  ) - Vx(kk  ,ii-1,jj  )) * r40x  -  (Vx(kk  ,ii+1,jj  ) - Vx(kk  ,ii-2,jj  )) * r41x
+        dyVy = (Vy(kk  ,ii  ,jj  ) - Vy(kk  ,ii  ,jj-1)) * r40y  -  (Vy(kk  ,ii  ,jj+1) - Vy(kk  ,ii  ,jj-2)) * r41y
+        dzVz = (Vz(kk  ,ii  ,jj  ) - Vz(kk-1,ii  ,jj  )) * r40z  -  (Vz(kk+1,ii  ,jj  ) - Vz(kk-2,ii  ,jj  )) * r41z
+
+        dxVy = ( (Vy(kk  ,ii+1,jj  ) - Vy(kk  ,ii  ,jj  )) * r40x  -  (Vy(kk  ,ii+2,jj  ) - Vy(kk  ,ii-1,jj  )) * r41x &
+               + (Vy(kk  ,ii+1,jj-1) - Vy(kk  ,ii  ,jj-1)) * r40x  -  (Vy(kk  ,ii+2,jj-1) - Vy(kk  ,ii-1,jj-1)) * r41x &
+               + (Vy(kk  ,ii  ,jj  ) - Vy(kk  ,ii-1,jj  )) * r40x  -  (Vy(kk  ,ii+1,jj  ) - Vy(kk  ,ii-2,jj  )) * r41x &
+               + (Vy(kk  ,ii  ,jj-1) - Vy(kk  ,ii-1,jj-1)) * r40x  -  (Vy(kk  ,ii+1,jj-1) - Vy(kk  ,ii-2,jj-1)) * r41x ) * 0.25
+
+        dxVz = ( (Vz(kk  ,ii+1,jj  ) - Vz(kk  ,ii  ,jj  )) * r40x  -  (Vz(kk  ,ii+2,jj  ) - Vz(kk  ,ii-1,jj  )) * r41x &
+               + (Vz(kk-1,ii+1,jj  ) - Vz(kk-1,ii  ,jj  )) * r40x  -  (Vz(kk-1,ii+2,jj  ) - Vz(kk-1,ii-1,jj  )) * r41x &
+               + (Vz(kk  ,ii  ,jj  ) - Vz(kk  ,ii-1,jj  )) * r40x  -  (Vz(kk  ,ii+1,jj  ) - Vz(kk  ,ii-2,jj  )) * r41x &
+               + (Vz(kk-1,ii  ,jj  ) - Vz(kk-1,ii-1,jj  )) * r40x  -  (Vz(kk-1,ii+1,jj  ) - Vz(kk-1,ii-2,jj  )) * r41x ) * 0.25
+
+        dyVx = ( (Vx(kk  ,ii  ,jj+1) - Vx(kk  ,ii  ,jj  )) * r40y  -  (Vx(kk  ,ii  ,jj+2) - Vx(kk  ,ii  ,jj-1)) * r41y &
+               + (Vx(kk  ,ii-1,jj+1) - Vx(kk  ,ii-1,jj  )) * r40y  -  (Vx(kk  ,ii-1,jj+2) - Vx(kk  ,ii-1,jj-1)) * r41y &
+               + (Vx(kk  ,ii  ,jj  ) - Vx(kk  ,ii  ,jj-1)) * r40y  -  (Vx(kk  ,ii  ,jj+1) - Vx(kk  ,ii  ,jj-2)) * r41y &
+               + (Vx(kk  ,ii-1,jj  ) - Vx(kk  ,ii-1,jj-1)) * r40y  -  (Vx(kk  ,ii-1,jj+1) - Vx(kk  ,ii-1,jj-2)) * r41y ) * 0.25
+
+        dyVz = ( (Vz(kk  ,ii  ,jj+1) - Vz(kk  ,ii  ,jj  )) * r40y  -  (Vz(kk  ,ii  ,jj+2) - Vz(kk  ,ii  ,jj-1)) * r41y &
+               + (Vz(kk-1,ii  ,jj+1) - Vz(kk-1,ii  ,jj  )) * r40y  -  (Vz(kk-1,ii  ,jj+2) - Vz(kk-1,ii  ,jj-1)) * r41y &
+               + (Vz(kk  ,ii  ,jj  ) - Vz(kk  ,ii  ,jj-1)) * r40y  -  (Vz(kk  ,ii  ,jj+1) - Vz(kk  ,ii  ,jj-2)) * r41y &
+               + (Vz(kk-1,ii  ,jj  ) - Vz(kk-1,ii  ,jj-1)) * r40y  -  (Vz(kk-1,ii  ,jj+1) - Vz(kk-1,ii  ,jj-2)) * r41y ) * 0.25
+
+        dzVx = ( (Vx(kk+1,ii  ,jj  ) - Vx(kk  ,ii  ,jj  )) * r40z  -  (Vx(kk+2,ii  ,jj  ) - Vx(kk-1,ii  ,jj  )) * r41z &
+               + (Vx(kk+1,ii-1,jj  ) - Vx(kk  ,ii-1,jj  )) * r40z  -  (Vx(kk+2,ii-1,jj  ) - Vx(kk-1,ii-1,jj  )) * r41z &
+               + (Vx(kk  ,ii  ,jj  ) - Vx(kk-1,ii  ,jj  )) * r40z  -  (Vx(kk+1,ii  ,jj  ) - Vx(kk-2,ii  ,jj  )) * r41z &
+               + (Vx(kk  ,ii-1,jj  ) - Vx(kk-1,ii-1,jj  )) * r40z  -  (Vx(kk+1,ii-1,jj  ) - Vx(kk-2,ii-1,jj  )) * r41z ) * 0.25
+
+        dzVy = ( (Vy(kk+1,ii  ,jj  ) - Vy(kk  ,ii  ,jj  )) * r40z  -  (Vy(kk+2,ii  ,jj  ) - Vy(kk-1,ii  ,jj  )) * r41z &
+               + (Vy(kk+1,ii  ,jj-1) - Vy(kk  ,ii  ,jj-1)) * r40z  -  (Vy(kk+2,ii  ,jj-1) - Vy(kk-1,ii  ,jj-1)) * r41z &
+               + (Vy(kk  ,ii  ,jj  ) - Vy(kk-1,ii  ,jj  )) * r40z  -  (Vy(kk+1,ii  ,jj  ) - Vy(kk-2,ii  ,jj  )) * r41z &
+               + (Vy(kk  ,ii  ,jj-1) - Vy(kk-1,ii  ,jj-1)) * r40z  -  (Vy(kk+1,ii  ,jj-1) - Vy(kk-2,ii  ,jj-1)) * r41z ) * 0.25
+
+        exx(i) = exx(i) + dxVx * dt
+        eyy(i) = eyy(i) + dyVy * dt
+        ezz(i) = ezz(i) + dzVz * dt
+        eyz(i) = eyz(i) + (dyVz + dzVy) * 0.5 * dt
+        exz(i) = exz(i) + (dxVz + dzVx) * 0.5 * dt
+        exy(i) = exy(i) + (dxVy + dyVx) * 0.5 * dt
+
+      end do
+      !$omp end parallel do
+      
+    end if
+    
+      
     !! output
     if( mod( it-1, ntdec_w ) == 0 ) then
       itw = (it-1)/ntdec_w + 1
@@ -2418,7 +2533,6 @@ contains
       end if
 
       if( sw_wav_stress ) then
-        !! Use 1e-9 instead of UC for the case of stress tensor. Output is in SI unit
         !$omp parallel do private(i)
         do i=1, nst
           stress_st(itw,1,i) = Sxx(kst(i), ist(i), jst(i)) * M0 * UC * 1e6
@@ -2433,6 +2547,20 @@ contains
         end do
         !$omp end parallel do
       end if
+
+      if( sw_wav_strain ) then
+        !$omp parallel do private(i)
+        do i=1, nst
+          strain_st(itw,1,i) = exx(i) * M0 * UC * 1e-3
+          strain_st(itw,2,i) = eyy(i) * M0 * UC * 1e-3
+          strain_st(itw,3,i) = ezz(i) * M0 * UC * 1e-3
+          strain_st(itw,4,i) = eyz(i) * M0 * UC * 1e-3
+          strain_st(itw,5,i) = exz(i) * M0 * UC * 1e-3
+          strain_st(itw,6,i) = exy(i) * M0 * UC * 1e-3
+        end do
+        !$omp end parallel do
+      end if
+
       
     end if
 
