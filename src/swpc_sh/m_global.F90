@@ -37,7 +37,7 @@ module m_global
   !!
   integer,  parameter :: Nl = 4                                     !< FDM order ( 4th )
   integer,  parameter :: Nsl = Nl/2                                 !< thickness of "sleeve area"
-  real(SP)            :: UC = 10.0**(-10)                           !< Conventional -> SI unit for moment tensor of [Nm]
+  real(SP)            :: UC = 10.0**(-12)                           !< Conventional -> SI unit for moment tensor 
   integer,  parameter :: MP = DP                                    !< DP for mixed precision, SP for pure single precision
   integer,  parameter :: NM = 3                                     !< Number of memory variables
   integer,  parameter :: NBD = 9                                    !< Number of boundary depths to be memorized
