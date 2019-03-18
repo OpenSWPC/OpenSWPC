@@ -32,7 +32,6 @@
 
 !! assert
 
-#if defined(_ASSERT) || defined(ASSERT)
 #if defined(__INTEL_COMPILER)
 #define assert(a)  assert__macro( a, #a, __FILE__, __LINE__ )
 #define ASSERT(a)  assert__macro( a, #a, __FILE__, __LINE__ )
@@ -40,7 +39,3 @@
 #define assert(a)  assert__macro( a, __FILE__, __LINE__ )
 #define ASSERT(a)  assert__macro( a, __FILE__, __LINE__ )
 #endif             
-#else              
-#define assert(a)  debug__void()
-#define ASSERT(a)  debug__void()
-#endif
