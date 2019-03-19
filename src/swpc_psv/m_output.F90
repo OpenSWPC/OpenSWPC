@@ -1277,7 +1277,7 @@ contains
           wav_stress(itw,1,i) = Sxx(kst(i),ist(i)) * M0 * UC * 1e6  !! [N/m^2]
           wav_stress(itw,2,i) = Szz(kst(i),ist(i)) * M0 * UC * 1e6
           wav_stress(itw,3,i) = (Sxz(kst(i),  ist(i)) + Sxz(kst(i),  ist(i)-1)  &
-                             + Sxz(kst(i)-1,ist(i)) + Sxz(kst(i)-1,ist(i)-1)  ) * 0.25 * M0 * UC * 1e6
+                               + Sxz(kst(i)-1,ist(i)) + Sxz(kst(i)-1,ist(i)-1)  ) * 0.25 * M0 * UC * 1e6
         end do
       end if
 

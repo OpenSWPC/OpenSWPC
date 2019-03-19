@@ -459,7 +459,7 @@ contains
           end do
         end if
 
-        if( sw_wav_stress ) then
+        if( sw_wav_strain ) then
           do j=1, 6
             call export_wav__sac(sh_strain(j,i), wav_strain(:,j,i))
           end do
@@ -796,14 +796,14 @@ contains
           call setup_sac_header( sh_strain(j,i), i)
         end do
         
-        sh_stress(1,i)%kcmpnm = "Exx"
-        sh_stress(2,i)%kcmpnm = "Eyy"
-        sh_stress(3,i)%kcmpnm = "Ezz"
-        sh_stress(4,i)%kcmpnm = "Eyz"
-        sh_stress(5,i)%kcmpnm = "Exz"
-        sh_stress(6,i)%kcmpnm = "Exy"
+        sh_strain(1,i)%kcmpnm = "Exx"
+        sh_strain(2,i)%kcmpnm = "Eyy"
+        sh_strain(3,i)%kcmpnm = "Ezz"
+        sh_strain(4,i)%kcmpnm = "Eyz"
+        sh_strain(5,i)%kcmpnm = "Exz"
+        sh_strain(6,i)%kcmpnm = "Exy"
 
-        sh_stress(:,i)%idep = 5 ! unknown        
+        sh_strain(:,i)%idep = 5 ! unknown        
       end if
 
     end do
@@ -2398,7 +2398,7 @@ contains
     real(MP) :: dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz
     integer :: ii, jj, kk
 
-    if( sw_wav ) return
+    if( .not. sw_wav ) return
 
     call pwatch__on( "output__store_wav" )
 
@@ -2513,7 +2513,7 @@ contains
         do i=1, nst
           wav_stress(itw,1,i) = Sxx(kst(i), ist(i), jst(i)) * M0 * UC * 1e6
           wav_stress(itw,2,i) = Syy(kst(i), ist(i), jst(i)) * M0 * UC * 1e6
-          wav_stress(itw,3,i) = Szz(kst(i), ist(i), jst(i)) * M0 * 1e6
+          wav_stress(itw,3,i) = Szz(kst(i), ist(i), jst(i)) * M0 * UC * 1e6
           wav_stress(itw,4,i) = ( Syz(kst(i),   ist(i), jst(i)) + Syz(kst(i),   ist(i), jst(i)-1)  &
                                 + Syz(kst(i)-1, ist(i), jst(i)) + Syz(kst(i)-1, ist(i), jst(i)-1) ) * 0.25 * M0 * UC * 1e6
           wav_stress(itw,5,i) = ( Sxz(kst(i),   ist(i), jst(i)) + Sxz(kst(i),   ist(i)-1, jst(i))  &
