@@ -71,7 +71,7 @@ module m_output
 
 
   type(snp) :: xz_ps, xz_v, xz_u
-  logical   :: sw_wav, sw_wav_v, sw_wav_u, sw_wav_stress
+  logical   :: sw_wav, sw_wav_v, sw_wav_u, sw_wav_stress, sw_wav_strain
 
   !! switch
   integer   :: ntdec_s, ntdec_w                                !< time step decimation factor: Snap and Waves
@@ -93,20 +93,23 @@ module m_output
   !! waveform
   integer :: ntw ! number of wave samples
   real(SP), allocatable :: vxst(:,:), vzst(:,:), uxst(:,:), uzst(:,:)
-  real(SP), allocatable :: stress_st(:,:,:)
-  type(sac__hdr), allocatable :: sh(:,:), sh_stress(:,:)
+  real(SP), allocatable :: stress_st(:,:,:), wav_strain(:,:,:)
+  type(sac__hdr), allocatable :: sh(:,:), sh_stress(:,:), sh_strain(:,:)
   real(SP), allocatable :: ux(:), uz(:)
+  real(SP), allocatable :: exx(:), ezz(:), exz(:)
 
   !! I/O area in the node
   integer :: is0, is1, ks0, ks1
 
   !! derivative coefficient
-  real(SP) :: r20x, r20z
+  real(MP) :: r20x, r20z
 
   character(6) :: snp_format ! native or netcdf
 
   !! displacement snapshot buffer
   real(SP), allocatable :: buf_u(:,:,:)
+
+  real(MP) :: r40x, r40z, r41x, r41z  
 
 contains
 
@@ -142,11 +145,12 @@ contains
     call readini( io_prm, 'sw_wav_v',  sw_wav_v,  .false. )
     call readini( io_prm, 'sw_wav_u',  sw_wav_u,  .false. )
     call readini( io_prm, 'sw_wav_stress',  sw_wav_stress,  .false. )
+    call readini( io_prm, 'sw_wav_strain',  sw_wav_strain,  .false. )
 
     call readini( io_prm, 'snp_format', snp_format, 'native' )
     call readini( io_prm, 'wav_format', wav_format, 'sac' )
 
-    sw_wav = ( sw_wav_v .or. sw_wav_u .or. sw_wav_stress )
+    sw_wav = ( sw_wav_v .or. sw_wav_u .or. sw_wav_stress .or. sw_wav_strain )
 
     !!
     !! snapshot
@@ -228,8 +232,13 @@ contains
     buf_u(:,:,:) = 0.0
 
     !! for taking derivatives
-    r20x = 1 / dx
-    r20z = 1 / dz
+    !! FDM coefficients
+    r40x = 9.0_MP /  8.0_MP / dx
+    r40z = 9.0_MP /  8.0_MP / dz
+    r41x = 1.0_MP / 24.0_MP / dx
+    r41z = 1.0_MP / 24.0_MP / dz
+    r20x = 1.  / dx
+    r20z = 1.  / dz
 
 !!!!
 !!!! waveform
@@ -288,6 +297,12 @@ contains
             call export_wav__sac( sh_stress(j,i), stress_st(:,j,i) )
           end do
         end if
+
+        if( sw_wav_strain ) then
+          do j=1, 3
+            call export_wav__sac( sh_strain(j,i), wav_strain(:,j,i) )
+          end do
+        end if
         
       end do
 
@@ -311,6 +326,7 @@ contains
       end if
 
       if( sw_wav_stress ) call export_wav__csf(nst, 3, sh_stress, stress_st )
+      if( sw_wav_strain ) call export_wav__csf(nst, 3, sh_strain, wav_strain )
 
     else if ( wav_format == 'wav' ) then
 
@@ -337,6 +353,10 @@ contains
 
       if( sw_wav_stress ) then
         write(io) nst, ntw, title, sh_stress, stress_st
+      end if
+
+      if( sw_wav_strain ) then
+        write(io) nst, ntw, title, sh_strain, wav_strain
       end if
       
       close(io)
@@ -563,6 +583,12 @@ contains
       stress_st(:,:,:) = 0.0
     end if
 
+    if( sw_wav_strain ) then
+      allocate( wav_strain(ntw,3,nst) )
+      allocate( sh_strain(3,nst) )
+      wav_strain(:,:,:) = 0.0
+    end if
+
     !!
     !! set-up sac header
     !!
@@ -577,6 +603,11 @@ contains
           call setup_sac_header( sh_stress(j,i), i )
         end do
       end if
+      if( sw_wav_strain ) then
+        do j=1, 3
+          call setup_sac_header( sh_strain(j,i), i )
+        end do
+      end if
 
       !! component dependent
       sh(1,i)%kcmpnm = "Vx"
@@ -589,6 +620,13 @@ contains
         sh_stress(3,i)%kcmpnm = "Sxz"
         
         sh_stress(:,i)%idep = 5 ! unknown
+      end if
+      if( sw_wav_strain ) then
+        sh_strain(1,i)%kcmpnm = "Exx"
+        sh_strain(2,i)%kcmpnm = "Ezz"
+        sh_strain(3,i)%kcmpnm = "Exz"
+        
+        sh_strain(:,i)%idep = 5 ! unknown
       end if
       
       sh(1,i)%cmpinc = 90.0;  sh(1,i)%cmpaz  =  0.0 + phi
@@ -1168,6 +1206,8 @@ contains
   subroutine output__store_wav(it)
     integer, intent(in) :: it
     integer :: i, itw
+    real(MP) :: dxVx, dxVz, dzVx, dzVz
+    integer :: ii, kk
 
     if( .not. sw_wav ) return
 
@@ -1178,6 +1218,14 @@ contains
       allocate( ux(nst), uz(nst) )
       ux(:) = 0.0
       uz(:) = 0.0
+
+      if( sw_wav_strain ) then
+        allocate( exx(nst), ezz(nst), exz(nst) )
+        exx(:) = 0.0
+        ezz(:) = 0.0
+        exz(:) = 0.0
+      end if
+            
     end if
 
     !! integrate waveform
@@ -1189,6 +1237,35 @@ contains
       end do
       !$omp end parallel do
     end if
+
+   if( sw_wav_strain ) then
+      !$omp parallel do private(i, ii, kk, dxVx, dzVz, dxVz, dzVx )
+      do i=1, nst
+        ii = ist(i)
+        kk = kst(i)
+
+        dxVx = (Vx(kk  ,ii  ) - Vx(kk  ,ii-1)) * r40x  -  (Vx(kk  ,ii+1) - Vx(kk  ,ii-2)) * r41x
+        dzVz = (Vz(kk  ,ii  ) - Vz(kk-1,ii  )) * r40z  -  (Vz(kk+1,ii  ) - Vz(kk-2,ii  )) * r41z
+
+        dxVz = ( (Vz(kk  ,ii+1) - Vz(kk  ,ii  )) * r40x  -  (Vz(kk  ,ii+2) - Vz(kk  ,ii-1)) * r41x &
+               + (Vz(kk-1,ii+1) - Vz(kk-1,ii  )) * r40x  -  (Vz(kk-1,ii+2) - Vz(kk-1,ii-1)) * r41x &
+               + (Vz(kk  ,ii  ) - Vz(kk  ,ii-1)) * r40x  -  (Vz(kk  ,ii+1) - Vz(kk  ,ii-2)) * r41x &
+               + (Vz(kk-1,ii  ) - Vz(kk-1,ii-1)) * r40x  -  (Vz(kk-1,ii+1) - Vz(kk-1,ii-2)) * r41x ) * 0.25
+        dzVx = ( (Vx(kk+1,ii  ) - Vx(kk  ,ii  )) * r40z  -  (Vx(kk+2,ii  ) - Vx(kk-1,ii  )) * r41z &
+               + (Vx(kk+1,ii-1) - Vx(kk  ,ii-1)) * r40z  -  (Vx(kk+2,ii-1) - Vx(kk-1,ii-1)) * r41z &
+               + (Vx(kk  ,ii  ) - Vx(kk-1,ii  )) * r40z  -  (Vx(kk+1,ii  ) - Vx(kk-2,ii  )) * r41z &
+               + (Vx(kk  ,ii-1) - Vx(kk-1,ii-1)) * r40z  -  (Vx(kk+1,ii-1) - Vx(kk-2,ii-1)) * r41z ) * 0.25
+
+        exx(i) = exx(i) + dxVx * dt
+        ezz(i) = ezz(i) + dzVz * dt
+        exz(i) = exz(i) + (dxVz + dzVx) * 0.5 * dt
+
+      end do
+      !$omp end parallel do
+      
+    end if
+    
+          
 
 
     !! output
@@ -1216,11 +1293,21 @@ contains
         !! [TODO] confirm unit conversion coefficient
         !$omp parallel do private(i)
         do i=1, nst
-          stess_st(itw,1,i) = Sxx(kst(i),ist(i)) * M0 * UC * 1e6
-          stess_st(itw,2,i) = Szz(kst(i),ist(i)) * M0 * UC * 1e6
-          stess_st(itw,3,i) = (Sxz(kst(i),  ist(i)) + Sxz(kst(i),  ist(i)-1)  &
+          stress_st(itw,1,i) = Sxx(kst(i),ist(i)) * M0 * UC * 1e6
+          stress_st(itw,2,i) = Szz(kst(i),ist(i)) * M0 * UC * 1e6
+          stress_st(itw,3,i) = (Sxz(kst(i),  ist(i)) + Sxz(kst(i),  ist(i)-1)  &
                              + Sxz(kst(i)-1,ist(i)) + Sxz(kst(i)-1,ist(i)-1)  ) * 0.25 * M0 * UC * 1e6
         end do
+      end if
+
+      if( sw_wav_strain ) then
+        !$omp parallel do private(i)
+        do i=1, nst
+          wav_strain(itw,1,i) = exx(i) * M0 * UC * 1e-3
+          wav_strain(itw,2,i) = ezz(i) * M0 * UC * 1e-3
+          wav_strain(itw,3,i) = exz(i) * M0 * UC * 1e-3
+        end do
+        !$omp end parallel do
       end if
       
     end if
@@ -1237,7 +1324,7 @@ contains
 
     write( io ) xz_ps, xz_v, xz_u
     write( io ) sw_wav, sw_wav_u, sw_wav_v
-    write( io ) sw_wav_stress
+    write( io ) sw_wav_stress, sw_wav_strain
     write( io ) wav_format
     
     write( io ) ntdec_s
@@ -1295,7 +1382,7 @@ contains
 
     read( io ) xz_ps, xz_v, xz_u
     read( io ) sw_wav, sw_wav_u, sw_wav_v
-    read( io ) sw_stress
+    read( io ) sw_wav_stress
     read( io ) wav_format
     
     read( io ) ntdec_s

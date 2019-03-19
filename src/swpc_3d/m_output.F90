@@ -170,7 +170,7 @@ contains
     call readini( io_prm, 'sw_wav_v',   sw_wav_v,   .false. )
     call readini( io_prm, 'sw_wav_u',   sw_wav_u,   .false. )
     call readini( io_prm, 'sw_wav_stress', sw_wav_stress,   .false. )
-    call readini( io_prm, 'sw_wav_stress', sw_wav_strain,   .false. )    
+    call readini( io_prm, 'sw_wav_strain', sw_wav_strain,   .false. )    
     call readini( io_prm, 'snp_format', snp_format, 'native' )
     call readini( io_prm, 'wav_format', wav_format, 'sac' ) 
 
@@ -2414,6 +2414,7 @@ contains
         eyy(:) = 0.0
         ezz(:) = 0.0
         eyz(:) = 0.0
+        exz(:) = 0.0
         exy(:) = 0.0
       end if
       
