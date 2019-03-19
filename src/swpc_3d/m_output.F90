@@ -519,10 +519,11 @@ contains
       integer, intent(in) :: nst, ncmp
       type(sac__hdr), intent(in) :: sh(ncmp, nst)
       real(SP), intent(in) :: dat(ntw, ncmp, nst)
-
+      character(5) :: cid
       character(256) :: fn
 
-      fn = trim(odir) // '/wav/' // trim(title) // '.csf'
+      write(cid,'(I5.5)') myid
+      fn = trim(odir) // '/wav/' // trim(title) // '__' // cid // '__.csf'
       call csf__write(fn, nst*ncmp, ntw, reshape(sh,(/ncmp*nst/)), reshape(dat, (/ntw, ncmp*nst/)))
 
     end subroutine export_wav__csf
