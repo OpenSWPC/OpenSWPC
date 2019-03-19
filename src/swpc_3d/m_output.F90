@@ -423,9 +423,9 @@ contains
   subroutine output__export_wav()
     
     integer :: i, j
-    character(256) :: fn1, fn2, fn3, fn4, fn5, fn6
     character(6) :: cid
     integer :: io
+    character(256) :: fn
 
     call pwatch__on("output__export_wav")
 
@@ -478,15 +478,15 @@ contains
     else if ( wav_format == 'wav' ) then
 
       write(cid,'(I6.6)') myid
-      fn1 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.wav'
+      fn = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.wav'
 
       if( sw_wav ) then
 #ifdef _ES
         call std__getio(io, is_big=.true.)
-        open(io, file=trim(fn1), form='unformatted', action='write', status='replace')
+        open(io, file=trim(fn), form='unformatted', action='write', status='replace')
 #else
         call std__getio(io, is_big=.true.) 
-        open(io, file=trim(fn1), access='stream', form='unformatted', action='write', status='replace')
+        open(io, file=trim(fn), access='stream', form='unformatted', action='write', status='replace')
 #endif
       end if
 
@@ -2515,11 +2515,11 @@ contains
           wav_stress(itw,2,i) = Syy(kst(i), ist(i), jst(i)) * M0 * UC * 1e6
           wav_stress(itw,3,i) = Szz(kst(i), ist(i), jst(i)) * M0 * 1e6
           wav_stress(itw,4,i) = ( Syz(kst(i),   ist(i), jst(i)) + Syz(kst(i),   ist(i), jst(i)-1)  &
-                               + Syz(kst(i)-1, ist(i), jst(i)) + Syz(kst(i)-1, ist(i), jst(i)-1) ) * 0.25 * M0 * UC * 1e6
+                                + Syz(kst(i)-1, ist(i), jst(i)) + Syz(kst(i)-1, ist(i), jst(i)-1) ) * 0.25 * M0 * UC * 1e6
           wav_stress(itw,5,i) = ( Sxz(kst(i),   ist(i), jst(i)) + Sxz(kst(i),   ist(i)-1, jst(i))  &
-                               + Sxz(kst(i)-1, ist(i), jst(i)) + Sxz(kst(i)-1, ist(i)-1, jst(i)) ) * 0.25 * M0 * UC * 1e6
+                                + Sxz(kst(i)-1, ist(i), jst(i)) + Sxz(kst(i)-1, ist(i)-1, jst(i)) ) * 0.25 * M0 * UC * 1e6
           wav_stress(itw,6,i) = ( Sxy(kst(i), ist(i),   jst(i)) + Sxy(kst(i), ist(i),   jst(i)-1)  &
-                               + Sxy(kst(i), ist(i)-1, jst(i)) + Sxy(kst(i), ist(i)-1, jst(i)-1) ) * 0.25 * M0 * UC * 1e6
+                                + Sxy(kst(i), ist(i)-1, jst(i)) + Sxy(kst(i), ist(i)-1, jst(i)-1) ) * 0.25 * M0 * UC * 1e6
         end do
         !$omp end parallel do
       end if
@@ -2670,7 +2670,7 @@ contains
 
     read( io ) xy_ps, yz_ps, xz_ps, fs_ps, ob_ps, xy_v, yz_v, xz_v, fs_v, ob_v, xy_u, yz_u, xz_u, fs_u, ob_u
     read( io ) sw_wav, sw_wav_u, sw_wav_v
-    read( io ) sw_wav_stress
+    read( io ) sw_wav_stress, sw_wav_strain
     read( io ) wav_format
 
     read( io ) ntdec_s
