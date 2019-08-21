@@ -330,6 +330,8 @@ contains
     integer :: ierr
     real(SP) :: rdum
     real(SP) :: mw
+    real(SP) :: D, S
+    integer :: is0, js0, ks0
     !! ----
 
     call std__getio( io )
@@ -412,6 +414,46 @@ contains
         mo(i) = seismic_moment(mw)
         call sdr2moment( strike-phi, dip, rake, rdum, rdum, rdum, myz(i), rdum, mxy(i) )
         call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
+
+      case( 'xydsdc' )
+        read(adum,*,iostat=ierr) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), D, S, strike, dip, rake
+        call assert( ierr == 0 )
+        call assert( -360. <= strike .and. strike <= 360. )
+        call assert(  -90. <= dip    .and. dip    <= 90.  )
+        call assert( -180. <= rake   .and. rake   <= 180. )
+        call sdr2moment( strike-phi, dip, rake, rdum, rdum, rdum, myz(i), rdum, mxy(i) )
+        is0 = x2i( sx(i), xbeg, real(dx) )
+        ks0 = z2k( sz(i), zbeg, real(dz) )
+
+        if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
+            kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then
+          mo(i) = mu(ks0,js0) * D * S
+        else
+          mo(i) = 0.
+        end if
+
+      case( 'lldsdc' )
+        read(adum,*,iostat=ierr) lon, lat, sz(i), sprm(1,i), sprm(2,i), D, S, strike, dip, rake
+        call assert( ierr == 0 )
+        call assert( -360. <= lon .and. lon <= 360 )
+        call assert(  -90. <= lat .and. lat <=  90 )
+        call assert( -360. <= strike .and. strike <= 360. )
+        call assert(  -90. <= dip    .and. dip    <= 90.  )
+        call assert( -180. <= rake   .and. rake   <= 180. )
+
+        call sdr2moment( strike-phi, dip, rake, rdum, rdum, rdum, myz(i), rdum, mxy(i) )
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
+
+        is0 = x2i( sx(i), xbeg, real(dx) )
+        ks0 = z2k( sz(i), zbeg, real(dz) )
+
+        if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
+            kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then
+          mo(i) = mu(ks0,js0) * D * S
+        else
+          mo(i) = 0.
+        end if    
+
 
       case default
         write(STDERR,*) "ERROR [source__setup]: Invalid source type: "//trim(stf_format)
