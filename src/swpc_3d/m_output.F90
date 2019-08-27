@@ -761,7 +761,13 @@ contains
         sh_vel(3,i)%cmpinc =  0.0;  sh_vel(3,i)%cmpaz  =  0.0
 
         sh_vel(1:3,i)%idep = 7 ! velocity [nm/s]
-        
+
+        if( wav_calc_dist ) then
+          sh_vel(:,i)%lcalda = .false. 
+          sh_vel(:,i)%dist = sqrt( (sx0 - xst(i))**2 + (sy0 - yst(i))**2 )
+          sh_vel(:,i)%az = std__rad2deg(atan2(yst(i)-sy0, xst(i)-sx0))
+          sh_vel(:,i)%baz = std__rad2deg(atan2(sy0-yst(i), sx0-xst(i)))
+        end if        
       end if
       
       if( sw_wav_u ) then
@@ -777,7 +783,14 @@ contains
         sh_disp(3,i)%cmpinc =  0.0;  sh_disp(3,i)%cmpaz  =  0.0
 
         sh_disp(1:3,i)%idep = 6 ! displacement [nm]
-        
+
+        if( wav_calc_dist ) then
+          sh_disp(:,i)%lcalda = .false. 
+          sh_disp(:,i)%dist = sqrt( (sx0 - xst(i))**2 + (sy0 - yst(i))**2 )
+          sh_disp(:,i)%az = std__rad2deg(atan2(yst(i)-sy0, xst(i)-sx0))
+          sh_disp(:,i)%baz = std__rad2deg(atan2(sy0-yst(i), sx0-xst(i)))
+        end if
+                
       end if
       
       if( sw_wav_stress ) then
@@ -794,7 +807,14 @@ contains
 
         sh_stress(:,i)%idep = 5 ! unknown
         
+        if( wav_calc_dist ) then
+          sh_stress(:,i)%lcalda = .false. 
+          sh_stress(:,i)%dist = sqrt( (sx0 - xst(i))**2 + (sy0 - yst(i))**2 )
+          sh_stress(:,i)%az = std__rad2deg(atan2(yst(i)-sy0, xst(i)-sx0))
+          sh_stress(:,i)%baz = std__rad2deg(atan2(sy0-yst(i), sx0-xst(i)))
+        end if
       end if
+
       if( sw_wav_strain ) then
         do j=1, 6
           call setup_sac_header( sh_strain(j,i), i)
@@ -808,14 +828,15 @@ contains
         sh_strain(6,i)%kcmpnm = "Exy"
 
         sh_strain(:,i)%idep = 5 ! unknown        
+        
+        if( wav_calc_dist ) then
+          sh_strain(:,i)%lcalda = .false. 
+          sh_strain(:,i)%dist = sqrt( (sx0 - xst(i))**2 + (sy0 - yst(i))**2 )
+          sh_strain(:,i)%az = std__rad2deg(atan2(yst(i)-sy0, xst(i)-sx0))
+          sh_strain(:,i)%baz = std__rad2deg(atan2(sy0-yst(i), sx0-xst(i)))
+        end if
       end if
 
-      if( wav_calc_dist ) then
-        sh(:,i)%lcalda = .false. 
-        sh(:,i)%dist = sqrt( (sx0 - xst(i))**2 + (sy0 - yst(i))**2 )
-        sh(:,i)%az = std__rad2deg(atan2(yst(i)-sy0, xst(i)-sx0))
-        sh(:,i)%baz = std__rad2deg(atan2(sy0-yst(i), sx0-xst(i)))
-      end if
     end do
 
   contains

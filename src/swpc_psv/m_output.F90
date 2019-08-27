@@ -586,6 +586,13 @@ contains
         sh_vel(:,i)%idep = 7 ! velocity [nm/s]
         sh_vel(1,i)%cmpinc = 90.0;  sh_vel(1,i)%cmpaz  =  0.0 + phi
         sh_vel(2,i)%cmpinc =  0.0;  sh_vel(2,i)%cmpaz  =  0.0
+
+        if( wav_calc_dist ) then
+          sh_vel(:,i)%lcalda = .false. 
+          sh_vel(:,i)%dist = sqrt( (sx0 - xst(i))**2  )
+          sh_vel(:,i)%az = std__rad2deg(atan2(0., xst(i)-sx0))
+          sh_vel(:,i)%baz = std__rad2deg(atan2(0., sx0-xst(i)))
+        end if
       end if
 
       if( sw_wav_u ) then
@@ -597,6 +604,14 @@ contains
         sh_disp(:,i)%idep = 6 ! displacement [nm]
         sh_disp(1,i)%cmpinc = 90.0;  sh_disp(1,i)%cmpaz  =  0.0 + phi
         sh_disp(2,i)%cmpinc =  0.0;  sh_disp(2,i)%cmpaz  =  0.0
+
+        if( wav_calc_dist ) then
+          sh_disp(:,i)%lcalda = .false. 
+          sh_disp(:,i)%dist = sqrt( (sx0 - xst(i))**2  )
+          sh_disp(:,i)%az = std__rad2deg(atan2(0., xst(i)-sx0))
+          sh_disp(:,i)%baz = std__rad2deg(atan2(0., sx0-xst(i)))
+        end if
+
       end if
 
       if( sw_wav_stress ) then
@@ -608,6 +623,14 @@ contains
         sh_stress(3,i)%kcmpnm = "Sxz"
         
         sh_stress(:,i)%idep = 5 ! unknown
+
+         if( wav_calc_dist ) then
+          sh_stress(:,i)%lcalda = .false. 
+          sh_stress(:,i)%dist = sqrt( (sx0 - xst(i))**2  )
+          sh_stress(:,i)%az = std__rad2deg(atan2(0., xst(i)-sx0))
+          sh_stress(:,i)%baz = std__rad2deg(atan2(0., sx0-xst(i)))
+        end if
+
       end if
       
       if( sw_wav_strain ) then
@@ -619,6 +642,13 @@ contains
         sh_strain(3,i)%kcmpnm = "Exz"
         
         sh_strain(:,i)%idep = 5 ! unknown
+        
+        if( wav_calc_dist ) then
+          sh_strain(:,i)%lcalda = .false. 
+          sh_strain(:,i)%dist = sqrt( (sx0 - xst(i))**2  )
+          sh_strain(:,i)%az = std__rad2deg(atan2(0., xst(i)-sx0))
+          sh_strain(:,i)%baz = std__rad2deg(atan2(0., sx0-xst(i)))
+        end if
       end if
 
     end do
@@ -660,16 +690,6 @@ contains
       sh%user7   = clat  !< coordinate
       sh%user8   = phi
       sh%o       = otim
-
-      if( wav_calc_dist ) then
-        sh(:,i)%lcalda = .false. 
-        sh(:,i)%dist = sqrt( (sx0 - xst(i))**2  )
-        sh(:,i)%az = std__rad2deg(atan2(0., xst(i)-sx0))
-        sh(:,i)%baz = std__rad2deg(atan2(0., sx0-xst(i)))
-      end if
-
-
-    end do
 
       call daytim__localtime( sh%tim, sh%nzyear, sh%nzmonth, sh%nzday, sh%nzhour, sh%nzmin, sh%nzsec )
       call daytim__ymd2jul  ( sh%nzyear, sh%nzmonth, sh%nzday, sh%nzjday )
