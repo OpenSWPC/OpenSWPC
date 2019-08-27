@@ -110,6 +110,7 @@ module m_output
   real(SP), allocatable :: buf_u(:,:,:)
 
   real(MP) :: r40x, r40z, r41x, r41z  
+  logical :: wav_calc_dist
 
 contains
 
@@ -149,6 +150,8 @@ contains
 
     call readini( io_prm, 'snp_format', snp_format, 'native' )
     call readini( io_prm, 'wav_format', wav_format, 'sac' )
+
+    call readini( io_prm, 'wav_calc_dist', wav_calc_dist, .false. )
 
     sw_wav = ( sw_wav_v .or. sw_wav_u .or. sw_wav_stress .or. sw_wav_strain )
 
@@ -653,15 +656,20 @@ contains
         sh%user5   = mxy0
       end if
 
-      sh%user6   = clon !< coordinate
-      sh%user7   = clat !< coordinate
-      sh%user8   = phi
-      sh%o       = otim
-      
       sh%user6   = clon  !< coordinate
       sh%user7   = clat  !< coordinate
       sh%user8   = phi
       sh%o       = otim
+
+      if( wav_calc_dist ) then
+        sh(:,i)%lcalda = .false. 
+        sh(:,i)%dist = sqrt( (sx0 - xst(i))**2  )
+        sh(:,i)%az = std__rad2deg(atan2(0., xst(i)-sx0))
+        sh(:,i)%baz = std__rad2deg(atan2(0., sx0-xst(i)))
+      end if
+
+
+    end do
 
       call daytim__localtime( sh%tim, sh%nzyear, sh%nzmonth, sh%nzday, sh%nzhour, sh%nzmin, sh%nzsec )
       call daytim__ymd2jul  ( sh%nzyear, sh%nzmonth, sh%nzday, sh%nzjday )

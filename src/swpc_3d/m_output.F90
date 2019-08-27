@@ -118,6 +118,9 @@ module m_output
   real(SP), allocatable :: max_ob_v(:,:,:), max_ob_u(:,:,:), max_fs_v(:,:,:), max_fs_u(:,:,:)
 
   real(MP) :: r40x, r40y, r40z, r41x, r41y, r41z
+
+  logical :: wav_calc_dist
+  
 contains
 
 
@@ -173,6 +176,7 @@ contains
     call readini( io_prm, 'sw_wav_strain', sw_wav_strain,   .false. )    
     call readini( io_prm, 'snp_format', snp_format, 'native' )
     call readini( io_prm, 'wav_format', wav_format, 'sac' ) 
+    call readini( io_prm, 'wav_calc_dist', wav_calc_dist, .false. )
 
     !! Do not output waveform for Green's function mode
     call readini( io_prm, 'green_mode', green_mode, .false. )
@@ -806,6 +810,12 @@ contains
         sh_strain(:,i)%idep = 5 ! unknown        
       end if
 
+      if( wav_calc_dist ) then
+        sh(:,i)%lcalda = .false. 
+        sh(:,i)%dist = sqrt( (sx0 - xst(i))**2 + (sy0 - yst(i))**2 )
+        sh(:,i)%az = std__rad2deg(atan2(yst(i)-sy0, xst(i)-sx0))
+        sh(:,i)%baz = std__rad2deg(atan2(sy0-yst(i), sx0-xst(i)))
+      end if
     end do
 
   contains

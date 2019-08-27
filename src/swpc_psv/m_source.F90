@@ -472,6 +472,7 @@ contains
       !! remember first record as hypocenter
       if( i==1 ) then
         call geomap__c2g( sx(i), 0.0, clon, clat, phi, evlo, evla )
+        sx0 = sx(i)
         evdp = sz(i)
         mxx0 = mxx(i)
         myy0 = -12345.0
