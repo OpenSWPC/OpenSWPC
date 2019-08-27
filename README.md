@@ -2,7 +2,7 @@
 
 Corresponding Author: Takuto Maeda
 
-![example](./doc/swpc-demo.gif)
+![example](./doc/md/fig/swpc-demo.gif)
 
 ## Description
 
