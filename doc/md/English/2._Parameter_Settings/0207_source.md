@@ -109,20 +109,20 @@ in the `fn_grd` or `fn_grd_rmed` list files.
     **`stf_format`**
     : Format of the source list file. Choose from the following six candidates. 
 
-        -  `’xym0ij’` :  $x$, $y$, $z$, $T_0$, $T_R$, $M_0$, $m_{xx}$, $m_{yy}$,  $m_{zz}$,  $m_{yz}$, $m_{xz}$, $m_{xy}$    
-        -  `’xym0dc’`  :  $x$, $y$, $z$, $T_0$, $T_R$, $M_0$,  strike, dip, rake  
+        -  `'xym0ij'` :  $x$, $y$, $z$, $T_0$, $T_R$, $M_0$, $m_{xx}$, $m_{yy}$,  $m_{zz}$,  $m_{yz}$, $m_{xz}$, $m_{xy}$    
+        -  `'xym0dc'`  :  $x$, $y$, $z$, $T_0$, $T_R$, $M_0$,  strike, dip, rake  
 
-        -  `’llm0ij’`   : lon, lat, $z$, $T_0$, $T_R$, $M_0$, $m_{xx}$, $m_{yy}$,  $m_{zz}$, $m_{yz}$, $m_{xz}$, $m_{xy}$  
+        -  `'llm0ij'`   : lon, lat, $z$, $T_0$, $T_R$, $M_0$, $m_{xx}$, $m_{yy}$,  $m_{zz}$, $m_{yz}$, $m_{xz}$, $m_{xy}$  
 
-        - `’llm0dc’`  :  lon, lat, $z$, $T_0$, $T_R$, $M_0$, strike, dip, rake  
+        - `'llm0dc'`  :  lon, lat, $z$, $T_0$, $T_R$, $M_0$, strike, dip, rake  
 
-        - `’xymwij’`   :  $x$, $y$, $z$, $T_0$, $T_R$, $M_0$,  $m_{xx}$, $m_{yy}$, $m_{zz}$, $m_{yz}$, $m_{xz}$, $m_{xy}$  
+        - `'xymwij'`   :  $x$, $y$, $z$, $T_0$, $T_R$, $M_0$,  $m_{xx}$, $m_{yy}$, $m_{zz}$, $m_{yz}$, $m_{xz}$, $m_{xy}$  
 
-        - `’xymwdc’` :  $x$, $y$, $z$, $T_0$, $T_R$, $M_0$, strike, dip, rake  
+        - `'xymwdc'` :  $x$, $y$, $z$, $T_0$, $T_R$, $M_0$, strike, dip, rake  
 
-        - `’llmwij’`  : lon, lat, $z$, $T_0$, $T_R$, $M_0$, $m_{xx}$, $m_{yy}$, $m_{zz}$, $m_{yz}$,  $m_{xz}$,  $m_{xy}$  
+        - `'llmwij'`  : lon, lat, $z$, $T_0$, $T_R$, $M_0$, $m_{xx}$, $m_{yy}$, $m_{zz}$, $m_{yz}$,  $m_{xz}$,  $m_{xy}$  
 
-        -  `’llmwdc’`  : lon, lat, $z$, $T_0$, $T_R$, $M_0$, strike, dip, rake
+        -  `'llmwdc'`  : lon, lat, $z$, $T_0$, $T_R$, $M_0$, strike, dip, rake
   
         - `'lldsdc'` : lon, lat, $z$, $T_0$, $T_R$, $D$, $S$, strike, dip, rake
   
@@ -131,15 +131,15 @@ in the `fn_grd` or `fn_grd_rmed` list files.
         The unit of each variables are [km] for $x$, $y$, $z$, [Nm] for $M_0$ and $m_{ij}$, [s] for $T_0$ and $T_R$, [degree] for all parameters describing angles, [m] for slip $D$ and [m${}^2$] for area $S$. 
 
     ** `stftype`**
-    : Choice of the source time function. Select from `’boxcar’`,
-    `’triangle’`, `’herrmann’`, `’kupper’`, `’cosine’`, and `’texp’`.
+    : Choice of the source time function. Select from `'boxcar'`,
+    `'triangle'`, `'herrmann'`, `'kupper'`, `'cosine'`, and `'texp'`.
 
     ** `fn_stf`**
     : Filename of the source list.
 
     ** `sdep_fit` **
     : Flag to fit the source depth to the velocity discontinuity. 
-    `’asis’`: do not fit (default). `’bd{i}’`(i=1,2,$\cdots$9): fits to
+    `'asis'`: do not fit (default). `'bd{i}'`(i=1,2,$\cdots$9): fits to
     the `i`-th boundary specified in the rightmost column of
     `fn_grdlst`.
 
@@ -162,9 +162,9 @@ possible to use both a moment tensor and a body force at the same time.
     **`stf_format`**
     :  Format of the source file. Select from `'xy'` or `'ll'`. Note that the source file format is different from that for the moment tensor. 
 
-        -  `’xy’`:    x,    y,     z,   $T_0$ ,  $T_R$ ,  $f_x$,   $f_y$,   $f_z$
+        -  `'xy'`:    x,    y,     z,   $T_0$ ,  $T_R$ ,  $f_x$,   $f_y$,   $f_z$
         
-        -  `’ll’`:   lon,    lat ,  z,   $T_0$,   $T_R$ ,  $f_x$,   $f_y$ ,  $f_z$
+        -  `'ll'`:   lon,    lat ,  z,   $T_0$,   $T_R$ ,  $f_x$,   $f_y$ ,  $f_z$
 
     **`stftype`**
     : Choice of the source time function. Same as the case with a moment
@@ -230,7 +230,7 @@ propagation direction will be normalized to 1.
 
     **`pw_ps`**
     :    
-    Plane wave type. Choose from `’p’` or `’s’`
+    Plane wave type. Choose from `'p'` or `'s'`
 
     **`pw_strike`**
     : 
@@ -249,9 +249,9 @@ propagation direction will be normalized to 1.
     Source time function type. Same as the cases with the moment tensor
     or body force sources.
 
-The use of the PML absorbing boundary condition (`abc_type=’pml’`; see [this section](0208_abc.md) for details) is
+The use of the PML absorbing boundary condition (`abc_type='pml'`; see [this section](0208_abc.md) for details) is
 strongly recommended for the case of plane wave incidence. The simple
-Cerjan's (`abc_type=’cerjan’`) condition always causes significant
+Cerjan's (`abc_type='cerjan'`) condition always causes significant
 contamination by artificial reflections.
 
 !!! Quote "Figure"
