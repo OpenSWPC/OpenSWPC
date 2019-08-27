@@ -666,7 +666,7 @@ contains
       !! common header
       sh%evlo    = evlo
       sh%evla    = evla
-      sh%evdp    = evdp*1000
+      sh%evdp    = evdp  !! evdp changed to km unit from SWPC 5.0
       sh%tim     = exedate
       sh%b       = tbeg
       sh%delta   = ntdec_w * dt
