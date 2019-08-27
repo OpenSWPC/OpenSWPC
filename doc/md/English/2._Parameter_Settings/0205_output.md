@@ -218,6 +218,11 @@ region will be exported.
     : Station file format: `’sac’` (usual, recommended) or `’csf’`.
 
 
+### Strain and stress output
+
+By specifying `sw_wav_strain = .true.` and `sw_wav_stress = .true.`, users can obtain strain and stress time series as a SAC-formatted data file as in the case of velocity and displacement (**Experimental; new in version 5.0**). The specification of station locations are same with the case of velocity/displacement. The output units are nondimensional for strain and \[Pa\] for stress data. 
+
+
 ### The csf format
 
 Because the `SAC` format is defined to express the data at one component
