@@ -14,6 +14,8 @@ environment in 3D and 2D (P-SV or SH) media.
 This package also provides a set of tools for visualizing/converting simulation
 output.
 
+The online documentation: https://tktmyd.github.io/OpenSWPC
+
 ## License
 
 MIT License. Please see LICENSE file for details.
