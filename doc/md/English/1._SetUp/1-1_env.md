@@ -1,0 +1,29 @@
+# System requirements
+
+Executing `OpenSWPC` requires a Fortran compiler that can handle (at least a part of) the Fortran 2003 standard and an MPI  library. 
+The program can be run on a single CPU or CPU core without parallelization; however, the MPI library is still required.
+In addition, the `NetCDF` library, compiled by the same Fortran compiler, is recommended to use the direct input/output of the `NetCDF`-formatted files. 
+
+
+The source code of `OpenSWPC` almost strictly follows the language standard of Fortran2003. 
+As an exception, system calls (the `system()` subroutine) are used. 
+Note that this extension is supported by most available Fortran compilers. 
+`OpenSWPC` uses stream I/O, which is part of the Fortran2003 standards. 
+This functionality may not be implemented with older compilers. 
+
+
+This code was developed in the following environment: 
+
+-   Apple macOS Mojave 10.14.3
+-   GNU `gfortran` 8.2.0
+-   `OpenMPI` 4.0.0
+
+In addition, the following computers were confirmed to work with \swpc: 
+
+
+-   EIC computer, ERI/UTokyo (ver. 2015; SGI Altix; intel fortran)
+-   JAMSTEC Earth Simulator (NEC SX-ACE; NEC compiler)
+-   AICS K computer (Fujitsu compiler)
+-   Nagoya University (FX10/Fx100; Fujitsu compiler)
+-   Linux Cent OS 6.6 (gfortran 4.9.2 & mpich)
+-   Linux Ubuntu 16.04LTS (gfortran 5.4 & OpenMPI)
