@@ -2,7 +2,7 @@
 
 Corresponding Author: Takuto Maeda
 
-![example](./doc/swpc-demo.gif)
+![example](./doc/md/fig/swpc-demo.gif)
 
 ## Description
 
@@ -13,6 +13,8 @@ environment in 3D and 2D (P-SV or SH) media.
 
 This package also provides a set of tools for visualizing/converting simulation
 output.
+
+The online documentation: https://tktmyd.github.io/OpenSWPC
 
 ## License
 
@@ -108,3 +110,7 @@ doi:[10.1038/s41598-017-03048-6](https://doi.org/10.1038/s41598-017-03048-6)
 Morioka, H., H. Kumagai, and T. Maeda (2017),
 Theoretical basis of the amplitude source location method for volcano-seismic signals, _J. Geophys. Res._, _122_, 6538-6551.
 doi:[10.1002/2017JB013997](https://doi.org/10.1002/2017JB013997)
+
+Furumura, T., & Kennett, B. L. N. (2018). Regional distance PL phase in the crustal waveguide—An analog to the teleseismic W phase in the upper‐mantle waveguide. _J. Geophys. Res._, _123_, 4007– 4024. doi:[10.1029/2018JB015717](https://doi.org/10.1029/2018JB015717)
+
+Furumura, T., & Kennett, B. L. N. (2019). The significance of long‐period ground motion at regional to teleseismic distances from the 610 km deep Mw8.3 Sea of Okhotsk earthquake of 24 May 2013. _J. Geophys. Res._, _124_. doi:[10.1029/2019JB018147](https://doi.org/10.1029/2019JB018147)
