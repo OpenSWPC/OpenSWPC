@@ -107,6 +107,7 @@ module m_output
   !! displacement snapshot buffer
   real(SP), allocatable :: buf_u(:,:,:)
 
+  logical :: wav_calc_dist
 contains
 
 
@@ -143,6 +144,8 @@ contains
 
     call readini( io_prm, 'snp_format', snp_format, 'native' )
     call readini( io_prm, 'wav_format', wav_format, 'sac' )
+
+    call readini( io_prm, 'wav_calc_dist', wav_calc_dist, .false. )
 
     sw_wav = ( sw_wav_v .or. sw_wav_u )
 
@@ -582,6 +585,14 @@ contains
 
       sh(1:2,i)%idep = 7 ! velocity [nm/s]
       sh(3:4,i)%idep = 6 ! displacement [nm]
+
+      if( wav_calc_dist ) then
+        sh(:,i)%lcalda = .false. 
+        sh(:,i)%dist = sqrt( (sx0 - xst(i))**2  )
+        sh(:,i)%az = std__rad2deg(atan2(0., xst(i)-sx0))
+        sh(:,i)%baz = std__rad2deg(atan2(0., sx0-xst(i)))
+      end if
+
 
     end do
 

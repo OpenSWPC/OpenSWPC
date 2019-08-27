@@ -428,6 +428,7 @@ contains
         mxz0 = -12345.0
         mxy0 = mxy(i)
         otim = sprm(1,i)
+        sx0 = sx(i)
       end if
 
     end do
