@@ -1,0 +1,70 @@
+##                                                            -*- mode:yaml -*-
+
+site_name: "OpenSWPC"
+site_description: "OpenSWPC User's Guide"
+site_author: 'Takuto Maeda'
+
+site_url: 'https://tktmyd.github.io/OpenSWPC'
+
+copyright: 'Copyright &copy 2019 Takuto Maeda. All Rights Reserved'
+
+docs_dir: 'md'
+
+site_dir: 'site'
+
+use_directory_urls: true
+
+theme:
+  language: 'en'
+  name: 'material'
+  palette:
+    primary: 'black'
+    accent: 'teal'
+  feature:
+    tabs: true
+
+   
+extra_css:
+  - "https://fonts.googleapis.com/earlyaccess/notosansjp.css"
+  - "https://fonts.googleapis.com/css?family=Open+Sans:600,800"
+  - "css/custom.css"
+
+extra:
+  search:
+    language: 'en, ja'
+  font:
+#    text: 'Noto Sans JP'
+    code: 'Consolas'
+  social:
+    - type: 'github'
+      link: 'https://github.com/tktmyd'
+
+
+markdown_extensions:
+  - pymdownx.superfences
+  - fontawesome_markdown
+
+  - codehilite:
+      linenums: true
+      use_pygments: true
+
+  - pymdownx.arithmatex:
+      preview: false
+
+  - admonition
+  - footnotes
+  - fontawesome_markdown
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      linenums: true
+    
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - markdown.extensions.def_list
+
+extra_javascript:
+  - mathjax-config.js
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+
+

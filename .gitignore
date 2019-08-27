@@ -57,3 +57,6 @@ bin/branch.sh
 
 # archives
 archives/*
+
+# build documents
+doc/site/*

@@ -3,7 +3,7 @@
 !! seismic source radiation
 !!
 !! @copyright
-!!   Copyright 2013-2018 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2019 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 #include "m_debug.h"
@@ -340,7 +340,9 @@ contains
     integer :: ierr
     real(SP) :: rdum
     real(SP) :: mw
-
+    real(SP) :: D, S
+    integer :: is0, js0, ks0
+    
     call std__getio( io )
     open( io, file = trim(fn_stf), action='read', status='old' )
     i = 0
@@ -423,6 +425,45 @@ contains
         call sdr2moment( strike-phi, dip, rake, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum )
         call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
 
+      case( 'xydsdc' )
+        read(adum,*,iostat=ierr) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), D, S, strike, dip, rake
+        call assert( ierr == 0 )
+        call assert( -360. <= strike .and. strike <= 360. )
+        call assert(  -90. <= dip    .and. dip    <= 90.  )
+        call assert( -180. <= rake   .and. rake   <= 180. )
+        call sdr2moment( strike-phi, dip, rake, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum )
+        is0 = x2i( sx(i), xbeg, real(dx) )
+        ks0 = z2k( sz(i), zbeg, real(dz) )
+
+        if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
+            kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then
+          mo(i) = mu(ks0,js0) * D * S
+        else
+          mo(i) = 0.
+        end if
+
+      case( 'lldsdc' )
+        read(adum,*,iostat=ierr) lon, lat, sz(i), sprm(1,i), sprm(2,i), D, S, strike, dip, rake
+        call assert( ierr == 0 )
+        call assert( -360. <= lon .and. lon <= 360 )
+        call assert(  -90. <= lat .and. lat <=  90 )
+        call assert( -360. <= strike .and. strike <= 360. )
+        call assert(  -90. <= dip    .and. dip    <= 90.  )
+        call assert( -180. <= rake   .and. rake   <= 180. )
+
+        call sdr2moment( strike-phi, dip, rake, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum )
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
+
+        is0 = x2i( sx(i), xbeg, real(dx) )
+        ks0 = z2k( sz(i), zbeg, real(dz) )
+
+        if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
+            kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then
+          mo(i) = mu(ks0,js0) * D * S
+        else
+          mo(i) = 0.
+        end if    
+
       case default
         write(STDERR,*) "ERROR [source__setup]: Invalid source type: "//trim(stf_format)
 
@@ -431,6 +472,7 @@ contains
       !! remember first record as hypocenter
       if( i==1 ) then
         call geomap__c2g( sx(i), 0.0, clon, clat, phi, evlo, evla )
+        sx0 = sx(i)
         evdp = sz(i)
         mxx0 = mxx(i)
         myy0 = -12345.0

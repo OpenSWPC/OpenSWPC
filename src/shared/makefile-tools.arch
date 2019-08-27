@@ -125,4 +125,11 @@ ifeq ($(arch),ubuntu-gfortran)
 
 endif
 
-
+ifeq ($(arch),oak)
+  FC      = module load netcdf netcdf-fortran hdf5; ifort
+  FFLAGS  =  -D_INFO -D_ASSERT -I../include
+  NCFLAG  = -D_NETCDF
+  NCLIB =
+  NCINC =
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5
+endif

@@ -3,7 +3,7 @@
 !! global control parameters, shared arrays and MPI communication
 !!
 !! @copyright
-!!   Copyright 2013-2018 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2019 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -136,7 +136,7 @@ module m_global
   real(SP) :: mxx0, myy0, mzz0, myz0, mxz0, mxy0
   real(SP) :: fx0, fy0, fz0
   real(SP) :: otim
-
+  real(SP) :: sx0
   !!
   !! private variables
   !!

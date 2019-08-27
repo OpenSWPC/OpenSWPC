@@ -3,7 +3,7 @@
 !! Snapshot/waveform output
 !!
 !! @copyright
-!!   Copyright 2013-2018 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2019 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -71,7 +71,7 @@ module m_output
   end type snp
 
   type(snp) :: xz_v, xz_u
-  logical   :: sw_wav, sw_wav_v, sw_wav_u
+  logical   :: sw_wav, sw_wav_v, sw_wav_u, sw_wav_stress, sw_wav_strain
 
   !! switch
   integer   :: ntdec_s, ntdec_w                                !< time step decimation factor: Snap and Waves
@@ -92,19 +92,28 @@ module m_output
 
   !! waveform
   integer :: ntw ! number of wave samples
-  real(SP), allocatable :: vyst(:,:), uyst(:,:)
-  type(sac__hdr), allocatable :: sh(:,:)
+  real(SP), allocatable :: wav_vel(:,:,:)
+  real(SP), allocatable :: wav_disp(:,:,:)
+  real(SP), allocatable :: wav_stress(:,:,:)
+  real(SP), allocatable :: wav_strain(:,:,:)
+  type(sac__hdr), allocatable :: sh_vel(:,:), sh_disp(:,:), sh_stress(:,:), sh_strain(:,:)
   real(SP), allocatable :: uy(:)
 
   !! I/O area in the node
   integer :: is0, is1, ks0, ks1
 
   !! derivative coefficient
-  real(SP) :: r20x, r20z
+  real(MP) :: r20x, r20z
+  real(MP) :: r40x, r40z, r41x, r41z  
 
   character(6) :: snp_format ! native or netcdf
 
   real(SP), allocatable :: buf_u(:,:) !! displacement buffer
+
+  real(MP), allocatable :: eyz(:), exy(:)
+
+  logical :: wav_calc_dist
+
 contains
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -137,11 +146,15 @@ contains
     call readini( io_prm, 'fn_stloc',  fn_stloc,  ''      )
     call readini( io_prm, 'sw_wav_v',  sw_wav_v,  .false. )
     call readini( io_prm, 'sw_wav_u',  sw_wav_u,  .false. )
-
+    call readini( io_prm, 'sw_wav_stress',  sw_wav_stress, .false. )
+    call readini( io_prm, 'sw_wav_strain',  sw_wav_strain, .false. )
+    
     call readini( io_prm, 'snp_format', snp_format, 'native' )
     call readini( io_prm, 'wav_format', wav_format, 'sac' )
 
-    sw_wav = ( sw_wav_v .or. sw_wav_u )
+    call readini( io_prm, 'wav_calc_dist', wav_calc_dist, .false. )
+    
+    sw_wav = ( sw_wav_v .or. sw_wav_u .or. sw_wav_stress .or. sw_wav_strain )
 
 !!!!
 !!!! snapshot
@@ -208,9 +221,12 @@ contains
     end if
 
     !! for taking derivatives
-    r20x = 1 / dx
-    r20z = 1 / dz
-
+    r40x = 9.0_MP /  8.0_MP / dx
+    r40z = 9.0_MP /  8.0_MP / dz
+    r41x = 1.0_MP / 24.0_MP / dx
+    r41z = 1.0_MP / 24.0_MP / dz
+    r20x = 1.  / dx
+    r20z = 1.  / dz
 
     allocate(buf_u(nxs,nzs))
     buf_u(:,:) = 0.0
@@ -239,8 +255,8 @@ contains
   !<
   !! --
   subroutine output__export_wav()
-    integer :: i
-    character(256) :: fn1, fn2
+    integer :: i, j
+    character(256) :: fn
     character(6) :: cid
     integer :: io
 
@@ -251,52 +267,53 @@ contains
     if( wav_format == 'sac' ) then
       do i=1, nst
 
-        if( sw_wav_v ) then
-          fn1 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Vy.sac'
-          call sac__write( fn1, sh(1,i), vyst(:,i), .true. )
-
+        if ( sw_wav_v ) then
+          call export_wav__sac(sh_stress(1,i), wav_vel(:,1,i))
         end if
 
-        if( sw_wav_u ) then
-          fn2 = trim(odir) // '/wav/' // trim(title) // '.' // trim(stnm(i)) // '.Uy.sac'
-          call sac__write( fn2, sh(2,i), uyst(:,i), .true. )
+        if ( sw_wav_u ) then
+          call export_wav__sac(sh_stress(1,i), wav_disp(:,1,i))
         end if
 
+        
+        if ( sw_wav_stress ) then
+          do j=1, 2
+            call export_wav__sac(sh_stress(j,i), wav_stress(:,j,i))
+          end do
+        end if
+
+        if ( sw_wav_strain ) then
+          do j=1, 2
+            call export_wav__sac(sh_strain(j,i), wav_strain(:,j,i))
+          end do
+        end if
+        
       end do
     else if (wav_format == 'csf' ) then
 
-      write(cid,'(I6.6)') myid
 
-      if( sw_wav_v ) then
-        fn1 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.Vy.sac'
-        call csf__write( fn1, nst, sh(1,1)%npts, sh(1,:), vyst(:,:), .true. )
-      end if
-
-      if( sw_wav_u ) then
-        fn2 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.Uy.sac'
-        call csf__write( fn2, nst, sh(2,1)%npts, sh(2,:), uyst(:,:), .true. )
-      end if
+      if( sw_wav_stress ) call export_wav__csf(nst, 1, sh_vel, wav_vel )
+      if( sw_wav_stress ) call export_wav__csf(nst, 1, sh_disp, wav_disp )
+      if( sw_wav_stress ) call export_wav__csf(nst, 2, sh_stress, wav_stress )
+      if( sw_wav_strain ) call export_wav__csf(nst, 2, sh_strain, wav_strain )
 
     else if ( wav_format == 'wav' ) then
 
       write(cid,'(I6.6)') myid
-      fn1 = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.wav'
+      fn = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.wav'
 
 #ifdef _ES
       call std__getio(io, is_big=.true.)
-      open(io, file=trim(fn1), form='unformatted', action='write', status='replace')
+      open(io, file=trim(fn), form='unformatted', action='write', status='replace')
 #else
       call std__getio(io) 
-      open(io, file=trim(fn1), access='stream', form='unformatted', action='write', status='replace')
+      open(io, file=trim(fn), access='stream', form='unformatted', action='write', status='replace')
 #endif
 
-      if( sw_wav_v ) then
-        write(io) nst, ntw, title, sh(1,:), vyst(:,:)
-      end if
-
-      if( sw_wav_u ) then
-        write(io) nst, ntw, title, sh(2,:), uyst(:,:)
-      end if
+      if( sw_wav_v )      write(io) nst, ntw, title, sh_vel, wav_vel
+      if( sw_wav_u )      write(io) nst, ntw, title, sh_disp, wav_disp
+      if( sw_wav_stress ) write(io) nst, ntw, title, sh_stress, wav_stress
+      if( sw_wav_strain ) write(io) nst, ntw, title, sh_strain, wav_strain
 
       close(io)
 
@@ -305,6 +322,33 @@ contains
 
     call pwatch__off("output__export_wav")
 
+  contains
+    
+    subroutine export_wav__sac( sh, dat )
+
+      type(sac__hdr), intent(in) :: sh
+      real(SP), intent(in) :: dat(:)
+      character(256) :: fn
+      !! --
+      
+      fn = trim(odir) // '/wav/' // trim(title) // '.' // trim(sh%kstnm) // '.' // trim(sh%kcmpnm) // '.sac'
+      call sac__write( fn, sh, dat, .true. )
+      
+    end subroutine export_wav__sac
+
+    subroutine export_wav__csf(nst, ncmp, sh, dat)
+      
+      integer, intent(in) :: nst, ncmp
+      type(sac__hdr), intent(in) :: sh(ncmp, nst)
+      real(SP), intent(in) :: dat(ntw, ncmp, nst)
+      character(5) :: cid
+      character(256) :: fn
+
+      write(cid,'(I5.5)') myid
+      fn = trim(odir) // '/wav/' // trim(title) // '__' // cid // '__.csf'
+      call csf__write(fn, nst*ncmp, ntw, reshape(sh,(/ncmp*nst/)), reshape(dat, (/ntw, ncmp*nst/)))
+
+    end subroutine export_wav__csf
 
   end subroutine output__export_wav
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -341,9 +385,11 @@ contains
 
       nst_g = 0          ! not exist
       sw_wav = .false.
-      if( myid == 0 ) then
-        write(STDERR,'(A)') "[INFO] output--read_stinfo: Station file does not exist. WAV file will not be created"
-      end if
+      sw_wav_v = .false.
+      sw_wav_u = .false.
+      sw_wav_stress = .false.
+      sw_wav_strain = .false.
+      call info( "No station file found" )      
       return
 
     else
@@ -485,74 +531,145 @@ contains
 
     end do
 
-    allocate( vyst(ntw,nst), uyst(ntw,nst) )
-    vyst(:,:) = 0.0
-    uyst(:,:) = 0.0
+    if( sw_wav_v ) then
+      allocate(wav_vel(ntw,1,nst))
+      allocate(sh_vel(1,nst))
+      wav_vel(:,:,:) = 0.0
+    end if
+
+    if( sw_wav_u ) then
+      allocate(wav_disp(ntw,1,nst))
+      allocate(sh_disp(1,nst))
+      wav_disp(:,:,:) = 0.0
+    end if
+
+    if( sw_wav_stress ) then
+      allocate( wav_stress(ntw,2,nst) )
+      allocate( sh_stress(2,nst) )
+      wav_stress(:,:,:) = 0.0
+    end if    
+
+    if( sw_wav_strain ) then
+      allocate( wav_strain(ntw,2,nst) )
+      allocate( sh_strain(2,nst) )
+      wav_strain(:,:,:) = 0.0
+    end if    
 
     !!
     !! set-up sac header
     !!
-    allocate( sh(2,nst) )
     do i=1, nst
 
       !! first initialize header type
-      do j=1, 2
-        call sac__init(sh(j,i))
-      end do
+      if( sw_wav_v ) then
+        call setup_sac_header(sh_vel(j,i), i)
+        sh_vel(1,i)%kcmpnm = "Vy"
+        sh_vel(1,i)%cmpinc = 90.0;  sh_vel(1,i)%cmpaz  = 90.0 + phi
+        sh_vel(1,i)%idep = 7 ! velocity [nm/s]
 
-      !! common header
-      sh(:,i)%evlo    = evlo
-      sh(:,i)%evla    = evla
-      sh(:,i)%evdp    = evdp*1000
-      sh(:,i)%tim     = exedate
-      sh(:,i)%b       = tbeg
-      sh(:,i)%delta   = ntdec_w * dt
-      sh(:,i)%npts    = ntw
-      sh(:,i)%mag     = mw
-      if( bf_mode ) then
-        sh(:,i)%user0   = fx0
-        sh(:,i)%user1   = fy0
-        sh(:,i)%user2   = fz0
-      else
-        sh(:,i)%user0   = mxx0
-        sh(:,i)%user1   = myy0
-        sh(:,i)%user2   = mzz0
-        sh(:,i)%user3   = myz0
-        sh(:,i)%user4   = mxz0
-        sh(:,i)%user5   = mxy0
+        if( wav_calc_dist ) then
+          sh_vel(:,i)%lcalda = .false. 
+          sh_vel(:,i)%dist = sqrt( (sx0 - xst(i))**2  )
+          sh_vel(:,i)%az = std__rad2deg(atan2(0., xst(i)-sx0))
+          sh_vel(:,i)%baz = std__rad2deg(atan2(0., sx0-xst(i)))
+        end if
+        
       end if
-      sh(:,i)%user6   = clon !< coordinate
-      sh(:,i)%user7   = clat !< coordinate
-      sh(:,i)%user8   = phi
-      sh(:,i)%o       = otim
-
-      !! exedate -> time
-      do j=1, 2
-        call daytim__localtime( sh(j,i)%tim, &
-            sh(j,i)%nzyear, sh(j,i)%nzmonth, sh(j,i)%nzday, sh(j,i)%nzhour, sh(j,i)%nzmin, sh(j,i)%nzsec )
-        call daytim__ymd2jul  ( sh(j,i)%nzyear, sh(j,i)%nzmonth, sh(j,i)%nzday, sh(j,i)%nzjday )
-      end do
-
-      !! station dependent
-      sh(:,i)%kevnm = trim(adjustl( title(1:16) ))
-      sh(:,i)%kstnm = trim(stnm(i))
-      sh(:,i)%stlo  = stlo(i)
-      sh(:,i)%stla  = stla(i)
-      sh(:,i)%stdp  = zst(i)*1000 ! in meter unit
-
-
-      !! component dependent
-      sh(1,i)%kcmpnm = "Vy"
-      sh(2,i)%kcmpnm = "Uy"
-
-      sh(1,i)%cmpinc = 90.0;  sh(1,i)%cmpaz  = 90.0 + phi
-      sh(2,i)%cmpinc = 90.0;  sh(2,i)%cmpaz  = 90.0 + phi
-
-      sh(1,i)%idep = 7 ! velocity [nm/s]
-      sh(2,i)%idep = 6 ! displacement [nm]
-
+      if( sw_wav_u ) then
+        call setup_sac_header(sh_disp(j,i), i)
+        sh_disp(1,i)%kcmpnm = "Uy"
+        sh_disp(1,i)%cmpinc = 90.0;  sh_disp(1,i)%cmpaz  = 90.0 + phi
+        sh_disp(1,i)%idep = 6 ! displacement [nm]
+        if( wav_calc_dist ) then
+          sh_disp(:,i)%lcalda = .false. 
+          sh_disp(:,i)%dist = sqrt( (sx0 - xst(i))**2  )
+          sh_disp(:,i)%az = std__rad2deg(atan2(0., xst(i)-sx0))
+          sh_disp(:,i)%baz = std__rad2deg(atan2(0., sx0-xst(i)))
+        end if
+      end if
+      if( sw_wav_stress ) then
+        do j=1, 2
+          call setup_sac_header(sh_stress(j,i), i)
+          sh_stress(1,i)%kcmpnm = "Syz"
+          sh_stress(2,i)%kcmpnm = "Sxy"
+          sh_stress(:,i)%idep = 5 ! unknown
+        end do
+        if( wav_calc_dist ) then
+          sh_stress(:,i)%lcalda = .false. 
+          sh_stress(:,i)%dist = sqrt( (sx0 - xst(i))**2  )
+          sh_stress(:,i)%az = std__rad2deg(atan2(0., xst(i)-sx0))
+          sh_stress(:,i)%baz = std__rad2deg(atan2(0., sx0-xst(i)))
+        end if
+      end if
+      if( sw_wav_strain ) then
+        do j=1, 2
+          call setup_sac_header(sh_strain(j,i), i)
+          sh_strain(1,i)%kcmpnm = "Eyz"
+          sh_strain(2,i)%kcmpnm = "Exy"
+          sh_strain(:,i)%idep = 5 ! unknown
+        end do
+        if( wav_calc_dist ) then
+          sh_strain(:,i)%lcalda = .false. 
+          sh_strain(:,i)%dist = sqrt( (sx0 - xst(i))**2  )
+          sh_strain(:,i)%az = std__rad2deg(atan2(0., xst(i)-sx0))
+          sh_strain(:,i)%baz = std__rad2deg(atan2(0., sx0-xst(i)))
+        end if        
+      end if
+      
     end do
 
+  contains
+    
+    subroutine setup_sac_header( sh, ist )
+
+      type(sac__hdr), intent(out) :: sh
+      integer,        intent(in)  :: ist
+      !! --
+
+      call sac__init(sh)
+
+      !! common header
+      sh%evlo    = evlo
+      sh%evla    = evla
+      sh%evdp    = evdp !! evdp changed to km unit from SWPC 5.0
+      sh%tim     = exedate
+      sh%b       = tbeg
+      sh%delta   = ntdec_w * dt
+      sh%npts    = ntw
+      sh%mag     = mw
+      
+      if( bf_mode ) then
+        sh%user0   = fx0
+        sh%user1   = fy0
+        sh%user2   = fz0
+      else
+        sh%user0   = mxx0
+        sh%user1   = myy0
+        sh%user2   = mzz0
+        sh%user3   = myz0
+        sh%user4   = mxz0
+        sh%user5   = mxy0
+      end if
+
+
+      sh%user6   = clon !< coordinate
+      sh%user7   = clat !< coordinate
+      sh%user8   = phi
+      sh%o       = otim
+      
+      
+      call daytim__localtime( sh%tim, sh%nzyear, sh%nzmonth, sh%nzday, sh%nzhour, sh%nzmin, sh%nzsec )
+      call daytim__ymd2jul  ( sh%nzyear, sh%nzmonth, sh%nzday, sh%nzjday )
+      sh%nzmsec = 0
+
+      !! station dependent
+      sh%kevnm = trim(adjustl( title(1:16) ))
+      sh%kstnm = trim(stnm(ist))
+      sh%stlo  = stlo(ist)
+      sh%stla  = stla(ist)
+      sh%stdp  = zst(ist)*1000 ! in meter unit
+      
+    end subroutine setup_sac_header    
 
   end subroutine read_stinfo
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -977,6 +1094,9 @@ contains
 
     integer, intent(in) :: it
     integer :: i, itw
+    real(MP) :: dxVy, dzVy
+    integer :: ii, kk
+    !! --
 
     if( .not. sw_wav ) return
 
@@ -986,6 +1106,11 @@ contains
     if( it == 1 ) then
       allocate( uy(nst) )
       uy(:) = 0.0
+      if( sw_wav_strain ) then
+        allocate( eyz(nst), exy(nst) )
+        eyz(:) = 0.0
+        exy(:) = 0.0
+      end if
     end if
 
     !! integrate waveform
@@ -995,21 +1120,64 @@ contains
       end do
     end if
 
+    if( sw_wav_strain ) then
+      !$omp parallel do private(i, ii, kk, dxVy, dzVy)
+      do i=1, nst
+        ii = ist(i)
+        kk = kst(i)
+
+        dxVy = ( (Vy(kk  ,ii+1) - Vy(kk  ,ii  )) * r40x  -  (Vy(kk  ,ii+2) - Vy(kk  ,ii-1)) * r41x &
+               + (Vy(kk  ,ii  ) - Vy(kk  ,ii-1)) * r40x  -  (Vy(kk  ,ii+1) - Vy(kk  ,ii-2)) * r41x ) * 0.5
+
+        dzVy = ( (Vy(kk+1,ii  ) - Vy(kk  ,ii  )) * r40z  -  (Vy(kk+2,ii  ) - Vy(kk-1,ii  )) * r41z &
+               + (Vy(kk  ,ii  ) - Vy(kk-1,ii  )) * r40z  -  (Vy(kk+1,ii  ) - Vy(kk-2,ii  )) * r41z ) * 0.5
+
+        eyz(i) = eyz(i) + dzVy * 0.5 * dt
+        exy(i) = exy(i) + dxVy * 0.5 * dt
+
+      end do
+      !$omp end parallel do
+      
+    end if
 
     !! output
     if( mod( it-1, ntdec_w ) == 0 ) then
       itw = (it-1)/ntdec_w + 1
       if( sw_wav_v ) then
+        !$omp parallel do private(i)
         do i=1, nst
-          vyst(itw,i) =   Vy( kst(i), ist(i) ) * M0 * UC * 1e9 !! [nm/s]
+          wav_vel(itw,1,i) =   Vy( kst(i), ist(i) ) * M0 * UC * 1e9 !! [nm/s]
         end do
+        !$omp end parallel do
       end if
 
       if( sw_wav_u ) then
+        !$omp parallel do private(i)
         do i=1, nst
-          uyst(itw,i) = uy(i) * M0 * UC * 1e9                          !! [nm]
+          wav_disp(itw,1,i) = uy(i) * M0 * UC * 1e9                          !! [nm]
         end do
+        !$omp end parallel do
       end if
+
+      if( sw_wav_stress ) then
+        !$omp parallel do private(i)
+        do i=1, nst
+          wav_stress(itw,1,i) = (Syz(kst(i),ist(i)) + Syz(kst(i)-1,ist(i))) * 0.5 * M0 * UC * 1e6
+          wav_stress(itw,2,i) = (Sxy(kst(i),ist(i)) + Sxy(kst(i),ist(i)-1)) * 0.5 * M0 * UC * 1e6
+        end do
+        !$omp end parallel do
+      end if
+
+
+      if( sw_wav_strain ) then
+        !$omp parallel do private(i)
+        do i=1, nst
+          wav_strain(itw,1,i) = eyz(i) * M0 * UC * 1e-3
+          wav_strain(itw,2,i) = exy(i) * M0 * UC * 1e-3
+        end do
+        !$omp end parallel do
+      end if
+      
     end if
 
     call pwatch__off( "output__store_wav" )
@@ -1024,7 +1192,9 @@ contains
 
     write( io ) xz_v, xz_u
     write( io ) sw_wav, sw_wav_u, sw_wav_v
-
+    write( io ) sw_wav_stress, sw_wav_strain
+    write( io ) wav_format
+    
     write( io ) ntdec_s
     write( io ) idec,kdec
 
@@ -1053,10 +1223,23 @@ contains
         write( io ) stla(1:nst)
         write( io ) stnm(1:nst)
 
-        write( io ) vyst(1:ntw,1:nst)
-        write( io ) uyst(1:ntw,1:nst)
-        write( io ) sh(1:2,1:nst)
-        write( io ) uy(1:nst)
+        if( sw_wav_v  ) then
+          write( io ) sh_vel(:,:), wav_vel(:,:,:)
+        end if
+        
+        if( sw_wav_u ) then
+          write( io ) sh_disp(:,:), wav_disp(:,:,:)
+          write( io ) uy(:)
+        end if
+
+        if( sw_wav_stress ) then
+          write( io ) sh_stress(:,:), wav_stress(:,:,:)
+        end if
+        
+        if( sw_wav_strain ) then
+          write( io ) sh_strain(:,:), wav_strain(:,:,:)
+          write( io ) eyz(:), exy(:)
+        end if
       end if
 
     end if
@@ -1072,7 +1255,9 @@ contains
 
     read( io ) xz_v, xz_u
     read( io ) sw_wav, sw_wav_u, sw_wav_v
-
+    read( io ) sw_wav_stress, sw_wav_strain
+    read( io ) wav_format
+    
     read( io ) ntdec_s
     read( io ) idec, kdec
 
@@ -1110,16 +1295,31 @@ contains
         read( io ) stla(1:nst)
         read( io ) stnm(1:nst)
 
-        allocate( vyst(ntw,nst) )
-        allocate( uyst(ntw,nst) )
-        allocate( uy(nst) )
-        allocate( sh(2,nst) )
-        read( io ) vyst(1:ntw,1:nst)
-        read( io ) uyst(1:ntw,1:nst)
-        read( io ) sh(1:2,1:nst)
-        read( io ) uy(1:nst)
-      end if
 
+        if( sw_wav_v ) then
+          allocate( sh_vel(1,nst), wav_vel(ntw,1,nst) )
+          read(io) sh_vel, wav_vel
+        end if
+        
+        if( sw_wav_u ) then
+          allocate( sh_disp(1,nst), wav_disp(ntw,1,nst), uy(nst) )
+          read(io) sh_disp, wav_disp
+          read(io) uy
+        end if
+        
+        if( sw_wav_stress  ) then
+          allocate( wav_stress(ntw,2,nst), sh_stress(2,nst) )      
+          read( io ) sh_stress, wav_stress
+        end if
+
+        if( sw_wav_strain ) then
+          allocate( wav_strain(ntw,2,nst), sh_strain(2,nst), eyz(nst), exy(nst) )
+          read( io ) sh_strain, wav_strain
+          read( io ) eyz, exy
+        end if
+        
+      end if
+      
     end if
 
     if( snp_format == 'native' ) then
