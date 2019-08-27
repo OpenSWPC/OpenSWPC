@@ -87,8 +87,9 @@ becomes flat in the frequency domain, is approximately $f \le 1/(2 T_R)$
 The source mechanisms of the faulting are given by a six-component
 moment tensor or by three parameters of a double couple source
 (`strike`, `dip`, `rake`). The source locations can be given either by
-their computational or geographical coordinates. Therefore, there are
-eight possible formats to describe the source. In the program, sources are given as a
+their computational or geographical coordinates. The size of the earthquake can be described by seismic moment $M_0$ or moment magnitude $M_W$ or fault slip $D$ & area $S$. 
+In total, there are
+ten possible formats to describe the source. In the program, sources are given as a
 stress-drop source by using the moment rate function. The moment rate
 function is chosen from the given six functions. They require
 parameters in the source list file for their starting time $T_0$,
@@ -122,6 +123,12 @@ in the `fn_grd` or `fn_grd_rmed` list files.
         - `’llmwij’`  : lon, lat, $z$, $T_0$, $T_R$, $M_0$, $m_{xx}$, $m_{yy}$, $m_{zz}$, $m_{yz}$,  $m_{xz}$,  $m_{xy}$  
 
         -  `’llmwdc’`  : lon, lat, $z$, $T_0$, $T_R$, $M_0$, strike, dip, rake
+  
+        - `'lldsdc'` : lon, lat, $z$, $T_0$, $T_R$, $D$, $S$, strike, dip, rake
+  
+        - `'xydsdc'` : $x$, $y$, $z$, $T_0$, $T_R$, $D$, $S$, strike, dip, rake
+
+        The unit of each variables are [km] for $x$, $y$, $z$, [Nm] for $M_0$ and $m_{ij}$, [s] for $T_0$ and $T_R$, [degree] for all parameters describing angles, [m] for slip $D$ and [m${}^2$] for area $S$. 
 
     ** `stftype`**
     : Choice of the source time function. Select from `’boxcar’`,
