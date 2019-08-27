@@ -21,11 +21,19 @@ errors.
 nx = 1024 ! number of grids
 ```
 
-The order of the parameter definition can be changed freely. If a parameter is not specified, `OpenSWPC` may use a pre-defined default variable in some cases. In such a case, the use of the default-parameter will be included in the standard error output. 
+The order of the parameter definition can be changed freely. If a parameter is not specified, `OpenSWPC` may use a pre-defined default variable if the missing parameter is not critical for executing computation. 
 Note that there are parameters that must be defined explicitly. Multiple definitions of the same parameters in a single parameter file are not recommended; however, in this case, the first definition may be adopted. 
 It is acceptable to leave blanks before and after the equal sign; however, **it is not permitted to have a blank space between the minus character and succeeding numbers** (e.g., `’- 35.0’` is not allowed). 
 It is recommended to **use quotation marks around string parameters**. 
 Without them, the directory path character ('/') may be unexpectedly interpreted as a termination of the string parameter.
+
+
+!!! Caution 
+    If a non-essential parameter is not given in the parameter file, an information message will be displayed in the standard error output as an example below: 
+    ```txt
+    [info] key XXXX is not found. 
+    [info]     Use default value YYYY instead.
+    ```
 
 ## An Example Parameter File
 
