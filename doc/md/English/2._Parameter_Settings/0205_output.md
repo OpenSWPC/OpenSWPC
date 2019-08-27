@@ -222,6 +222,13 @@ region will be exported.
 
 By specifying `sw_wav_strain = .true.` and `sw_wav_stress = .true.`, users can obtain strain and stress time series as a SAC-formatted data file as in the case of velocity and displacement (**Experimental; new in version 5.0**). The specification of station locations are same with the case of velocity/displacement. The output units are nondimensional for strain and \[Pa\] for stress data. 
 
+### Distance calculation mode
+In default, `OpenSWPC` will store the station location via `stlo` and `stla` headers of `SAC`, and `SAC` program will automatically calculate the epicentral distance. However if the input station location is given in `xy` coordinate and distance if very long, the error originated from the map projection is not negilible. In such cases, one may calculate epicentral distance in the `OpenSWPC` and store to the `epdist` header of `SAC` files, and prohibit `SAC` to overwright the distance header. 
+
+!!! Info "Parameters"
+    **`wav_calc_dist`**
+    : If this parameter is `.true.`, calculate and store the epicentral distance and store it to the `SAC` header. 
+
 
 ### The csf format
 
