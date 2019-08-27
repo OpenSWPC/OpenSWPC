@@ -10,7 +10,7 @@
 ## NCFLAG, NCLIB, NCINC  (netcdf library)
 ##
 ## @copyright
-##   Copyright 2013-2016 Takuto Maeda. All rights reserved.
+##   Copyright 2013-2019 Takuto Maeda. All rights reserved.
 ##   This project is released under the MIT license.
 ##
 ## ------------------------------------------------------------------------- ##
@@ -136,3 +136,14 @@ ifeq ($(arch),ubuntu-gfortran)
 endif
 
 
+##
+## Oakforest-PACS at the University of Tokyo
+##
+ifeq ($(arch),oak)
+  FC      = module load netcdf hdf5 netcdf-fortran; mpiifort
+  FFLAGS  = -axMIC-AVX512 -qopenmp -D_INFO -D_ASSERT -I../include -static-intel -static_mpi -O3 -ipo -align array64byte -qopt-streaming-stores=auto
+  NCFLAG  = -D_NETCDF 
+  NCLIB = 
+  NCINC = 
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 
+endif

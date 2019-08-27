@@ -132,7 +132,7 @@ contains
     case ( 'triangle' );  n_stfprm = 2
     case ( 'herrmann' );  n_stfprm = 2
     case ( 'kupper'   );  n_stfprm = 2
-    case ( 'cosine'  );  n_stfprm = 2
+    case ( 'cosine'   );  n_stfprm = 2
     case ( 'texp'     );  n_stfprm = 2
     end select
 
@@ -540,6 +540,8 @@ contains
     character(256) :: adum
     integer :: ierr
     real(SP) :: mw
+    real(SP) :: D, S
+    integer :: is0, js0, ks0
     !! ----
 
     call std__getio( io )
@@ -627,6 +629,54 @@ contains
         call sdr2moment( strike-phi, dip, rake, mxx(i), myy(i), mzz(i), myz(i), mxz(i), mxy(i) )
         call geomap__g2c( lon, lat, clon, clat, phi, sx(i), sy(i) )
 
+      case( 'xydsdc' )
+        read(adum,*,iostat=ierr) sx(i), sy(i), sz(i), sprm(1,i), sprm(2,i), D, S, strike, dip, rake
+
+        call assert( ierr == 0 )
+        call assert( -360. <= strike .and. strike <= 360. )
+        call assert(  -90. <= dip    .and. dip    <= 90.  )
+        call assert( -180. <= rake   .and. rake   <= 180. )
+
+        ! use strike angle measured from map azimuth
+        call sdr2moment( strike-phi, dip, rake, mxx(i), myy(i), mzz(i), myz(i), mxz(i), mxy(i) )
+        is0 = x2i( sx(i), xbeg, real(dx) )
+        js0 = y2j( sy(i), ybeg, real(dy) )
+        ks0 = z2k( sz(i), zbeg, real(dz) )
+
+        if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
+            jbeg - 2 <= js0 .and. js0 <= jend + 3 .and. &
+            kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then
+          mo(i) = mu(ks0,is0,js0) * D * S
+        else
+          mo(i) = 0.
+        end if
+
+      case( 'lldsdc' )
+        read(adum,*,iostat=ierr) lon, lat, sz(i), sprm(1,i), sprm(2,i), D, S, strike, dip, rake
+
+        call assert( ierr == 0 )
+        call assert( -360. <= lon .and. lon <= 360 )
+        call assert(  -90. <= lat .and. lat <=  90 )
+        call assert( -360. <= strike .and. strike <= 360. )
+        call assert(  -90. <= dip    .and. dip    <= 90.  )
+        call assert( -180. <= rake   .and. rake   <= 180. )
+
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), sy(i) )
+
+        ! use strike angle measured from map azimuth
+        call sdr2moment( strike-phi, dip, rake, mxx(i), myy(i), mzz(i), myz(i), mxz(i), mxy(i) )
+        is0 = x2i( sx(i), xbeg, real(dx) )
+        js0 = y2j( sy(i), ybeg, real(dy) )
+        ks0 = z2k( sz(i), zbeg, real(dz) )
+
+        if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
+            jbeg - 2 <= js0 .and. js0 <= jend + 3 .and. &
+            kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then
+          mo(i) = mu(ks0,is0,js0) * D * S
+        else
+          mo(i) = 0.
+        end if
+
       case default
         call info( 'invalid source type' )
         call assert( .false. )
@@ -636,6 +686,8 @@ contains
       !! remember first record as hypocenter
       if( i==1 ) then
         call geomap__c2g( sx(i), sy(i), clon, clat, phi, evlo, evla )
+        sx0 = sx(i)
+        sy0 = sy(i)
         evdp = sz(i)
         mxx0 = mxx(i)
         myy0 = myy(i)

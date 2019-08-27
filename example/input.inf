@@ -93,6 +93,8 @@
 
   sw_wav_v         = .true.           !! velocity trace output at stations
   sw_wav_u         = .false.          !! displacement trace output at stations
+  sw_wav_stress    = .true.           !! stress tensor trace
+  sw_wav_strain    = .true.           !! strain tansor trace
   ntdec_w          = 5                !! time decimation of waveform output
   st_format        = 'xy'             !! station format: 'xy' or 'll'
   fn_stloc         = './example/stloc.xy'  !! station location file

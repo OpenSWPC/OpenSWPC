@@ -153,6 +153,7 @@ module m_global
   real(SP) :: mxx0, myy0, mzz0, myz0, mxz0, mxy0
   real(SP) :: fx0, fy0, fz0
   real(SP) :: otim
+  real(SP) :: sx0, sy0
 
   !! Special modes
   logical  :: pw_mode                                               !< Plane wave mode
