@@ -91,7 +91,7 @@
     : モーメントテンソルの表現の種別．以下10種類から選ぶ．
 
         -  `'xym0ij'` :  $x$, $y$, $z$, $T_0$, $T_R$, $M_0$, $m_{xx}$, $m_{yy}$,  $m_{zz}$,  $m_{yz}$, $m_{xz}$, $m_{xy}$    
-        -  
+  
         -  `'xym0dc'`  :  $x$, $y$, $z$, $T_0$, $T_R$, $M_0$,  strike, dip, rake  
 
         -  `'llm0ij'`   : lon, lat, $z$, $T_0$, $T_R$, $M_0$, $m_{xx}$, $m_{yy}$,  $m_{zz}$, $m_{yz}$, $m_{xz}$, $m_{xy}$  
