@@ -342,6 +342,7 @@ contains
     real(SP) :: mw
     real(SP) :: D, S
     integer :: is0, js0, ks0
+    real(SP), allocatable :: r0(:)
     
     call std__getio( io )
     open( io, file = trim(fn_stf), action='read', status='old' )
@@ -350,6 +351,7 @@ contains
     do
 
       read(io,'(A256)', iostat=ierr) adum
+      adum = adjustl(adum)
       if( ierr /= 0 ) exit                  ! detect EOF
       if( adjustl(adum(1:1)) == "#" ) cycle ! neglect comment line
       if( trim(adjustl(adum)) == "" ) cycle ! neglect blank line
@@ -437,7 +439,7 @@ contains
 
         if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
             kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then
-          mo(i) = mu(ks0,js0) * D * S
+          mo(i) = (1e9 * mu(ks0,js0)) * D * S
         else
           mo(i) = 0.
         end if
@@ -459,7 +461,7 @@ contains
 
         if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
             kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then
-          mo(i) = mu(ks0,js0) * D * S
+          mo(i) = (1e9 * mu(ks0,js0)) * D * S
         else
           mo(i) = 0.
         end if    
@@ -486,6 +488,14 @@ contains
     end do
 
     close( io )
+
+    if( stf_format == 'lldsdc' .or. stf_format == 'xydsdc' ) then
+      allocate(r0(ns))
+      call mpi_allreduce(mo, r0, ns, mpi_real, mpi_max, mpi_comm_world, ierr)
+      mo(:) = r0(:)
+      deallocate(r0)
+    end if
+
 
   end subroutine source__grid_moment
   !! --------------------------------------------------------------------------------------------------------------------------- !!

@@ -147,3 +147,25 @@ ifeq ($(arch),oak)
   NCINC = 
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 
 endif
+# the following is an alias of Oakforest-PACS
+ifeq ($(arch),ofp)
+  FC      = module load netcdf hdf5 netcdf-fortran; mpiifort
+  FFLAGS  = -axMIC-AVX512 -qopenmp -D_INFO -D_ASSERT -I../include -static-intel -static_mpi -O3 -ipo -align array64byte -qopt-streaming-stores=auto
+  NCFLAG  = -D_NETCDF 
+  NCLIB = 
+  NCINC = 
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 
+endif
+
+
+##
+## Oakbridge-CX at the University of Tokyo
+##
+ifeq ($(arch),obcx)
+  FC      = module load netcdf hdf5 netcdf-fortran; mpiifort
+  FFLAGS  = -axCORE-AVX512 -qopenmp -D_INFO -D_ASSERT -I../include -static-intel -static_mpi -O3 -ipo 
+  NCFLAG  = -D_NETCDF 
+  NCLIB = 
+  NCINC = 
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 
+endif
