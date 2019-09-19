@@ -542,6 +542,7 @@ contains
     real(SP) :: mw
     real(SP) :: D, S
     integer :: is0, js0, ks0
+    real(SP), allocatable :: rdum(:)
     !! ----
 
     call std__getio( io )
@@ -551,6 +552,7 @@ contains
     do
 
       read(io,'(A256)', iostat=ierr) adum
+      adum = adjustl(adum)
       if( ierr /= 0 ) exit                  ! detect EOF
       if( adjustl(adum(1:1)) == "#" ) cycle ! neglect comment line
       if( trim(adjustl(adum)) == "" ) cycle ! neglect blank line
@@ -646,7 +648,7 @@ contains
         if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
             jbeg - 2 <= js0 .and. js0 <= jend + 3 .and. &
             kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then
-          mo(i) = mu(ks0,is0,js0) * D * S
+          mo(i) = (1e9 * mu(ks0,is0,js0)) * D * S
         else
           mo(i) = 0.
         end if
@@ -672,7 +674,7 @@ contains
         if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
             jbeg - 2 <= js0 .and. js0 <= jend + 3 .and. &
             kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then
-          mo(i) = mu(ks0,is0,js0) * D * S
+          mo(i) = (1e9 * mu(ks0,is0,js0)) * D * S
         else
           mo(i) = 0.
         end if
@@ -700,6 +702,13 @@ contains
 
 
     end do
+
+    if( stf_format == 'lldsdc' .or. stf_format == 'xydsdc' ) then
+      allocate(rdum(ns))
+      call mpi_allreduce(mo, rdum, ns, mpi_real, mpi_max, mpi_comm_world, ierr)
+      mo(:) = rdum(:)
+      deallocate(rdum)
+    end if
 
     close( io )
 
