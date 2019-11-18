@@ -98,13 +98,13 @@
 
         - `'llm0dc'`  :  lon, lat, $z$, $T_0$, $T_R$, $M_0$, strike, dip, rake  
 
-        - `'xymwij'`   :  $x$, $y$, $z$, $T_0$, $T_R$, $M_0$,  $m_{xx}$, $m_{yy}$, $m_{zz}$, $m_{yz}$, $m_{xz}$, $m_{xy}$  
+        - `'xymwij'`   :  $x$, $y$, $z$, $T_0$, $T_R$, $M_W$,  $m_{xx}$, $m_{yy}$, $m_{zz}$, $m_{yz}$, $m_{xz}$, $m_{xy}$  
 
-        - `'xymwdc'` :  $x$, $y$, $z$, $T_0$, $T_R$, $M_0$, strike, dip, rake  
+        - `'xymwdc'` :  $x$, $y$, $z$, $T_0$, $T_R$, $M_W$, strike, dip, rake  
 
-        - `'llmwij'`  : lon, lat, $z$, $T_0$, $T_R$, $M_0$, $m_{xx}$, $m_{yy}$, $m_{zz}$, $m_{yz}$,  $m_{xz}$,  $m_{xy}$  
+        - `'llmwij'`  : lon, lat, $z$, $T_0$, $T_R$, $M_W$, $m_{xx}$, $m_{yy}$, $m_{zz}$, $m_{yz}$,  $m_{xz}$,  $m_{xy}$  
 
-        - `'llmwdc'`  : lon, lat, $z$, $T_0$, $T_R$, $M_0$, strike, dip, rake
+        - `'llmwdc'`  : lon, lat, $z$, $T_0$, $T_R$, $M_W$, strike, dip, rake
        
         - `'lldsdc'` : lon, lat, $z$, $T_0$, $T_R$, $D$, $S$, strike, dip, rake
   
