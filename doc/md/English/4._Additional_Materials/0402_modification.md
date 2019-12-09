@@ -2,7 +2,7 @@
 
 ## Defining Your own Velocity Model
 
-The velocity structure is defined by the subroutine `vmodel_\ast`,
+The velocity structure is defined by the subroutine `vmodel_*`,
 called by the module `m_medium.F90`. These subroutines commonly have the
 input/output parameters defined in the following table. 
 
