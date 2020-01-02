@@ -287,7 +287,7 @@ contains
 
         if( sw_wav_u ) then
           do j=1, 2
-            call export_wav__sac(sh_vel(j,i), wav_disp(:,j,i))
+            call export_wav__sac(sh_disp(j,i), wav_disp(:,j,i))
           end do
         end if
 

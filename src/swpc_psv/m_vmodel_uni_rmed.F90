@@ -147,7 +147,7 @@ contains
     ! dummy value
     bd(:,1:NBD) = -9999
     dum = xc(i0)
-    dum = zc(i0)
+    dum = zc(k0)
     dum = vcut
 
   end subroutine vmodel_uni_rmed
