@@ -3,7 +3,7 @@
 !! Snapshot/waveform output
 !!
 !! @copyright
-!!   Copyright 2013-2019 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -287,7 +287,7 @@ contains
 
         if( sw_wav_u ) then
           do j=1, 2
-            call export_wav__sac(sh_vel(j,i), wav_disp(:,j,i))
+            call export_wav__sac(sh_disp(j,i), wav_disp(:,j,i))
           end do
         end if
 

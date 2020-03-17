@@ -3,7 +3,7 @@
 !! Snapshot/waveform output
 !!
 !! @copyright
-!!   Copyright 2013-2019 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -562,7 +562,7 @@ contains
 
       !! first initialize header type
       if( sw_wav_v ) then
-        call setup_sac_header(sh_vel(j,i), i)
+        call setup_sac_header(sh_vel(1,i), i)
         sh_vel(1,i)%kcmpnm = "Vy"
         sh_vel(1,i)%cmpinc = 90.0;  sh_vel(1,i)%cmpaz  = 90.0 + phi
         sh_vel(1,i)%idep = 7 ! velocity [nm/s]
@@ -576,7 +576,7 @@ contains
         
       end if
       if( sw_wav_u ) then
-        call setup_sac_header(sh_disp(j,i), i)
+        call setup_sac_header(sh_disp(1,i), i)
         sh_disp(1,i)%kcmpnm = "Uy"
         sh_disp(1,i)%cmpinc = 90.0;  sh_disp(1,i)%cmpaz  = 90.0 + phi
         sh_disp(1,i)%idep = 6 ! displacement [nm]

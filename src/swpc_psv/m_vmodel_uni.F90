@@ -3,7 +3,7 @@
 !! User-routines for defining velocity/attenuation structure
 !!
 !! @copyright
-!!   Copyright 2013-2019 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 
@@ -118,7 +118,7 @@ contains
     ! dummy value
     bd(:,1:NBD) = -9999
     dum = xc(i0)
-    dum = zc(i0)
+    dum = zc(k0)
     dum = vcut
 
   end subroutine vmodel_uni
