@@ -125,7 +125,32 @@ ifeq ($(arch),ubuntu-gfortran)
 
 endif
 
+##
+## Oakforest-PACS
+##
 ifeq ($(arch),oak)
+  FC      = module load netcdf netcdf-fortran hdf5; ifort
+  FFLAGS  =  -D_INFO -D_ASSERT -I../include
+  NCFLAG  = -D_NETCDF
+  NCLIB =
+  NCINC =
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5
+endif
+# this is an alias of Oakforest-PACS
+ifeq ($(arch),ofp)
+  FC      = module load netcdf netcdf-fortran hdf5; ifort
+  FFLAGS  =  -D_INFO -D_ASSERT -I../include
+  NCFLAG  = -D_NETCDF
+  NCLIB =
+  NCINC =
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5
+endif
+
+
+##
+## Oakbridge-CX
+##
+ifeq ($(arch),obcx)
   FC      = module load netcdf netcdf-fortran hdf5; ifort
   FFLAGS  =  -D_INFO -D_ASSERT -I../include
   NCFLAG  = -D_NETCDF

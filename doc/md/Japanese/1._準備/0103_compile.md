@@ -33,7 +33,8 @@ makefileでは以下の変数を指定する必要がある．
 | fx               | 富士通FX10, FX100 および京コンピュータ | `${HOME}/xlocal`        |
 | es3              | 地球シミュレータ                       | システム提供            |
 | ubuntu-gfortran  | Ubuntu 16.04LTS + gfortran + Open MPI  | `apt`によるインストール |
-| oak | 東京大学情報基盤センター Oakforest-PACS | `module` コマンドを通じて自動指定 |
+| ofp (or oak)  | 東京大学情報基盤センター Oakforest-PACS | `module` コマンドを通じて自動指定 |
+| obcx  | 東京大学情報基盤センター Oakbridge-CX | `module` コマンドを通じて自動指定 |
 
 
 たとえば`mac-gfortran`に相当する環境では，

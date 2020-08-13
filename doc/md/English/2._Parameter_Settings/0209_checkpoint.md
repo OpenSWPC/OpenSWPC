@@ -37,9 +37,3 @@ code (`swpc_3d.x`).
     : Investigate if the computation time exceeds `ckp_time` periodically
     at this interval. Setting this interval step as too small may affect
     the performance of the computation.
-
-    **`ckp_seq`**
-    : Sequential output mode. If this flag is `.true.`, the I/O of the
-    checkpointing files is sequentially performed from the zero-th MPI
-    node. If the file system is shared by several computational nodes,
-    this flag effectively improves the I/O performance.

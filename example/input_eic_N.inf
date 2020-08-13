@@ -49,6 +49,8 @@
   fq_max           = 2.00             !! maximum freq. for Q-constant model
   fq_ref           = 1.0              !! ref. freq. for physical dispersion
 
+  fullspace_mode   = .false.          !! no ground surface
+
   !! ----------------------------------------------------------------------- !!
   !! Snapshot Output
   !!
@@ -91,10 +93,13 @@
 
   sw_wav_v         = .true.           !! velocity trace output at stations
   sw_wav_u         = .false.          !! displacement trace output at stations
+  sw_wav_stress    = .false.           !! stress tensor trace
+  sw_wav_strain    = .false.           !! strain tansor trace
   ntdec_w          = 4                !! time decimation of waveform output
   st_format        = 'll'             !! station format: 'xy' or 'll'
   fn_stloc         = '${DATASET}/station/hinet.stlst'  !! station location file
   wav_format       = 'sac'            !! 'sac' or 'csf'
+  wav_calc_dist    = .false.          !! explicitly set  the SAC dist header
 
   !! ----------------------------------------------------------------------- !!
   !! Earthquake Source
@@ -132,7 +137,6 @@
     pw_strike        = 0.0       !! strike direction of plane wave (deg.)
     pw_dip           = 0.0       !! dip of plane wave (deg.)
     pw_rake          = 0.0       !! rake of plane S-wave polarization (deg.)
-
 
   !! ----------------------------------------------------------------------- !!
   !! Absorbing Boundary Condition
@@ -178,6 +182,7 @@
     dir_rmed         = './in/'             !! location of random medium file
     fn_grdlst_rmed   = './example/grd.lst' !! grd file list
     rhomin           = 1.0                 !! minimum density threshold
+    fn_rmed0         = 'dummy.ns'          !! vel. purturb. on a uniform media
 
   !! ----------------------------------------------------------------------- !!
   !! Checkpoint/Restart
@@ -186,7 +191,6 @@
   ckpdir           = './out/ckp'      !! output directory
   ckp_interval     = 1000000          !! interval for checkpoint check（1/cycle）
   ckp_time         = 1000000.         !! checkpoint time
-  ckp_seq          = .true.           !! sequential output mode
 
   !! ----------------------------------------------------------------------- !!
   !! Reciprocity Green's Function Mode
