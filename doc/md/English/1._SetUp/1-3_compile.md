@@ -52,8 +52,8 @@ The list of pre-defined architecture (`arch`) options is described in the follow
 |  fx            | Fujitsu FX10, FX100 and the K-computer | `${HOME}/xlocal` |
 |  es3           | The Earth Simulator             |   Provided by the system  |
 |  ubuntu-gfortran   | Ubuntu 16.04LTS + gfortran + Open MPI  |  Installation by `apt` |
-| oak | Oakforest-PACS of the University of Tokyo | automatically specified by the `module` command |
-
+| ofp (or oak) | Oakforest-PACS of the University of Tokyo | automatically specified by the `module` command |
+| obcx | Oakbridge-CX of the University of Tokyo | automatically specified by the `module` command |
 
 
 ## More about the `NetCDF` library

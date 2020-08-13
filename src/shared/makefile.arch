@@ -34,7 +34,7 @@ ifeq ($(arch),mac-intel)
   NETCDF  = -lnetcdf
 
   ifeq ($(debug),true)
-    FFLAGS  = -CB -traceback -Wl,-no_pie -heap-arrays 10 \
+    FFLAGS  = -CB -traceback -Wl,-no_pie -heap-arrays \
 			  -static-intel -I../include -D_INFO -D_DEBUG
   endif
 
@@ -64,18 +64,18 @@ endif
 
 
 ##
-## EIC @ ERI,U-TOKYO
+## EIC @ ERI,U-TOKYO (2020 System)
 ##
 ifeq ($(arch),eic)
   FC      = ifort
-  FFLAGS  = -xAVX -O3 -lmpi -I../include -D_INFO -qopenmp
+  FFLAGS  = -xCORE-AVX2 -O3 -lmpi -I../include -D_INFO -qopenmp
   NCFLAG  = -D_NETCDF
   NCLIB   = -L$(HOME)/local/lib
   NCINC   = -I$(HOME)/local/include
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
 
   ifeq ($(publish),true)
-    FFLAGS = -xAVX -O3 -lmpi -I../include -D_INFO -static-intel -qopenmp -mcmodel=small
+    FFLAGS = -xCORE-AVX2 -O3 -lmpi -I../include -D_INFO -static-intel -qopenmp -mcmodel=small
   endif
 
   ifeq ($(debug),true)
@@ -86,7 +86,7 @@ endif
 
 
 ##
-## Fujitsu FX10, FX100 & K-computer
+## Fujitsu FX10, FX100 (maybe obsolete)
 ##
 ifeq ($(arch),fx)
   FC      = mpifrtpx
@@ -142,6 +142,28 @@ endif
 ifeq ($(arch),oak)
   FC      = module load netcdf hdf5 netcdf-fortran; mpiifort
   FFLAGS  = -axMIC-AVX512 -qopenmp -D_INFO -D_ASSERT -I../include -static-intel -static_mpi -O3 -ipo -align array64byte -qopt-streaming-stores=auto
+  NCFLAG  = -D_NETCDF 
+  NCLIB = 
+  NCINC = 
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 
+endif
+# the following is an alias of Oakforest-PACS
+ifeq ($(arch),ofp)
+  FC      = module load netcdf hdf5 netcdf-fortran; mpiifort
+  FFLAGS  = -axMIC-AVX512 -qopenmp -D_INFO -D_ASSERT -I../include -static-intel -static_mpi -O3 -ipo -align array64byte -qopt-streaming-stores=auto
+  NCFLAG  = -D_NETCDF 
+  NCLIB = 
+  NCINC = 
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 
+endif
+
+
+##
+## Oakbridge-CX at the University of Tokyo
+##
+ifeq ($(arch),obcx)
+  FC      = module load netcdf hdf5 netcdf-fortran; mpiifort
+  FFLAGS  = -axCORE-AVX512 -qopenmp -D_INFO -D_ASSERT -I../include -static-intel -static_mpi -O3 -ipo 
   NCFLAG  = -D_NETCDF 
   NCLIB = 
   NCINC = 

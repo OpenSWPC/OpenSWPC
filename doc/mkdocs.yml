@@ -6,7 +6,12 @@ site_author: 'Takuto Maeda'
 
 site_url: 'https://tktmyd.github.io/OpenSWPC'
 
-copyright: 'Copyright &copy 2019 Takuto Maeda. All Rights Reserved'
+# Repository
+repo_name: tktmyd/OpenSWPC
+repo_url: https://github.com/tktmyd/OpenSWPC
+edit_uri: ""
+
+copyright: 'Copyright &copy Takuto Maeda. All Rights Reserved'
 
 docs_dir: 'md'
 
@@ -18,10 +23,12 @@ theme:
   language: 'en'
   name: 'material'
   palette:
-    primary: 'black'
-    accent: 'teal'
-  feature:
-    tabs: true
+    primary: 'green'
+    accent: 'black'
+  features:
+    - tabs
+    - instant
+  logo: fig/icon.png
 
    
 extra_css:
@@ -29,14 +36,20 @@ extra_css:
   - "https://fonts.googleapis.com/css?family=Open+Sans:600,800"
   - "css/custom.css"
 
+
+plugins:
+  - search:
+      separator: '[\s\-\.]+'
+      lang:
+        - en
+        - ja
+
 extra:
-  search:
-    language: 'en, ja'
   font:
 #    text: 'Noto Sans JP'
     code: 'Consolas'
   social:
-    - type: 'github'
+    - icon: fontawesome/brands/github-alt
       link: 'https://github.com/tktmyd'
 
 
