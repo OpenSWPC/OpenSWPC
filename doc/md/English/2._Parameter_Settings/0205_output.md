@@ -70,7 +70,7 @@ The snapshot file contains the header information listed in the following table.
 | `v1,v2,v3`   | real          | Currently not being used                                          |
 
 
-!!! Caution "A change in SAC header"
+!!! Caution "Change in a SAC header"
     `evdp` is measured in a unit of km after OpenSWPC version 5.0, while it was in m unit previously.
 
 For `NetCDF`, these headers are set as global attributes. The other
