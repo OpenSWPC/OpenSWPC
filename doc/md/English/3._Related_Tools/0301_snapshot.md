@@ -83,6 +83,10 @@ read_snp.x -i snapshotfile [-h] [-ppm|-bmp] [-pall]
   `-skip n`
   : Skip the first $n$ snapshots for visualization or data exports.
 
+  `-notim` (after v5.1)
+  : Do *not* plot the elapsed time in the snapshot figures.
+
+
 ## `diff_snp.x`
 
 This program takes the difference between two snapshots and exports it
