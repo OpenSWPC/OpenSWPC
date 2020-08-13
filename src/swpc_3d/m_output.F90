@@ -1341,8 +1341,8 @@ contains
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'evlo',           evlo))
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'evla',           evla))
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'evdp',           evdp))
-    call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'evx',            evx))
-    call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'evy',            evy))
+    call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'evx',            sx0))
+    call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'evy',            sy0))
 
 
     !! variable attributes

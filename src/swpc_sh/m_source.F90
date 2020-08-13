@@ -333,6 +333,7 @@ contains
     real(SP) :: D, S
     integer :: is0, js0, ks0
     real(SP), allocatable :: r0(:)
+    real(SP) :: sy(ns)
     !! ----
 
     call std__getio( io )
@@ -352,11 +353,11 @@ contains
       select case( stf_format )
 
       case( 'xym0ij' )
-        read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), mo(i), rdum, rdum, rdum, myz(i), rdum, mxy(i)
+        read( adum,*,iostat=ierr ) sx(i), sy(i), sz(i), sprm(1,i), sprm(2,i), mo(i), rdum, rdum, rdum, myz(i), rdum, mxy(i)
         call assert( ierr == 0 )
 
       case( 'xym0dc' )
-        read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), mo(i), strike, dip, rake
+        read( adum,*,iostat=ierr ) sx(i), sy(i), sz(i), sprm(1,i), sprm(2,i), mo(i), strike, dip, rake
         call assert( ierr == 0 )
         call assert( -360. <= strike .and. strike <= 360. )
         call assert(  -90. <= dip    .and. dip    <= 90.  )
@@ -369,7 +370,7 @@ contains
         call assert( ierr == 0 )
         call assert( -360. <= lon .and. lon <= 360 )
         call assert(  -90. <= lat .and. lat <=  90 )
-        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum)
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), sy(i))
 
       case( 'llm0dc' )
         read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mo(i), strike, dip, rake
@@ -377,15 +378,15 @@ contains
         call assert( -360. <= lon .and. lon <= 360 )
         call assert(  -90. <= lat .and. lat <=  90 )
         call sdr2moment( strike-phi, dip, rake, rdum, rdum, rdum, myz(i), rdum, mxy(i) )
-        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), sy(i) )
 
       case( 'xymwij' )
-        read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), mw, rdum, rdum, rdum, myz(i), rdum, mxy(i)
+        read( adum,*,iostat=ierr ) sx(i), sy(i), sz(i), sprm(1,i), sprm(2,i), mw, rdum, rdum, rdum, myz(i), rdum, mxy(i)
         call assert( ierr == 0 )
         call assert( mw <= 11. ) !! magnitude
         mo(i) = seismic_moment(mw)
       case( 'xymwdc' )
-        read( adum,*,iostat=ierr ) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), mw, strike, dip, rake
+        read( adum,*,iostat=ierr ) sx(i), sy(i), sz(i), sprm(1,i), sprm(2,i), mw, strike, dip, rake
         call assert( ierr == 0 )
         call assert( -360. <= strike .and. strike <= 360. )
         call assert(  -90. <= dip    .and. dip    <= 90.  )
@@ -402,7 +403,7 @@ contains
         call assert(  -90. <= lat .and. lat <=  90 )
         call assert( mw <= 11. ) !! magnitude
         mo(i) = seismic_moment(mw)
-        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum)
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), sy(i))
 
       case( 'llmwdc' )
         read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mw, strike, dip, rake
@@ -415,10 +416,10 @@ contains
         call assert( mw <= 11. ) !! magnitude
         mo(i) = seismic_moment(mw)
         call sdr2moment( strike-phi, dip, rake, rdum, rdum, rdum, myz(i), rdum, mxy(i) )
-        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), sy(i) )
 
       case( 'xydsdc' )
-        read(adum,*,iostat=ierr) sx(i), rdum, sz(i), sprm(1,i), sprm(2,i), D, S, strike, dip, rake
+        read(adum,*,iostat=ierr) sx(i), sy(i), sz(i), sprm(1,i), sprm(2,i), D, S, strike, dip, rake
         call assert( ierr == 0 )
         call assert( -360. <= strike .and. strike <= 360. )
         call assert(  -90. <= dip    .and. dip    <= 90.  )
@@ -444,7 +445,7 @@ contains
         call assert( -180. <= rake   .and. rake   <= 180. )
 
         call sdr2moment( strike-phi, dip, rake, rdum, rdum, rdum, myz(i), rdum, mxy(i) )
-        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), sy(i) )
 
         is0 = x2i( sx(i), xbeg, real(dx) )
         ks0 = z2k( sz(i), zbeg, real(dz) )
@@ -463,7 +464,7 @@ contains
       end select
 
       if( i==1 ) then
-        call geomap__c2g( sx(i), 0.0, clon, clat, phi, evlo, evla )
+        call geomap__c2g( sx(i), sy(i), clon, clat, phi, evlo, evla )
         evdp = sz(i)
         mxx0 = -12345.0
         myy0 = -12345.0
@@ -473,6 +474,7 @@ contains
         mxy0 = mxy(i)
         otim = sprm(1,i)
         sx0 = sx(i)
+        sy0 = sy(i)
       end if
 
     end do
