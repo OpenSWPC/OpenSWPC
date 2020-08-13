@@ -49,6 +49,7 @@ program SWPC_PSV
   logical :: stopwatch_mode
   integer :: io_prm, io_watch
   integer :: it0
+  logical :: strict_mode
   !! ----
 
   !!
@@ -64,6 +65,9 @@ program SWPC_PSV
   open( io_prm, file=trim(fn_prm), action='read', status='old' )
 
   call readini( io_prm, 'stopwatch_mode', stopwatch_mode, .true.  )
+
+  call readini( io_prm, 'strict_mode', strict_mode, .false. )
+  call readini__strict_mode( strict_mode )
 
   !!
   !! Read control parameters
