@@ -159,8 +159,8 @@ contains
     !! default values
     character(256), parameter :: D_ODIR = './dat'
     !! velocity structure
-    real(SP) :: den(nx,ny), rig(nx,ny), lam(nx,ny)
-    real(SP) :: vp(nx,ny),  vs(nx,ny)
+    real(SP), allocatable :: den(:,:), rig(:,:), lam(:,:)
+    real(SP), allocatable :: vp(:,:),  vs(:,:)
     real(SP), allocatable :: amp(:,:,:)
     real(SP) :: xx(nx), yy(ny)
     integer :: it
@@ -184,6 +184,8 @@ contains
     !!                  handling of command line arguments                    !!
     !!------------------------------------------------------------------------!!
 
+    allocate( den(nx,ny), rig(nx,ny), lam(nx,ny) )
+    allocate( vp(nx,ny),  vs(nx,ny))
 
     !!
     !! output directory
@@ -367,10 +369,10 @@ contains
     real,           parameter :: D_MUL = 1000.
 
     !! velocity structure
-    real(SP) :: den(nx,ny), rig(nx,ny), lam(nx,ny)
-    real(SP) :: vp(nx,ny),  vs(nx,ny), topo(nx,ny)
-    integer  :: cmed(3,nx,ny) ! color of background medium
-    real(SP) :: medium_bound(nx,ny)
+    real(SP), allocatable :: den(:,:), rig(:,:), lam(:,:)
+    real(SP), allocatable :: vp(:,:), vs(:,:), topo(:,:)
+    integer, allocatable :: cmed(:,:,:)
+    real(SP), allocatable :: medium_bound(:,:)
 
     real(SP), allocatable :: amp(:,:,:)
     integer,  allocatable :: img(:,:,:)
@@ -408,11 +410,17 @@ contains
     !!                  handling of command line arguments                    !!
     !!------------------------------------------------------------------------!!
 
+    !! Memory allocation
+    allocate( den(nx,ny), rig(nx,ny), lam(nx,ny) )
+    allocate( vp(nx,ny),  vs(nx,ny), topo(nx,ny) ) 
+    allocate( cmed(3,nx,ny) )
+    allocate( medium_bound(nx,ny))
 
     !!
     !! output directory
     !!
     call getopt( 'dir', is_exist, odir, typ )
+
     call system__call('/bin/mkdir '//trim(odir)//' > /dev/null 2>&1 ' )
 
 
@@ -570,10 +578,6 @@ contains
       medium_bound(:,ny) = medium_bound(:,ny-1)
 
     end if
-
-
-
-
 
 
 
