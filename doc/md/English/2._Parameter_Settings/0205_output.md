@@ -253,6 +253,10 @@ connected to a single file, with headers as in the following:
 
 It is assumed that the number of samples (`ntpts`) are in common in the `csf` format. If the `csf` format is selected, each parallel computation node exports waveforms in the corresponding domain into csf files for every components. 
 
+
+!!! Caution "Exporting large number of waveform dataset"
+    Large-scale computer systems often adopt the parallel lustre file system, which is *not* good at treating small but many files such as seismic wave traces in SAC format. In this case, it is recommended to use concatnated CSF format.
+
 ## Output Filename Conventions
 
 Output data names are determined by the following rules:
