@@ -20,8 +20,9 @@ theme:
   palette:
     primary: 'black'
     accent: 'teal'
-  feature:
-    tabs: true
+  features:
+    - tabs
+    - instant
 
    
 extra_css:
@@ -29,14 +30,20 @@ extra_css:
   - "https://fonts.googleapis.com/css?family=Open+Sans:600,800"
   - "css/custom.css"
 
+
+plugins:
+  - search:
+      separator: '[\s\-\.]+'
+      lang:
+        - en
+        - ja
+
 extra:
-  search:
-    language: 'en, ja'
   font:
 #    text: 'Noto Sans JP'
     code: 'Consolas'
   social:
-    - type: 'github'
+    - icon: fontawesome/brands/github-alt
       link: 'https://github.com/tktmyd'
 
 
