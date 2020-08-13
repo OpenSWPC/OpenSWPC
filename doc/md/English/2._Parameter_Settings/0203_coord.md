@@ -139,10 +139,7 @@ selected carefully. One may specify a smaller spatial grid size to avoid
 this problem; however, in this case, the time-step size must also be
 shortened to satisfy the stability condition.
 
-これら安定条件と波長条件は，差分法プログラム実行開始時に標準エラー出力に
-Stability Condition `c` および Wavelength Condition `r`
-として表示される．それぞれ，安定条件と時間刻みの比および構造中の最小波長と空間グリッドサイズの比を意味している．
-
+Parameters related to the above conditions will be displayed to the standard error output when the `OpenSWPC` programs start computation as the Stability Condition `c` and the Wavelength Condition `r`. They representes ratios between allowed maximum timestep by the stability condition and the time step parameter `dt`, and between the minimum wavelength in the medium and grid spacing, respectively. The former must be smaller than 1 to perform computation. 
 
 !!! Info "Parameters"
     **`nproc_x`**, **`nproc_y`**
