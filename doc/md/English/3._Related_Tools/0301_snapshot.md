@@ -83,6 +83,10 @@ read_snp.x -i snapshotfile [-h] [-ppm|-bmp] [-pall]
   `-skip n`
   : Skip the first $n$ snapshots for visualization or data exports.
 
+  `-notim` (after v5.1)
+  : Do *not* plot the elapsed time in the snapshot figures.
+
+
 ## `diff_snp.x`
 
 This program takes the difference between two snapshots and exports it
@@ -94,3 +98,30 @@ $ diff_snp.x snap1 snap2 diffile
 
 The output file format (`NetCDF` or binary) depends on the input file
 format.
+
+
+## `fs2grd.x`  
+
+**New in v5.1**
+
+Although snapshot data from `OpenSWPC` along the ground surface or ocean bottom follows the NetCDF format, they cannot be used in the GMT's grdimage command because they are not evenly-spaced grid data along longitude and latitude. 
+
+The utility program `fs2grd.x` resamples the `OpenSWPC`'s output dataset in longitude/latitude coordinate to convert it to GMT-friendly grd-format dataset. 
+
+``` bash
+$ fs2grd.x -i input.nc -v variable_name 
+           -R region -dlon delta_lon -dlat delta_lat 
+```
+
+
+  `-i`
+  : Specify the output file of `OpenSWPC` in NetCDF format to be resampled. The snapshot must be on the free surface (`fs`), ocean bottom (`ob`) or `xy` coordinates. 
+
+  `-R` `lon0/lon1/lat0/lat1`
+  : The region of resampling. Minimum(`lon0`) and maximum(`lon1`) longigude, minimum(`lat0`) and maximum(`lat1`) latitude. The formatting is similar to that in the GMT, but a blank space is necessary between `-R` and arguments. 
+  
+  `-dlon` delta_lon, `-dlat` delta_lat
+  : Grid spacings in longitudal and latitudal directions. 
+
+  `-v` variable_name
+  : Variable name to be resampled. Any horizontal-space 2D variables can be specified in the snapshot. One may confirm the list of the variables in the NetCDF file by `ncdump -h` command. If the specified variable is time-dependent, such as `Vx, Vy, Vz` or `div, rot_x, rot_y, rot_z`, the `fs2grd.x` will export time-sequential (many) files. 

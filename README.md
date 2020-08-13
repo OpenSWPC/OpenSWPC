@@ -1,8 +1,8 @@
 # OpenSWPC -- An Open-source Seismic Wave Propagation Code
 
-Corresponding Author: Takuto Maeda
+![logomark](./doc/md/fig/logo_h.png)
 
-![example](./doc/md/fig/swpc-demo.gif)
+Corresponding Author: Takuto Maeda
 
 ## Description
 

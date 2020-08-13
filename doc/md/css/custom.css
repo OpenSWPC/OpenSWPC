@@ -8,24 +8,24 @@ body {
 .md-typeset h1 {
     font-weight: bold;
     /* color: #000; */
-    color: #404db2;
+    color: #1b8736;
     border-bottom: solid 2px ;
     padding-bottom: 5px;
 }
 .md-typeset h2 {
-    color: #404db2;
+    color: #1b8736;
     font-weight: bold;
     border-bottom: 1px dashed;
 }
 
 .md-typeset h3 {
-    color: #404db2;
+    color: #1b8736;
     font-weight: bold;
     border-bottom: 1px dotted #888;
 }
 
 .md-typeset h4 {
-    color: #404db2;
+    color: #1b8736;
     font-weight: bold;
 }
 

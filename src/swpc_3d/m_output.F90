@@ -1338,6 +1338,12 @@ contains
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'datatype',       hdr%snaptype ) )
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'dt',             dt * ntdec_s ) )
 
+    call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'evlo',           evlo))
+    call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'evla',           evla))
+    call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'evdp',           evdp))
+    call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'evx',            sx0))
+    call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'evy',            sy0))
+
 
     !! variable attributes
     call nc_chk( nf90_put_att( hdr%io, hdr%vid_t, 'long_name', 't' ) )

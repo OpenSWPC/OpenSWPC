@@ -22,7 +22,6 @@ out/*
 *.ps
 *.tim
 *.ppm
-*.png
 *.cpt
 *.mpg
 *.mp4

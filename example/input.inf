@@ -14,7 +14,7 @@
   title            = 'swpc'           !! exe title: used for output filenames
   odir             = './out'          !! output directory
   ntdec_r          = 50               !! screen report timing (1/cycle)
-
+  strict_mode      = .false.          !! all parameters to be explicitly definied
 
   !! ----------------------------------------------------------------------- !!
   !! Model/Grid Size and Area
@@ -49,7 +49,7 @@
   fq_max           = 2.00             !! maximum freq. for Q-constant model
   fq_ref           = 1.0              !! ref. freq. for physical dispersion
 
-  fullspace_mode   = .false.          !! no ground surface
+  fullspace_mode   = .false.          !! no ground surface, only for 2D codes
 
   !! ----------------------------------------------------------------------- !!
   !! Snapshot Output
@@ -93,14 +93,14 @@
 
   sw_wav_v         = .true.           !! velocity trace output at stations
   sw_wav_u         = .false.          !! displacement trace output at stations
-  sw_wav_stress    = .false.           !! stress tensor trace
-  sw_wav_strain    = .false.           !! strain tansor trace
+  sw_wav_stress    = .true.           !! stress tensor trace
+  sw_wav_strain    = .true.           !! strain tansor trace
   ntdec_w          = 5                !! time decimation of waveform output
   st_format        = 'xy'             !! station format: 'xy' or 'll'
   fn_stloc         = './example/stloc.xy'  !! station location file
   wav_format       = 'sac'            !! 'sac' or 'csf'
-  wav_calc_dist    = .false.          !! explicitly set  the SAC dist header
-
+  wav_calc_dist    = .false.          !! Calculate epicentral distance
+  
   !! ----------------------------------------------------------------------- !!
   !! Earthquake Source
   !!
@@ -182,8 +182,7 @@
     dir_rmed         = './in/'             !! location of random medium file
     fn_grdlst_rmed   = './example/grd.lst' !! grd file list
     rhomin           = 1.0                 !! minimum density threshold
-    fn_rmed0         = 'dummy.ns'          !! vel. purturb. on a uniform media
-    
+
   !! ----------------------------------------------------------------------- !!
   !! Checkpoint/Restart
   !!
@@ -191,6 +190,7 @@
   ckpdir           = './out/ckp'      !! output directory
   ckp_interval     = 1000000          !! interval for checkpoint check（1/cycle）
   ckp_time         = 1000000.         !! checkpoint time
+  ckp_seq          = .true.           !! sequential output mode
 
   !! ----------------------------------------------------------------------- !!
   !! Reciprocity Green's Function Mode
@@ -208,8 +208,8 @@
   !! MISC
   !!
 
-  stopwatch_mode   = .true.           !! measure computation time at routines
-  benchmark_mode   = .true.           !! benchmark mode
+  stopwatch_mode   = .false.          !! measure computation time at routines
+  benchmark_mode   = .false.          !! benchmark mode
 
   ipad             = 0                !! memory padding size for tuning
   jpad             = 0                !! memory padding size for tuning

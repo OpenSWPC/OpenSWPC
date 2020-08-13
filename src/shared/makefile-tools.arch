@@ -28,7 +28,7 @@ ifeq ($(arch),mac-intel)
 
   FC      = ifort
   FFLAGS  = -O3 -xHOST \
-            -warn all -heap-arrays 10 -static-intel -I../include \
+            -warn all -heap-arrays -static-intel -I../include \
 		    -D_INFO
   NCFLAG  = -D_NETCDF
   NCLIB   = -L$(HOME)/local/lib
@@ -36,7 +36,7 @@ ifeq ($(arch),mac-intel)
   NETCDF  = -lnetcdf
 
   ifeq ($(debug),true)
-    FFLAGS  = -CB -traceback -Wl,-no_pie -heap-arrays 10 \
+    FFLAGS  = -CB -traceback -Wl,-no_pie -heap-arrays \
 			  -static-intel -I../include -D_INFO -D_DEBUG
   endif
 
@@ -74,7 +74,7 @@ ifeq ($(arch),eic)
   NETCDF  =  -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
 
   ifeq ($(publish),true)
-    FFLAGS = -xAVX -O3 -lmpi -I../include -D_INFO -static-intel -mcmodel=small
+    FFLAGS = -xHOST -O2 -lmpi -I../include -D_INFO -static-intel -mcmodel=small
   endif
 
 endif
@@ -97,7 +97,7 @@ endif
 ifeq ($(arch),es3)
   FC      = ifort
   FFLAGS  = -O3 -xHOST \
-	    -warn all -heap-arrays 10 -static-intel -I../include \
+	    -warn all -heap-arrays -static-intel -I../include \
 	    -D_INFO 
   NCFLAG  = -D_NETCDF
   NCLIB   = -L/usr/local/lib
@@ -130,7 +130,8 @@ endif
 ##
 ifeq ($(arch),oak)
   FC      = module load netcdf netcdf-fortran hdf5; ifort
-  FFLAGS  =  -D_INFO -D_ASSERT -I../include
+  FFLAGS  =  -D_INFO -D_ASSERT -O2 -xHOST \
+             -warn all -heap-arrays -I../include
   NCFLAG  = -D_NETCDF
   NCLIB =
   NCINC =
@@ -139,7 +140,8 @@ endif
 # this is an alias of Oakforest-PACS
 ifeq ($(arch),ofp)
   FC      = module load netcdf netcdf-fortran hdf5; ifort
-  FFLAGS  =  -D_INFO -D_ASSERT -I../include
+  FFLAGS  =  -D_INFO -D_ASSERT -O2 -xHOST \
+             -warn all -heap-arrays -I../include
   NCFLAG  = -D_NETCDF
   NCLIB =
   NCINC =
@@ -152,7 +154,8 @@ endif
 ##
 ifeq ($(arch),obcx)
   FC      = module load netcdf netcdf-fortran hdf5; ifort
-  FFLAGS  =  -D_INFO -D_ASSERT -I../include
+  FFLAGS  =  -D_INFO -D_ASSERT -O2 -xHOST \
+             -warn all -heap-arrays -I../include
   NCFLAG  = -D_NETCDF
   NCLIB =
   NCINC =

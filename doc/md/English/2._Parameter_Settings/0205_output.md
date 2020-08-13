@@ -70,7 +70,7 @@ The snapshot file contains the header information listed in the following table.
 | `v1,v2,v3`   | real          | Currently not being used                                          |
 
 
-!!! Caution "A change in SAC header"
+!!! Caution "Change in a SAC header"
     `evdp` is measured in a unit of km after OpenSWPC version 5.0, while it was in m unit previously.
 
 For `NetCDF`, these headers are set as global attributes. The other
@@ -252,6 +252,10 @@ connected to a single file, with headers as in the following:
     : Number of samples in a trace
 
 It is assumed that the number of samples (`ntpts`) are in common in the `csf` format. If the `csf` format is selected, each parallel computation node exports waveforms in the corresponding domain into csf files for every components. 
+
+
+!!! Caution "Exporting large number of waveform dataset"
+    Large-scale computer systems often adopt the parallel lustre file system, which is *not* good at treating small but many files such as seismic wave traces in SAC format. In this case, it is recommended to use concatnated CSF format.
 
 ## Output Filename Conventions
 
