@@ -60,6 +60,9 @@ read_snp.x -i snapshotfile [-h] [-ppm|-bmp] [-pall]
   `-skip n`
   : 最初の$n$スナップショットを読み飛ばす．
 
+  `-notim` (after v5.1)
+  : 可視化画像に経過時間をプロットしない．
+
 
 ## `diff_snp.x`
 
