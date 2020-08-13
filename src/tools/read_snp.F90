@@ -140,6 +140,7 @@ contains
     write(STDERR,'(A)') '  -bin: export single-precision xyz binary data'
     write(STDERR,'(A)') '  -asc: export xyz ascii data'
     write(STDERR,'(A)') '  -skip n: skip first n snapshots for export'
+    write(STDERR,'(A)') '  -notim: do not plot elapsed time on the snapshort figures'
     write(STDERR,*)
 
     stop
@@ -404,6 +405,7 @@ contains
     integer :: ir, ig, ib
     integer :: vid_rho, vid_mu, vid_lambda, vid_topo
     integer :: start(3), count(3)
+    logical :: no_timemark
     !--
 
     !!------------------------------------------------------------------------!!
@@ -434,18 +436,23 @@ contains
     !! amplitude scale
     !!
 
-    !! 個別指定
+    !! independent amplitude weight
     call getopt('mul1', is_exist, mul(1), D_MUL )
     call getopt('mul2', is_exist, mul(2), D_MUL )
     call getopt('mul3', is_exist, mul(3), D_MUL )
     call getopt('mul4', is_exist, mul(4), D_MUL )
 
-    !! 一括指定
+    !! ... or equall weight 
     call getopt('mul',  is_exist, mula  )
     if( is_exist )   mul(:) = mula
 
     call getopt( 'abs', is_abs ) ! absolute value
 
+    !!
+    !! Time mark (default is ON)
+    !! 
+    call getopt('notim', no_timemark)
+    
     !!
     !! graph size ( if includes absorbing boundary layer )
     !!
@@ -772,8 +779,9 @@ contains
         img(:,nys-1:nys ,1:nxs     ) = 0
 
         !! timemark
-        call stamp__char("t = "//trim(ct)//' s', 20, nxs-40, nys, nxs, img, .false. )
-
+        if( .not. no_timemark ) then
+          call stamp__char("t = "//trim(ct)//' s', 20, nxs-40, nys, nxs, img, .false. )
+        end if 
 
         !! export
         if( typ == 'ppm' ) then
@@ -791,8 +799,9 @@ contains
         img(:,nxs-1:nxs ,1:nys     ) = 0
 
         !! timemark
-        call stamp__char("t = "//trim(ct)//'s', 20, nys-40, nxs, nys, img, .false. )
-
+        if( .not. no_timemark ) then
+          call stamp__char("t = "//trim(ct)//'s', 20, nys-40, nxs, nys, img, .false. )
+        end if
 
         !! export
         if( typ == 'ppm' ) then
