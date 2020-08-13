@@ -1,6 +1,6 @@
 # OpenSWPC Users' Guide
 
-![](./fig/swpc-demo.gif)
+![](./fig/logo_v.png)
 
 ## Description
 

@@ -23,6 +23,7 @@ theme:
   features:
     - tabs
     - instant
+  logo: fig/icon.png
 
    
 extra_css:
