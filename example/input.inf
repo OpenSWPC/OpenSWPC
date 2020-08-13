@@ -20,8 +20,8 @@
   !! Model/Grid Size and Area
   !!
 
-  nproc_x          = 4                !! parallelization in x-dir
-  nproc_y          = 6                !! parallelization in x-dir
+  nproc_x          = 2                !! parallelization in x-dir
+  nproc_y          = 2                !! parallelization in x-dir
   nx               = 384              !! total grid number in x-dir
   ny               = 384              !! total grid number in y-dir
   nz               = 384              !! total grid number in z-dir
@@ -99,7 +99,8 @@
   st_format        = 'xy'             !! station format: 'xy' or 'll'
   fn_stloc         = './example/stloc.xy'  !! station location file
   wav_format       = 'sac'            !! 'sac' or 'csf'
-
+  wav_calc_dist    = .false.          !! Calculate epicentral distance
+  
   !! ----------------------------------------------------------------------- !!
   !! Earthquake Source
   !!
@@ -207,8 +208,8 @@
   !! MISC
   !!
 
-  stopwatch_mode   = .true.           !! measure computation time at routines
-  benchmark_mode   = .true.           !! benchmark mode
+  stopwatch_mode   = .false.          !! measure computation time at routines
+  benchmark_mode   = .false.          !! benchmark mode
 
   ipad             = 0                !! memory padding size for tuning
   jpad             = 0                !! memory padding size for tuning
