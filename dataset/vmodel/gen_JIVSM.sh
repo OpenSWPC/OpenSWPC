@@ -22,10 +22,10 @@ archive_jivsm_w=lp2012nankai-w_str.zip
 # JIVSM original data
 
 #if [ ! -e ${archive_jivsm_e} ]; then
-#  curl  -o ${archive_jivsm_e} http://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-e_str.zip
+#  curl  -o ${archive_jivsm_e} https://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-e_str.zip
 #fi
 #if [ ! -e ${archive_jivsm_w} ]; then
-#  curl  -o ${archive_jivsm_w} http://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-w_str.zip
+#  curl  -o ${archive_jivsm_w} https://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-w_str.zip
 #fi
 
 

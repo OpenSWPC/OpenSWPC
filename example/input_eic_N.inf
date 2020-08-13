@@ -14,7 +14,7 @@
   title            = 'swpc_N'        !! exe title: used for output filenames
   odir             = './out'          !! output directory
   ntdec_r          = 50               !! screen report timing (1/cycle)
-
+  strict_mode      = .false. 
 
   !! ----------------------------------------------------------------------- !!
   !! Model/Grid Size and Area

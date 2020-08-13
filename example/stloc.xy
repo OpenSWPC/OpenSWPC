@@ -11,8 +11,9 @@
 #      'oba': locate one-grid above from the groud surface/seafloor
 #      'bd{i}' (i=0,...,9) i-th boundary interface
 #
-#    x     y     z       stnm   zsw
+# ---
+#      x     y     z       stnm   zsw
 # --------------------------------------
-   0.0   0.0   0.0       st01   obb
-   -200. -500. 20        st02   obb
-   10.0  5.0   0.0       st03   obb
+     0.0   0.0   0.0       st01   obb
+   -10.0  -5.0   0.0       st02   obb
+    10.0   5.0   0.0       st03   obb

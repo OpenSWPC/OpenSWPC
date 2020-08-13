@@ -21,6 +21,8 @@ module m_readini
 
   !! -- Public Procedures
   public :: readini
+  public :: readini__strict_mode
+  logical :: strict_mode = .false. 
 
   !--
 
@@ -91,8 +93,13 @@ contains
       !! reach to the last line
       if( ierr /= 0 ) then
         call info( 'key ' // trim(keyword) //' is not found.' )
-        call info( '    Use default value '//trim(def)//' instead.' )
-        var = trim(def)
+        if( .not. strict_mode ) then
+          call info( '    Use default value '//trim(def)//' instead.' )
+          var = trim(def)
+        else
+          call info( '    Program terminate ... ' )
+          stop
+        end if
         return
       end if
 
@@ -194,6 +201,13 @@ contains
 
   end subroutine readini_l
   !! --------------------------------------------------------------------------------------------------------------------------- !!
+
+  subroutine readini__strict_mode( mode )
+    logical, intent(in) :: mode
+
+    strict_mode = mode
+    
+  end subroutine readini__strict_mode
 
 end module m_readini
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
