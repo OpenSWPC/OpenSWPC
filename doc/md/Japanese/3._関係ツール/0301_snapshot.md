@@ -73,3 +73,31 @@ $ diff_snp.x snap1 snap2 diffile
 ```
 
 出力ファイルのフォーマット（`NetCDF`もしくは独自バイナリ）は入力ファイルのフォーマットに依存する．
+
+
+## `fs2grd.x`  
+
+**New in v5.1**
+
+`OpenSWPC`の地表面もしくは海面におけるスナップショットファイル`(title).(ob|fs).(typ).nc`は，NetCDF形式ファイルではあるものの，緯度経度方向に等間隔のデータではないため，GMTの`grdimage`ではそのままプロットできない．
+
+`fs2grd.x`は，`OpenSWPC`内指定された緯度経度範囲と間隔で出力ファイルをリサンプルし，GMTで直接利用可能なgrd形式のデータを出力する．
+
+``` bash
+$ fs2grd.x -i input.nc -v variable_name 
+           -R region -dlon delta_lon -dlat delta_lat 
+```
+
+
+  `-i`
+  : `OpenSWPC`出力スナップショット（NetCDF形式）ファイル．地表面（`fs`）・海底面（`ob`）あるいは`xy`データであること．
+
+  `-R` `lon0/lon1/lat0/lat1`
+  : リサンプルデータを作る領域．経度方向の最小`lon0`と最大`lon1`，緯度方向の最小`lat0`と`lat1`を与える．
+  記法はGMTの書式に準じるが，`-R`とオプションの値の間には空白が必要であることに注意．シミュレーション領域の外側を含んだ場合，そこはNaNで埋められる．
+
+  `-dlon` delta_lon, `-dlat` delta_lat
+  : 経度・緯度方向のグリッド間隔．この間隔で補間される．
+
+  `-v` variable_name
+  : 変数名．スナップショットに定義されている水平面2次元配列データであれば何でも良い．変数の一覧は`ncdump -h`コマンドで確認することができる．`Vx, Vy, Vz`や`div, rot_x, rot_y, rot_z`のような時間変化するデータは，時間ステップごとに分割したファイルが生成される．
