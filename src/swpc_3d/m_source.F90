@@ -540,9 +540,11 @@ contains
     character(256) :: adum
     integer :: ierr
     real(SP) :: mw
-    real(SP) :: D, S
+    real(MP) :: D, S
     integer :: is0, js0, ks0
     real(SP), allocatable :: rdum(:)
+    integer :: iex
+    real(MP):: M0tmp
     !! ----
 
     call std__getio( io )
@@ -678,6 +680,31 @@ contains
         else
           mo(i) = 0.
         end if
+
+      case( 'psmeca' )
+        read(adum,*,iostat=ierr) lon, lat, sz(i), mzz(i), mxx(i), myy(i), mxz(i), myz(i), mxy(i), iex
+        ! reverse sign
+        myz(i) = -myz(i)
+        mxy(i) = -mxy(i)
+
+        ! moment in dyn-cm
+        M0tmp = sqrt( mxx(i)**2 + myy(i)**2 + mzz(i)**2 + 2 * ( mxz(i)**2 + myz(i)**2 + mxy(i)**2 ))/ sqrt(2.0)
+        mo(i) = M0tmp * 10**(iex)
+        
+        sprm(1,i) = 0.0
+        ! 2 x (empirical half-duration) will be a rise time
+        sprm(2,i) = 2 * 1.05 * 1e-8 * mo(i)**(1._dp/3._dp)
+
+        ! convert to N-m unit from Dyn-cm
+        mo(i) = mo(i) * 1e7
+
+        ! scale moment tensor components
+        mxx(i) = mxx(i) / M0tmp
+        myy(i) = myy(i) / M0tmp
+        mzz(i) = mzz(i) / M0tmp
+        mxz(i) = mxz(i) / M0tmp
+        myz(i) = myz(i) / M0tmp
+        mxy(i) = mxy(i) / M0tmp
 
       case default
         call info( 'invalid source type' )
