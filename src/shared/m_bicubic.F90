@@ -393,8 +393,8 @@ contains
         ffy(i,j) = ( ff(i,j+1) - ff(i,j-1) ) / ( 2 * dy )
       end do
       !  approximate by one-sided derivatives
-      ffy(i,1) = ( ffy(i,2) - ffy(i,1) ) / dy
-      ffy(i,ny) = ( ffy(i,ny) - ffy(i,ny-1) ) / dy
+      ffy(i,1) = ( ff(i,2) - ff(i,1) ) / dy
+      ffy(i,ny) = ( ff(i,ny) - ff(i,ny-1) ) / dy
     end do
   end subroutine diffy
   !! --------------------------------------------------------------------------------------------------------------------------- !!
