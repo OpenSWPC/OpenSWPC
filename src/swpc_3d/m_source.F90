@@ -686,6 +686,8 @@ contains
         ! reverse sign
         myz(i) = -myz(i)
         mxy(i) = -mxy(i)
+        
+        call geomap__g2c( lon, lat, clon, clat, phi, sx(i), sy(i) )
 
         ! moment in dyn-cm
         M0tmp = sqrt( mxx(i)**2 + myy(i)**2 + mzz(i)**2 + 2 * ( mxz(i)**2 + myz(i)**2 + mxy(i)**2 ))/ sqrt(2.0)
