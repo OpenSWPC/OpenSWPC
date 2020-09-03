@@ -691,14 +691,14 @@ contains
 
         ! moment in dyn-cm
         M0tmp = sqrt( mxx(i)**2 + myy(i)**2 + mzz(i)**2 + 2 * ( mxz(i)**2 + myz(i)**2 + mxy(i)**2 ))/ sqrt(2.0)
-        mo(i) = M0tmp * 10**(iex)
+        mo(i) = M0tmp * 10.**(iex)
         
         sprm(1,i) = 0.0
         ! 2 x (empirical half-duration) will be a rise time
         sprm(2,i) = 2 * 1.05 * 1e-8 * mo(i)**(1._dp/3._dp)
 
         ! convert to N-m unit from Dyn-cm
-        mo(i) = mo(i) * 1e7
+        mo(i) = mo(i) * 1e-7
 
         ! scale moment tensor components
         mxx(i) = mxx(i) / M0tmp
