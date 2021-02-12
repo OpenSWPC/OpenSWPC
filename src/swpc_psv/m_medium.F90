@@ -285,11 +285,11 @@ contains
 
       do i=ibeg, iend
 
-        kfs_top(i) = min( kfs(i)-1, minval( kfs(i-1:i+2)+1) )
-        kfs_bot(i) = max( kfs(i)+1, maxval( kfs(i-1:i+2)  ) )
+        kfs_top(i) = max(kbeg, min( kfs(i)-1, minval( kfs(i-1:i+2)+1) ))
+        kfs_bot(i) = min(kend, max( kfs(i)+1, maxval( kfs(i-1:i+2)  ) ))
 
-        kob_top(i) = min( kob(i)-1, minval( kob(i-1:i+2)+1) )
-        kob_bot(i) = max( kob(i)+1, maxval( kob(i-1:i+2)  ) )
+        kob_top(i) = max(kbeg, min( kob(i)-1, minval( kob(i-1:i+2)+1) ))
+        kob_bot(i) = min(kend, max( kob(i)+1, maxval( kob(i-1:i+2)  ) ))
 
       end do
 
