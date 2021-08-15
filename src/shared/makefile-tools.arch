@@ -161,3 +161,15 @@ ifeq ($(arch),obcx)
   NCINC =
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5
 endif
+
+##
+## BDEC
+##
+ifeq ($(arch),bdec-o)
+  FC      = module purge; module load intel netcdf netcdf-fortran hdf5; ifort
+  FFLAGS  =  -D_INFO -D_ASSERT -O2 -xHOST -warn all -heap-arrays -I../include
+  NCFLAG  = -D_NETCDF
+  NCLIB =
+  NCINC =
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5
+endif
