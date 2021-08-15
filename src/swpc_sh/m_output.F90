@@ -268,11 +268,11 @@ contains
       do i=1, nst
 
         if ( sw_wav_v ) then
-          call export_wav__sac(sh_stress(1,i), wav_vel(:,1,i))
+          call export_wav__sac(sh_vel(1,i), wav_vel(:,1,i))
         end if
 
         if ( sw_wav_u ) then
-          call export_wav__sac(sh_stress(1,i), wav_disp(:,1,i))
+          call export_wav__sac(sh_disp(1,i), wav_disp(:,1,i))
         end if
 
         
