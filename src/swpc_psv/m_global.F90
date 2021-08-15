@@ -361,9 +361,11 @@ contains
     kbeg_k = kbeg
     kend_k = kend
 
-    if( fullspace_mode ) kbeg_k = na+1
     
     if( abc_type == 'pml' ) then
+
+      if( fullspace_mode ) kbeg_k = na+1
+
       if( iend <= na ) then ! no kernel integration
         ibeg_k = iend+1
       else if ( ibeg <= na ) then ! pertial kernel

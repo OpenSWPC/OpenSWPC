@@ -63,6 +63,9 @@ contains
       call absorb_p__update_vel
     case( 'cerjan' )
       call absorb_c__update_vel
+      call absorb_c__update_vel
+      call absorb_c__update_vel
+      call absorb_c__update_vel
     case default
       continue
     end select
@@ -81,6 +84,9 @@ contains
     case( 'pml' )
       call absorb_p__update_stress
     case( 'cerjan' )
+      call absorb_c__update_stress
+      call absorb_c__update_stress
+      call absorb_c__update_stress
       call absorb_c__update_stress
     case default
       continue
