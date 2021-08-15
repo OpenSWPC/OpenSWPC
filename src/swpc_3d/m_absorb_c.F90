@@ -135,9 +135,9 @@ contains
     real(SP) :: gcc
 
     !$omp parallel do schedule(dynamic) private( i, j, k, gcc )
-    do j=jbeg_k, jend_k
-      do i=ibeg_k, iend_k
-        do k=kbeg_a(i,j), kend_k
+    do j=jbeg, jend
+      do i=ibeg, iend
+        do k=kbeg, kend_k
 
           gcc = gx_c(i) * gy_c(j) * gz_c(k)
           Sxx(k,i,j) = Sxx(k,i,j) * gcc
@@ -162,9 +162,9 @@ contains
     integer :: i, j, k
 
     !$omp parallel do schedule(dynamic) private(i,j,k)
-    do j=jbeg_k, jend_k
-      do i=ibeg_k, iend_k
-        do k=kbeg_a(i,j), kend_k
+    do j=jbeg, jend
+      do i=ibeg, iend
+        do k=kbeg, kend
 
           Vx(k,i,j) = Vx(k,i,j) * gx_b(i) * gy_c(j) * gz_c(k)
           Vy(k,i,j) = Vy(k,i,j) * gx_c(i) * gy_b(j) * gz_c(k)

@@ -437,9 +437,10 @@ contains
     kbeg_k = kbeg
     kend_k = kend
 
-    if( fullspace_mode ) kbeg_k = na + 1
-
     if( abc_type == 'pml' ) then
+
+      if( fullspace_mode ) kbeg_k = na + 1
+
       if      ( iend <= na      ) then; ibeg_k = iend+1;  ! no kernel integration
       else if ( ibeg <= na      ) then; ibeg_k = na+1  ;  ! pertial kernel
       end if
@@ -457,7 +458,6 @@ contains
       end if
       kend_k = nz-na
     end if
-
 
     call pwatch__off( "global__setup2" ) !! measure from here
 

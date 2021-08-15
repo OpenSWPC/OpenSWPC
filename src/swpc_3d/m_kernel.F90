@@ -118,7 +118,7 @@ contains
   subroutine kernel__update_vel()
 
     integer :: i, j, k
-    real(MP) :: d3Sx3(kbeg_k:kend_k), d3Sy3(kbeg_k:kend_k), d3Sz3(kbeg_k:kend_k)
+    real(MP) :: d3Sx3(kbeg:kend), d3Sy3(kbeg:kend), d3Sz3(kbeg:kend)
     !! ----
 
     call pwatch__on("kernel__update_vel")
@@ -229,8 +229,8 @@ contains
     real(SP) :: taup1, taus1, taup_plus1, taus_plus1
     real(SP) :: d3v3, dxVx_dyVy, dxVx_dzVz, dyVy_dzVz
     real(SP) :: Rxx_n, Ryy_n, Rzz_n, Ryz_n, Rxz_n, Rxy_n
-    real(MP) :: dxVx(kbeg_k:kend_k),  dyVy(kbeg_k:kend_k), dzVz(kbeg_k:kend_k)
-    real(MP) :: dxVy_dyVx(kbeg_k:kend_k), dxVz_dzVx(kbeg_k:kend_k), dyVz_dzVy(kbeg_k:kend_k)
+    real(MP) :: dxVx(kbeg:kend),  dyVy(kbeg:kend), dzVz(kbeg:kend)
+    real(MP) :: dxVy_dyVx(kbeg:kend), dxVz_dzVx(kbeg:kend), dyVz_dzVy(kbeg:kend)
     !! ----
 
     call pwatch__on("kernel__update_stress")

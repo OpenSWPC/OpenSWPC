@@ -121,8 +121,8 @@ contains
 
     !$omp parallel private(i,k,gc,gb)
     !$omp do schedule(dynamic)
-    do i=ibeg_k, iend_k
-      do k=kbeg_a(i), kend
+    do i=ibeg, iend
+      do k=kbeg, kend
         gc = gx_c(i) * gz_c(k)
         gb = gx_b(i) * gz_b(k)
         Sxx(k,i) = Sxx(k,i) * gc
@@ -143,8 +143,8 @@ contains
 
     !$omp parallel private(i,k)
     !$omp do schedule(dynamic)
-    do i=ibeg_k, iend_k
-      do k=kbeg_a(i), kend
+    do i=ibeg, iend
+      do k=kbeg, kend
         Vx(k,i) = Vx(k,i) * gx_b(i) * gz_c(k)
         Vz(k,i) = Vz(k,i) * gx_c(i) * gz_b(k)
       end do

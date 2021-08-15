@@ -335,15 +335,15 @@ contains
     end do
     !$omp end do nowait
     !$omp end parallel
-
+    
     if( fullspace_mode ) then
 
-    !$omp parallel &
-    !$omp private( dxSxx, dySyy, dzSzz, dySyz, dzSyz, dxSxz, dzSxz, dxSxy ,dySxy ) &
-    !$omp private( gxc0, gxe0, gyc0, gye0, gzc0, gze0 ) &
-    !$omp private( i, j, k )
-    !$omp do &
-    !$omp schedule(dynamic)
+      !$omp parallel &
+      !$omp private( dxSxx, dySyy, dzSzz, dySyz, dzSyz, dxSxz, dzSxz, dxSxy ,dySxy ) &
+      !$omp private( gxc0, gxe0, gyc0, gye0, gzc0, gze0 ) &
+      !$omp private( i, j, k )
+      !$omp do &
+      !$omp schedule(dynamic)
       do j=jbeg_k, jend_k
 
         gyc0(1:4) = gyc(1:4,j)
@@ -607,14 +607,15 @@ contains
     !$omp end parallel
 
     if( fullspace_mode ) then
-    !$omp parallel &
-    !$omp private( gxc0, gxe0, gyc0, gye0, gzc0, gze0 ) &
-    !$omp private( dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz ) &
-    !$omp private( lam2mu_R, lam_R ) &
-    !$omp private( dxVx_ade, dyVy_ade, dzVz_ade ) &
-    !$omp private( i, j, k )
-    !$omp do &
-    !$omp schedule(dynamic)
+
+      !$omp parallel &
+      !$omp private( gxc0, gxe0, gyc0, gye0, gzc0, gze0 ) &
+      !$omp private( dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz ) &
+      !$omp private( lam2mu_R, lam_R ) &
+      !$omp private( dxVx_ade, dyVy_ade, dzVz_ade ) &
+      !$omp private( i, j, k )
+      !$omp do &
+      !$omp schedule(dynamic)
       do j=jbeg_k, jend_k
 
         gyc0(1:4) = gyc(1:4,j)
@@ -708,7 +709,6 @@ contains
       !$omp end parallel
 
     end if
-
     !$omp barrier
 
   end subroutine absorb_p__update_stress

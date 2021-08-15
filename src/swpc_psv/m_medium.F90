@@ -293,6 +293,11 @@ contains
 
       end do
 
+      if( fullspace_mode ) then
+        kfs_bot = kfs_top - 1
+        kob_bot = kob_top - 1 
+      end if
+
     end subroutine surface_detection
     !! ------------------------------------------------------------------------------------------------------------------------ !!
 
