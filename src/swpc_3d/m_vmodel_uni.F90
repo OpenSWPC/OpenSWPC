@@ -58,54 +58,67 @@ contains
     call readini( io_prm, 'qs0',    qs0, 1000000.0 )
     call readini( io_prm, 'topo0', topo0, 0.0 )
 
-    do j = j0, j1
-      do i = i0, i1
 
-        !! define topography shape here
-        bd(i,j,0) = topo0
+    if( fullspace_mode ) then
 
-        do k = k0, k1
+      rho(:,:,:) = rho0
+      mu (:,:,:) = rho0 * vs0 * vs0
+      lam(:,:,:) = rho0 * ( vp0 * vp0 - 2 * vs0 * vs0 )
+      qp (:,:,:) = qp0
+      qs (:,:,:) = qs0
 
-          if( zc( k ) > bd(i,j,0) ) then
+    else
 
-            !! elastic medium
-            rho(k,i,j) = rho0
-            mu (k,i,j) = rho(k,i,j) * vs0 * vs0
-            lam(k,i,j) = rho(k,i,j) * ( vp0*vp0 - 2*vs0*vs0 )
-            qp (k,i,j) = qp0
-            qs (k,i,j) = qs0
+      do j = j0, j1
+        do i = i0, i1
 
-          else if ( zc (k) > 0.0 ) then
+          !! define topography shape here
+          bd(i,j,0) = topo0
 
-            !! ocean column
+          do k = k0, k1
 
-            vp1 = 1.5
-            vs1 = 0.0
+            if( zc( k ) > bd(i,j,0) ) then
 
-            rho(k,i,j) = 1.0
-            mu (k,i,j) = rho(k,i,j) * vs1 * vs1
-            lam(k,i,j) = rho(k,i,j) * ( vp1*vp1 - 2*vs1*vs1 )
-            qp (k,i,j) = 1000000.0 ! effectively no attenuation in ocean column
-            qs (k,i,j) = 1000000.0
+              !! elastic medium
+              rho(k,i,j) = rho0
+              mu (k,i,j) = rho(k,i,j) * vs0 * vs0
+              lam(k,i,j) = rho(k,i,j) * ( vp0*vp0 - 2*vs0*vs0 )
+              qp (k,i,j) = qp0
+              qs (k,i,j) = qs0
 
-          else
+            else if ( zc (k) > 0.0 ) then
 
-            !! air column
+              !! ocean column
 
-            vp1 = 0.0
-            vs1 = 0.0
+              vp1 = 1.5
+              vs1 = 0.0
 
-            rho(k,i,j) = 0.001
-            mu (k,i,j) = rho(k,i,j) * vs1 * vs1
-            lam(k,i,j) = rho(k,i,j) * ( vp1*vp1 - 2*vs1*vs1 )
-            qp (k,i,j) = 10.0 ! artificially strong attenuation in air-column
-            qs (k,i,j) = 10.0 ! artificially strong attenuation in air-column
+              rho(k,i,j) = 1.0
+              mu (k,i,j) = rho(k,i,j) * vs1 * vs1
+              lam(k,i,j) = rho(k,i,j) * ( vp1*vp1 - 2*vs1*vs1 )
+              qp (k,i,j) = 1000000.0 ! effectively no attenuation in ocean column
+              qs (k,i,j) = 1000000.0
 
-          end if
+            else
+
+              !! air column
+
+              vp1 = 0.0
+              vs1 = 0.0
+
+              rho(k,i,j) = 0.001
+              mu (k,i,j) = rho(k,i,j) * vs1 * vs1
+              lam(k,i,j) = rho(k,i,j) * ( vp1*vp1 - 2*vs1*vs1 )
+              qp (k,i,j) = 10.0 ! artificially strong attenuation in air-column
+              qs (k,i,j) = 10.0 ! artificially strong attenuation in air-column
+
+            end if
+          end do
         end do
       end do
-    end do
+    end if
 
+    
     ! dummy value
     bd(:,:,1:NBD) = -9999
 
