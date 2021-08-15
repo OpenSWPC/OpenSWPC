@@ -26,8 +26,9 @@ theme:
     primary: 'green'
     accent: 'black'
   features:
-    - tabs
-    - instant
+    - navigation.tabs
+    - navigation.top
+    - toc.integrate
   logo: fig/icon.png
 
    
@@ -56,14 +57,11 @@ extra:
 markdown_extensions:
   - pymdownx.superfences
   - fontawesome_markdown
-
   - codehilite:
       linenums: true
       use_pygments: true
-
   - pymdownx.arithmatex:
       preview: false
-
   - admonition
   - footnotes
   - fontawesome_markdown
@@ -71,10 +69,9 @@ markdown_extensions:
       permalink: true
   - pymdownx.highlight:
       linenums: true
-    
   - pymdownx.inlinehilite
   - pymdownx.magiclink
-  - markdown.extensions.def_list
+  - def_list
 
 extra_javascript:
   - mathjax-config.js
