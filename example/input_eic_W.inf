@@ -145,7 +145,7 @@
 
   abc_type         = 'pml'            !! 'pml' or 'cerjan'
   na               = 20               !! absorbing layer thickness
-  stabilize_pml    = .true.           !! avoid low-v layer in PML region
+  stabilize_pml    = .false.           !! avoid low-v layer in PML region
 
   !! ----------------------------------------------------------------------- !!
   !! Velocity model
