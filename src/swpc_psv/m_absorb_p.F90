@@ -618,8 +618,8 @@ contains
 
     R0 = 10**( - ( log10( real(na) ) - 1 ) / log10( 2.0 )  - 3.0 )
     d0 = - ( 1.0 / (2.0*H) ) * ( pd +1 ) * cp * log( R0 )
-    b0 = 6.0
-    a0 = min( PI * fcut, d0/b0 *0.02 )
+    b0 = 7.0
+    a0 = PI * fcut
 
     if( x <= xbeg + H ) then
       xx = ( xbeg + H ) - x
@@ -630,9 +630,8 @@ contains
     end if
 
     d = d0 * abs( xx / H )**pd
-    !a = a0 * ( 1.0 - abs( xx / H )**pa )
+    a = a0 * ( 1.0 - abs( xx / H )**pa )
     b = 1.0 + ( b0 - 1.0 ) * abs( xx / H )**pb
-    a = 0.02 * d / b
 
     g(1) = (  ( 1.0 + ( dt / 2.0 ) * a ) / b     ) / ( 1.0 + ( dt / 2.0 ) * ( a + d / b ) )
     g(2) = ( -1.0 / b                            ) / ( 1.0 + ( dt / 2.0 ) * ( a + d / b ) )
