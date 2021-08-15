@@ -128,6 +128,8 @@ in the `fn_grd` or `fn_grd_rmed` list files.
   
         - `'xydsdc'` : $x$, $y$, $z$, $T_0$, $T_R$, $D$, $S$, strike, dip, rake
 
+        - `'psmeca'` : lon, lat, $z$, $M_{rr}$, $M_{tt}$, $M_{ff}$, $M_{rt}$, $M_{rf}$, $M_{tf}$, iexp &nbsp; **(new in v5.2)**
+       
         The unit of each variables are [km] for $x$, $y$, $z$, [Nm] for $M_0$ and $m_{ij}$, [s] for $T_0$ and $T_R$, [degree] for all parameters describing angles, [m] for slip $D$ and [m${}^2$] for area $S$. 
 
     ** `stftype`**
@@ -142,6 +144,45 @@ in the `fn_grd` or `fn_grd_rmed` list files.
     `'asis'`: do not fit (default). `'bd{i}'`(i=1,2,$\cdots$9): fits to
     the `i`-th boundary specified in the rightmost column of
     `fn_grdlst`.
+
+### Specifying the magnitude of an earthquake
+
+When the moment tensor component is given directly, there is a trade-off regarding magnitude between the specification of the seismic moment $M_0$ or moment magnitude $M_W$ and the moment tensor component. For example, the following two specifications are completely equivalent
+
+| $M_0$ || $m_{xx}$ | $m_{yy}$ | $m_{zz}$ | $m_{yz}$ | $m_{xz}$ | $m_{xy}$ |
+| -- || -- | -- | -- | -- | -- | -- |
+| `1e15` || `1.0` | `1.0` | `1.0` | `0.0` | `0.0` | `0.0` | 
+| `1.0` || `1e15` | `1e15` | `1e15` | `0.0` | `0.0` | `0.0` | 
+
+Based on the input parameters, the final seismic moment $\overline{M}_0$ is
+
+$$
+    \overline{M}_0 =\times \frac{ M_0 }{\sqrt{2}} \sqrt{m_{xx}^2 +m_{yy}^2 +m_{zz}^2 + 2(m_{yz}^2+m_{xz}^2+m_{xy}^2)}
+$$
+
+which is determined by If more than one point source is specified, the sum of all source elements in the above equation becomes the total seismic moment; in the case of 2D P-SV and SH calculations, only the components valid for each cross section are evaluated.
+
+
+
+### `psmeca` specification
+
+Specify the seismic source in the standard format of `psmeca -Sm` in [GMT](https://www.generic-mapping-tools.org/) and [globalcmt](https://www.globalcmt.org/CMTsearch.html). Specify the seismic source. It specifies the latitude and longitude depth of the epicenter, the moment tensor in the polar coordinate system (in the order $M_{rr}$, $M_{tt}$, $M_{ff}$, $M_{rt}$, $M_{rf}$, $M_{tf}$), and the exponential part (integer) of the seismic moment. Note that the exponential part is given in dyn-cm, as is customary. These parameters are converted into the moment tensor in the Cartesian coordinate system within OpenSWPC and used for the calculation. Fracture initiation time at the epicenter $T_0$ is $0$, rise time $T_R$ is based on Ekström et al. (2012) [^Ekström2012], and scaling
+
+$$
+ T_R = 2 \times 1.05 \times 10^{-8} \times M_0^{1/3}
+$$ 
+
+which is determined by $M_0$$. Again, $M_0$ is a value in dyn-cm.
+
+This specification is effective from version 5.2.
+
+!!! Warning "Note on horizontal rotation"
+
+    As of version 5.2, when the parameter `phi` is not equall to zero, the rotation behavior of the source mechanism is different when the source mechanism is given as strike, dip, or rake, and when it is given as moment tensor.
+
+    In the former case, the moment tensor is calculated based on the assumption that the strike were measured from the north, regardless of the value of `phi`. On the other hand, the moment tensor is assumed to be defined for the $x$, $y$ coordinates after rotation. In other words, if one want to use moment tensor components from the catalog and rotate the coordinate system horizontally, one have calculate the rotated moment by yourself and give it as a parameter.
+
+    The developers are aware that these behaviors are not systematic and may be changed in future versions.
 
 ## Body Force Mode
 
