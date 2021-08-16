@@ -13,6 +13,7 @@ module m_vmodel_lhm
   use m_debug
   use m_readini
   use m_global
+  use m_seawater
   implicit none
   private
   save
@@ -54,9 +55,14 @@ contains
     logical :: is_exist
     integer :: nlayer
     character(256) :: adum
+    logical :: use_munk
     !! ----
 
     call readini( io_prm, 'fn_lhm', fn_lhm, '' )
+
+    !! seawater
+    call readini( io_prm, 'munk_profile', use_munk, .false. )
+    call seawater__init( use_munk )
 
     inquire( file=fn_lhm, exist=is_exist )
     call assert( is_exist )
@@ -112,7 +118,7 @@ contains
           
         else
 
-          vp1 = 1.5
+          vp1 = seawater__vel( zc(k) )
           vs1 = 0.0
           
           rho(k,i0:i1,j0:j1) = 1.0

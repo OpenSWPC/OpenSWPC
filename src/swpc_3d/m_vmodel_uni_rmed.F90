@@ -15,6 +15,7 @@ module m_vmodel_uni_rmed
   use m_global
   use m_rdrmed
   use m_fdtool
+  use m_seawater
   implicit none
   private
   save
@@ -56,6 +57,7 @@ contains
     logical :: is_exist
     real(SP) :: vmin, vmax, dh, cc, rhomin
     logical  :: vmax_over, vmin_under, rhomin_under
+    logical :: use_munk
     !! ----
 
     call readini( io_prm, 'vp0',    vp0, 5.0 )
@@ -65,6 +67,9 @@ contains
     call readini( io_prm, 'qs0',    qs0, 1000000.0 )
     call readini( io_prm, 'topo0', topo0, 0.0 )
     call readini( io_prm, 'rhomin', rhomin, 1.0 )
+    !! seawater
+    call readini( io_prm, 'munk_profile', use_munk, .false. )
+    call seawater__init( use_munk )
 
     vmin = vcut
 
@@ -117,7 +122,7 @@ contains
 
             !! ocean column
 
-            vp1 = 1.5
+            vp1 = seawater__vel( zc(k) )
             vs1 = 0.0
 
             rho(k,i,j) = 1.0

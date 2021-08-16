@@ -19,6 +19,7 @@ module m_vmodel_grd
   use m_geomap
   use m_system
   use m_readini
+  use m_seawater
   use mpi
   use netcdf
 
@@ -81,6 +82,7 @@ contains
     integer :: ncid, ndim, nvar, xid, yid, zid
     character(80) :: xname, yname, zname
     real(DP) :: dlon, dlat
+    logical :: use_munk
     !! ----
 
     call readini( io_prm, 'fn_grdlst', fn_grdlst, '.' )
@@ -90,6 +92,10 @@ contains
     call readini( io_prm, 'is_flatten', is_flatten, .false. )
 
     if( is_flatten ) is_ocean=.true.
+
+    !! seawater
+    call readini( io_prm, 'munk_profile', use_munk, .false. )
+    call seawater__init( use_munk )
 
     !!
     !! first initialize whole medium by air/ocean
@@ -120,7 +126,7 @@ contains
 
             if( zc(k) < 0 ) cycle
 
-            vp0  = 1.5
+            vp0  = seawater__vel( zc(k) )
             vs0  = 0.0
             rho0 = 1.0
             qp0  = 1000000.0

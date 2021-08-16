@@ -15,6 +15,7 @@ module m_vmodel_uni_rmed
   use m_readini
   use m_global
   use m_rdrmed
+  use m_seawater
   implicit none
   private
   save
@@ -56,6 +57,7 @@ contains
     character(256) :: dir_rmed
     real(SP) :: vmin, vmax, dh, cc, rhomin
     logical  :: is_vmax_over, is_vmin_under, is_rhomin_under
+    logical :: use_munk
     !! ----
 
     call readini( io_prm, 'vp0',    vp0, 5.0 )
@@ -65,6 +67,10 @@ contains
     call readini( io_prm, 'qs0',    qs0, 1000000.0 )
     call readini( io_prm, 'topo0',  topo0, 0.0 )
     call readini( io_prm, 'rhomin', rhomin, 1.0 )
+
+    !! seawater
+    call readini( io_prm, 'munk_profile', use_munk, .false. )
+    call seawater__init( use_munk )
 
     vmin = vcut
 
@@ -113,7 +119,7 @@ contains
 
           !! ocean column
 
-          vp1 = 1.5
+          vp1 = seawater__vel(zc(k))
           vs1 = 0.0
 
           rho(k,i) = 1.0

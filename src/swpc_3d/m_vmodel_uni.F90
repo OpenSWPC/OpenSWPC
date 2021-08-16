@@ -13,6 +13,8 @@ module m_vmodel_uni
   use m_debug
   use m_readini
   use m_global
+  use m_seawater
+
   implicit none
   private
   save
@@ -49,6 +51,7 @@ contains
     real(SP) :: vp0, vs0, rho0, qp0, qs0, topo0
     real(SP) :: vp1, vs1
     real(SP) :: dum
+    logical :: use_munk
     !! ----
 
     call readini( io_prm, 'vp0',    vp0, 5.0 )
@@ -57,7 +60,9 @@ contains
     call readini( io_prm, 'qp0',    qp0, 1000000.0 )
     call readini( io_prm, 'qs0',    qs0, 1000000.0 )
     call readini( io_prm, 'topo0', topo0, 0.0 )
-
+    !! seawater
+    call readini( io_prm, 'munk_profile', use_munk, .false. )
+    call seawater__init( use_munk )
 
     if( fullspace_mode ) then
 
@@ -90,7 +95,7 @@ contains
 
               !! ocean column
 
-              vp1 = 1.5
+              vp1 = seawater__vel( zc(k) )
               vs1 = 0.0
 
               rho(k,i,j) = 1.0

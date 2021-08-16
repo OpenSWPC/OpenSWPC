@@ -15,6 +15,7 @@ module m_vmodel_lhm_rmed
   use m_global
   use m_rdrmed
   use m_fdtool
+  use m_seawater
 
   implicit none
   private
@@ -63,11 +64,16 @@ contains
     character(256) :: dir_rmed
     real(SP) :: vmin, vmax, dh, cc, rhomin
     logical  :: is_vmax_over, is_vmin_under, is_rhomin_under
+    logical :: use_munk
     !! ----
 
     call readini( io_prm, 'fn_lhm_rmed', fn_lhm, '' )
     call readini( io_prm, 'dir_rmed', dir_rmed, '' )
     call readini( io_prm, 'rhomin', rhomin, 1.0 )
+
+    !! seawater
+    call readini( io_prm, 'munk_profile', use_munk, .false. )
+    call seawater__init( use_munk )    
     
     inquire( file=fn_lhm, exist=is_exist )
     call assert( is_exist )
@@ -151,7 +157,7 @@ contains
           
         else
 
-          vp1 = 1.5
+          vp1 = seawater__vel( zc(k) )
           vs1 = 0.0
           
           rho(k,i0:i1) = 1.0
