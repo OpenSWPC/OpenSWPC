@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Visualize Parallel MPI computation balance: absolute time version
-# usage: timvis_abs.gmt5 [timfile]
+# Visualize Parallel MPI computation balance
+# usage: timvis.gmt [timfile]
 
 ## @copyright
 ##   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
@@ -29,6 +29,7 @@ gmt set PS_IMAGE_COMPRESS    none
 gmt set PS_LINE_CAP          round
 gmt set PS_LINE_JOIN         round
 
+## --
 
 infile=$1
 
@@ -45,41 +46,31 @@ echo "title = " $title
 order=`echo $ncpu | awk '{print 10**int(log($1/4)/log(10.))}'`
 horder=`echo $order | awk '{print $1/2}'`
 htick=a${order}f${horder}
-
-
-# time
-maxtime=$(awk '$1>=0{print $5}' $infile | sort -n | tail -1)
-echo "max time = $maxtime"
-torder=$(echo $maxtime | awk '{print int(log($1)/log(10))}')
-c=$(echo $maxtime $torder | awk '{print $1/(10^$2)}')
-d=$(echo $c | awk '{print int($1)+1}')
-if (( $d <= 5 )); then
-    vmax=$(echo $torder | awk '{printf("%d",5*10^$1)}')
-else
-    vmax=$(echo $torder | awk '{printf("%d",10*10^$1)}')
-fi
+vtick=a20f10g10
 echo "ticks = " $htick/$vtick
 echo "ncpu  = " $ncpu
 echo "nproc = " $nproc
 
-region=-0.9999999/$ncpu2/0/$vmax
+region=-0.9999999/$ncpu2/0/100
 echo "region = " $region
 width=15
 height=15
 
-gmt psbasemap -JX${width}c/${height}c -R$region \
-  -Bx${htick}+l"MPI node ID" -Byafg+l"elapsed time [s]" -BWSen -K > $title.ps
+gmt psbasemap \
+  -JX${width}c/${height}c -R$region \
+  -BWSen -Bx${htick}+l"MPI node number" -By${vtick}+l"relative time [%]" \
+  -K > $title.ps
 
 for (( i=$nproc; i > 0 ; i -- ))
 do
   ii=$(echo $i | awk '{print $1%12}')
   col=`awk '$1=='$ii'{print $2}' col.cpt`
-  awk '$2=='$i'{printf("%d  %f \n",$1,$5)}' $infile | gmt psxy -JX -R -Sb1u -Wfaint,black -G${col} -K -O >> $title.ps
+  awk '$2=='$i'{printf("%d  %f \n",$1,$7)}' $infile | \
+    gmt psxy -JX -R -Sb1u -Wfaint,black -G${col} -K -O >> $title.ps
 done
 
-titleloc=`echo $vmax | awk '{print $1*1.03}'`
-gmt pstext -J -R -N -O -K  <<EOF>>$title.ps
--1 $titleloc 12 0 0 LM $title
+gmt pstext -J -R -N -O -K -F+a0+jLM+f12p,Helvetica,black  <<EOF>>$title.ps
+-1 108 $title
 EOF
 
 
@@ -106,10 +97,9 @@ $x2 $y2
 $x2 $y1
 $x1 $y1
 EOF
-
   nm=`awk '$1==0&&$2=='$i'{print $3}' $infile`
-  gmt pstext -J -R -O -K  -N <<EOF>>$title.ps
-$x3 $y3 10 0 0 LM $nm
+  gmt pstext -J -R -O -K -F+a0+jLM+f10p,Helvetica,black -N <<EOF>>$title.ps
+$x3 $y3 $nm
 EOF
 done
 
@@ -120,6 +110,9 @@ touch tmp$$
 gmt psxy -JX  -R -Sb1u tmp$$ -O  >> $title.ps
 rm -f tmp$$
 
-gmt ps2raster -Tf -Au1c -P $title.ps
+gmt psconvert -Tg -E150 -Qg4 -Qt4 -A1c -P $title.ps
 rm -f $title.ps
-rm -f gmt.conf gmt.history col.cpt
+
+rm -f gmt.conf
+rm -f gmt.history
+#rm -f col.cpt
