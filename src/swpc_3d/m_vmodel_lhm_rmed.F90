@@ -15,6 +15,7 @@ module m_vmodel_lhm_rmed
   use m_global
   use m_rdrmed
   use m_fdtool
+  use m_seawater
   implicit none
   private
   save
@@ -64,6 +65,7 @@ contains
     character(256) :: dir_rmed
     real(SP) :: vmin, vmax, dh, cc, rhomin
     logical  :: vmax_over, vmin_under, rhomin_under
+    logical :: use_munk
     !! ----
 
     call readini( io_prm, 'fn_lhm_rmed', fn_lhm, '' )
@@ -79,6 +81,9 @@ contains
     call std__countline( io_vel, nlayer, '#' )
     allocate( depth(nlayer), rho0(nlayer), vp0(nlayer), vs0(nlayer), qp0(nlayer), qs0(nlayer), fn_rmed(nlayer) )
 
+    !! seawater
+    call readini( io_prm, 'munk_profile', use_munk, .false. )
+    call seawater__init( use_munk )    
 
     vmin = vcut
 
@@ -154,7 +159,7 @@ contains
           
         else
 
-          vp1 = 1.5
+          vp1 = seawater__vel(zc(k))
           vs1 = 0.0
           
           rho(k,i0:i1,j0:j1) = 1.0
