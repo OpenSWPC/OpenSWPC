@@ -153,7 +153,8 @@
   vmodel_type      = 'lhm'            !! velocity model type 'uni'/'grd'/'lhm'
   is_ocean         = .true.           !! topography z<0 is covered by ocean
   is_flatten       = .false.          !! Force topography variation to zero
-
+  munk_profile     = .true. 
+  
     !! --------------------------------------------------------------------- !!
     !! For uniform velocity model 'uni'
     !!
