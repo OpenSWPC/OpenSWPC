@@ -13,6 +13,7 @@ module m_vmodel_user
   use m_geomap
   use m_fdtool
   use m_readini
+  use m_seawater
   implicit none
   private
   save
@@ -69,6 +70,7 @@ contains
     real(SP) :: vp0, vs0, rho0, qp0, qs0, topo0
     real(SP) :: vp1, vs1
     real(SP) :: dum
+    logical :: use_munk
     !! ----
 
     !!
@@ -85,6 +87,9 @@ contains
     call readini( io_prm, 'qp0',    qp0, 1000000.0 )
     call readini( io_prm, 'qs0',    qs0, 1000000.0 )
     call readini( io_prm, 'topo0', topo0, 0.0 )
+    !! seawater
+    call readini( io_prm, 'munk_profile', use_munk, .false. )
+    call seawater__init( use_munk )
 
     !!
     !! The medium parameter must be set from given region (i0:i1, k0:k1)
@@ -113,7 +118,7 @@ contains
           !!
           !! The code treat the uppermost layer as ocean column if P-wave velocity is finite and S-wave velocity is zero
           !!
-          vp1 = 1.5
+          vp1 = seawater__vel( zc(k) )
           vs1 = 0.0
 
           rho(k,i) = 1.0

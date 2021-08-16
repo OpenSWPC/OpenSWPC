@@ -19,6 +19,7 @@ module m_vmodel_grd_rmed
   use m_system
   use m_rdrmed
   use m_fdtool
+  use m_seawater
   use netcdf
 
   implicit none
@@ -82,6 +83,7 @@ contains
     logical  :: is_vmax_over, is_vmin_under, is_rhomin_under
     integer :: ncid, ndim, nvar, xid, yid, zid
     character(80) :: xname, yname, zname
+    logical :: use_munk
     !! ----
 
     call readini( io_prm, 'fn_grdlst_rmed', fn_grdlst, '' )
@@ -92,6 +94,9 @@ contains
     call readini( io_prm, 'dir_rmed',  dir_rmed, '.' )
     call readini( io_prm, 'rhomin', rhomin, 1.0 )
 
+    !! seawater
+    call readini( io_prm, 'munk_profile', use_munk, .false. )
+    call seawater__init( use_munk )    
 
     vmin = vcut
     dh = 1. / sqrt( 1./dx**2 + 1./dz**2 )
@@ -129,7 +134,7 @@ contains
 
           if( zc(k) < 0 ) cycle
 
-          vp0  = 1.5
+          vp0  = seawater__vel( zc(k) )
           vs0  = 0.0
           rho0 = 1.0
           qp0  = 1000000.0
