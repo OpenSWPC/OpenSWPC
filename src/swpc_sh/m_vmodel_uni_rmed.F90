@@ -56,6 +56,9 @@ contains
     character(256) :: dir_rmed
     real(SP) :: cc, dh, vmin, vmax, rhomin
     logical  :: is_vmax_over, is_vmin_under, is_rhomin_under
+    logical :: earth_flattening
+    real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
+    real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening    
     !! ----
 
     call readini( io_prm, 'vp0',    vp0, 5.0 )
@@ -65,6 +68,18 @@ contains
     call readini( io_prm, 'qs0',    qs0, 1000000.0 )
     call readini( io_prm, 'topo0',  topo0, 0.0 )
     call readini( io_prm, 'rhomin', rhomin, 1.0 )
+
+    !! earth-flattening transformation
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
+    if( earth_flattening ) then
+      do k=k0, k1
+        zs(k) = R_EARTH - R_EARTH * exp( - zc(k) / R_EARTH )
+        Cv(k) = exp( zc(k) / R_EARTH)
+      end do
+    else
+      zs(:) = zc(:)
+      Cv(:) = 1.0
+    end if 
 
     call readini( io_prm, 'dir_rmed', dir_rmed, '' )
     call readini( io_prm, 'fn_rmed0', fn_rmed0, '' )
@@ -94,12 +109,12 @@ contains
 
       do k = k0, k1
 
-        if( zc( k ) > bd(i,0) ) then
+        if( zs( k ) > bd(i,0) ) then
 
           !! elastic medium
           rho2 = (1 + 0.8*xi(k,i)) * rho0
-          vp2  = (1 +     xi(k,i)) * vp0
-          vs2  = (1 +     xi(k,i)) * vs0
+          vp2  = (1 +     xi(k,i)) * Cv(k) * vp0
+          vs2  = (1 +     xi(k,i)) * Cv(k) * vs0
 
           call vcheck( vp2, vs2, rho2, xi(k,i), vmin, vmax, rhomin, is_vmin_under, is_vmax_over, is_rhomin_under )
 
@@ -109,11 +124,11 @@ contains
           qp (k,i) = qp0
           qs (k,i) = qs0
 
-        else if ( zc (k) > 0.0 ) then
+        else if ( zs (k) > 0.0 ) then
 
           !! ocean column
 
-          vp1 = 1.5
+          vp1 = Cv(k) * 1.5
           vs1 = 0.0
 
           rho(k,i) = 1.0

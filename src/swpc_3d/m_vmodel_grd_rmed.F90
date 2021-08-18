@@ -96,6 +96,8 @@ contains
     integer :: ncid, ndim, nvar, xid, yid, zid
     character(80) :: xname, yname, zname
     logical :: use_munk
+    logical :: earth_flattening
+    real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening    
     !! ----
 
     call readini( io_prm, 'fn_grdlst_rmed', fn_grdlst, '.' )
@@ -114,6 +116,16 @@ contains
     !! seawater
     call readini( io_prm, 'munk_profile', use_munk, .false. )
     call seawater__init( use_munk )
+
+    !! earth-flattening transform
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
+    if( earth_flattening ) then
+      do k=k0, k1
+        Cv(k) = exp( zc(k) / R_EARTH)
+      end do
+    else
+      Cv(:) = 1.0
+    end if    
 
     vmin = vcut
 
@@ -155,7 +167,7 @@ contains
 
             if( zc(k) < 0 ) cycle
 
-            vp0  = seawater__vel( zc(k) )
+            vp0  = Cv(k) * seawater__vel( zc(k) )
             vs0  = 0.0
             rho0 = 1.0
             qp0  = 1000000.0
@@ -311,6 +323,10 @@ contains
 
           call bicubic__interp( bcd(n), glon(i,j), glat(i,j), zgrd )
 
+          if( earth_flattening ) then
+            zgrd = - R_EARTH * log( (R_EARTH - zgrd) / R_EARTH )
+          end if
+
           if( n == 1 ) bd(i,j,0) = zgrd
 
           if( is_flatten ) zgrd = zgrd - bd(i,j,0)
@@ -354,8 +370,8 @@ contains
             call assert( vs1(n) < vmax )
 
             !! add random medium
-            vp2 = vp1(n) * ( 1.0 + xi(kk,i,j,tbl_rmed(n) ) )
-            vs2 = vs1(n) * ( 1.0 + xi(kk,i,j,tbl_rmed(n) ) )
+            vp2 = Cv(k) * vp1(n) * ( 1.0 + xi(kk,i,j,tbl_rmed(n) ) )
+            vs2 = Cv(k) * vs1(n) * ( 1.0 + xi(kk,i,j,tbl_rmed(n) ) )
             rho2 = rho1(n) * ( 1.0 + 0.8 * xi(kk,i,j,tbl_rmed(n) ) )
 
             if( vp1(n) > 0 .and. vs1(n) > 0 ) then

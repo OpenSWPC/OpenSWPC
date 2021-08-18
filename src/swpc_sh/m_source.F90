@@ -44,6 +44,7 @@ module m_source
   real(MP), allocatable :: fy(:)                                          !< body force magnitude at grids
   real(SP)              :: dt_dxz
   character(4)          :: sdep_fit                                       !< 'bd0', 'bd1', ..., 'bd9'
+  logical :: earth_flattening
 
 
 contains
@@ -101,6 +102,8 @@ contains
     call readini(io_prm, 'stftype', stftype, 'boxcar')
     call readini(io_prm, 'stf_format', stf_format, 'xym0ij' )
     call readini(io_prm, 'sdep_fit', sdep_fit, 'asis' )
+
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
 
     if( trim(adjustl(stftype)) == 'scosine' ) stftype = 'cosine'  !! backward compatibility
 
@@ -163,6 +166,12 @@ contains
         call source__grid_moment( fn_stf, stf_format, nsrc_g, n_stfprm, sx_g, sz_g, mo_g, myz_g, mxy_g, srcprm_g)
       end if
 
+    end if
+
+    if (earth_flattening) then
+      do k=1, nsrc_g
+        sz_g(k) = - R_EARTH * log( ( R_EARTH - sz_g(k) ) / R_EARTH )
+      end do
     end if
 
     !! check cut-off frequency
@@ -428,7 +437,11 @@ contains
         call assert( -180. <= rake   .and. rake   <= 180. )
         call sdr2moment( strike-phi, dip, rake, rdum, rdum, rdum, myz(i), rdum, mxy(i) )
         is0 = x2i( sx(i), xbeg, real(dx) )
-        ks0 = z2k( sz(i), zbeg, real(dz) )
+        if( earth_flattening ) then
+          ks0 = z2k( real( - R_EARTH * log( ( R_EARTH - sz(i) )/R_EARTH )), zbeg, real(dz) )
+        else
+          ks0 = z2k( sz(i), zbeg, real(dz) )
+        end if
 
         if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
             kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then
@@ -450,7 +463,11 @@ contains
         call geomap__g2c( lon, lat, clon, clat, phi, sx(i), sy(i) )
 
         is0 = x2i( sx(i), xbeg, real(dx) )
-        ks0 = z2k( sz(i), zbeg, real(dz) )
+        if( earth_flattening ) then
+          ks0 = z2k( real( - R_EARTH * log( ( R_EARTH - sz(i) )/R_EARTH )), zbeg, real(dz) )
+        else
+          ks0 = z2k( sz(i), zbeg, real(dz) )
+        end if
 
         if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
             kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then

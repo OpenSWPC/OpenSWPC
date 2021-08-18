@@ -52,9 +52,23 @@ contains
     logical :: is_exist
     integer :: nlayer
     character(256) :: adum
+    logical :: earth_flattening
+    real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
+    real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening
     !! ----
 
     call readini( io_prm, 'fn_lhm', fn_lhm, '' )
+
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
+    if( earth_flattening ) then
+      do k=k0, k1
+        zs(k) = R_EARTH - R_EARTH * exp( - zc(k) / R_EARTH )
+        Cv(k) = exp( zc(k) / R_EARTH)
+      end do
+    else
+      zs(:) = zc(:)
+      Cv(:) = 1.0
+    end if
 
     inquire( file=fn_lhm, exist=is_exist )
     if( .not. is_exist ) then
@@ -97,9 +111,9 @@ contains
     do k = k0, k1
 
       !! air/ocean column
-      if( zc(k) < depth(1) ) then
+      if( zs(k) < depth(1) ) then
 
-        if( zc(k) < 0.0 ) then 
+        if( zs(k) < 0.0 ) then 
 
           vp1 = 0.0
           vs1 = 0.0
@@ -113,7 +127,7 @@ contains
           
         else
 
-          vp1 = 1.5
+          vp1 = Cv(k) * 1.5
           vs1 = 0.0
           
           rho(k,i0:i1) = 1.0
@@ -130,10 +144,10 @@ contains
 
       !! chose layer
       do l=1, nlayer
-        if( zc(k) >= depth(l) ) then
+        if( zs(k) >= depth(l) ) then
           rho1 = rho0(l)
-          vp1  = vp0(l)
-          vs1  = vs0(l)
+          vp1  = Cv(k) * vp0(l)
+          vs1  = Cv(k) * vs0(l)
           qp1  = qp0(l)
           qs1  = qs0(l)
         end if

@@ -115,7 +115,7 @@ contains
 
       do k = k0, k1
 
-        if( zc( k ) > bd(i,0) ) then
+        if( zs( k ) > bd(i,0) ) then
 
           !! elastic medium
           rho2 = (1 + 0.8*xi(k,i)) * rho0
@@ -130,7 +130,7 @@ contains
           qp (k,i) = qp0
           qs (k,i) = qs0
 
-        else if ( zc (k) > 0.0 ) then
+        else if ( zs (k) > 0.0 ) then
 
           !! ocean column
 
