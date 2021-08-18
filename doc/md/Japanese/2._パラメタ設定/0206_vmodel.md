@@ -97,6 +97,9 @@ c
     ** `earth_flattening`** &nbsp;  **(new in version 5.2)**
     : `.true.`のときEarth-flattening tranformation (e.g., Aki and Richards, Box 9.2) により，デカルト座標系を球殻構造に対応する深さと速度の非線形変換を行う．このオプションは長距離（~500 km以上）や深発地震の到達時刻の正確な再現に特に有用である．ただし，P-SVと3D構造ではこの変換は**厳密ではない**ことに注意．
 
+    !!! Warning
+        Version 5.2における`earth_flattening`モードの実装はまだ試験段階である．利用には十分注意すること．
+
 
 ## 空気および海水層の取り扱い
 

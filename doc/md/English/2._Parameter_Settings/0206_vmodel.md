@@ -107,7 +107,7 @@ program can be overlaid onto the model.
             - `topo_flatten` : Make topography variatinon flat by offsetting the medium below. 
 
             !!! Warning "Renaming `is_flatten` to `topo_flatten`"
-            This option used to be `is_flatten` until Version 5.1, but has been renamed to avoid confusion with the `earth_flattening` option implemented in Version 5.2.
+                This option used to be `is_flatten` until Version 5.1, but has been renamed to avoid confusion with the `earth_flattening` option implemented in Version 5.2.
 
         `’user’`
         :   A user subroutine defined in `src/swpc_*/m_vmodel_user.F90`
@@ -128,6 +128,9 @@ program can be overlaid onto the model.
 
     ** `earth_flattening`** &nbsp;  **(new in version 5.2)**
     : If this option is `.true.`, OpenSWPC performs the transformation the Cartesian coordinate to pseudo-spherical coordinate by means of the Earth-flattening tranformation (e.g., Aki and Richards, Box 9.2). This option may be useful for reproducing accurate arrival time of seismic waves for long (~500 km or more) traveling distances and/or for deep-focus earthquake. Please be noted that this transformation is **not** exact in P-SV and 3D models. 
+
+    !!! Warning
+        The implementation of `earth_flattening` mode in version 5.2 is still in the experimental stage. Please use it with caution. 
 
 ## On Treatments of Air and Seawater Layer
 
