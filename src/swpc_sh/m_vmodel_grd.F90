@@ -121,7 +121,7 @@ contains
 
           vp0  = Cv(k) * 1.5
           vs0  = 0.0
-          rho0 = 1.0
+          rho0 = 1.0 * Cv(k)**(-5)
           qp0  = 1000000.0
           qs0  = 1000000.0
 
@@ -244,9 +244,9 @@ contains
     do i=i0, i1
       do n=1,ngrd
         do k=kgrd(n,i)+1, k1
-          rho(k,i) = rho1(n)
-          lam(k,i) = rho1(n) * Cv(k)**2 * ( vp1(n) * vp1(n) - 2 * vs1(n) * vs1(n) )
-          mu (k,i) = rho1(n) * Cv(k)**2 *                         vs1(n) * vs1(n)
+          rho(k,i) = rho1(n) * Cv(k)**(-5)
+          lam(k,i) = rho1(n) * Cv(k)**(-5) * Cv(k)**2 * ( vp1(n) * vp1(n) - 2 * vs1(n) * vs1(n) )
+          mu (k,i) = rho1(n) * Cv(k)**(-5) * Cv(k)**2 *                         vs1(n) * vs1(n)
           qp (k,i) = qp1(n)
           qs (k,i) = qs1(n)
         end do

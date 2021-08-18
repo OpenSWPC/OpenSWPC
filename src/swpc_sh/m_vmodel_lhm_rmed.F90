@@ -170,7 +170,7 @@ contains
           vp1 = Cv(k) * 1.5
           vs1 = 0.0
           
-          rho(k,i0:i1) = 1.0
+          rho(k,i0:i1) = 1.0 * Cv(k)**(-5)
           mu (k,i0:i1) = 0.0
           lam(k,i0:i1) = 1.0 * vp1 * vp1
 
@@ -186,7 +186,7 @@ contains
         !! chose layer
         do l=1, nlayer
           if( zs(k) >= depth(l) ) then
-            rho1 = rho0(l) * ( 1 + 0.8*xi(k,i,tbl_rmed(l)) )
+            rho1 = Cv(k)**(-5) * rho0(l) * ( 1 + 0.8*xi(k,i,tbl_rmed(l)) )
             vp1  = Cv(k) * vp0(l)  * ( 1 +     xi(k,i,tbl_rmed(l)) )
             vs1  = Cv(k) * vs0(l)  * ( 1 +     xi(k,i,tbl_rmed(l)) )
             qp1  = qp0(l)

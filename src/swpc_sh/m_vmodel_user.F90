@@ -67,7 +67,7 @@ contains
 
     integer  :: i, k
     real(SP) :: vp0, vs0, rho0, qp0, qs0, topo0
-    real(SP) :: vp1, vs1
+    real(SP) :: vp1, vs1, rho1
     real(SP) :: dum
     logical  :: earth_flattening
     real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
@@ -120,7 +120,8 @@ contains
           !! elastic medium
           vp1 = Cv(k) * vp0
           vs1 = Cv(k) * vs0
-          rho(k,i) = rho0
+          rho1 = Cv(k)**(-5) * rho0 
+          rho(k,i) = rho1
           mu (k,i) = rho(k,i) * vs1 * vs1
           lam(k,i) = rho(k,i) * ( vp1*vp1 - 2*vs1*vs1 )
           qp (k,i) = qp0
@@ -136,7 +137,7 @@ contains
           vp1 = Cv(k) * 1.5
           vs1 = 0.0
 
-          rho(k,i) = 1.0
+          rho(k,i) = 1.0 * Cv(k)**(-5)
           mu (k,i) = rho(k,i) * vs1 * vs1
           lam(k,i) = rho(k,i) * ( vp1*vp1 - 2*vs1*vs1 )
           qp (k,i) = 1000000.0 ! effectively no attenuation in ocean column

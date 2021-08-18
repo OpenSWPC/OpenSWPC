@@ -142,7 +142,7 @@ contains
 
           vp0  = Cv(k) * 1.5
           vs0  = 0.0
-          rho0 = 1.0
+          rho0 = 1.0 * Cv(k)**(-5)
           qp0  = 1000000.0
           qs0  = 1000000.0
 
@@ -291,7 +291,7 @@ contains
 
           vp2 = Cv(k) * vp1(n) * ( 1.0 + xi(kk,i,tbl_rmed(n) ) )
           vs2 = Cv(k) * vs1(n) * ( 1.0 + xi(kk,i,tbl_rmed(n) ) )
-          rho2 = rho1(n) * ( 1.0 + 0.8 * xi(kk,i,tbl_rmed(n) ) )
+          rho2 = Cv(k)**(-5) * rho1(n) * ( 1.0 + 0.8 * xi(kk,i,tbl_rmed(n) ) )
 
           if( vp1(n) > 0 .and. vs1(n) > 0 ) then
             call vcheck(vp2, vs2, rho2, xi(kk,i,tbl_rmed(n)), vmin, vmax, rhomin, is_vmin_under, is_vmax_over, is_rhomin_under)

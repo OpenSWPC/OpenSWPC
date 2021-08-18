@@ -112,7 +112,7 @@ contains
         if( zs( k ) > bd(i,0) ) then
 
           !! elastic medium
-          rho2 = (1 + 0.8*xi(k,i)) * rho0
+          rho2 = (1 + 0.8*xi(k,i)) * Cv(k)**(-5) * rho0
           vp2  = (1 +     xi(k,i)) * Cv(k) * vp0
           vs2  = (1 +     xi(k,i)) * Cv(k) * vs0
 
@@ -131,7 +131,7 @@ contains
           vp1 = Cv(k) * 1.5
           vs1 = 0.0
 
-          rho(k,i) = 1.0
+          rho(k,i) = 1.0 * Cv(k)**(-5)
           mu (k,i) = rho(k,i) * vs1 * vs1
           lam(k,i) = rho(k,i) * ( vp1*vp1 - 2*vs1*vs1 )
           qp (k,i) = 1000000.0 ! effectively no attenuation in ocean column
