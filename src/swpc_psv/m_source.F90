@@ -44,6 +44,7 @@ module m_source
   real(MP), allocatable :: mo(:)                            !< moment at grids
   real(MP)              :: dt_dxz
   character(4)          :: sdep_fit                         !< 'bd0', 'bd1', ..., 'bd9'
+  logical :: earth_flattening
 
 
 contains
@@ -103,6 +104,9 @@ contains
     call readini( io_prm, 'stftype', stftype, 'kupper' )
     call readini( io_prm, 'stf_format', stf_format, 'xym0ij' )
     call readini( io_prm, 'sdep_fit', sdep_fit, 'asis' )
+
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
+
 
     if( trim(adjustl(stftype)) == 'scosine' ) stftype = 'cosine'  !! backward compatibility
 
@@ -169,6 +173,13 @@ contains
             sx_g, sz_g, mo_g, mxx_g, mzz_g, mxz_g, srcprm_g)
 
       end if
+    end if
+
+    ! 
+    if (earth_flattening) then
+      do k=1, nsrc_g
+        sz_g(k) = - R_EARTH * log( ( R_EARTH - sz_g(k) ) / R_EARTH )
+      end do
     end if
 
     ! count up all moment / body force
@@ -439,7 +450,12 @@ contains
         call assert( -180. <= rake   .and. rake   <= 180. )
         call sdr2moment( strike-phi, dip, rake, mxx(i), rdum, mzz(i), rdum, mxz(i), rdum )
         is0 = x2i( sx(i), xbeg, real(dx) )
-        ks0 = z2k( sz(i), zbeg, real(dz) )
+
+        if( earth_flattening ) then
+          ks0 = z2k( real( - R_EARTH * log( ( R_EARTH - sz(i) )/R_EARTH )), zbeg, real(dz) )
+        else
+          ks0 = z2k( sz(i), zbeg, real(dz) )
+        end if
 
         if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
             kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then

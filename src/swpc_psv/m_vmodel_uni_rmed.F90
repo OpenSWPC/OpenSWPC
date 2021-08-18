@@ -58,6 +58,9 @@ contains
     real(SP) :: vmin, vmax, dh, cc, rhomin
     logical  :: is_vmax_over, is_vmin_under, is_rhomin_under
     logical :: use_munk
+    logical :: earth_flattening
+    real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
+    real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening    
     !! ----
 
     call readini( io_prm, 'vp0',    vp0, 5.0 )
@@ -71,6 +74,18 @@ contains
     !! seawater
     call readini( io_prm, 'munk_profile', use_munk, .false. )
     call seawater__init( use_munk )
+
+    !! earth-flattening transformation
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
+    if( earth_flattening ) then
+      do k=k0, k1
+        zs(k) = R_EARTH - R_EARTH * exp( - zc(k) / R_EARTH )
+        Cv(k) = exp( zc(k) / R_EARTH)
+      end do
+    else
+      zs(:) = zc(:)
+      Cv(:) = 1.0
+    end if    
 
     vmin = vcut
 
@@ -104,8 +119,8 @@ contains
 
           !! elastic medium
           rho2 = (1 + 0.8*xi(k,i)) * rho0
-          vp2  = (1 +     xi(k,i)) * vp0
-          vs2  = (1 +     xi(k,i)) * vs0
+          vp2  = (1 +     xi(k,i)) * Cv(k)*vp0
+          vs2  = (1 +     xi(k,i)) * Cv(k)*vs0
 
           call vcheck( vp2, vs2, rho2, xi(k,i), vmin, vmax, rhomin, is_vmin_under, is_vmax_over, is_rhomin_under )
 
@@ -119,7 +134,7 @@ contains
 
           !! ocean column
 
-          vp1 = seawater__vel(zc(k))
+          vp1 = Cv(k)*seawater__vel(zc(k))
           vs1 = 0.0
 
           rho(k,i) = 1.0
