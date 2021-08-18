@@ -65,6 +65,9 @@ contains
     real(SP) :: vmin, vmax, dh, cc, rhomin
     logical  :: is_vmax_over, is_vmin_under, is_rhomin_under
     logical :: use_munk
+    logical :: earth_flattening
+    real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
+    real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening       
     !! ----
 
     call readini( io_prm, 'fn_lhm_rmed', fn_lhm, '' )
@@ -74,6 +77,19 @@ contains
     !! seawater
     call readini( io_prm, 'munk_profile', use_munk, .false. )
     call seawater__init( use_munk )    
+
+    !! earth-flattening transformation
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
+    if( earth_flattening ) then
+      do k=k0, k1
+        zs(k) = R_EARTH - R_EARTH * exp( - zc(k) / R_EARTH )
+        Cv(k) = exp( zc(k) / R_EARTH)
+      end do
+    else
+      zs(:) = zc(:)
+      Cv(:) = 1.0
+    end if    
+    
     
     inquire( file=fn_lhm, exist=is_exist )
     call assert( is_exist )
@@ -157,7 +173,7 @@ contains
           
         else
 
-          vp1 = seawater__vel( zc(k) )
+          vp1 = Cv(k) * seawater__vel( zc(k) )
           vs1 = 0.0
           
           rho(k,i0:i1) = 1.0
@@ -177,8 +193,8 @@ contains
         do l=1, nlayer
           if( zc(k) >= depth(l) ) then
             rho1 = rho0(l) * ( 1 + 0.8*xi(k,i,tbl_rmed(l)) )
-            vp1  = vp0(l)  * ( 1 +     xi(k,i,tbl_rmed(l)) )
-            vs1  = vs0(l)  * ( 1 +     xi(k,i,tbl_rmed(l)) )
+            vp1  = Cv(k) * vp0(l)  * ( 1 +     xi(k,i,tbl_rmed(l)) )
+            vs1  = Cv(k) * vs0(l)  * ( 1 +     xi(k,i,tbl_rmed(l)) )
             qp1  = qp0(l)
             qs1  = qs0(l)
  

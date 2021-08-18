@@ -11,11 +11,10 @@
   !! Control
   !!
 
-  title            = 'swpc_W'        !! exe title: used for output filenames
+  title            = 'swpc_N'        !! exe title: used for output filenames
   odir             = './out'          !! output directory
   ntdec_r          = 50               !! screen report timing (1/cycle)
   strict_mode      = .false. 
-
 
   !! ----------------------------------------------------------------------- !!
   !! Model/Grid Size and Area
@@ -23,8 +22,8 @@
 
   nproc_x          = 6                !! parallelization in x-dir
   nproc_y          = 6                !! parallelization in x-dir
-  nx               = 2000             !! total grid number in x-dir
-  ny               = 2560             !! total grid number in y-dir
+  nx               = 3200             !! total grid number in x-dir
+  ny               = 1600             !! total grid number in y-dir
   nz               = 500              !! total grid number in z-dir
   nt               = 24000            !! time step number
 
@@ -36,13 +35,13 @@
   vcut             = 1.5              !! minimum velocity
                                       !- smaller velocities will be increased
 
-  xbeg             = -500.0           !! minimum in x-dir
-  ybeg             = -640.0           !! minimum in y-dir
+  xbeg             = -800.0           !! minimum in x-dir
+  ybeg             = -400.0           !! minimum in y-dir
   zbeg             = -10.0            !! minimum in z-dir
   tbeg             = 0.0              !! start time
 
-  clon             = 136.0            !! center longitude
-  clat             = 34.5             !! center latitude
+  clon             = 142.0            !! center longitude
+  clat             = 39.0             !! center latitude
   phi              = 0.0              !! horizontal coordinate rotation
                                       !- measured clockwise from the north
 
@@ -56,7 +55,7 @@
   !! Snapshot Output
   !!
 
-  snp_format       = 'netcdf'         !! snapshot format (native or netcdf)
+  snp_format       = 'netcdf'         !! snapshot format (netcdf)
 
   xy_ps%sw         = .false.          !! P&S amp. for xy section
   xz_ps%sw         = .true.           !! P&S amp. for xz section
@@ -99,7 +98,7 @@
   ntdec_w          = 4                !! time decimation of waveform output
   st_format        = 'll'             !! station format: 'xy' or 'll'
   fn_stloc         = '${DATASET}/station/hinet.stlst'  !! station location file
-  wav_format       = 'sac'            !! 'sac' or 'csf'
+  wav_format       = 'sac'            !! 'sac' or 'csf'  ('sac' recommended)
   wav_calc_dist    = .false.          !! explicitly set  the SAC dist header
 
   !! ----------------------------------------------------------------------- !!
@@ -116,7 +115,7 @@
   !! 'boxcar' / 'triangle' / 'herrmann' / 'kupper' / 'cosine' / 'texp'
   stftype          = 'kupper'
 
-  fn_stf           = "./example/source.W.dat"   !! Source grid file name
+  fn_stf           = "./example/source.N.dat"   !! Source grid file name
 
   !! source depth correction
   !! 'asis':use z value, 'bd{i}': i-th boundary (i=0...9)
@@ -145,7 +144,7 @@
 
   abc_type         = 'pml'            !! 'pml' or 'cerjan'
   na               = 20               !! absorbing layer thickness
-  stabilize_pml    = .false.           !! avoid low-v layer in PML region
+  stabilize_pml    = .false.           !! avoid low-v layer in PML region 
 
   !! ----------------------------------------------------------------------- !!
   !! Velocity model
@@ -153,7 +152,9 @@
 
   vmodel_type      = 'grd'            !! velocity model type 'uni'/'grd'/'lhm'
   is_ocean         = .true.           !! topography z<0 is covered by ocean
-  is_flatten       = .false.          !! Force topography variation to zero
+  topo_flatten     = .false.          !! Force topography variation to zero (formerly is_flatten)
+  munk_profile     = .true.           !! velocity gradient inside the seawater column
+  earth_flattening = .false.          !! Earth-flattening tranformation
 
     !! --------------------------------------------------------------------- !!
     !! For uniform velocity model 'uni'
@@ -192,6 +193,7 @@
   ckpdir           = './out/ckp'      !! output directory
   ckp_interval     = 1000000          !! interval for checkpoint check（1/cycle）
   ckp_time         = 1000000.         !! checkpoint time
+  ckp_seq          = .true.           !! sequential output mode
 
   !! ----------------------------------------------------------------------- !!
   !! Reciprocity Green's Function Mode

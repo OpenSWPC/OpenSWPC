@@ -54,6 +54,9 @@ contains
     integer :: nlayer
     character(256) :: adum
     logical :: use_munk
+    logical :: earth_flattening
+    real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
+    real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening
     !! ----
 
     call readini( io_prm, 'fn_lhm', fn_lhm, '' )
@@ -68,6 +71,17 @@ contains
     !! seawater
     call readini( io_prm, 'munk_profile', use_munk, .false. )
     call seawater__init( use_munk )
+
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
+    if( earth_flattening ) then
+      do k=k0, k1
+        zs(k) = R_EARTH - R_EARTH * exp( - zc(k) / R_EARTH )
+        Cv(k) = exp( zc(k) / R_EARTH)
+      end do
+    else
+      zs(:) = zc(:)
+      Cv(:) = 1.0
+    end if
 
     call std__getio( io_vel )
     open( io_vel, file=fn_lhm, status='old', action='read', iostat=ierr )
@@ -103,9 +117,9 @@ contains
     do k = k0, k1
 
       !! air/ocean column
-      if( zc(k) < depth(1) ) then
+      if( zs(k) < depth(1) ) then
 
-        if( zc(k) < 0.0 ) then 
+        if( zs(k) < 0.0 ) then 
 
           vp1 = 0.0
           vs1 = 0.0
@@ -119,7 +133,7 @@ contains
           
         else
 
-          vp1 = seawater__vel(zc(k))
+          vp1 = Cv(k) * seawater__vel(zs(k))
           vs1 = 0.0
           
           rho(k,i0:i1) = 1.0
@@ -136,10 +150,10 @@ contains
 
       !! chose layer
       do l=1, nlayer
-        if( zc(k) >= depth(l) ) then
+        if( zs(k) >= depth(l) ) then
           rho1 = rho0(l)
-          vp1  = vp0(l)
-          vs1  = vs0(l)
+          vp1  = Cv(k)*vp0(l)
+          vs1  = Cv(k)*vs0(l)
           qp1  = qp0(l)
           qs1  = qs0(l)
         end if
