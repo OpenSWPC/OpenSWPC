@@ -77,7 +77,7 @@ contains
 
     call readini( io_prm, 'fn_grdlst', fn_grdlst, '' )
     call readini( io_prm, 'is_ocean', is_ocean, .true. )
-    call readini( io_prm, 'is_flatten', is_flatten, .false. )
+    call readini( io_prm, 'topo_flatten', is_flatten, .false. )
     if( is_flatten ) is_ocean = .true.
     call readini( io_prm, 'dir_grd',  dir_grd, '.' )
 

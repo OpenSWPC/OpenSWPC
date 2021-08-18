@@ -5,10 +5,10 @@
 #$ -ac T=12                    # OpenMP thread (12 for MPI/OpenMP Hybrid)
 #$ -cwd                        # Execute at the current directory
 #$ -j y                        # Combine stderr & stdout
-#$ -o swpc_out_C.txt           # Output filename
+#$ -o swpc_out_W.txt           # Output filename
 #$ -N SWPC                     # Job name
 
 source ${TMP}/hybrid-mpi-$JOB_ID/env.csh
 mpiexec_mpt -np ${TOTAL_PROCS} omplace -nt ${OMP_NUM_THREADS} \
-    ./bin/swpc_3d.x -i example/input_eic_C.inf
+    ./bin/swpc_3d.x -i example/input_WJapan.inf
 

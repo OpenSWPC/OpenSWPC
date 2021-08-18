@@ -11,7 +11,7 @@
   !! Control
   !!
 
-  title            = 'swpc_C'        !! exe title: used for output filenames
+  title            = 'swpc_W'        !! exe title: used for output filenames
   odir             = './out'          !! output directory
   ntdec_r          = 50               !! screen report timing (1/cycle)
   strict_mode      = .false. 
@@ -22,8 +22,8 @@
 
   nproc_x          = 6                !! parallelization in x-dir
   nproc_y          = 6                !! parallelization in x-dir
-  nx               = 2200             !! total grid number in x-dir
-  ny               = 2200             !! total grid number in y-dir
+  nx               = 2000             !! total grid number in x-dir
+  ny               = 2560             !! total grid number in y-dir
   nz               = 500              !! total grid number in z-dir
   nt               = 24000            !! time step number
 
@@ -35,13 +35,13 @@
   vcut             = 1.5              !! minimum velocity
                                       !- smaller velocities will be increased
 
-  xbeg             = -550.0           !! minimum in x-dir
-  ybeg             = -550.0           !! minimum in y-dir
+  xbeg             = -500.0           !! minimum in x-dir
+  ybeg             = -640.0           !! minimum in y-dir
   zbeg             = -10.0            !! minimum in z-dir
   tbeg             = 0.0              !! start time
 
-  clon             = 136.6            !! center longitude
-  clat             = 37.0             !! center latitude
+  clon             = 136.0            !! center longitude
+  clat             = 34.5             !! center latitude
   phi              = 0.0              !! horizontal coordinate rotation
                                       !- measured clockwise from the north
 
@@ -55,7 +55,7 @@
   !! Snapshot Output
   !!
 
-  snp_format       = 'netcdf'         !! snapshot format (native or netcdf)
+  snp_format       = 'netcdf'         !! snapshot format (netcdf)
 
   xy_ps%sw         = .false.          !! P&S amp. for xy section
   xz_ps%sw         = .true.           !! P&S amp. for xz section
@@ -98,7 +98,7 @@
   ntdec_w          = 4                !! time decimation of waveform output
   st_format        = 'll'             !! station format: 'xy' or 'll'
   fn_stloc         = '${DATASET}/station/hinet.stlst'  !! station location file
-  wav_format       = 'sac'            !! 'sac' or 'csf'
+  wav_format       = 'sac'            !! 'sac' or 'csf'  ('sac' recommended)
   wav_calc_dist    = .false.          !! explicitly set  the SAC dist header
 
   !! ----------------------------------------------------------------------- !!
@@ -115,7 +115,7 @@
   !! 'boxcar' / 'triangle' / 'herrmann' / 'kupper' / 'cosine' / 'texp'
   stftype          = 'kupper'
 
-  fn_stf           = "./example/source.C.dat"   !! Source grid file name
+  fn_stf           = "./example/source.W.dat"   !! Source grid file name
 
   !! source depth correction
   !! 'asis':use z value, 'bd{i}': i-th boundary (i=0...9)
@@ -144,7 +144,7 @@
 
   abc_type         = 'pml'            !! 'pml' or 'cerjan'
   na               = 20               !! absorbing layer thickness
-  stabilize_pml    = .false.           !! avoid low-v layer in PML region
+  stabilize_pml    = .false.           !! avoid low-v layer in PML region 
 
   !! ----------------------------------------------------------------------- !!
   !! Velocity model
@@ -152,17 +152,19 @@
 
   vmodel_type      = 'grd'            !! velocity model type 'uni'/'grd'/'lhm'
   is_ocean         = .true.           !! topography z<0 is covered by ocean
-  is_flatten       = .false.          !! Force topography variation to zero
+  topo_flatten     = .false.          !! Force topography variation to zero (formerly is_flatten)
+  munk_profile     = .true.           !! velocity gradient inside the seawater column
+  earth_flattening = .false.          !! Earth-flattening tranformation
 
     !! --------------------------------------------------------------------- !!
     !! For uniform velocity model 'uni'
     !!
-    vp0              = 5.0                 !! P-wave velocity [km/s]
-    vs0              = 3.0                 !! S-wave velocity [km/s]
-    rho0             = 2.7                 !! mass density    [g/cm^3]
-    qp0              = 200                 !! Qp
-    qs0              = 200                 !! Qs
-    topo0            = 0                   !! topography location
+    vp0              = 5.0              !! P-wave velocity [km/s]
+    vs0              = 3.0              !! S-wave velocity [km/s]
+    rho0             = 2.7              !! mass density    [g/cm^3]
+    qp0              = 200              !! Qp
+    qs0              = 200              !! Qs
+    topo0            = 0                !! topography location
 
     !! --------------------------------------------------------------------- !!
     !! For GMT grid file input 'grd' ( requires netcdf library )
@@ -174,7 +176,7 @@
     !! --------------------------------------------------------------------- !!
     !! For layered homogeneous medium model ('lhm')
     !!
-    fn_lhm           = 'example/lhm.dat'  !! 1D velocity structure
+    fn_lhm           = 'example/lhm.dat'    !! 1D velocity structure
 
     !! --------------------------------------------------------------------- !!
     !! For random medium models
@@ -191,6 +193,7 @@
   ckpdir           = './out/ckp'      !! output directory
   ckp_interval     = 1000000          !! interval for checkpoint check（1/cycle）
   ckp_time         = 1000000.         !! checkpoint time
+  ckp_seq          = .true.           !! sequential output mode
 
   !! ----------------------------------------------------------------------- !!
   !! Reciprocity Green's Function Mode
@@ -202,7 +205,7 @@
   green_bforce     = .false.          !! also calc. body force Green's function
   green_maxdist    = 550.             !! horizontal limit of source grid
   green_fmt        = 'llz'            !! list file format: 'xyz' or 'llz'
-  fn_glst          = 'in/green.lst'   !! Green's function grid point list
+  fn_glst          = 'example/green.lst'   !! Green's function grid point list
 
   !! ----------------------------------------------------------------------- !!
   !! MISC
