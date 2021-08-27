@@ -1,16 +1,15 @@
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
 !>
-!! Write SAC-formatted seismograms: Fortran 2003 Version
+!! SAC-formatted seismograms
 !!
 !! @copyright
 !!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
-module m_wsac
+module m_sac
 
   !! -- Dependency
   use m_std
-  use m_daytim
 
   !! -- Declarations
   implicit none
@@ -19,6 +18,7 @@ module m_wsac
   !! -- Public Procedures
   public :: sac__hdr     ! sac data type
   public :: sac__write   ! write sac datafile
+  public :: sac__read    ! read  sac datafile  
   public :: sac__init    ! initialize sac data type
   public :: sac__whdr    ! read header
   public :: csf__write   ! write concatenated sac format file
@@ -31,49 +31,66 @@ module m_wsac
   type sac__hdr
 
     !!               var name          description                   record#
-    real(DP)      :: delta           ! sampling interval             (001)
-    real(DP)      :: depmin          ! minimum value                 (002)
-    real(DP)      :: depmax          ! maximum value                 (003)
-    real(DP)      :: b               ! begenning independent value   (006)
-    real(DP)      :: e               ! ending independent value      (007)
-    real(DP)      :: o               ! event origin time             (008)
-    real(DP)      :: a               ! first arrival time            (009)
-    real(DP)      :: t0              ! time picks                    (011)
-    real(DP)      :: t1              ! time picks                    (012)
-    real(DP)      :: t2              ! time picks                    (013)
-    real(DP)      :: t3              ! time picks                    (014)
-    real(DP)      :: t4              ! time picks                    (015)
-    real(DP)      :: t5              ! time picks                    (016)
-    real(DP)      :: t6              ! time picks                    (017)
-    real(DP)      :: t7              ! time picks                    (018)
-    real(DP)      :: t8              ! time picks                    (019)
-    real(DP)      :: t9              ! time picks                    (020)
-    real(DP)      :: stla            ! station latitude              (032)
-    real(DP)      :: stlo            ! station longitude             (033)
-    real(DP)      :: stel            ! station elevation (m)         (034)
-    real(DP)      :: stdp            ! station depth (m)             (035)
-    real(DP)      :: evla            ! event latitude                (036)
-    real(DP)      :: evlo            ! event longitude               (037)
-    real(DP)      :: evel            ! event elevation (m)           (038)
-    real(DP)      :: evdp            ! event depth (m)               (039)
-    real(DP)      :: mag             ! event magnitude               (040)
-    real(DP)      :: user0           ! user header                   (041)
-    real(DP)      :: user1           ! user header                   (042)
-    real(DP)      :: user2           ! user header                   (043)
-    real(DP)      :: user3           ! user header                   (044)
-    real(DP)      :: user4           ! user header                   (045)
-    real(DP)      :: user5           ! user header                   (046)
-    real(DP)      :: user6           ! user header                   (047)
-    real(DP)      :: user7           ! user header                   (048)
-    real(DP)      :: user8           ! user header                   (049)
-    real(DP)      :: user9           ! user header                   (050)
-    real(DP)      :: dist            ! distance (km)                 (051)
-    real(DP)      :: az              ! azimuth (deg)                 (052)
-    real(DP)      :: baz             ! back azimuth (deg)            (053)
-    real(DP)      :: gcarc           ! angular distance (deg)        (054)
-    real(DP)      :: depmen          ! mean value                    (057)
-    real(DP)      :: cmpaz           ! component azimuth             (058)
-    real(DP)      :: cmpinc          ! component incident angle      (059)     
+    real(dp)      :: delta           ! sampling interval             (001)
+    real(dp)      :: depmin          ! minimum value                 (002)
+    real(dp)      :: depmax          ! maximum value                 (003)
+    real(dp)      :: scale           ! multiplying scale factor      (004)
+    real(dp)      :: odelta          ! Observed increment            (005)
+    real(dp)      :: b               ! begenning independent value   (006)
+    real(dp)      :: e               ! ending independent value      (007)
+    real(dp)      :: o               ! event origin time             (008)
+    real(dp)      :: a               ! first arrival time            (009)
+    real(dp)      :: t0              ! time picks                    (011)
+    real(dp)      :: t1              ! time picks                    (012)
+    real(dp)      :: t2              ! time picks                    (013)
+    real(dp)      :: t3              ! time picks                    (014)
+    real(dp)      :: t4              ! time picks                    (015)
+    real(dp)      :: t5              ! time picks                    (016)
+    real(dp)      :: t6              ! time picks                    (017)
+    real(dp)      :: t7              ! time picks                    (018)
+    real(dp)      :: t8              ! time picks                    (019)
+    real(dp)      :: t9              ! time picks                    (020)
+    real(dp)      :: f               ! fini or end of event time     (021)
+    real(dp)      :: resp0           ! instrument response param.    (022)
+    real(dp)      :: resp1           ! instrument response param.    (023)
+    real(dp)      :: resp2           ! instrument response param.    (024)
+    real(dp)      :: resp3           ! instrument response param.    (025)
+    real(dp)      :: resp4           ! instrument response param.    (026)
+    real(dp)      :: resp5           ! instrument response param.    (027)
+    real(dp)      :: resp6           ! instrument response param.    (028)
+    real(dp)      :: resp7           ! instrument response param.    (029)
+    real(dp)      :: resp8           ! instrument response param.    (030)
+    real(dp)      :: resp9           ! instrument response param.    (031)
+    real(dp)      :: stla            ! station latitude              (032)
+    real(dp)      :: stlo            ! station longitude             (033)
+    real(dp)      :: stel            ! station elevation (m)         (034)
+    real(dp)      :: stdp            ! station depth (m)             (035)
+    real(dp)      :: evla            ! event latitude                (036)
+    real(dp)      :: evlo            ! event longitude               (037)
+    real(dp)      :: evel            ! event elevation (m)           (038)
+    real(dp)      :: evdp            ! event depth (m)               (039)
+    real(dp)      :: mag             ! event magnitude               (040)
+    real(dp)      :: user0           ! user header                   (041)
+    real(dp)      :: user1           ! user header                   (042)
+    real(dp)      :: user2           ! user header                   (043)
+    real(dp)      :: user3           ! user header                   (044)
+    real(dp)      :: user4           ! user header                   (045)
+    real(dp)      :: user5           ! user header                   (046)
+    real(dp)      :: user6           ! user header                   (047)
+    real(dp)      :: user7           ! user header                   (048)
+    real(dp)      :: user8           ! user header                   (049)
+    real(dp)      :: user9           ! user header                   (050)
+    real(dp)      :: dist            ! distance (km)                 (051)
+    real(dp)      :: az              ! azimuth (deg)                 (052)
+    real(dp)      :: baz             ! back azimuth (deg)            (053)
+    real(dp)      :: gcarc           ! angular distance (deg)        (054)
+    real(dp)      :: depmen          ! mean value                    (057)
+    real(dp)      :: cmpaz           ! component azimuth             (058)
+    real(dp)      :: cmpinc          ! component incident angle      (059) 
+    real(dp)      :: xminimum        ! minimum value of x (spec)     (060)    
+    real(dp)      :: xmaximum        ! maximum value of x (spec)     (061)    
+    real(dp)      :: yminimum        ! minimum value of y (spec)     (062)    
+    real(dp)      :: ymaximum        ! maximum value of y (spec)     (063)    
     integer       :: nzyear          ! reference time, year          (071)
     integer       :: nzjday          ! reference time, julian day    (072)
     integer       :: nzhour          ! reference time, hour          (073)
@@ -81,10 +98,23 @@ module m_wsac
     integer       :: nzsec           ! reference time, second        (075)
     integer       :: nzmsec          ! reference time, millisecond   (076)
     integer       :: nvhdr           ! header version                (077)
+    integer       :: norid           ! origin ID (CSS3.0)            (078)
+    integer       :: nevid           ! event ID (CSS3.0)             (079)
     integer       :: npts            ! number of data points         (080)
+    integer       :: nwfid           ! waveform ID (CSS3.0)          (082)
+    integer       :: nxsize          ! spectral length               (083)
+    integer       :: nysize          ! spectral width                (084)
     integer       :: iftype          ! type of file                  (086)
     integer       :: idep            ! type of dependent var.        (087)
+    integer       :: iztype          ! reference time equivallence   (088)
+    integer       :: iinst           ! instrument type               (090)
+    integer       :: istreg          ! station region                (091)
+    integer       :: ievreg          ! event region                  (092)
     integer       :: ievtyp          ! event type                    (093)
+    integer       :: iqual           ! data quality                  (094)
+    integer       :: isynth          ! synthetic data flag real=49   (095)
+    integer       :: imagtyp         ! magnitude type                (096)
+    integer       :: imagsrc         ! source of magnitude info.     (097)
     logical       :: leven           ! is evenly spaced file         (106)
     logical       :: lpspol          ! is positive polarity          (107)
     logical       :: lovrok          ! is overwrite ok?              (108)
@@ -113,14 +143,14 @@ module m_wsac
     character(8)  :: kdatrd          ! date data onto comp.          (155)
     character(8)  :: kinst           ! instrument                    (157)
 
-    !! Unofficial header at unused blocks
-    real(DP) :: user10 ! user header (064)
-    real(DP) :: user11 ! user header (065)
-    real(DP) :: user12 ! user header (066)
-    real(DP) :: user13 ! user header (067)
-    real(DP) :: user14 ! user header (068)
-    real(DP) :: user15 ! user header (069)
-    real(DP) :: user16 ! user header (070)
+    !! Unofficial headers at unused blocks
+    real(dp) :: user10 ! user header (064)
+    real(dp) :: user11 ! user header (065)
+    real(dp) :: user12 ! user header (066)
+    real(dp) :: user13 ! user header (067)
+    real(dp) :: user14 ! user header (068)
+    real(dp) :: user15 ! user header (069)
+    real(dp) :: user16 ! user header (070)
     integer  :: iuser0 ! user header (098)
     integer  :: iuser1 ! user header (099)
     integer  :: iuser2 ! user header (100)
@@ -131,60 +161,108 @@ module m_wsac
     integer  :: iuser7 ! user header (105)
     logical  :: luser0 ! user header (110)
 
-    !! associated information from sac header
-    integer :: nzmonth ! month of begin time from nzjday
-    integer :: nzday   ! day   of begin time from nzjday
-
-    integer :: tim     ! absolute begin time from 1970/1/1 0:0:0 in second
-    logical :: is_same_endian
+    !! original header
+    integer :: nzmonth
+    integer :: nzday
+    integer :: tim
 
   end type sac__hdr
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Write SAC file
-  !!
-  !! @par Usage
-  !! call sac__write( char filename, type__header, real data(:), logical sw )
-  !! data can be single or double precisions
-  !! if sw = true, the existing file is automatically replaced.
-  !<
-  !! --
   interface sac__write
-
-    module procedure wsac_d, wsac_s
-
+    module procedure sac_d, sac_s
   end interface sac__write
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Write CSF file
-  !!
-  !! @par Usage
-  !! call sac__csf( char filename, integer ntrace, integer npts, sac__hdr sh(:), real(*) dat(:), logical sw )
-  !! data can be single or double precisions
-  !! if sw = true, the existing file is automatically replaced. 
-  !<
-  !! --
+  interface sac__read
+     module procedure rsac_d, rsac_s
+  end interface
+
   interface csf__write
-
     module procedure wcsf_d, wcsf_s
-
   end interface csf__write
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
 
 contains
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
+  !! Read SAC file
+  !<
+  !! --
+  subroutine rsac_d ( fn_sac, ss, dat )
+
+    character(*),          intent(in)    :: fn_sac  !< sac filename
+    type(sac__hdr),        intent(out)   :: ss      !< header info
+    real(dp), allocatable, intent(inout) :: dat(:)  !< waveform data
+    real(sp), allocatable                :: fdat(:)
+    !----
+    
+    call rsac_s( fn_sac, ss, fdat )
+
+    if( .not. allocated( dat ) )  allocate( dat(1:ss%npts) )
+    dat = dble(fdat)
+    deallocate(fdat)
+    
+  end subroutine rsac_d
+
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  !>
+  !! Read SAC file
+  !<
+  !! --  
+  subroutine rsac_s( fn_sac, ss, dat )
+
+    character(*),                    intent(in)    :: fn_sac  !< sac filename
+    type(sac__hdr),                  intent(out)   :: ss      !< header info
+    real(sp), allocatable, optional, intent(inout) :: dat(:)  !< waveform data
+    !--
+    integer :: io
+    integer :: i
+    integer :: nmax
+    logical :: same_endian
+    integer :: ierr
+    !----
+    call std__getio(io)
+    open( io, file=fn_sac, &
+          action='read', access='stream', form='unformatted', status='old', iostat=ierr)
+    
+    if( ierr /= 0 ) then
+      write(stderr,*) '[sac__read]: file '// trim(fn_sac) // ' not opened. '
+      return
+    end if
+
+    call sac__rhdr(io, ss, same_endian)
+        
+    if( present( dat ) ) then       
+       
+       if( .not. allocated( dat ) ) then
+          allocate( dat(1:ss%npts))
+          nmax = ss%npts
+       else
+          nmax = max( ss%npts, size(dat) )
+       end if
+       
+       if( ss%npts > nmax ) then
+          write(stderr,*) '[sac__read]: data array does not have enough size' 
+       end if
+       
+       read(io) dat
+       if( .not. same_endian ) then
+          do i=1, ss%npts
+             call change_endian_r( dat(i) )
+          end do
+       end if
+       
+    end if
+    
+    close( io )
+    
+  end subroutine rsac_s  
+
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  !>
   !! Write SAC file
   !<
   !! --
-  subroutine wsac_d( fn_sac, ss, dat, overwrite )
+  subroutine sac_d( fn_sac, ss, dat, overwrite )
 
     !! -- Arguments
     character(*),   intent(in)           :: fn_sac
@@ -195,19 +273,19 @@ contains
     !! ----
 
     if( present( overwrite) ) then
-      call wsac_s( fn_sac, ss, real(dat), overwrite)
+      call sac_s( fn_sac, ss, real(dat), overwrite)
     else
-      call wsac_s( fn_sac, ss, real(dat) )
+      call sac_s( fn_sac, ss, real(dat) )
     end if
 
-  end subroutine wsac_d
+  end subroutine sac_d
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
   !! Write SAC file
   !<
-  subroutine wsac_s( fn_sac, ss, dat, overwrite )
+  subroutine sac_s( fn_sac, ss, dat, overwrite )
 
     !! -- Arguments
     character(*),   intent(in)           :: fn_sac
@@ -225,19 +303,19 @@ contains
     if( isexist ) then
       if( present( overwrite) ) then
         if( .not. overwrite ) then
-          write(STDERR,*) 'wsac: file '//trim(fn_sac)//' exists.'
-          write(STDERR,*) 'wsac: could not overwrite the file.'
-          write(STDERR,*) 'wsac: return without success'
+          write(STDERR,*) 'sac: file '//trim(fn_sac)//' exists.'
+          write(STDERR,*) 'sac: could not overwrite the file.'
+          write(STDERR,*) 'sac: return without success'
           write(STDERR,*)
           return
         end if
       else
-        write(STDERR,*) 'wsac: file '//trim(fn_sac)//' exists.'
-        write(STDERR,*) 'wsac: Overwrite ? (y/n)'
+        write(STDERR,*) 'sac: file '//trim(fn_sac)//' exists.'
+        write(STDERR,*) 'sac: Overwrite ? (y/n)'
         read(STDIN,'(A)') yn
         if( yn /= 'y' .and. yn /='Y' ) then
-          write(STDERR,*) 'wsac: could not overwrite the file.'
-          write(STDERR,*) 'wsac: return without success'
+          write(STDERR,*) 'sac: could not overwrite the file.'
+          write(STDERR,*) 'sac: return without success'
           write(STDERR,*)
           return
         end if
@@ -252,7 +330,7 @@ contains
     write( io ) dat(1:ss%npts)
     close( io )
 
-  end subroutine wsac_s
+  end subroutine sac_s
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -495,10 +573,6 @@ contains
     ss%kdatrd  = cerr
     ss%kinst   = cerr
 
-    ss%nzmonth = ierr
-    ss%nzday   = ierr
-    ss%tim     = ierr
-
     !! inoficial headers
     ss%user10 = ferr
     ss%user11 = ferr
@@ -618,5 +692,240 @@ contains
   end subroutine wcsf_s
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-end module m_wsac
+  !-----------------------------------------------------------------------------------------------!
+  !> Read SAC data header from pre-opened file io
+  !--
+  subroutine sac__rhdr( io, ss, same_endian )
+
+    integer,        intent(in) :: io
+    type(sac__hdr), intent(out) :: ss
+    logical,        intent(out), optional :: same_endian
+    !--
+    integer :: i
+    real(sp)     :: fheader(1:70)
+    integer      :: iheader(71:105)
+    logical      :: lheader(106:110)
+    integer      :: nvhdr
+    character(4) :: aheader(111:158)
+    logical      :: same_endian0
+    !----
+    
+    read(io) fheader
+    read(io) iheader
+    read(io) lheader
+    read(io) aheader
+    nvhdr = iheader( 77) 
+    same_endian0 = ( 1 <= nvhdr .and. nvhdr <= 9 )
+    
+    if( .not. same_endian0 ) then
+      do i=  1, 70
+        call change_endian_r(fheader(i))
+      end do
+      do i= 71,105
+        call change_endian_i(iheader(i))
+      end do
+      do i=106,110
+        call change_endian_l(lheader(i))
+      end do
+    end if
+    
+    ss % delta  = dble( int( fheader(  1) * 1d7 + 0.5 ) ) / 1d7
+    ss % depmin = dble( fheader(  2)  )
+    ss % depmax = dble( fheader(  3)  ) 
+    ss % b      = dble( fheader(  6)  )
+    ss % e      = dble( fheader(  7)  )
+    ss % o      = dble( fheader(  8)  )
+    ss % a      = dble( fheader(  9)  )
+    ss % t0     = dble( fheader( 11)  )
+    ss % t1     = dble( fheader( 12)  )
+    ss % t2     = dble( fheader( 13)  )
+    ss % t3     = dble( fheader( 14)  )
+    ss % t4     = dble( fheader( 15)  )
+    ss % t5     = dble( fheader( 16)  )
+    ss % t6     = dble( fheader( 17)  )
+    ss % t7     = dble( fheader( 18)  )
+    ss % t8     = dble( fheader( 19)  )
+    ss % t9     = dble( fheader( 20)  )
+    ss % stla   = dble( fheader( 32)  )
+    ss % stlo   = dble( fheader( 33)  )
+    ss % stel   = dble( fheader( 34)  )
+    ss % stdp   = dble( fheader( 35)  )
+    ss % evla   = dble( fheader( 36)  )
+    ss % evlo   = dble( fheader( 37)  )
+    ss % evel   = dble( fheader( 38)  )
+    ss % evdp   = dble( fheader( 39)  )
+    ss % mag    = dble( fheader( 40)  )
+    ss % user0  = dble( fheader( 41)  )
+    ss % user1  = dble( fheader( 42)  )
+    ss % user2  = dble( fheader( 43)  )
+    ss % user3  = dble( fheader( 44)  )
+    ss % user4  = dble( fheader( 45)  )
+    ss % user5  = dble( fheader( 46)  )
+    ss % user6  = dble( fheader( 47)  )
+    ss % user7  = dble( fheader( 48)  )
+    ss % user8  = dble( fheader( 49)  )
+    ss % user9  = dble( fheader( 50)  )
+    ss % dist   = dble( fheader( 51)  )
+    ss % az     = dble( fheader( 52)  )
+    ss % baz    = dble( fheader( 53)  )
+    ss % gcarc  = dble( fheader( 54)  )
+    ss % depmen = dble( fheader( 57)  )
+    ss % cmpaz  = dble( fheader( 58)  )
+    ss % cmpinc = dble( fheader( 59)  )
+    
+    ss % nzyear = iheader( 71) 
+    ss % nzjday = iheader( 72) 
+    ss % nzhour = iheader( 73) 
+    ss % nzmin  = iheader( 74) 
+    ss % nzsec  = iheader( 75) 
+    ss % nzmsec = iheader( 76) 
+    ss % nvhdr  = iheader( 77) 
+    ss % npts   = iheader( 80) 
+    ss % iftype = iheader( 86) 
+    ss % idep   = iheader( 87) 
+    ss % ievtyp = iheader( 93) 
+    
+    ss % leven  = lheader(106)
+    ss % lpspol = lheader(107)
+    ss % lovrok = lheader(108)
+    ss % lcalda = lheader(109)
+    
+    ss % kstnm  = aheader(111) // aheader(112)
+    ss % kevnm  = aheader(113) // aheader(114) // aheader(115) // aheader(116)
+    ss % khole  = aheader(117) // aheader(118)
+    ss % ko     = aheader(119) // aheader(120)
+    ss % ka     = aheader(121) // aheader(122)
+    ss % kt0    = aheader(123) // aheader(124)
+    ss % kt1    = aheader(125) // aheader(126)
+    ss % kt2    = aheader(127) // aheader(128)
+    ss % kt3    = aheader(129) // aheader(130)
+    ss % kt4    = aheader(131) // aheader(132)
+    ss % kt5    = aheader(133) // aheader(134)
+    ss % kt6    = aheader(135) // aheader(136)
+    ss % kt7    = aheader(137) // aheader(138)
+    ss % kt8    = aheader(139) // aheader(140)
+    ss % kt9    = aheader(141) // aheader(142)
+    ss % kf     = aheader(143) // aheader(144)
+    ss % kuser0 = aheader(145) // aheader(146)
+    ss % kuser1 = aheader(147) // aheader(148)
+    ss % kuser2 = aheader(149) // aheader(150)
+    ss % kcmpnm = aheader(151) // aheader(152)
+    ss % knetwk = aheader(153) // aheader(154)
+    ss % kdatrd = aheader(155) // aheader(156)
+    ss % kinst  = aheader(157) // aheader(158)
+    
+    call char_zeropad( ss%kstnm  )
+    call char_zeropad( ss%kevnm  )
+    call char_zeropad( ss%kt0    )
+    call char_zeropad( ss%kt1    )
+    call char_zeropad( ss%kt2    )
+    call char_zeropad( ss%kt3    )
+    call char_zeropad( ss%kt4    )
+    call char_zeropad( ss%kt5    )
+    call char_zeropad( ss%kt6    )
+    call char_zeropad( ss%kt7    )
+    call char_zeropad( ss%kt8    )
+    call char_zeropad( ss%kt9    )
+    call char_zeropad( ss%kuser0 )
+    call char_zeropad( ss%kuser1 )
+    call char_zeropad( ss%kuser2 )
+    call char_zeropad( ss%kcmpnm )
+    call char_zeropad( ss%knetwk )
+    
+    !! unofficieal headers
+    ss % user10 = dble( fheader( 64) )
+    ss % user11 = dble( fheader( 65) )
+    ss % user12 = dble( fheader( 66) )
+    ss % user13 = dble( fheader( 67) )
+    ss % user14 = dble( fheader( 68) )
+    ss % user15 = dble( fheader( 69) )
+    ss % user16 = dble( fheader( 70) )
+    ss % iuser0 = iheader( 98)
+    ss % iuser1 = iheader( 99)
+    ss % iuser2 = iheader(100)
+    ss % iuser3 = iheader(101)
+    ss % iuser4 = iheader(102)
+    ss % iuser5 = iheader(103)
+    ss % iuser6 = iheader(104)
+    ss % iuser7 = iheader(105)
+    ss % luser0 = lheader(110)
+
+    if( present(same_endian) ) same_endian = same_endian0
+
+  end subroutine sac__rhdr
+
+  !-----------------------------------------------------------------------------------------------!
+  subroutine byteswap(nbyte, foo)
+
+    integer,          intent(in)    :: nbyte ! must be even
+    character(nbyte), intent(inout) :: foo
+    !--
+    integer  :: i, j
+    character(1) :: wk
+    !----
+
+    do i=1, nbyte/2
+      j = nbyte - i + 1
+      wk       = foo(i:i)
+      foo(i:i) = foo(j:j)
+      foo(j:j) = wk
+    end do    
+
+  end subroutine byteswap
+
+  !-----------------------------------------------------------------------------------------------!  
+  subroutine change_endian_r( var )
+
+    real, intent(inout) :: var
+    character(4) :: c
+    
+    c = transfer( var, c )
+    call byteswap( 4, c )
+    var = transfer( c, var )
+    
+  end subroutine change_endian_r
+
+  !-----------------------------------------------------------------------------------------------!  
+  subroutine change_endian_i( var )
+
+    integer, intent(inout) :: var
+    character(4) :: c
+    
+    c = transfer( var, c )
+    call byteswap( 4, c)
+    var = transfer( c, var )
+    
+  end subroutine change_endian_i
+
+  !-----------------------------------------------------------------------------------------------!  
+  subroutine change_endian_l( var )
+
+    logical, intent(inout) :: var
+    character(4) :: c
+
+    c = transfer( var, c )
+    call byteswap( 4, c )
+    var = transfer( c, var )
+    
+  end subroutine change_endian_l
+
+  !-----------------------------------------------------------------------------------------------!
+  !> Substitute blanks in character ch by padding '0'
+  !--
+  subroutine char_zeropad( ch )
+
+    character(*), intent(inout) :: ch
+    !--
+    integer :: i
+    !----
+    
+    do i=1, len(ch)
+       if( ichar(ch(i:i))== 0 )then
+          ch(i:i) = ' ' 
+       end if
+    end do
+    
+  end subroutine char_zeropad  
+
+end module m_sac
 !! ----------------------------------------------------------------------------------------------------------------------------- !!

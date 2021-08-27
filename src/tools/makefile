@@ -44,7 +44,7 @@ m_color.o   : m_color.F90 m_std.o
 m_fk.o      : m_fk.F90 m_std.o m_rfft.o
 m_rfft.o    : m_rfft.F90 m_std.o
 m_gammaf.o  : m_gammaf.F90 m_std.o
-m_wsac.o    : m_wsac.F90 m_daytim.o m_std.o
+m_sac.o    : m_sac.F90 m_std.o
 
 .SUFFIXES:
 .SUFFIXES: .F90 .o
@@ -79,7 +79,7 @@ m_wsac.o    : m_wsac.F90 m_daytim.o m_std.o
 ../../bin/xy2ll.x: xy2ll.F90 m_std.o m_geomap.o m_system.o m_gk.o m_debug.o
 	$(FC) $(FFLAGS) -o $@ $^ 
 
-../../bin/wav2sac.x: wav2sac.F90 m_std.o m_system.o m_daytim.o m_wsac.o 
+../../bin/wav2sac.x: wav2sac.F90 m_std.o m_system.o m_daytim.o m_sac.o 
 	$(FC) $(FFLAGS) -o $@ $^ 
 
 ../../bin/fs2grd.x: fs2grd.F90 m_std.o m_system.o m_gk.o m_geomap.o m_getopt.o m_bicubic.o m_fdsnap.o m_daytim.o

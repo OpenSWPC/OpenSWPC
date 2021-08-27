@@ -16,7 +16,7 @@ module m_output
   use m_pwatch
   use m_fdtool
   use m_daytim
-  use m_wsac
+  use m_sac
   use m_readini
   use m_geomap
   use m_system

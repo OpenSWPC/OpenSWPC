@@ -9,7 +9,7 @@
 program wav2sac
 
   use m_std
-  use m_wsac
+  use m_sac
   use m_system
   implicit none
 
