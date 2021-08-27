@@ -106,7 +106,7 @@ contains
     !! PML region definition
     !!
     kbeg_min = minval( kbeg_a(:) )
-    if( fullspace_mode ) kbeg_min = kbeg
+    ! if( fullspace_mode ) kbeg_min = kbeg
 
     !! memory allocation
     allocate(  axVy( kbeg_min:kend, ibeg:iend ) )
@@ -214,54 +214,54 @@ contains
     !$omp end do nowait
     !$omp end parallel
 
-    if( fullspace_mode ) then
-      !$omp parallel &
-      !$omp private( gxc0, gzc0, dzSyz, dxSxy, by, i, k )
-      !$omp do schedule(dynamic)
-      do i=ibeg_k, iend_k
+    ! if( fullspace_mode ) then
+    !   ! $omp parallel &
+    !   ! $omp private( gxc0, gzc0, dzSyz, dxSxy, by, i, k )
+    !   ! $omp do schedule(dynamic)
+    !   do i=ibeg_k, iend_k
 
-        gxc0(1:4) = gxc(1:4,i)
+    !     gxc0(1:4) = gxc(1:4,i)
 
-        !!
-        !! Derivatives
-        !!
-        do k=1,na
+    !     !!
+    !     !! Derivatives
+    !     !!
+    !     do k=1,na
 
-          dzSyz(k) = (  Syz(k  ,i ) - Syz(k-1,i   )  ) * r20z
-          dxSxy(k) = (  Sxy(k  ,i ) - Sxy(k  ,i-1 )  ) * r20x
+    !       dzSyz(k) = (  Syz(k  ,i ) - Syz(k-1,i   )  ) * r20z
+    !       dxSxy(k) = (  Sxy(k  ,i ) - Sxy(k  ,i-1 )  ) * r20x
 
-        end do
+    !     end do
 
-        !!
-        !! update velocity
-        !!
-        do k=1, na
+    !     !!
+    !     !! update velocity
+    !     !!
+    !     do k=1, na
 
-          gzc0(1:4) = gzc(1:4,k)
+    !       gzc0(1:4) = gzc(1:4,k)
 
-          !!
-          !! Velocity Updates
-          !!
-          by = 1.0 /  rho(k,i)
+    !       !!
+    !       !! Velocity Updates
+    !       !!
+    !       by = 1.0 /  rho(k,i)
 
-          Vy(k,i) = Vy(k,i) &
-              + by * ( gxc0(1) * dxSxy(k)   + gzc0(1) * dzSyz(k)       &
-              + gxc0(2) * axSxy(k,i) + gzc0(2) * azSyz(k,i)  ) * dt
+    !       Vy(k,i) = Vy(k,i) &
+    !           + by * ( gxc0(1) * dxSxy(k)   + gzc0(1) * dzSyz(k)       &
+    !           + gxc0(2) * axSxy(k,i) + gzc0(2) * azSyz(k,i)  ) * dt
 
-          !!
-          !! ADE updates
-          !!
-          axSxy(k,i) = gxc0(3) * axSxy(k,i) + gxc0(4) * dxSxy(k) * dt
-          azSyz(k,i) = gzc0(3) * azSyz(k,i) + gzc0(4) * dzSyz(k) * dt
+    !       !!
+    !       !! ADE updates
+    !       !!
+    !       axSxy(k,i) = gxc0(3) * axSxy(k,i) + gxc0(4) * dxSxy(k) * dt
+    !       azSyz(k,i) = gzc0(3) * azSyz(k,i) + gzc0(4) * dzSyz(k) * dt
           
-        end do
-      end do
-      !$omp end do nowait
-      !$omp end parallel
-    end if
+    !     end do
+    !   end do
+    !   ! $omp end do nowait
+    !   ! $omp end parallel
+    ! end if
   
 
-    !$omp barrier
+    ! ! $omp barrier
 
   end subroutine absorb_p__update_vel
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -351,56 +351,56 @@ contains
     !$omp end do nowait
     !$omp end parallel
 
-    if( fullspace_mode ) then
-      !$omp parallel &
-      !$omp private(i, k, gxe0, gze0, dxVy, dzVy, nnn, pnn, npn, muxy, muyz )
-      !$omp do schedule(dynamic)
-      do i=ibeg_k, iend_k
+    ! if( fullspace_mode ) then
+    !   ! $omp parallel &
+    !   ! $omp private(i, k, gxe0, gze0, dxVy, dzVy, nnn, pnn, npn, muxy, muyz )
+    !   ! $omp do schedule(dynamic)
+    !   do i=ibeg_k, iend_k
 
-        gxe0(1:4) = gxe(1:4,i)
+    !     gxe0(1:4) = gxe(1:4,i)
 
-        !!
-        !! Derivatives
-        !!
-        do k=kbeg, na
+    !     !!
+    !     !! Derivatives
+    !     !!
+    !     do k=kbeg, na
 
-          dxVy(k) = (  Vy(k  ,i+1) - Vy(k,i)  ) * r20x
-          dzVy(k) = (  Vy(k+1,i  ) - Vy(k,i)  ) * r20z
+    !       dxVy(k) = (  Vy(k  ,i+1) - Vy(k,i)  ) * r20x
+    !       dzVy(k) = (  Vy(k+1,i  ) - Vy(k,i)  ) * r20z
 
-        end do
-
-
-        !!
-        !! Update Shear Stress
-        !!
-        do k=kbeg, na
-
-          gze0(1:4) = gze(1:4,k)
+    !     end do
 
 
-          !!
-          !! effective rigidity for shear stress components
-          !!
+    !     !!
+    !     !! Update Shear Stress
+    !     !!
+    !     do k=kbeg, na
 
-          nnn = mu (k  ,i )
-          pnn = mu (k+1,i )
-          npn = mu (k,  i+1)
-          muxy = 2*nnn*npn / ( nnn + npn + epsl )
-          muyz = 2*nnn*pnn / ( nnn + pnn + epsl )
+    !       gze0(1:4) = gze(1:4,k)
 
-          axVy(k,i) = gxe0(3) * axVy(k,i) + gxe0(4) * dxVy(k) * dt
-          azVy(k,i) = gze0(3) * azVy(k,i) + gze0(4) * dzVy(k) * dt
-          Syz(k,i) = Syz(k,i) + muyz* ( gze0(1) * dzVy(k) + gze0(2) * azVy(k,i) ) * dt
-          Sxy(k,i) = Sxy(k,i) + muxy* ( gxe0(1) * dxVy(k) + gxe0(2) * axVy(k,i) ) * dt
 
-        end do
-      end do
-      !$omp end do nowait
-      !$omp end parallel
+    !       !!
+    !       !! effective rigidity for shear stress components
+    !       !!
 
-    end if
+    !       nnn = mu (k  ,i )
+    !       pnn = mu (k+1,i )
+    !       npn = mu (k,  i+1)
+    !       muxy = 2*nnn*npn / ( nnn + npn + epsl )
+    !       muyz = 2*nnn*pnn / ( nnn + pnn + epsl )
+
+    !       axVy(k,i) = gxe0(3) * axVy(k,i) + gxe0(4) * dxVy(k) * dt
+    !       azVy(k,i) = gze0(3) * azVy(k,i) + gze0(4) * dzVy(k) * dt
+    !       Syz(k,i) = Syz(k,i) + muyz* ( gze0(1) * dzVy(k) + gze0(2) * azVy(k,i) ) * dt
+    !       Sxy(k,i) = Sxy(k,i) + muxy* ( gxe0(1) * dxVy(k) + gxe0(2) * axVy(k,i) ) * dt
+
+    !     end do
+    !   end do
+    !   ! $omp end do nowait
+    !   ! $omp end parallel
+
+    ! end if
     
-    !$omp barrier
+    ! ! $omp barrier
 
 
   end subroutine absorb_p__update_stress

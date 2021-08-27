@@ -134,7 +134,7 @@ contains
 
       !! surfaces
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       do k=kfs_top(i), kfs_bot(i)
         dxSxx(k) = (  Sxx(k  ,i+1) - Sxx(k  ,i  )  ) * r20x
@@ -144,7 +144,7 @@ contains
       end do
 
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       do k=kob_top(i), kob_bot(i)
         dxSxx(k) = (  Sxx(k  ,i+1) - Sxx(k  ,i  )  ) * r20x
@@ -166,7 +166,7 @@ contains
 
       !! i-boundary 
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       if( i == 1 ) then
         do k=kbeg_k, kend_k
@@ -277,7 +277,7 @@ contains
 
       !! free surface
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       do k=kfs_top(i), kfs_bot(i)
 
@@ -290,7 +290,7 @@ contains
 
       !! seafloor
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       do k=kob_top(i), kob_bot(i)
 
@@ -320,7 +320,7 @@ contains
       !! i-edge
       !!
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       if( i == 1 ) then
         do k=kbeg_k, kend_k

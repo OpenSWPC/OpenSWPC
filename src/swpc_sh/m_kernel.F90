@@ -127,7 +127,7 @@ contains
 
       !! surfaces
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       do k=kfs_top(i), kfs_bot(i)
         dzSyz(k) = (  Syz(k  ,i  ) - Syz(k-1,i  )  ) * r20z
@@ -135,7 +135,7 @@ contains
       end do
 
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       do k=kob_top(i), kob_bot(i)
         dzSyz(k) = (  Syz(k  ,i  ) - Syz(k-1,i  )  ) * r20z
@@ -217,7 +217,7 @@ contains
 
       !! free surface
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       do k=kfs_top(i), kfs_bot(i)
 
@@ -228,7 +228,7 @@ contains
 
       !! seafloor
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       do k=kob_top(i), kob_bot(i)
 

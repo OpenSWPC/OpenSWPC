@@ -13,7 +13,7 @@ module m_green
   use m_std
   use m_debug
   use m_global
-  use m_wsac
+  use m_sac
   use m_output
   use m_readini
   use m_geomap
@@ -364,7 +364,7 @@ contains
         sh(k)%kstnm = trim(green_stnm)
         sh(k)%evlo = long(i)
         sh(k)%evla = latg(i)
-        sh(k)%evdp = zg(i)*1000 ! in m-unit
+        sh(k)%evdp = zg(i) ! km unit after version 5.2
 
         sh(k)%tim   = exedate
         if( j<=6 ) then
@@ -600,14 +600,9 @@ contains
             trim(title) //  '__' // trim(sh(1)%kstnm) // '__' // &
             trim(green_cmp) // '__' // trim(cmyid) // '__.wav'
 
-#ifdef _ES
-        call std__getio(io, is_big=.true.)
-        open(io, file=trim(fn_wav), form='unformatted', action='write', status='replace')
-#else
         call std__getio(io, is_big=.true.) 
         open(io, file=trim(fn_wav), access='stream', form='unformatted', action='write', status='replace')
-#endif
-
+        
         write(io) ng*ncmp, ntw, title
         write(io) sh(:)
         write(io) gf(:,:)

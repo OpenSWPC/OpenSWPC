@@ -10,5 +10,5 @@
 
 source ${TMP}/hybrid-mpi-$JOB_ID/env.csh
 mpiexec_mpt -np ${TOTAL_PROCS} omplace -nt ${OMP_NUM_THREADS} \
-    ./bin/swpc_3d.x -i example/input_eic_N.inf
+    ./bin/swpc_3d.x -i example/input_NJapan.inf
 

@@ -46,8 +46,11 @@ contains
 
     integer  :: i, k
     real(SP) :: vp0, vs0, rho0, qp0, qs0, topo0
-    real(SP) :: vp1, vs1
+    real(SP) :: vp1, vs1, rho1
     real(SP) :: dum
+    logical :: earth_flattening
+    real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
+    real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening        
     !! ----
 
     call readini( io_prm, 'vp0',    vp0, 5.0 )
@@ -57,38 +60,59 @@ contains
     call readini( io_prm, 'qs0',    qs0, 1000000.0 )
     call readini( io_prm, 'topo0',  topo0, 0.0 )
 
-    if( fullspace_mode ) then
-      rho(:,:) = rho0
-      mu (:,:) = rho0 * vs0 * vs0
-      lam(:,:) = rho0 * ( vp0*vp0 - 2*vs0*vs0 )
-      qp (:,:) = qp0
-      qs (:,:) = qs0
-      bd(:,0) = -9999
-    else    
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
+    if( earth_flattening ) then
+      do k=k0, k1
+        zs(k) = R_EARTH - R_EARTH * exp( - zc(k) / R_EARTH )
+        Cv(k) = exp( zc(k) / R_EARTH)
+      end do
+    else
+      zs(:) = zc(:)
+      Cv(:) = 1.0
+    end if    
+
+    ! if( fullspace_mode ) then
+
+    !   do k=k0, k1
+
+    !     vp1 = Cv(k) * vp0
+    !     vs1 = Cv(k) * vs0
+    !     rho1 = Cv(k)**(-5) * rho0 
+    !     rho(k,:) = rho1
+    !     mu (k,:) = rho1 * vs1 * vs1
+    !     lam(k,:) = rho1 * ( vp1*vp1 - 2*vs1*vs1 )
+    !     qp (k,:) = qp0
+    !     qs (k,:) = qs0
+    !   end do
+
+    ! else    
       do i = i0, i1
 
         bd(i,0) = topo0
 
         do k = k0, k1
 
-          if( zc( k ) > bd(i,0) ) then
+          if( zs( k ) > bd(i,0) ) then
 
             !! elastic medium
-
-            rho(k,i) = rho0
-            mu (k,i) = rho0 * vs0 * vs0
-            lam(k,i) = rho0 * ( vp0*vp0 - 2*vs0*vs0 )
+            vp1 = Cv(k) * vp0
+            vs1 = Cv(k) * vs0   
+            rho1 = Cv(k)**(-5) * rho0 
+            
+            rho(k,i) = rho1
+            mu (k,i) = rho1 * vs1 * vs1
+            lam(k,i) = rho1 * ( vp1*vp1 - 2*vs1*vs1 )
             qp (k,i) = qp0
             qs (k,i) = qs0
 
-          else if ( zc (k) > 0.0 ) then
+          else if ( zs (k) > 0.0 ) then
 
             !! ocean column
-
-            vp1 = 1.5
+            !! Munk's profile is not necessary in SH mode as S-waves do not penetrate to the ocean
+            vp1 = Cv(k) * 1.5 
             vs1 = 0.0
 
-            rho(k,i) = 1.0
+            rho(k,i) = Cv(k)**(-5) * 1.0
             mu (k,i) = rho(k,i) * vs1 * vs1
             lam(k,i) = rho(k,i) * ( vp1*vp1 - 2*vs1*vs1 )
             qp (k,i) = 1000000.0 ! effectively no attenuation in ocean column
@@ -110,7 +134,7 @@ contains
           end if
         end do
       end do
-    end if
+    ! end if
     
 
     ! dummy value

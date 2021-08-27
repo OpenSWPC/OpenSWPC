@@ -477,7 +477,11 @@ contains
         call geomap__g2c( lon, lat, clon, clat, phi, sx(i), sy(i) )
 
         is0 = x2i( sx(i), xbeg, real(dx) )
-        ks0 = z2k( sz(i), zbeg, real(dz) )
+        if( earth_flattening ) then
+          ks0 = z2k( real( - R_EARTH * log( ( R_EARTH - sz(i) )/R_EARTH )), zbeg, real(dz) )
+        else
+          ks0 = z2k( sz(i), zbeg, real(dz) )
+        end if
 
         if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
             kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then

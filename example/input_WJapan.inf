@@ -16,7 +16,6 @@
   ntdec_r          = 50               !! screen report timing (1/cycle)
   strict_mode      = .false. 
 
-
   !! ----------------------------------------------------------------------- !!
   !! Model/Grid Size and Area
   !!
@@ -50,13 +49,11 @@
   fq_max           = 2.00             !! maximum freq. for Q-constant model
   fq_ref           = 1.0              !! ref. freq. for physical dispersion
 
-  fullspace_mode   = .false.          !! no ground surface
-
   !! ----------------------------------------------------------------------- !!
   !! Snapshot Output
   !!
 
-  snp_format       = 'netcdf'         !! snapshot format (native or netcdf)
+  snp_format       = 'netcdf'         !! snapshot format (netcdf)
 
   xy_ps%sw         = .false.          !! P&S amp. for xy section
   xz_ps%sw         = .true.           !! P&S amp. for xz section
@@ -99,7 +96,7 @@
   ntdec_w          = 4                !! time decimation of waveform output
   st_format        = 'll'             !! station format: 'xy' or 'll'
   fn_stloc         = '${DATASET}/station/hinet.stlst'  !! station location file
-  wav_format       = 'sac'            !! 'sac' or 'csf'
+  wav_format       = 'sac'            !! 'sac' or 'csf'  ('sac' recommended)
   wav_calc_dist    = .false.          !! explicitly set  the SAC dist header
 
   !! ----------------------------------------------------------------------- !!
@@ -145,7 +142,7 @@
 
   abc_type         = 'pml'            !! 'pml' or 'cerjan'
   na               = 20               !! absorbing layer thickness
-  stabilize_pml    = .false.           !! avoid low-v layer in PML region
+  stabilize_pml    = .false.           !! avoid low-v layer in PML region 
 
   !! ----------------------------------------------------------------------- !!
   !! Velocity model
@@ -153,7 +150,9 @@
 
   vmodel_type      = 'grd'            !! velocity model type 'uni'/'grd'/'lhm'
   is_ocean         = .true.           !! topography z<0 is covered by ocean
-  is_flatten       = .false.          !! Force topography variation to zero
+  topo_flatten     = .false.          !! Force topography variation to zero (formerly is_flatten)
+  munk_profile     = .true.           !! velocity gradient inside the seawater column
+  earth_flattening = .false.          !! Earth-flattening tranformation
 
     !! --------------------------------------------------------------------- !!
     !! For uniform velocity model 'uni'
@@ -192,6 +191,7 @@
   ckpdir           = './out/ckp'      !! output directory
   ckp_interval     = 1000000          !! interval for checkpoint check（1/cycle）
   ckp_time         = 1000000.         !! checkpoint time
+  ckp_seq          = .true.           !! sequential output mode
 
   !! ----------------------------------------------------------------------- !!
   !! Reciprocity Green's Function Mode

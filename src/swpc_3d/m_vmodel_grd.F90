@@ -83,19 +83,29 @@ contains
     character(80) :: xname, yname, zname
     real(DP) :: dlon, dlat
     logical :: use_munk
+    logical :: earth_flattening
+    real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening
     !! ----
 
     call readini( io_prm, 'fn_grdlst', fn_grdlst, '.' )
     call readini( io_prm, 'dir_grd',  dir_grd, '.' )
     call readini( io_prm, 'node_grd', node_grd, 0 )
     call readini( io_prm, 'is_ocean', is_ocean, .true. )
-    call readini( io_prm, 'is_flatten', is_flatten, .false. )
-
+    call readini( io_prm, 'topo_flatten', is_flatten, .false. )
     if( is_flatten ) is_ocean=.true.
 
     !! seawater
     call readini( io_prm, 'munk_profile', use_munk, .false. )
     call seawater__init( use_munk )
+    !! earth-flattening transform
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
+    if( earth_flattening ) then
+      do k=k0, k1
+        Cv(k) = exp( zc(k) / R_EARTH)
+      end do
+    else
+      Cv(:) = 1.0
+    end if
 
     !!
     !! first initialize whole medium by air/ocean
@@ -126,7 +136,7 @@ contains
 
             if( zc(k) < 0 ) cycle
 
-            vp0  = seawater__vel( zc(k) )
+            vp0  = Cv(k) * seawater__vel( zc(k) )
             vs0  = 0.0
             rho0 = 1.0
             qp0  = 1000000.0
@@ -265,6 +275,10 @@ contains
 
           call bicubic__interp( bcd(n), glon(i,j), glat(i,j), zgrd )
 
+          if( earth_flattening ) then
+            zgrd = - R_EARTH * log( (R_EARTH - zgrd) / R_EARTH )
+          end if
+
           if( n == 1 ) bd(i,j,0) = zgrd
 
           if( is_flatten ) zgrd = zgrd - bd(i,j,0)
@@ -296,8 +310,8 @@ contains
           !! fills deeper structure
           do k=kgrd(n,i,j)+1, k1
             rho(k,i,j) = rho1(n)
-            lam(k,i,j) = rho1(n) * ( vp1(n) * vp1(n) - 2 * vs1(n) * vs1(n) )
-            mu (k,i,j) = rho1(n) *                         vs1(n) * vs1(n)
+            lam(k,i,j) = rho1(n) * Cv(k)**2 * ( vp1(n) * vp1(n) - 2 * vs1(n) * vs1(n) )
+            mu (k,i,j) = rho1(n) * Cv(k)**2 *                         vs1(n) * vs1(n)
             qp (k,i,j) = qp1(n)
             qs (k,i,j) = qs1(n)
           end do

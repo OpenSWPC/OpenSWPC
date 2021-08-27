@@ -118,7 +118,6 @@ contains
     !!
 
     kbeg_min = minval( kbeg_a(:,:) )
-    if( fullspace_mode ) kbeg_min = kbeg
 
     !! memory allocation
     allocate(  axVx( kbeg_min:kend, ibeg:iend, jbeg:jend ) )
@@ -336,90 +335,6 @@ contains
     !$omp end do nowait
     !$omp end parallel
     
-    if( fullspace_mode ) then
-
-      !$omp parallel &
-      !$omp private( dxSxx, dySyy, dzSzz, dySyz, dzSyz, dxSxz, dzSxz, dxSxy ,dySxy ) &
-      !$omp private( gxc0, gxe0, gyc0, gye0, gzc0, gze0 ) &
-      !$omp private( i, j, k )
-      !$omp do &
-      !$omp schedule(dynamic)
-      do j=jbeg_k, jend_k
-
-        gyc0(1:4) = gyc(1:4,j)
-        gye0(1:4) = gye(1:4,j)
-  
-        do i=ibeg_k, iend_k
-  
-          gxc0(1:4) = gxc(1:4,i)
-          gxe0(1:4) = gxe(1:4,i)
-  
-          !!
-          !! Derivatives
-          !!
-          do k=kbeg, na
-  
-            dxSxx(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x
-            dySyy(k) = (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y
-            dzSzz(k) = (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
-            dySyz(k) = (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y
-            dzSyz(k) = (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
-            dxSxz(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r20x
-            dzSxz(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
-            dxSxy(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r20x
-            dySxy(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y
-  
-          end do
-  
-  
-          !!
-          !! update velocity
-          !!
-          do k=kbeg, na
-  
-            gzc0(1:4) = gzc(1:4,k)
-            gze0(1:4) = gze(1:4,k)
-  
-            !!
-            !! Velocity Updates
-            !!
-            Vx(k,i,j) = Vx(k,i,j) &
-                + bx(k,i,j) * ( gxe0(1) * dxSxx(k)     + gyc0(1) * dySxy(k)     + gzc0(1) * dzSxz(k)       &
-                + gxe0(2) * axSxx(k,i,j) + gyc0(2) * aySxy(k,i,j) + gzc0(2) * azSxz(k,i,j)  ) * dt
-  
-            Vy(k,i,j) = Vy(k,i,j) &
-                + by(k,i,j) * ( gxc0(1) * dxSxy(k)     + gye0(1) * dySyy(k)     + gzc0(1) * dzSyz(k)       &
-                + gxc0(2) * axSxy(k,i,j) + gye0(2) * aySyy(k,i,j) + gzc0(2) * azSyz(k,i,j)  ) * dt
-  
-            Vz(k,i,j) = Vz(k,i,j) &
-                + bz(k,i,j) * ( gxc0(1) * dxSxz(k)     + gyc0(1) * dySyz(k)     + gze0(1) * dzSzz(k)       &
-                + gxc0(2) * axSxz(k,i,j) + gyc0(2) * aySyz(k,i,j) + gze0(2) * azSzz(k,i,j)  ) * dt
-  
-  
-            !!
-            !! ADE updates
-            !!
-  
-            axSxx(k,i,j) = gxe0(3) * axSxx(k,i,j) + gxe0(4) * dxSxx(k) * dt
-            aySxy(k,i,j) = gyc0(3) * aySxy(k,i,j) + gyc0(4) * dySxy(k) * dt
-            azSxz(k,i,j) = gzc0(3) * azSxz(k,i,j) + gzc0(4) * dzSxz(k) * dt
-  
-            axSxy(k,i,j) = gxc0(3) * axSxy(k,i,j) + gxc0(4) * dxSxy(k) * dt
-            aySyy(k,i,j) = gye0(3) * aySyy(k,i,j) + gye0(4) * dySyy(k) * dt
-            azSyz(k,i,j) = gzc0(3) * azSyz(k,i,j) + gzc0(4) * dzSyz(k) * dt
-  
-            axSxz(k,i,j) = gxc0(3) * axSxz(k,i,j) + gxc0(4) * dxSxz(k) * dt
-            aySyz(k,i,j) = gyc0(3) * aySyz(k,i,j) + gyc0(4) * dySyz(k) * dt
-            azSzz(k,i,j) = gze0(3) * azSzz(k,i,j) + gze0(4) * dzSzz(k) * dt
-  
-          end do
-        end do
-      end do
-      !$omp end do nowait
-      !$omp end parallel
-
-    end if
-
     !$omp barrier
 
   end subroutine absorb_p__update_vel
@@ -605,110 +520,6 @@ contains
     end do
     !$omp end do nowait
     !$omp end parallel
-
-    if( fullspace_mode ) then
-
-      !$omp parallel &
-      !$omp private( gxc0, gxe0, gyc0, gye0, gzc0, gze0 ) &
-      !$omp private( dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz ) &
-      !$omp private( lam2mu_R, lam_R ) &
-      !$omp private( dxVx_ade, dyVy_ade, dzVz_ade ) &
-      !$omp private( i, j, k )
-      !$omp do &
-      !$omp schedule(dynamic)
-      do j=jbeg_k, jend_k
-
-        gyc0(1:4) = gyc(1:4,j)
-        gye0(1:4) = gye(1:4,j)
-  
-        do i=ibeg_k, iend_k
-  
-          gxc0(1:4) = gxc(1:4,i)
-          gxe0(1:4) = gxe(1:4,i)
-  
-          !!
-          !! Derivatives
-          !!
-          do k=1, na
-  
-            dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
-            dxVy(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x
-            dxVz(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x
-            dyVx(k) = (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
-            dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
-            dyVz(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y
-            dzVx(k) = (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
-            dzVy(k) = (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
-            dzVz(k) = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r20z
-  
-          end do
-  
-          !!
-          !! Update Normal Stress
-          !!
-          do k=1, na
-  
-            gzc0(1:4) = gzc(1:4,k)
-  
-            !!
-            !! update stress components
-            !!
-            lam2mu_R = ( lam(k,i,j) + 2 * mu(k,i,j) )
-            lam_R    = lam2mu_R - 2*mu(k,i,j)
-  
-  
-            !!
-            !! Normal Stress
-            !!
-            dxVx_ade = gxc0(1) * dxVx(k) + gxc0(2) * axVx(k,i,j)
-            dyVy_ade = gyc0(1) * dyVy(k) + gyc0(2) * ayVy(k,i,j)
-            dzVz_ade = gzc0(1) * dzVz(k) + gzc0(2) * azVz(k,i,j)
-            Sxx(k,i,j) = Sxx(k,i,j) + ( lam2mu_R * dxVx_ade + lam_R * ( dyVy_ade + dzVz_ade ) ) * dt
-            Syy(k,i,j) = Syy(k,i,j) + ( lam2mu_R * dyVy_ade + lam_R * ( dxVx_ade + dzVz_ade ) ) * dt
-            Szz(k,i,j) = Szz(k,i,j) + ( lam2mu_R * dzVz_ade + lam_R * ( dxVx_ade + dyVy_ade ) ) * dt
-  
-  
-            !!
-            !! ADE
-            !!
-            axVx(k,i,j) = gxc0(3) * axVx(k,i,j) + gxc0(4) * dxVx(k) * dt
-            ayVy(k,i,j) = gyc0(3) * ayVy(k,i,j) + gyc0(4) * dyVy(k) * dt
-            azVz(k,i,j) = gzc0(3) * azVz(k,i,j) + gzc0(4) * dzVz(k) * dt
-  
-          end do
-  
-  
-          !!
-          !! Update Shear Stress
-          !!
-          do k=1, na
-  
-            gze0(1:4) = gze(1:4,k)
-  
-            Syz(k,i,j) = Syz(k,i,j) + muyz(k,i,j) * ( gye0(1) * dyVz(k)     + gze0(1) * dzVy(k) &
-                + gye0(2) * ayVz(k,i,j) + gze0(2) * azVy(k,i,j) ) * dt
-  
-            Sxz(k,i,j) = Sxz(k,i,j) + muxz(k,i,j) * ( gxe0(1) * dxVz(k)     + gze0(1) * dzVx(k) &
-                + gxe0(2) * axVz(k,i,j) + gze0(2) * azVx(k,i,j) ) * dt
-  
-            Sxy(k,i,j) = Sxy(k,i,j) + muxy(k,i,j) * ( gxe0(1) * dxVy(k)     + gye0(1) * dyVx(k) &
-                + gxe0(2) * axVy(k,i,j) + gye0(2) * ayVx(k,i,j) ) * dt
-  
-            ayVx(k,i,j) = gye0(3) * ayVx(k,i,j) + gye0(4) * dyVx(k) * dt
-            azVx(k,i,j) = gze0(3) * azVx(k,i,j) + gze0(4) * dzVx(k) * dt
-            axVy(k,i,j) = gxe0(3) * axVy(k,i,j) + gxe0(4) * dxVy(k) * dt
-            azVy(k,i,j) = gze0(3) * azVy(k,i,j) + gze0(4) * dzVy(k) * dt
-            axVz(k,i,j) = gxe0(3) * axVz(k,i,j) + gxe0(4) * dxVz(k) * dt
-            ayVz(k,i,j) = gye0(3) * ayVz(k,i,j) + gye0(4) * dyVz(k) * dt
-  
-  
-          end do
-        end do
-      end do
-      !$omp end do nowait
-      !$omp end parallel
-
-    end if
     !$omp barrier
 
   end subroutine absorb_p__update_stress
