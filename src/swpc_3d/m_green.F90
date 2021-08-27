@@ -600,14 +600,9 @@ contains
             trim(title) //  '__' // trim(sh(1)%kstnm) // '__' // &
             trim(green_cmp) // '__' // trim(cmyid) // '__.wav'
 
-#ifdef _ES
-        call std__getio(io, is_big=.true.)
-        open(io, file=trim(fn_wav), form='unformatted', action='write', status='replace')
-#else
         call std__getio(io, is_big=.true.) 
         open(io, file=trim(fn_wav), access='stream', form='unformatted', action='write', status='replace')
-#endif
-
+        
         write(io) ng*ncmp, ntw, title
         write(io) sh(:)
         write(io) gf(:,:)

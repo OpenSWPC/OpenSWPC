@@ -146,7 +146,7 @@ module m_global
 
 
   !! fullspace-mode
-  logical :: fullspace_mode
+!  logical :: fullspace_mode
   
   !! benchmark
   logical :: benchmark_mode
@@ -187,7 +187,7 @@ contains
       clat = 35.7182
       phi  = 0.0
       abc_type = 'pml'
-      fullspace_mode = .false.
+!      fullspace_mode = .false.
     else
       call readini( io_prm, 'dx',      dx,      0.5_MP       )
       call readini( io_prm, 'dz',      dz,      0.5_MP       )
@@ -200,7 +200,7 @@ contains
       call readini( io_prm, 'clat',    clat,   35.7182       )
       call readini( io_prm, 'phi',     phi,     0.0          )
       call readini( io_prm, 'abc_type', abc_type, 'pml' )
-      call readini( io_prm, 'fullspace_mode', fullspace_mode, .false. )
+!      call readini( io_prm, 'fullspace_mode', fullspace_mode, .false. )
     end if
 
 
@@ -364,7 +364,7 @@ contains
     
     if( abc_type == 'pml' ) then
 
-      if( fullspace_mode ) kbeg_k = na+1
+     ! if( fullspace_mode ) kbeg_k = na+1
 
       if( iend <= na ) then ! no kernel integration
         ibeg_k = iend+1
@@ -378,7 +378,6 @@ contains
       end if
       kend_k = nz-na
     end if
-
 
     call pwatch__off( "global__setup2" ) !! measure from here
 
@@ -585,7 +584,7 @@ contains
     write(io) phi
     write(io) xc(ibeg_m:iend_m)
     write(io) zc(kbeg_m:kend_m)
-    write(io) fullspace_mode
+!    write(io) fullspace_mode
     write(io) kbeg_a(ibeg:iend)
 
   end subroutine global__checkpoint
@@ -631,7 +630,7 @@ contains
     allocate( kbeg_a(ibeg_m:iend_m) )
     read(io) xc(ibeg_m:iend_m)
     read(io) zc(kbeg_m:kend_m)
-    read(io) fullspace_mode
+!    read(io) fullspace_mode
     read(io) kbeg_a(ibeg:iend)
 
   end subroutine global__restart

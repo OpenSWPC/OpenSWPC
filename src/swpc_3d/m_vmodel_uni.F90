@@ -78,21 +78,21 @@ contains
       Cv(:) = 1.0
     end if  
 
-    if( fullspace_mode ) then
+    ! if( fullspace_mode ) then
 
-      do k=k0, k1
-        vp1 = Cv(k) * vp0
-        vs1 = Cv(k) * vs0
+    !   do k=k0, k1
+    !     vp1 = Cv(k) * vp0
+    !     vs1 = Cv(k) * vs0
 
 
-        rho(k,:,:) = rho0
-        mu (k,:,:) = rho0 * vs1 * vs1
-        lam(k,:,:) = rho0 * ( vp1 * vp1 - 2 * vs1 * vs1 )
-        qp (k,:,:) = qp0
-        qs (k,:,:) = qs0
-      end do
+    !     rho(k,:,:) = rho0
+    !     mu (k,:,:) = rho0 * vs1 * vs1
+    !     lam(k,:,:) = rho0 * ( vp1 * vp1 - 2 * vs1 * vs1 )
+    !     qp (k,:,:) = qp0
+    !     qs (k,:,:) = qs0
+    !   end do
 
-    else
+    ! else
 
       do j = j0, j1
         do i = i0, i1
@@ -144,7 +144,7 @@ contains
           end do
         end do
       end do
-    end if
+    ! end if
 
     
     ! dummy value

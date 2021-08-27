@@ -485,13 +485,8 @@ contains
       fn = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.wav'
 
       if( sw_wav ) then
-#ifdef _ES
-        call std__getio(io, is_big=.true.)
-        open(io, file=trim(fn), form='unformatted', action='write', status='replace')
-#else
         call std__getio(io, is_big=.true.) 
         open(io, file=trim(fn), access='stream', form='unformatted', action='write', status='replace')
-#endif
       end if
 
       if( sw_wav_v      ) write(io) nst, ntw, title, sh_vel(:,:),    wav_vel(:,:,:)
@@ -915,11 +910,7 @@ contains
 
       call std__getio( hdr%io, is_big=.true. )
 
-#ifdef _ES
-      open( hdr%io, file=trim(fname), action='write', status='replace', form='unformatted' )
-#else
       open( hdr%io, file=trim(fname), access='stream', action='write', status='replace', form='unformatted' )
-#endif
       call write_snp_header( hdr, nys, nzs, ysnp(1:nys), zsnp(1:nzs) )
 
     end if
@@ -970,11 +961,7 @@ contains
     if( myid == hdr % ionode ) then
 
       call std__getio( hdr % io, is_big=.true. )
-#ifdef _ES
-      open( hdr % io, file=trim(fname), action='write', status='replace', form='unformatted' )
-#else
       open( hdr % io, file=trim(fname), access='stream', action='write', status='replace', form='unformatted' )
-#endif
       call write_snp_header( hdr, nxs, nzs, xsnp(1:nxs), zsnp(1:nzs) )
 
     end if
@@ -1104,7 +1091,7 @@ contains
       hdr % ds1 = jdec * dy
       hdr % ds2 = kdec * dz
 
-      call nc_chk( nf90_create( trim(fname), NF90_CLOBBER, hdr%io ) )
+      call nc_chk( nf90_create( trim(fname), NF90_NETCDF4, hdr%io ) )
       call write_nc_header( hdr, nys, nzs, ysnp, zsnp )
 
     end if
@@ -1185,7 +1172,7 @@ contains
       hdr % ds1 = idec * dx
       hdr % ds2 = kdec * dz
 
-      call nc_chk( nf90_create( trim(fname), NF90_CLOBBER, hdr%io ) )
+      call nc_chk( nf90_create( trim(fname), NF90_NETCDF4, hdr%io ) )
       call write_nc_header( hdr, nxs, nzs, xsnp, zsnp )
 
     end if

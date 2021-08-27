@@ -128,11 +128,7 @@ contains
     !$omp private( d3Sx3, d3Sy3, d3Sz3 ) &
     !$omp private( i, j, k )
     !$omp do &
-#ifdef _ES
-    !$omp schedule(static)
-#else
     !$omp schedule(static,1)
-#endif
     do j=jbeg_k, jend_k
 
       do i=ibeg_k, iend_k
@@ -158,7 +154,7 @@ contains
 
         !! overwrite around free surface
 #ifdef _ES
-        !CDIR NOVECTOR
+        !NEC$ novector
 #endif
         do k=kfs_top(i,j), kfs_bot(i,j)
           d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
@@ -176,7 +172,7 @@ contains
 
         !! overwrite around seafloor
 #ifdef _ES
-        !CDIR NOVECTOR
+        !NEC$ novector
 #endif
         do k=kob_top(i,j), kob_bot(i,j)
           d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
@@ -243,11 +239,7 @@ contains
     !$omp private( Rxx_n, Ryy_n, Rzz_n ) &
     !$omp private( i, j, k, m )
     !$omp do &
-#ifdef _ES
-    !$omp schedule(static)
-#else
     !$omp schedule(static,1)
-#endif
     do j=jbeg_k, jend_k
       do i=ibeg_k, iend_k
 
@@ -264,7 +256,7 @@ contains
 
         !! overwrite around free surface
 #ifdef _ES
-        !CDIR NOVECTOR
+        !NEC$ novector
 #endif
         do k=kfs_top(i,j), kfs_bot(i,j)
 
@@ -276,7 +268,7 @@ contains
 
         !! overwrite around seafloor
 #ifdef _ES
-        !CDIR NOVECTOR
+        !NEC$ novector
 #endif
         do k=kob_top(i,j), kob_bot(i,j)
 
@@ -354,11 +346,7 @@ contains
     !$omp private( Ryz_n, Rxz_n, Rxy_n ) &
     !$omp private( i, j, k, m )
     !$omp do  &
-#ifdef _ES
-    !$omp schedule(static)
-#else
     !$omp schedule(static,1)
-#endif
     do j=jbeg_k, jend_k
 
       do i=ibeg_k, iend_k
@@ -378,7 +366,7 @@ contains
 
         !! overwrite around free surface
 #ifdef _ES
-        !CDIR NOVECTOR
+        !NEC$ novector
 #endif
         do k=kfs_top(i,j), kfs_bot(i,j)
 
@@ -393,7 +381,7 @@ contains
 
         !! overwrite around seafloor
 #ifdef _ES
-        !CDIR NOVECTOR
+        !NEC$ novector
 #endif
         do k=kob_top(i,j), kob_bot(i,j)
 

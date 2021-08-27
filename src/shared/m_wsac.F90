@@ -244,14 +244,8 @@ contains
       end if
     end if
 
-#ifdef _ES
-    !! used with F_NORCW="900,901......" option
-    call std__getio( io, is_big=.true. )
-    open( io, file=trim(fn_sac), action='write', form='unformatted', status='replace' )
-#else
     call std__getio( io )
     open( io, file=trim(fn_sac), action='write', access='stream', form='unformatted', status='replace' )
-#endif
 
     call sac__whdr(io, ss)
 
@@ -607,14 +601,9 @@ contains
       end if
     end do
 
-#ifdef _ES
-    ! big endian numbers are used with F_NORCW="900,901,902,..." environmental variable
-    call std__getio(io, is_big=.true.)
-    open(io, file=trim(fn_csf), action='write', form='unformatted', status='unknown')
-#else
     call std__getio(io)
     open(io, file=trim(fn_csf), action='write', access='stream', form='unformatted', status='unknown')
-#endif
+
     write(io) 'CSFD'
     write(io) ntrace
     write(io) npts

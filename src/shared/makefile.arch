@@ -99,7 +99,7 @@ endif
 
 
 ##
-## Earth Simulator 3 (Use fortran 90 compiler for better speed)
+## Earth Simulator 3 (Use fortran 90 compiler for better speed) ((obsolete))
 ##
 ifeq ($(arch),es3)
   FC      = sxmpif90
@@ -113,6 +113,22 @@ ifeq ($(arch),es3)
 	FFLAGS = -eR -pi nest=5 -Wf"-pvctl fullmsg -init stack=nan heap=nan" -D_ES -f2003 -I ../include -D_INFO -Popenmp
   endif
 
+endif
+
+##
+## Earth Simulator 4 (JAMSTEC, Japan)
+##
+ifeq ($(arch),es4)
+  FC      = module purge; module load NECSDK/all NetCDF4_ve/all; mpinfort
+  FFLAGS  = -I ../include -D_INFO -fopenmp -O3 -finline-functions -floop-unroll -fpp -report-format -D_ASSERT -D_ES
+  NCFLAG  = -D_NETCDF
+  NCLIB   =  -L /opt/nec/ve/lib/
+  NCINC   = -I /opt/share/NetCDF4_ve/netcdf-fortran/4.5.2/include/
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lsz -lz -lnfort
+
+  ifeq ($(debug),true)
+    FFLAGS = -fbounds-check -O0 -D_INFO -fopenmp -I ../include 
+  endif
 endif
 
 ##
