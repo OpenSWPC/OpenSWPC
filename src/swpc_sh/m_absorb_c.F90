@@ -3,7 +3,7 @@
 !! Boundary absorber module: Cerjan's Sponge
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -68,18 +68,6 @@ contains
     Lx = na * dx
     Lz = na * dz
 
-    !!
-    !! Absorbing area definition
-    !!
-    allocate( kbeg_a(ibeg:iend) )
-
-    do i=ibeg, iend
-      if( i<= na .or. nx-na+1 <= i ) then
-        kbeg_a(i) = kbeg
-      else
-        kbeg_a(i) = kend-na+1
-      end if
-    end do
 
     !!
     !! Calculate attenuator based on distance
@@ -101,8 +89,13 @@ contains
     !$omp parallel do private(k)
     do k=kbeg, kend
       if( k <= na ) then
-        gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, 0.0, real(dz)) )          / Lz )**2 )
-        gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, 0.0, real(dz)) + real(dz)/2 ) ) / Lz )**2 )
+        ! if( fullspace_mode ) then
+        !   gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, 0.0, real(dz)) )          / Lz )**2 )
+        !   gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, 0.0, real(dz)) + real(dz)/2 ) ) / Lz )**2 )
+        ! else
+          gz_c(k) = 1.0
+          gz_b(k) = 1.0
+        ! end if          
       else if( k >= nz-na+1 ) then
         gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, Nz*real(dz), -real(dz))  + real(dz)/2  ) / Lz )**2 )
         gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, Nz*real(dz), -real(dz))  ) ) / Lz )**2 )
@@ -125,8 +118,8 @@ contains
     integer :: i, k
 
     !$omp parallel do private(i,k)
-    do i=ibeg_k, iend_k
-      do k=kbeg_a(i), kend
+    do i=ibeg, iend
+      do k=kbeg, kend
         Syz(k,i) = Syz(k,i) * gx_c(i) * gz_b(k)
         Sxy(k,i) = Sxy(k,i) * gx_b(i) * gz_c(k)
       end do
@@ -142,8 +135,8 @@ contains
     integer :: i, k
 
     !$omp parallel do private(i,k)
-    do i=ibeg_k, iend_k
-      do k=kbeg_a(i), kend
+    do i=ibeg, iend
+      do k=kbeg, kend
         Vy(k,i) = Vy(k,i) * gx_c(i) * gz_c(k)
       end do
     end do
@@ -157,7 +150,6 @@ contains
 
     write( io ) gx_c( ibeg_m:iend_m ), gx_b( ibeg_m:iend_m )
     write( io ) gz_c( kbeg_m:kend_m ), gz_b( kbeg_m:kend_m )
-    write( io ) kbeg_a(ibeg:iend)
 
   end subroutine absorb_c__checkpoint
 
@@ -168,8 +160,6 @@ contains
     allocate( gz_c( kbeg_m:kend_m ), gz_b( kbeg_m:kend_m ) )
     read( io ) gx_c( ibeg_m:iend_m ), gx_b( ibeg_m:iend_m )
     read( io ) gz_c( kbeg_m:kend_m ), gz_b( kbeg_m:kend_m )
-    allocate( kbeg_a(ibeg:iend) )
-    read( io ) kbeg_a
 
   end subroutine absorb_c__restart
 

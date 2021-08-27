@@ -75,8 +75,6 @@ standard output on the screen. This program will also estimate the total
 memory usage in the standard error output.
 
 
-## `mapregion.gmt4` | `mapregion.gmt5`
+## `mapregion.gmt`
 
-These scripts use `mapregion.x` to visualize the region by using GMT4 or
-GMT5. By default, these scripts plot only the region around the Japanese
-Islands.
+These scripts use `mapregion.x` to visualize the region by using GMT. GMT version 5 or later is necessary. By default, these scripts plot only the region around the Japanese Islands.

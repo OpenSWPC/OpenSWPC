@@ -104,6 +104,11 @@ program can be overlaid onto the model.
             parameter is set to `.false.`, the seafloor will be used as
             a free surface and no seawater will be used.
 
+            - `topo_flatten` : Make topography variatinon flat by offsetting the medium below. 
+
+            !!! Warning "Renaming `is_flatten` to `topo_flatten`"
+                This option used to be `is_flatten` until Version 5.1, but has been renamed to avoid confusion with the `earth_flattening` option implemented in Version 5.2.
+
         `’user’`
         :   A user subroutine defined in `src/swpc_*/m_vmodel_user.F90`
         is used for defining velocity model. Recompilation of the code
@@ -118,15 +123,37 @@ program can be overlaid onto the model.
     be longer than 5-10 grids). This substitution will not be performed
     in the oceanic area.
 
+    **`munk_profile`** &nbsp; **(new in version 5.2)**
+    : If this value is `.true.`, the Munk's profile with minima is applied in the seawater layer. Otherwise a constant value of 1.5 km/s is used. See the explanation in the next section.
+
+    ** `earth_flattening`** &nbsp;  **(new in version 5.2)**
+    : If this option is `.true.`, OpenSWPC performs the transformation the Cartesian coordinate to pseudo-spherical coordinate by means of the Earth-flattening tranformation (e.g., Aki and Richards, Box 9.2). This option may be useful for reproducing accurate arrival time of seismic waves for long (~500 km or more) traveling distances and/or for deep-focus earthquake. Please be noted that this transformation is **not** exact in P-SV and 3D models. 
+
+    !!! Warning
+        The implementation of `earth_flattening` mode in version 5.2 is still in the experimental stage. Please use it with caution. 
+
 ## On Treatments of Air and Seawater Layer
 
 In `OpenSWPC`, the air column has a mass density of $\rho=0.001$ [g/cm${}^3$], 
 velocities of $V_P = V_S = 0$ [km/s], and intrinsic
-attenuation parameters of $Q^P = Q^S = 10^{10}$. In the ocean column,
-$\rho= 1.0$ [g/cm${}^3$], $V_P = 1.5$ [km/s], $V_S = 0.0$ [km/s],
-and $Q^P = Q^S = 10^6$ are assumed. The air column is treated as a
+attenuation parameters of $Q^P = Q^S = 10^{10}$. 
+The air column is treated as a
 vacuum with no seismic wave propagation (with zero velocities). However,
-**the mass density in the air column must not be zero to avoid division by zero**. In the free
+**the mass density in the air column must not be zero to avoid division by zero**. 
+
+In the ocean column, $\rho= 1.0$ [g/cm${}^3$], $V_S = 0.0$ [km/s],
+and $Q^P = Q^S = 10^6$ are assumed. 
+The attenuation of underwater sound waves is known to be very small, so we have introduced a very large $Q$ values that are virtually unattenuated. 
+The P-wave velocity is $V_P=1.5$ km/s, but in the version 5.2 and later, the depth-dependent Munk's profile which is defined the equation below can be used by setting `munk_profile = .true.`. 
+
+\begin{align*}
+&V_P(z) = 1.5 \times \left[ 1.0 + 0.00737 \left( z_b - 1 + e^{-zb} \right) \right] \text{[m/s]}\\
+&z_b = 2(z-1.3) /1.3
+\end{align*}
+
+where the unit of $z$ is km. This profile contains a minima which corresponds to the SOFAR channel at a depth of 1300 m. 
+
+In the free
 surface and seafloor, the reduced order of the finite difference is
 performed according to Okamoto and Takenaka (2005[^OT2005]) and Maeda and Furumura (2003[^MF2003]). 
 These discontinuities are automatically detected as boundaries that change $\mu$ and $\lambda$ from zero to a finite value.

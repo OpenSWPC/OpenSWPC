@@ -3,7 +3,7 @@
 !! Set-up medium velocity/attenuation structure
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 
@@ -292,6 +292,11 @@ contains
         kob_bot(i) = max( kob(i)+1, maxval( kob(i-1:i+2)  ) )
 
       end do
+
+      ! if( fullspace_mode ) then
+      !   kfs_bot = kfs_top - 1
+      !   kob_bot = kob_top - 1 
+      ! end if
 
     end subroutine surface_detection
     !! ------------------------------------------------------------------------------------------------------------------------ !!

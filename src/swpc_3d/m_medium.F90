@@ -3,7 +3,7 @@
 !! Set-up medium velocity/attenuation structure
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -404,7 +404,6 @@ contains
       kfs(:,:) = kbeg-1
       kob(:,:) = kbeg-1
 
-
       !!
       !! Detect free surfaces as material interface
       !! kfs, kob must be defined ibeg-1:iend+2, jbeg-1:jend+2 to detect (kfs|kob)_top/bot .
@@ -447,6 +446,11 @@ contains
       end do
       !$omp end parallel do
 
+!      if( fullspace_mode ) then
+!        kfs_bot = kfs_top - 1
+!        kob_bot = kob_top - 1 
+!      end if
+            
     end subroutine surface_detection
     !! ------------------------------------------------------------------------------------------------------------------------ !!
 

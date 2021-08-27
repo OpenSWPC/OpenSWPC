@@ -91,13 +91,11 @@ sections, detailed descriptions of each parameter will be given.
   fq_max           = 2.00             !! maximum freq. for Q-constant model
   fq_ref           = 1.0              !! ref. freq. for physical dispersion
 
-  fullspace_mode   = .false.          !! no ground surface, only for 2D codes
-
   !! ----------------------------------------------------------------------- !!
   !! Snapshot Output
   !!
 
-  snp_format       = 'netcdf'         !! snapshot format (native or netcdf)
+  snp_format       = 'netcdf'         !! snapshot format (netcdf)
 
   xy_ps%sw         = .false.          !! P&S amp. for xy section
   xz_ps%sw         = .true.           !! P&S amp. for xz section
@@ -135,12 +133,12 @@ sections, detailed descriptions of each parameter will be given.
 
   sw_wav_v         = .true.           !! velocity trace output at stations
   sw_wav_u         = .false.          !! displacement trace output at stations
-  sw_wav_stress    = .true.           !! stress tensor trace
-  sw_wav_strain    = .true.           !! strain tansor trace
+  sw_wav_stress    = .false.           !! stress tensor trace
+  sw_wav_strain    = .false.           !! strain tansor trace
   ntdec_w          = 5                !! time decimation of waveform output
   st_format        = 'xy'             !! station format: 'xy' or 'll'
   fn_stloc         = './example/stloc.xy'  !! station location file
-  wav_format       = 'sac'            !! 'sac' or 'csf'
+  wav_format       = 'sac'            !! 'sac' or 'csf' ('sac' recommended)
   wav_calc_dist    = .false.          !! Calculate epicentral distance
   
   !! ----------------------------------------------------------------------- !!
@@ -186,7 +184,7 @@ sections, detailed descriptions of each parameter will be given.
 
   abc_type         = 'pml'            !! 'pml' or 'cerjan'
   na               = 20               !! absorbing layer thickness
-  stabilize_pml    = .true.           !! avoid low-v layer in PML region
+  stabilize_pml    = .false.           !! avoid low-v layer in PML region
 
   !! ----------------------------------------------------------------------- !!
   !! Velocity model
@@ -194,8 +192,10 @@ sections, detailed descriptions of each parameter will be given.
 
   vmodel_type      = 'lhm'            !! velocity model type 'uni'/'grd'/'lhm'
   is_ocean         = .true.           !! topography z<0 is covered by ocean
-  is_flatten       = .false.          !! Force topography variation to zero
-
+  topo_flatten     = .false.          !! Force topography variation to zero (formerly is_flatten)
+  munk_profile     = .true.           !! velocity gradient inside the seawater column
+  earth_flattening = .false.          !! Earth-flattening tranformation
+  
     !! --------------------------------------------------------------------- !!
     !! For uniform velocity model 'uni'
     !!
@@ -224,6 +224,7 @@ sections, detailed descriptions of each parameter will be given.
     dir_rmed         = './in/'             !! location of random medium file
     fn_grdlst_rmed   = './example/grd.lst' !! grd file list
     rhomin           = 1.0                 !! minimum density threshold
+    fn_rmed0         = 'dummy.ns'          !! vel. purturb. on a uniform media
 
   !! ----------------------------------------------------------------------- !!
   !! Checkpoint/Restart

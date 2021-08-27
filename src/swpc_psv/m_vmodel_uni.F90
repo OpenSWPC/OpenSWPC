@@ -3,7 +3,7 @@
 !! User-routines for defining velocity/attenuation structure
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 
@@ -14,6 +14,7 @@ module m_vmodel_uni
   use m_debug
   use m_readini
   use m_global
+  use m_seawater
   implicit none
   private
   save
@@ -48,6 +49,10 @@ contains
     real(SP) :: vp0, vs0, rho0, qp0, qs0, topo0
     real(SP) :: vp1, vs1
     real(SP) :: dum
+    logical :: use_munk
+    logical :: earth_flattening
+    real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
+    real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening    
     !! ----
 
     call readini( io_prm, 'vp0',    vp0, 5.0 )
@@ -56,17 +61,36 @@ contains
     call readini( io_prm, 'qp0',    qp0, 1000000.0 )
     call readini( io_prm, 'qs0',    qs0, 1000000.0 )
     call readini( io_prm, 'topo0', topo0, 0.0 )
+    !! seawater
+    call readini( io_prm, 'munk_profile', use_munk, .false. )
+    call seawater__init( use_munk )
 
-
-    if( fullspace_mode ) then
-      
-      rho(:,:) = rho0
-      mu (:,:) = rho0 * vs0 * vs0
-      lam(:,:) = rho0 * ( vp0*vp0 - 2*vs0*vs0 )
-      qp (:,:) = qp0
-      qs (:,:) = qs0
-      
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
+    if( earth_flattening ) then
+      do k=k0, k1
+        zs(k) = R_EARTH - R_EARTH * exp( - zc(k) / R_EARTH )
+        Cv(k) = exp( zc(k) / R_EARTH)
+      end do
     else
+      zs(:) = zc(:)
+      Cv(:) = 1.0
+    end if    
+
+    ! if( fullspace_mode ) then
+      
+    !   do k=k0, k1
+
+    !     vp1 = Cv(k) * vp0
+    !     vs1 = Cv(k) * vs0
+
+    !     rho(k,:) = rho0
+    !     mu (k,:) = rho0 * vs1 * vs1
+    !     lam(k,:) = rho0 * ( vp1*vp1 - 2*vs1*vs1 )
+    !     qp (k,:) = qp0
+    !     qs (k,:) = qs0
+    !   end do
+      
+    ! else
       do i = i0, i1
 
         !! topography
@@ -74,13 +98,15 @@ contains
 
         do k = k0, k1
 
-          if( zc( k ) > bd(i,0) ) then
+          if( zs( k ) > bd(i,0) ) then
 
             !! elastic medium
 
+            vp1 = Cv(k) * vp0
+            vs1 = Cv(k) * vs0            
             rho(k,i) = rho0
-            mu (k,i) = rho0 * vs0 * vs0
-            lam(k,i) = rho0 * ( vp0*vp0 - 2*vs0*vs0 )
+            mu (k,i) = rho0 * vs1 * vs1
+            lam(k,i) = rho0 * ( vp1*vp1 - 2*vs1*vs1 )
             qp (k,i) = qp0
             qs (k,i) = qs0
 
@@ -88,7 +114,7 @@ contains
 
             !! ocean column
 
-            vp1 = 1.5
+            vp1 = Cv(k) * seawater__vel( zs(k) )
             vs1 = 0.0
 
             rho(k,i) = 1.0
@@ -113,7 +139,7 @@ contains
           end if
         end do
       end do
-    end if
+    ! end if
     
     ! dummy value
     bd(:,1:NBD) = -9999

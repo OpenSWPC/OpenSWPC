@@ -15,8 +15,8 @@
 *.a
 
 # Program Input/Output
-in/*
-out/*
+in*/*
+out*/*
 *.snp
 *.sac
 *.ps

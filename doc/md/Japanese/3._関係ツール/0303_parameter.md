@@ -68,6 +68,6 @@ $ mapregion.x -i input.inf -o region.dat
 `-o`オプションが与えられない場合には標準出力に出力を行う．
 また，本コードは$N_M=3$を仮定した場合の予想メモリ利用量をターミナルに出力する．
 
-## `mapregion.gmt4` | `mapregion.gmt5`
+## `mapregion.gmt`
 
-`mapregion.x`を呼び出して地図領域を描画する`GMT`スクリプト．GMTバージョンに応じて2種類のスクリプトが提供される．
+`mapregion.x`を呼び出して地図領域を描画する`GMT`スクリプト．GMTバージョン5以降が必要である．

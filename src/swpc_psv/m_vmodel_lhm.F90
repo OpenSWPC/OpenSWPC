@@ -3,7 +3,7 @@
 !! 1D velocity structure
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -13,6 +13,7 @@ module m_vmodel_lhm
   use m_debug
   use m_readini
   use m_global
+  use m_seawater
   implicit none
   private
   save
@@ -52,6 +53,10 @@ contains
     logical :: is_exist
     integer :: nlayer
     character(256) :: adum
+    logical :: use_munk
+    logical :: earth_flattening
+    real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
+    real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening
     !! ----
 
     call readini( io_prm, 'fn_lhm', fn_lhm, '' )
@@ -61,6 +66,21 @@ contains
       write(STDERR,*) "ERROR [m_vmodel_lhm]: velocity file "//trim(fn_lhm)//" does not exist"
       call mpi_finalize(ierr)
       stop
+    end if
+
+    !! seawater
+    call readini( io_prm, 'munk_profile', use_munk, .false. )
+    call seawater__init( use_munk )
+
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
+    if( earth_flattening ) then
+      do k=k0, k1
+        zs(k) = R_EARTH - R_EARTH * exp( - zc(k) / R_EARTH )
+        Cv(k) = exp( zc(k) / R_EARTH)
+      end do
+    else
+      zs(:) = zc(:)
+      Cv(:) = 1.0
     end if
 
     call std__getio( io_vel )
@@ -97,9 +117,9 @@ contains
     do k = k0, k1
 
       !! air/ocean column
-      if( zc(k) < depth(1) ) then
+      if( zs(k) < depth(1) ) then
 
-        if( zc(k) < 0.0 ) then 
+        if( zs(k) < 0.0 ) then 
 
           vp1 = 0.0
           vs1 = 0.0
@@ -113,7 +133,7 @@ contains
           
         else
 
-          vp1 = 1.5
+          vp1 = Cv(k) * seawater__vel(zs(k))
           vs1 = 0.0
           
           rho(k,i0:i1) = 1.0
@@ -130,10 +150,10 @@ contains
 
       !! chose layer
       do l=1, nlayer
-        if( zc(k) >= depth(l) ) then
+        if( zs(k) >= depth(l) ) then
           rho1 = rho0(l)
-          vp1  = vp0(l)
-          vs1  = vs0(l)
+          vp1  = Cv(k)*vp0(l)
+          vs1  = Cv(k)*vs0(l)
           qp1  = qp0(l)
           qs1  = qs0(l)
         end if

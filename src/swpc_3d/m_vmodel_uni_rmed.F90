@@ -3,7 +3,7 @@
 !! User-routines for defining velocity/attenuation structure
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -15,6 +15,7 @@ module m_vmodel_uni_rmed
   use m_global
   use m_rdrmed
   use m_fdtool
+  use m_seawater
   implicit none
   private
   save
@@ -56,6 +57,10 @@ contains
     logical :: is_exist
     real(SP) :: vmin, vmax, dh, cc, rhomin
     logical  :: vmax_over, vmin_under, rhomin_under
+    logical :: use_munk
+    logical :: earth_flattening
+    real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
+    real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening    
     !! ----
 
     call readini( io_prm, 'vp0',    vp0, 5.0 )
@@ -65,6 +70,20 @@ contains
     call readini( io_prm, 'qs0',    qs0, 1000000.0 )
     call readini( io_prm, 'topo0', topo0, 0.0 )
     call readini( io_prm, 'rhomin', rhomin, 1.0 )
+    !! seawater
+    call readini( io_prm, 'munk_profile', use_munk, .false. )
+    call seawater__init( use_munk )
+    !! earth-flattening transformation
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
+    if( earth_flattening ) then
+      do k=k0, k1
+        zs(k) = R_EARTH - R_EARTH * exp( - zc(k) / R_EARTH )
+        Cv(k) = exp( zc(k) / R_EARTH)
+      end do
+    else
+      zs(:) = zc(:)
+      Cv(:) = 1.0
+    end if    
 
     vmin = vcut
 
@@ -98,11 +117,11 @@ contains
 
         do k = k0, k1
 
-          if( zc( k ) > bd(i,j,0) ) then
+          if( zs( k ) > bd(i,j,0) ) then
 
             rho2 = ( 1.0 + 0.8 * xi(k,i,j) ) * rho0
-            vp2  = ( 1.0 +       xi(k,i,j) ) * vp0
-            vs2  = ( 1.0 +       xi(k,i,j) ) * vs0
+            vp2  = ( 1.0 +       xi(k,i,j) ) * Cv(k) * vp0
+            vs2  = ( 1.0 +       xi(k,i,j) ) * Cv(k) * vs0
 
             call vcheck( vp2, vs2, rho2, xi(k,i,j), vmin, vmax, rhomin, vmin_under, vmax_over, rhomin_under )
 
@@ -113,11 +132,11 @@ contains
             qp (k,i,j) = qp0
             qs (k,i,j) = qs0
 
-          else if ( zc (k) > 0.0 ) then
+          else if ( zs (k) > 0.0 ) then
 
             !! ocean column
 
-            vp1 = 1.5
+            vp1 = Cv(k) * seawater__vel( zc(k) )
             vs1 = 0.0
 
             rho(k,i,j) = 1.0

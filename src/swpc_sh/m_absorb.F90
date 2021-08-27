@@ -3,7 +3,7 @@
 !! Absorbing Boundary Condition
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -63,6 +63,9 @@ contains
       call absorb_p__update_vel
     case( 'cerjan' )
       call absorb_c__update_vel
+      call absorb_c__update_vel
+      call absorb_c__update_vel
+      call absorb_c__update_vel
     case default
       continue
     end select
@@ -81,6 +84,9 @@ contains
     case( 'pml' )
       call absorb_p__update_stress
     case( 'cerjan' )
+      call absorb_c__update_stress
+      call absorb_c__update_stress
+      call absorb_c__update_stress
       call absorb_c__update_stress
     case default
       continue

@@ -3,13 +3,13 @@
 !! Convert waveform binary (.wav) to SAC datafiles
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 program wav2sac
 
   use m_std
-  use m_wsac
+  use m_sac
   use m_system
   implicit none
 

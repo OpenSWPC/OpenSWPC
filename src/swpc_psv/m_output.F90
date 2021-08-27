@@ -3,7 +3,7 @@
 !! Snapshot/waveform output
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -16,7 +16,7 @@ module m_output
   use m_pwatch
   use m_fdtool
   use m_daytim
-  use m_wsac
+  use m_sac
   use m_readini
   use m_geomap
 #ifdef _NETCDF

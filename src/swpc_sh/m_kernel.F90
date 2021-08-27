@@ -3,7 +3,7 @@
 !! Computation kernel for FDM numerical simulation
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -127,7 +127,7 @@ contains
 
       !! surfaces
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       do k=kfs_top(i), kfs_bot(i)
         dzSyz(k) = (  Syz(k  ,i  ) - Syz(k-1,i  )  ) * r20z
@@ -135,7 +135,7 @@ contains
       end do
 
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       do k=kob_top(i), kob_bot(i)
         dzSyz(k) = (  Syz(k  ,i  ) - Syz(k-1,i  )  ) * r20z
@@ -217,7 +217,7 @@ contains
 
       !! free surface
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       do k=kfs_top(i), kfs_bot(i)
 
@@ -228,7 +228,7 @@ contains
 
       !! seafloor
 #ifdef _ES
-      !CDIR NOVECTOR
+      !NEC$ novector
 #endif
       do k=kob_top(i), kob_bot(i)
 

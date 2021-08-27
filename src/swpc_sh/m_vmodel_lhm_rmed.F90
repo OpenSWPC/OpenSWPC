@@ -3,7 +3,7 @@
 !! 1D velocity structure
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -63,11 +63,26 @@ contains
     character(256) :: dir_rmed
     real(SP) :: cc, dh, vmin, vmax, rhomin
     logical  :: is_vmax_over, is_vmin_under, is_rhomin_under
+    logical :: earth_flattening
+    real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
+    real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening      
     !! ----
 
     call readini( io_prm, 'fn_lhm_rmed', fn_lhm, '' )
     call readini( io_prm, 'dir_rmed', dir_rmed, '' )
     call readini( io_prm, 'rhomin', rhomin, 1.0 )
+
+    !! earth-flattening transformation
+    call readini( io_prm, 'earth_flattening', earth_flattening, .false. )
+    if( earth_flattening ) then
+      do k=k0, k1
+        zs(k) = R_EARTH - R_EARTH * exp( - zc(k) / R_EARTH )
+        Cv(k) = exp( zc(k) / R_EARTH)
+      end do
+    else
+      zs(:) = zc(:)
+      Cv(:) = 1.0
+    end if    
 
     inquire( file=fn_lhm, exist=is_exist )
     call assert( is_exist )
@@ -136,9 +151,9 @@ contains
     do k = k0, k1
 
       !! air/ocean column
-      if( zc(k) < depth(1) ) then
+      if( zs(k) < depth(1) ) then
 
-        if( zc(k) < 0.0 ) then 
+        if( zs(k) < 0.0 ) then 
 
           vp1 = 0.0
           vs1 = 0.0
@@ -152,10 +167,10 @@ contains
           
         else
 
-          vp1 = 1.5
+          vp1 = Cv(k) * 1.5
           vs1 = 0.0
           
-          rho(k,i0:i1) = 1.0
+          rho(k,i0:i1) = 1.0 * Cv(k)**(-5)
           mu (k,i0:i1) = 0.0
           lam(k,i0:i1) = 1.0 * vp1 * vp1
 
@@ -170,10 +185,10 @@ contains
       do i=i0, i1
         !! chose layer
         do l=1, nlayer
-          if( zc(k) >= depth(l) ) then
-            rho1 = rho0(l) * ( 1 + 0.8*xi(k,i,tbl_rmed(l)) )
-            vp1  = vp0(l)  * ( 1 +     xi(k,i,tbl_rmed(l)) )
-            vs1  = vs0(l)  * ( 1 +     xi(k,i,tbl_rmed(l)) )
+          if( zs(k) >= depth(l) ) then
+            rho1 = Cv(k)**(-5) * rho0(l) * ( 1 + 0.8*xi(k,i,tbl_rmed(l)) )
+            vp1  = Cv(k) * vp0(l)  * ( 1 +     xi(k,i,tbl_rmed(l)) )
+            vs1  = Cv(k) * vs0(l)  * ( 1 +     xi(k,i,tbl_rmed(l)) )
             qp1  = qp0(l)
             qs1  = qs0(l)
 

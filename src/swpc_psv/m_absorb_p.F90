@@ -21,7 +21,7 @@
 !!  <- na ->
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -75,7 +75,7 @@ contains
     !! --
     integer  :: i, k
     real(SP) :: hx,hz
-    integer  :: idum
+    integer  :: idum, ierr
     !! ----
 
     !!
@@ -108,7 +108,7 @@ contains
     !!
 
     kbeg_min = minval( kbeg_a(:) )
-    if( fullspace_mode ) kbeg_min = kbeg
+!    if( fullspace_mode ) kbeg_min = kbeg
 
     !! memory allocation
     allocate(  axVx( kbeg_min:kend, ibeg:iend ) )
@@ -241,72 +241,73 @@ contains
     end do
     !$omp end do nowait
     !$omp end parallel
+    !$omp barrier    
 
-    if( fullspace_mode ) then
-      !$omp parallel &
-      !$omp private( dxSxx, dzSzz, dxSxz, dzSxz ) &
-      !$omp private( gxc0, gxe0, gzc0, gze0 ) &
-      !$omp private( i, k )
-      !$omp do &
-      !$omp schedule(dynamic)
-      do i=ibeg_k, iend_k
+    ! if( fullspace_mode ) then
+    !   ! $omp parallel &
+    !   ! $omp private( dxSxx, dzSzz, dxSxz, dzSxz ) &
+    !   ! $omp private( gxc0, gxe0, gzc0, gze0 ) &
+    !   ! $omp private( i, k )
+    !   ! $omp do &
+    !   ! $omp schedule(dynamic)
+    !   do i=ibeg_k, iend_k
 
-        gxc0(1:4) = gxc(1:4,i)
-        gxe0(1:4) = gxe(1:4,i)
+    !     gxc0(1:4) = gxc(1:4,i)
+    !     gxe0(1:4) = gxe(1:4,i)
 
-        !!
-        !! Derivatives
-        !!
-        do k=kbeg, na
+    !     !!
+    !     !! Derivatives
+    !     !!
+    !     do k=kbeg, na
 
-          dxSxx(k) = (  Sxx(k  ,i+1) - Sxx(k  ,i  )  ) * r20x
-          dzSzz(k) = (  Szz(k+1,i  ) - Szz(k  ,i  )  ) * r20z
-          dxSxz(k) = (  Sxz(k  ,i  ) - Sxz(k  ,i-1)  ) * r20x
-          dzSxz(k) = (  Sxz(k  ,i  ) - Sxz(k-1,i  )  ) * r20z
+    !       dxSxx(k) = (  Sxx(k  ,i+1) - Sxx(k  ,i  )  ) * r20x
+    !       dzSzz(k) = (  Szz(k+1,i  ) - Szz(k  ,i  )  ) * r20z
+    !       dxSxz(k) = (  Sxz(k  ,i  ) - Sxz(k  ,i-1)  ) * r20x
+    !       dzSxz(k) = (  Sxz(k  ,i  ) - Sxz(k-1,i  )  ) * r20z
 
-        end do
-
-
-        !!
-        !! update velocity
-        !!
-        do k=kbeg, na
-
-          gzc0(1:4) = gzc(1:4,k)
-          gze0(1:4) = gze(1:4,k)
-
-          bx = 2.0 / ( rho(k,i) + rho(k,i+1) )
-          bz = 2.0 / ( rho(k,i) + rho(k+1,i) )
-
-          !!
-          !! Velocity Updates
-          !!
-          Vx(k,i) = Vx(k,i) &
-              + bx * ( gxe0(1) * dxSxx(k)   + gzc0(1) * dzSxz(k)       &
-              + gxe0(2) * axSxx(k,i) + gzc0(2) * azSxz(k,i)  ) * dt
-
-          Vz(k,i) = Vz(k,i) &
-              + bz * ( gxc0(1) * dxSxz(k)     + gze0(1) * dzSzz(k)       &
-              + gxc0(2) * axSxz(k,i) + gze0(2) * azSzz(k,i)  ) * dt
+    !     end do
 
 
-          !!
-          !! ADE updates
-          !!
+    !     !!
+    !     !! update velocity
+    !     !!
+    !     do k=kbeg, na
 
-          axSxx(k,i) = gxe0(3) * axSxx(k,i) + gxe0(4) * dxSxx(k) * dt
-          azSxz(k,i) = gzc0(3) * azSxz(k,i) + gzc0(4) * dzSxz(k) * dt
-          axSxz(k,i) = gxc0(3) * axSxz(k,i) + gxc0(4) * dxSxz(k) * dt
-          azSzz(k,i) = gze0(3) * azSzz(k,i) + gze0(4) * dzSzz(k) * dt
+    !       gzc0(1:4) = gzc(1:4,k)
+    !       gze0(1:4) = gze(1:4,k)
 
-        end do
-      end do
-      !$omp end do nowait
-      !$omp end parallel
+    !       bx = 2.0 / ( rho(k,i) + rho(k,i+1) )
+    !       bz = 2.0 / ( rho(k,i) + rho(k+1,i) )
 
-    end if
+    !       !!
+    !       !! Velocity Updates
+    !       !!
+    !       Vx(k,i) = Vx(k,i) &
+    !           + bx * ( gxe0(1) * dxSxx(k)   + gzc0(1) * dzSxz(k)       &
+    !           + gxe0(2) * axSxx(k,i) + gzc0(2) * azSxz(k,i)  ) * dt
 
-    !$omp barrier
+    !       Vz(k,i) = Vz(k,i) &
+    !           + bz * ( gxc0(1) * dxSxz(k)     + gze0(1) * dzSzz(k)       &
+    !           + gxc0(2) * axSxz(k,i) + gze0(2) * azSzz(k,i)  ) * dt
+
+
+    !       !!
+    !       !! ADE updates
+    !       !!
+
+    !       axSxx(k,i) = gxe0(3) * axSxx(k,i) + gxe0(4) * dxSxx(k) * dt
+    !       azSxz(k,i) = gzc0(3) * azSxz(k,i) + gzc0(4) * dzSxz(k) * dt
+    !       axSxz(k,i) = gxc0(3) * axSxz(k,i) + gxc0(4) * dxSxz(k) * dt
+    !       azSzz(k,i) = gze0(3) * azSzz(k,i) + gze0(4) * dzSzz(k) * dt
+
+    !     end do
+    !   end do
+    !   ! $omp end do
+    !   ! $omp end parallel
+    !   ! $omp barrier
+    ! end if
+
+
 
   end subroutine absorb_p__update_vel
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -436,93 +437,95 @@ contains
     end do
     !$omp end do nowait
     !$omp end parallel
-
-    if( fullspace_mode ) then
-      !$omp parallel &
-      !$omp private( gxc0, gxe0, gzc0, gze0 ) &
-      !$omp private( dxVx, dxVz, dzVx, dzVz ) &
-      !$omp private( lam2mu_R, lam_R ) &
-      !$omp private( dxVx_ade, dzVz_ade ) &
-      !$omp private( i,k ) &
-      !$omp private( nnn, pnn, npn, ppn, muxz ) 
-      !$omp do &
-      !$omp schedule(dynamic)
-      do i=ibeg_k, iend_k
-
-        gxc0(1:4) = gxc(1:4,i)
-        gxe0(1:4) = gxe(1:4,i)
-
-        !!
-        !! Derivatives
-        !!
-        do k=kbeg, na
-
-          dxVx(k) = (  Vx(k  ,i  ) - Vx(k  ,i-1)  ) * r20x
-          dxVz(k) = (  Vz(k  ,i+1) - Vz(k  ,i  )  ) * r20x
-          dzVx(k) = (  Vx(k+1,i  ) - Vx(k  ,i  )  ) * r20z
-          dzVz(k) = (  Vz(k  ,i  ) - Vz(k-1,i  )  ) * r20z
-
-        end do
-
-        !!
-        !! Update Normal Stress
-        !!
-        do k=kbeg, na
-
-          gzc0(1:4) = gzc(1:4,k)
-
-          !!
-          !! update stress components
-          !!
-          lam2mu_R = ( lam(k,i) + 2 * mu(k,i) )
-          lam_R    = lam2mu_R - 2*mu(k,i)
-
-
-          !!
-          !! Normal Stress
-          !!
-          dxVx_ade = gxc0(1) * dxVx(k) + gxc0(2) * axVx(k,i)
-          dzVz_ade = gzc0(1) * dzVz(k) + gzc0(2) * azVz(k,i)
-          Sxx(k,i) = Sxx(k,i) + ( lam2mu_R * dxVx_ade + lam_R * dzVz_ade ) * dt
-          Szz(k,i) = Szz(k,i) + ( lam2mu_R * dzVz_ade + lam_R * dxVx_ade ) * dt
-
-
-          !!
-          !! ADE
-          !!
-          axVx(k,i) = gxc0(3) * axVx(k,i) + gxc0(4) * dxVx(k) * dt
-          azVz(k,i) = gzc0(3) * azVz(k,i) + gzc0(4) * dzVz(k) * dt
-
-        end do
-
-
-        !!
-        !! Update Shear Stress
-        !!
-        do k=kbeg, na
-
-          gze0(1:4) = gze(1:4,k)
-
-          nnn = mu (k  ,i  )
-          pnn = mu (k+1,i  )
-          npn = mu (k,  i+1)
-          ppn = mu (k+1,i+1)
-          muxz = 4*nnn*pnn*npn*ppn / ( nnn*pnn*npn + nnn*pnn*ppn + nnn*npn*ppn + pnn*npn*ppn + epsl)
-
-          Sxz(k,i) = Sxz(k,i) + muxz * ( gxe0(1) * dxVz(k)     + gze0(1) * dzVx(k) &
-              + gxe0(2) * axVz(k,i) + gze0(2) * azVx(k,i) ) * dt
-
-          azVx(k,i) = gze0(3) * azVx(k,i) + gze0(4) * dzVx(k) * dt
-          axVz(k,i) = gxe0(3) * axVz(k,i) + gxe0(4) * dxVz(k) * dt
-
-        end do
-      end do
-      !$omp end do nowait
-      !$omp end parallel
-
-    end if
-
     !$omp barrier
+
+    ! if( fullspace_mode ) then
+    !   ! $omp parallel &
+    !   ! $omp private( gxc0, gxe0, gzc0, gze0 ) &
+    !   ! $omp private( dxVx, dxVz, dzVx, dzVz ) &
+    !   ! $omp private( lam2mu_R, lam_R ) &
+    !   ! $omp private( dxVx_ade, dzVz_ade ) &
+    !   ! $omp private( i,k ) &
+    !   ! $omp private( nnn, pnn, npn, ppn, muxz ) 
+    !   ! $omp do &
+    !   ! $omp schedule(dynamic)
+    !   do i=ibeg_k, iend_k
+
+    !     gxc0(1:4) = gxc(1:4,i)
+    !     gxe0(1:4) = gxe(1:4,i)
+
+    !     !!
+    !     !! Derivatives
+    !     !!
+    !     do k=kbeg, na
+
+    !       dxVx(k) = (  Vx(k  ,i  ) - Vx(k  ,i-1)  ) * r20x
+    !       dxVz(k) = (  Vz(k  ,i+1) - Vz(k  ,i  )  ) * r20x
+    !       dzVx(k) = (  Vx(k+1,i  ) - Vx(k  ,i  )  ) * r20z
+    !       dzVz(k) = (  Vz(k  ,i  ) - Vz(k-1,i  )  ) * r20z
+
+    !     end do
+
+    !     !!
+    !     !! Update Normal Stress
+    !     !!
+    !     do k=kbeg, na
+
+    !       gzc0(1:4) = gzc(1:4,k)
+
+    !       !!
+    !       !! update stress components
+    !       !!
+    !       lam2mu_R = ( lam(k,i) + 2 * mu(k,i) )
+    !       lam_R    = lam2mu_R - 2*mu(k,i)
+
+
+    !       !!
+    !       !! Normal Stress
+    !       !!
+    !       dxVx_ade = gxc0(1) * dxVx(k) + gxc0(2) * axVx(k,i)
+    !       dzVz_ade = gzc0(1) * dzVz(k) + gzc0(2) * azVz(k,i)
+    !       Sxx(k,i) = Sxx(k,i) + ( lam2mu_R * dxVx_ade + lam_R * dzVz_ade ) * dt
+    !       Szz(k,i) = Szz(k,i) + ( lam2mu_R * dzVz_ade + lam_R * dxVx_ade ) * dt
+
+
+    !       !!
+    !       !! ADE
+    !       !!
+    !       axVx(k,i) = gxc0(3) * axVx(k,i) + gxc0(4) * dxVx(k) * dt
+    !       azVz(k,i) = gzc0(3) * azVz(k,i) + gzc0(4) * dzVz(k) * dt
+
+    !     end do
+
+
+    !     !!
+    !     !! Update Shear Stress
+    !     !!
+    !     do k=kbeg, na
+
+    !       gze0(1:4) = gze(1:4,k)
+
+    !       nnn = mu (k  ,i  )
+    !       pnn = mu (k+1,i  )
+    !       npn = mu (k,  i+1)
+    !       ppn = mu (k+1,i+1)
+    !       muxz = 4*nnn*pnn*npn*ppn / ( nnn*pnn*npn + nnn*pnn*ppn + nnn*npn*ppn + pnn*npn*ppn + epsl)
+
+    !       Sxz(k,i) = Sxz(k,i) + muxz * ( gxe0(1) * dxVz(k)     + gze0(1) * dzVx(k) &
+    !           + gxe0(2) * axVz(k,i) + gze0(2) * azVx(k,i) ) * dt
+
+    !       azVx(k,i) = gze0(3) * azVx(k,i) + gze0(4) * dzVx(k) * dt
+    !       axVz(k,i) = gxe0(3) * axVz(k,i) + gxe0(4) * dxVz(k) * dt
+
+    !     end do
+    !   end do
+    !   ! $omp end do nowait
+    !   ! $omp end parallel
+    !   ! $omp barrier
+
+    ! end if
+
+
 
 
   end subroutine absorb_p__update_stress
@@ -618,8 +621,8 @@ contains
 
     R0 = 10**( - ( log10( real(na) ) - 1 ) / log10( 2.0 )  - 3.0 )
     d0 = - ( 1.0 / (2.0*H) ) * ( pd +1 ) * cp * log( R0 )
-    b0 = 6.0
-    a0 = min( PI * fcut, d0/b0 *0.02 )
+    b0 = 7.0
+    a0 = PI * fcut
 
     if( x <= xbeg + H ) then
       xx = ( xbeg + H ) - x
@@ -630,9 +633,8 @@ contains
     end if
 
     d = d0 * abs( xx / H )**pd
-    !a = a0 * ( 1.0 - abs( xx / H )**pa )
+    a = a0 * ( 1.0 - abs( xx / H )**pa )
     b = 1.0 + ( b0 - 1.0 ) * abs( xx / H )**pb
-    a = 0.02 * d / b
 
     g(1) = (  ( 1.0 + ( dt / 2.0 ) * a ) / b     ) / ( 1.0 + ( dt / 2.0 ) * ( a + d / b ) )
     g(2) = ( -1.0 / b                            ) / ( 1.0 + ( dt / 2.0 ) * ( a + d / b ) )
@@ -640,7 +642,6 @@ contains
     g(4) = (  d / b                              ) / ( 1.0 + ( dt / 2.0 ) * ( a + d / b ) )
 
   end subroutine damping_profile
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_absorb_p
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
+!! ---------------------------------------------------------------------------------------------------------------------------- !!

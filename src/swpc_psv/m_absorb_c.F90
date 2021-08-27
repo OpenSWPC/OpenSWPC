@@ -3,7 +3,7 @@
 !! Boundary absorber module: Cerjan's Sponge
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -90,8 +90,13 @@ contains
     !$omp parallel do private(k)
     do k=kbeg, kend
       if( k <= na ) then
-        gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, 0.0, real(dz)) )          / Lz )**2 )
-        gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, 0.0, real(dz)) + real(dz)/2 ) ) / Lz )**2 )
+        ! if( fullspace_mode ) then
+        !   gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, 0.0, real(dz)) )          / Lz )**2 )
+        !   gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, 0.0, real(dz)) + real(dz)/2 ) ) / Lz )**2 )
+        ! else
+          gz_c(k) = 1.0
+          gz_b(k) = 1.0
+        ! end if  
       else if( k >= nz-na+1 ) then
         gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, Nz*real(dz), -real(dz))  + real(dz)/2  ) / Lz )**2 )
         gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, Nz*real(dz), -real(dz))  ) ) / Lz )**2 )
@@ -116,8 +121,8 @@ contains
 
     !$omp parallel private(i,k,gc,gb)
     !$omp do schedule(dynamic)
-    do i=ibeg_k, iend_k
-      do k=kbeg_a(i), kend
+    do i=ibeg, iend
+      do k=kbeg, kend
         gc = gx_c(i) * gz_c(k)
         gb = gx_b(i) * gz_b(k)
         Sxx(k,i) = Sxx(k,i) * gc
@@ -138,8 +143,8 @@ contains
 
     !$omp parallel private(i,k)
     !$omp do schedule(dynamic)
-    do i=ibeg_k, iend_k
-      do k=kbeg_a(i), kend
+    do i=ibeg, iend
+      do k=kbeg, kend
         Vx(k,i) = Vx(k,i) * gx_b(i) * gz_c(k)
         Vz(k,i) = Vz(k,i) * gx_c(i) * gz_b(k)
       end do

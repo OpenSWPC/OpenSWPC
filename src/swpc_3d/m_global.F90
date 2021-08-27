@@ -3,7 +3,7 @@
 !! global control parameters, shared arrays and MPI communication
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -160,6 +160,9 @@ module m_global
   logical  :: bf_mode                                               !< Body force soruce mode
   logical  :: green_mode                                            !< Green's function computaiton with reciprocity
 
+  !! fullspace-mode
+!  logical :: fullspace_mode
+
   !!
   !! private variables
   !!
@@ -212,6 +215,7 @@ contains
       clat = 35.7182
       phi  = 0.0
       abc_type = 'pml'
+!      fullspace_mode = .false. 
     else !! or read from file for regular run
       call readini( io_prm, 'dx',             dx,              0.5_MP         )
       call readini( io_prm, 'dy',             dy,              0.5_MP         )
@@ -226,6 +230,7 @@ contains
       call readini( io_prm, 'clat',           clat,            35.7182        )
       call readini( io_prm, 'phi',            phi,             0.0            )
       call readini( io_prm, 'abc_type',       abc_type,        'pml'          )
+!      call readini( io_prm, 'fullspace_mode', fullspace_mode, .false. )
 
     end if
 
@@ -433,6 +438,9 @@ contains
     kend_k = kend
 
     if( abc_type == 'pml' ) then
+
+!      if( fullspace_mode ) kbeg_k = na + 1
+
       if      ( iend <= na      ) then; ibeg_k = iend+1;  ! no kernel integration
       else if ( ibeg <= na      ) then; ibeg_k = na+1  ;  ! pertial kernel
       end if
@@ -449,8 +457,11 @@ contains
       else if ( jend >= ny-na+1 ) then; jend_k = ny-na;
       end if
       kend_k = nz-na
+
     end if
 
+    call debug(kbeg_k)
+    call debug(kend_k)
 
     call pwatch__off( "global__setup2" ) !! measure from here
 
@@ -487,7 +498,8 @@ contains
     !$omp parallel do private(j,k,ptr)
     do j=jbeg, jend
 #ifdef _ES
-      !cdir nodep,nosync
+      !NEC$ ivdep
+      !NEC$ nosync
 #endif
       do k=kbeg, kend
         ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
@@ -519,7 +531,8 @@ contains
     !$omp parallel do private(ptr)
     do i=ibeg,iend
 #ifdef _ES
-      !cdir nodep,nosync
+      !NEC$ ivdep
+      !NEC$ nosync
 #endif
       do k=kbeg,kend
         ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
@@ -631,7 +644,8 @@ contains
     !$omp parallel do private(i,k,ptr)
     do j=jbeg, jend
 #ifdef _ES
-      !cdir nodep,nosync
+      !NEC$ ivdep
+      !NEC$ nosync
 #endif
       do k=kbeg, kend
         ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
@@ -662,7 +676,10 @@ contains
     !!
     !$omp parallel do private(ptr)
     do i=ibeg,iend
-      !cdir nodep,nosync
+#ifdef _ES
+      !NEC$ ivdep
+      !NEC$ nosync
+#endif
       do k=kbeg,kend
         ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
@@ -810,6 +827,7 @@ contains
     write(io) xc(ibeg_m:iend_m)
     write(io) yc(jbeg_m:jend_m)
     write(io) zc(kbeg_m:kend_m)
+!    write(io) fullspace_mode
     write(io) kbeg_a(ibeg:iend,jbeg:jend)
 
     deallocate( sbuf_ip, sbuf_im, sbuf_jp, sbuf_jm )
@@ -868,7 +886,7 @@ contains
     read(io) xc(ibeg_m:iend_m)
     read(io) yc(jbeg_m:jend_m)
     read(io) zc(kbeg_m:kend_m)
-
+!    read(io) fullspace_mode
     allocate( kbeg_a(ibeg:iend, jbeg:jend) )
     read(io) kbeg_a(ibeg:iend,jbeg:jend)
 

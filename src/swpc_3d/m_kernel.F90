@@ -3,7 +3,7 @@
 !! Computation kernel for FDM numerical simulation
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -118,7 +118,7 @@ contains
   subroutine kernel__update_vel()
 
     integer :: i, j, k
-    real(MP) :: d3Sx3(kbeg_k:kend_k), d3Sy3(kbeg_k:kend_k), d3Sz3(kbeg_k:kend_k)
+    real(MP) :: d3Sx3(kbeg:kend), d3Sy3(kbeg:kend), d3Sz3(kbeg:kend)
     !! ----
 
     call pwatch__on("kernel__update_vel")
@@ -128,11 +128,7 @@ contains
     !$omp private( d3Sx3, d3Sy3, d3Sz3 ) &
     !$omp private( i, j, k )
     !$omp do &
-#ifdef _ES
-    !$omp schedule(static)
-#else
     !$omp schedule(static,1)
-#endif
     do j=jbeg_k, jend_k
 
       do i=ibeg_k, iend_k
@@ -158,7 +154,7 @@ contains
 
         !! overwrite around free surface
 #ifdef _ES
-        !CDIR NOVECTOR
+        !NEC$ novector
 #endif
         do k=kfs_top(i,j), kfs_bot(i,j)
           d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
@@ -176,7 +172,7 @@ contains
 
         !! overwrite around seafloor
 #ifdef _ES
-        !CDIR NOVECTOR
+        !NEC$ novector
 #endif
         do k=kob_top(i,j), kob_bot(i,j)
           d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
@@ -229,8 +225,8 @@ contains
     real(SP) :: taup1, taus1, taup_plus1, taus_plus1
     real(SP) :: d3v3, dxVx_dyVy, dxVx_dzVz, dyVy_dzVz
     real(SP) :: Rxx_n, Ryy_n, Rzz_n, Ryz_n, Rxz_n, Rxy_n
-    real(MP) :: dxVx(kbeg_k:kend_k),  dyVy(kbeg_k:kend_k), dzVz(kbeg_k:kend_k)
-    real(MP) :: dxVy_dyVx(kbeg_k:kend_k), dxVz_dzVx(kbeg_k:kend_k), dyVz_dzVy(kbeg_k:kend_k)
+    real(MP) :: dxVx(kbeg:kend),  dyVy(kbeg:kend), dzVz(kbeg:kend)
+    real(MP) :: dxVy_dyVx(kbeg:kend), dxVz_dzVx(kbeg:kend), dyVz_dzVy(kbeg:kend)
     !! ----
 
     call pwatch__on("kernel__update_stress")
@@ -243,11 +239,7 @@ contains
     !$omp private( Rxx_n, Ryy_n, Rzz_n ) &
     !$omp private( i, j, k, m )
     !$omp do &
-#ifdef _ES
-    !$omp schedule(static)
-#else
     !$omp schedule(static,1)
-#endif
     do j=jbeg_k, jend_k
       do i=ibeg_k, iend_k
 
@@ -264,7 +256,7 @@ contains
 
         !! overwrite around free surface
 #ifdef _ES
-        !CDIR NOVECTOR
+        !NEC$ novector
 #endif
         do k=kfs_top(i,j), kfs_bot(i,j)
 
@@ -276,7 +268,7 @@ contains
 
         !! overwrite around seafloor
 #ifdef _ES
-        !CDIR NOVECTOR
+        !NEC$ novector
 #endif
         do k=kob_top(i,j), kob_bot(i,j)
 
@@ -354,11 +346,7 @@ contains
     !$omp private( Ryz_n, Rxz_n, Rxy_n ) &
     !$omp private( i, j, k, m )
     !$omp do  &
-#ifdef _ES
-    !$omp schedule(static)
-#else
     !$omp schedule(static,1)
-#endif
     do j=jbeg_k, jend_k
 
       do i=ibeg_k, iend_k
@@ -378,7 +366,7 @@ contains
 
         !! overwrite around free surface
 #ifdef _ES
-        !CDIR NOVECTOR
+        !NEC$ novector
 #endif
         do k=kfs_top(i,j), kfs_bot(i,j)
 
@@ -393,7 +381,7 @@ contains
 
         !! overwrite around seafloor
 #ifdef _ES
-        !CDIR NOVECTOR
+        !NEC$ novector
 #endif
         do k=kob_top(i,j), kob_bot(i,j)
 

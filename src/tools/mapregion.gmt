@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# mapregion.gmt5
+# mapregion.gmt
 # use mapregion.x to plot computation area on Japan Map
 
 ## @copyright
-##   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+##   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
 region=128/146/30/46
 input=$1
@@ -24,7 +24,7 @@ ${bindir}/mapregion.x -i ${input} | gmt psxy -J -R -Wthicker,blue -O  -K >> ${ou
 
 gmt pscoast -J -R -O -P  -Wdefault,black -Bxa4f2g2 -Bya4f2g2 -BWSen -Dh -A200 -L141/31.4/38/500 >> ${output}
 
-gmt ps2raster -Tf -A -P $output
+gmt psconvert -Tg -E150 -Qg4 -Qt4 -A1c -P $output
 
 rm -f gmt.conf
 rm -f gmt.history
