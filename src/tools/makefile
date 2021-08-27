@@ -8,7 +8,7 @@
 ## --
 
 all: read_snp.x diff_snp.x mapregion.x fdmcond.x qmodel_tau.x grdsnp.x \
-	gen_rmed2d.x gen_rmed3d.x ll2xy.x xy2ll.x wav2sac.x fs2grd.x
+	gen_rmed2d.x gen_rmed3d.x ll2xy.x xy2ll.x wav2sac.x fs2grd.x wvconv.x
 
 ## file search path
 
@@ -84,6 +84,9 @@ m_sac.o    : m_sac.F90 m_std.o
 
 ../../bin/fs2grd.x: fs2grd.F90 m_std.o m_system.o m_gk.o m_geomap.o m_getopt.o m_bicubic.o m_fdsnap.o m_daytim.o
 	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
+
+../../bin/wvconv.x: wvconv.F90 m_std.o m_rfft.o m_fk.o m_sac.o 
+	$(FC) $(FFLAGS) -o $@ $^ 
 
 clean:
 	/bin/rm -f *.o *.mod *~ ../../bin/read_snp.x ../../bin/diff_snp.x ../../bin/mapregion.x ../../bin/fdmcond.x ../../bin/qmodel_tau.x ../../bin/grdsnp.x ../../bin/gen_rmed2d.x ../../bin/gen_rmed3d.x ../../bin/ll2xy.x ../../bin/xy2ll.x
