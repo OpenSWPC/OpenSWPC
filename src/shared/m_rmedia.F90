@@ -3,7 +3,7 @@
 !! Calculate power spectrum density functions (PSDF) and synthetizing realization of random media
 !!
 !! @copyright
-!!   Copyright 2013-2020 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2021 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 module m_rmedia
