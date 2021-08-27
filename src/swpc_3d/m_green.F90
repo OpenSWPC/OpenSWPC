@@ -364,7 +364,7 @@ contains
         sh(k)%kstnm = trim(green_stnm)
         sh(k)%evlo = long(i)
         sh(k)%evla = latg(i)
-        sh(k)%evdp = zg(i)*1000 ! in m-unit
+        sh(k)%evdp = zg(i) ! km unit after version 5.2
 
         sh(k)%tim   = exedate
         if( j<=6 ) then
