@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# ------------------------------------------------------------------- # 
+## settings not necessary to modify 
+#PBS -T necmpi                   # set always
+#PBS -r n                        # do not re-run the job on trouble
+#PBS --custom vesetnum-lhost=8   # use all vector unit
+#PBS -j e                        # join the stdout to stderr
+#PBS -v OMP_NUM_THREADS=8 
+#PBS -v NMPI_PROGINF=DETAIL      # performance report
+
+# ---------
+
+## need to be adjusted
+#PBS -q ve_S                     # Queue
+#PBS -b 4                        # set Num-parallel / 8
+#PBS -l elapstim_req=00:30:00    # expected computation time
+#PBS -N job-name                 # job name
+# #PBS -M your@email.address     # notification email 
+
+# ------------------------------------------------------------------- # 
+
+# The following three lines should not be deleted
+module load NECSDK/necmpi
+module load NECSDK/all NetCDF4_ve/all
+cd ${PBS_O_WORKDIR}
+
+# -np option must be coincident to the nproc_x * nproc_y 
+# -nnp should always be 1
+mpirun -venode -np 32 -nnp 1 ./bin/swpc_3d.x -i example/input.inf
