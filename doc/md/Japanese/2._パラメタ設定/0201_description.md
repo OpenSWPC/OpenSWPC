@@ -93,8 +93,6 @@ nx = 1024   ! number of grids
   fq_max           = 2.00             !! maximum freq. for Q-constant model
   fq_ref           = 1.0              !! ref. freq. for physical dispersion
 
-  fullspace_mode   = .false.          !! no ground surface, only for 2D codes
-
   !! ----------------------------------------------------------------------- !!
   !! Snapshot Output
   !!

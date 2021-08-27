@@ -641,7 +641,6 @@ contains
     g(3) = (  1.0 - ( dt / 2.0 ) * ( a + d / b ) ) / ( 1.0 + ( dt / 2.0 ) * ( a + d / b ) )
     g(4) = (  d / b                              ) / ( 1.0 + ( dt / 2.0 ) * ( a + d / b ) )
 
-    write(300+myid,*) x, a, b, d, g(1), g(2), g(3), g(4)
   end subroutine damping_profile
 
 end module m_absorb_p
