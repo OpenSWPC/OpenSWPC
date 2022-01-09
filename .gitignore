@@ -51,7 +51,7 @@ dataset/station/*.stlst
 *.csv
 
 # non-repository
-src/swpc_1d
+# src/swpc_1d
 bin/branch.sh
 
 # archives
