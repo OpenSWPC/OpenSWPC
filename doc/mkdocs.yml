@@ -29,14 +29,48 @@ theme:
     - navigation.tabs
     - navigation.top
     - toc.integrate
+    - navigation.sections
+
   logo: fig/icon.png
 
-   
+nav:
+  - index.en.md
+  - Set up:
+    - 1._SetUp/0101_env.en.md
+    - 1._SetUp/0102_tree.en.md
+    - 1._SetUp/0103_compile.en.md
+    - 1._SetUp/0104_dataset.en.md
+    - 1._SetUp/0105_parallel.en.md
+  - Parameters:
+    - 2._Parameters/0201_description.en.md
+    - 2._Parameters/0202_env.en.md
+    - 2._Parameters/0203_coord.en.md
+    - 2._Parameters/0204_visco.en.md
+    - 2._Parameters/0205_output.en.md
+    - 2._Parameters/0206_vmodel.en.md
+    - 2._Parameters/0207_source.en.md
+    - 2._Parameters/0208_abc.en.md
+    - 2._Parameters/0209_checkpoint.en.md
+    - 2._Parameters/0210_reciprocity.en.md
+    - 2._Parameters/0211_2dcode.en.md
+  - Tools:
+    - 3._Tools/0301_snapshot.en.md
+    - 3._Tools/0302_vmodel.en.md
+    - 3._Tools/0303_parameter.en.md
+    - 3._Tools/0304_rmedia.en.md
+    - 3._Tools/0305_misc.en.md
+  - Hints:
+    - 4._Hints/0401_modelset.en.md
+    - 4._Hints/0402_modification.en.md
+  - Misc:
+    - Misc/New_Feature.en.md
+    - Misc/Revision_History.en.md
+    - Misc/License.en.md
+
 extra_css:
   - "https://fonts.googleapis.com/earlyaccess/notosansjp.css"
   - "https://fonts.googleapis.com/css?family=Open+Sans:600,800"
   - "css/custom.css"
-
 
 plugins:
   - search:
@@ -44,7 +78,18 @@ plugins:
       lang:
         - en
         - ja
-
+  - i18n:
+      default_language: en
+      languages:
+        en: English
+        ja: Japanese
+      nav_translations:
+        ja:
+          Set up: 準備
+          Parameters: パラメタ設定
+          Tools: 関連ツール
+          Hints: 計算のヒント
+          Misc: その他
 extra:
   font:
 #    text: 'Noto Sans JP'
