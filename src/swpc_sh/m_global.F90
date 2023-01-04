@@ -265,6 +265,7 @@ contains
     integer :: nl3
     integer :: i, k
     integer :: ierr, nproc_exe
+    integer :: mx, proc_x
 
     call pwatch__on( "global__setup2" ) !! measure from here
 
@@ -277,7 +278,14 @@ contains
     call mpi_comm_size( mpi_comm_world, nproc_exe, ierr )
     call assert( nproc_x == nproc_exe )
 
-    nxp = ceiling( nx / real(nproc_x) )  !!  nxp-1 <  nx / nproc_x  <= nxp
+
+    mx = mod(nx, nproc_x)
+    proc_x = myid
+    if( proc_x <= nproc_x - mx + 1 ) then
+      nxp = (nx - mx)/nproc_x
+    else
+      nxp = (nx - mx)/nproc_x + 1
+    end if    
 
 
     !!
@@ -306,18 +314,19 @@ contains
 
 
     !!
-    !! computation region in this node
+    !! computation region in this node (#244)
     !!
-    ibeg = nxp * idx + 1
-    iend = min( ibeg + nxp - 1, nx )
+    if ( proc_x <= nproc_x -mx - 1 ) then
+      ibeg =  proc_x      * (nx - mx) / nproc_x + 1
+      iend = (proc_x + 1) * (nx - mx) / nproc_x
+    else
+      ibeg =  proc_x      * ((nx - mx) / nproc_x + 1 ) - (nproc_x - mx) + 1
+      iend = (proc_x + 1) * ((nx - mx) / nproc_x + 1 ) - (nproc_x - mx)
+    end if
     kbeg = 1
     kend = nz
 
-    !! re-define node model size
-    !! i, j方向の端でサイズが余る場合、モデルサイズを適切に取り直す。
-    nxp = iend - ibeg + 1
-
-
+    
     !! memory requirements including margin for MPI/boundary conditions
     !! stress drop also requires sleeve area
     ibeg_m = ibeg - 3

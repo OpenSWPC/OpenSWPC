@@ -300,7 +300,8 @@ contains
     integer :: i, j, k
     integer :: ierr
     integer :: nproc_exe
-
+    integer :: mx, my
+    integer :: proc_x, proc_y
     call pwatch__on( "global__setup2" ) !! measure from here
 
     !!
@@ -314,9 +315,23 @@ contains
     call mpi_comm_size( mpi_comm_world, nproc_exe, ierr )
     call assert( nproc == nproc_exe )
 
-    nxp = ceiling( nx / real(nproc_x) )  !!  nxp-1 <  nx / nproc_x  <= nxp
-    nyp = ceiling( ny / real(nproc_y) )  !!  nyp-1 <  ny / nproc_y  <= nyp
+    mx = mod(nx, nproc_x)
+    my = mod(ny, nproc_y)
+    proc_x = mod(myid, nproc_x)
+    proc_y = myid / nproc_x
+    if( proc_x <= nproc_x - mx + 1 ) then
+      nxp = (nx - mx)/nproc_x
+    else
+      nxp = (nx - mx)/nproc_x + 1
+    end if
+    if( proc_y <= nproc_y - my + 1 ) then
+      nyp = (ny - my)/nproc_y
+    else
+      nyp = (ny - my)/nproc_y + 1
+    end if
 
+    call debug(nxp)
+    call debug(nyp)
 
     !!
     !! MPI coordinate
@@ -350,20 +365,31 @@ contains
 
 
     !!
-    !! computation region in this node
+    !! computation region in this node (#244)
     !!
-    ibeg = nxp * idx + 1
-    iend = min( ibeg + nxp - 1, nx )
-    jbeg = nyp * idy + 1
-    jend = min( jbeg + nyp - 1, ny )
+    if ( proc_x <= nproc_x -mx - 1 ) then
+      ibeg =  proc_x      * (nx - mx) / nproc_x + 1
+      iend = (proc_x + 1) * (nx - mx) / nproc_x
+    else
+      ibeg =  proc_x      * ((nx - mx) / nproc_x + 1 ) - (nproc_x - mx) + 1
+      iend = (proc_x + 1) * ((nx - mx) / nproc_x + 1 ) - (nproc_x - mx)
+    end if
+    if ( proc_y <= nproc_y - my - 1 ) then
+      jbeg =  proc_y      * (ny - my) / nproc_y + 1
+      jend = (proc_y + 1) * (ny - my) / nproc_y
+    else
+      jbeg =  proc_y      * ((ny - my) / nproc_y + 1 ) - (nproc_y - my) + 1
+      jend = (proc_y + 1) * ((ny - my) / nproc_y + 1 ) - (nproc_y - my)
+    end if
+
     kbeg = 1
     kend = nz
-
-    !! re-define node model size
-    !! i, j方向の端でサイズが余る場合、モデルサイズを適切に取り直す。
-    nxp = iend - ibeg + 1
-    nyp = jend - jbeg + 1
-
+    call debug(iend - ibeg)
+    call debug(jend - jbeg)
+    call debug(ibeg)
+    call debug(iend)
+    call debug(jbeg)
+    call debug(jend)
 
     !! memory requirements including margin for MPI/boundary conditions
     !! stress drop also requires sleeve area
@@ -373,7 +399,6 @@ contains
     jend_m = jend + 3 + jpad
     kbeg_m = kbeg - 3
     kend_m = kend + 3 + kpad
-
 
     !!
     !! coordinate setting
@@ -410,9 +435,6 @@ contains
     !!  +-----+--------------------------+-----+
     !!  1      na                        nx-na+1  nx
     !!  <- na ->
-
-
-
 
     allocate( kbeg_a(ibeg_m:iend_m,jbeg_m:jend_m) )
     do j=jbeg_m, jend_m
@@ -464,7 +486,7 @@ contains
     call debug(kend_k)
 
     call pwatch__off( "global__setup2" ) !! measure from here
-
+ 
   end subroutine global__setup2
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
 
