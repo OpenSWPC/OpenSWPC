@@ -319,12 +319,12 @@ contains
     my = mod(ny, nproc_y)
     proc_x = mod(myid, nproc_x)
     proc_y = myid / nproc_x
-    if( proc_x <= nproc_x - mx + 1 ) then
+    if( proc_x <= nproc_x - mx - 1 ) then
       nxp = (nx - mx)/nproc_x
     else
       nxp = (nx - mx)/nproc_x + 1
     end if
-    if( proc_y <= nproc_y - my + 1 ) then
+    if( proc_y <= nproc_y - my - 1 ) then
       nyp = (ny - my)/nproc_y
     else
       nyp = (ny - my)/nproc_y + 1
@@ -384,12 +384,7 @@ contains
 
     kbeg = 1
     kend = nz
-    call debug(iend - ibeg)
-    call debug(jend - jbeg)
-    call debug(ibeg)
-    call debug(iend)
-    call debug(jbeg)
-    call debug(jend)
+
 
     !! memory requirements including margin for MPI/boundary conditions
     !! stress drop also requires sleeve area
