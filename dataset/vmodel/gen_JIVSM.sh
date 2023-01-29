@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#
 # generate NetCDF (GMT grd) files for Japan Integrated Velocity Structure Model
 # This script assumes that the original distribution archive
 #   * lp2012nankai-e_str.zip
@@ -8,10 +7,21 @@
 # are downloaded and stored in the current directly.
 #
 
+### PARAMETERS #########################################################
+region=129/147/30/47
+
+# grid spacing (in degrees)
+dlon=0.005
+dlat=0.005
+
+topo=ETOPO1_Bed_g_gmt4.grd
+
+FC=gfortran # fortran compiler for extrapolation
+########################################################################
+
 # JIVSM for shallower structure
 archive_jivsm_e=lp2012nankai-e_str.zip
 archive_jivsm_w=lp2012nankai-w_str.zip
-
 
 #
 # File download
@@ -21,23 +31,21 @@ archive_jivsm_w=lp2012nankai-w_str.zip
 
 # JIVSM original data
 
-#if [ ! -e ${archive_jivsm_e} ]; then
-#  curl  -o ${archive_jivsm_e} https://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-e_str.zip
-#fi
-#if [ ! -e ${archive_jivsm_w} ]; then
-#  curl  -o ${archive_jivsm_w} https://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-w_str.zip
-#fi
+if [ ! -e ${archive_jivsm_e} ]; then
+  curl  -o ${archive_jivsm_e} https://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-e_str.zip
+fi
+if [ ! -e ${archive_jivsm_w} ]; then
+  curl  -o ${archive_jivsm_w} https://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-w_str.zip
+fi
 
 
 # Topography & bathymetry data for extrapotation
 
-#if [ ! -e ETOPO1_Bed_g_gmt4.grd.gz ]; then
-#  curl -o ETOPO1_Bed_g_gmt4.grd.gz  https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO1/data/bedrock/grid_registered/netcdf/ETOPO1_Bed_g_gmt4.grd.gz
-#fi
-#gunzip ETOPO1_Bed_g_gmt4.grd.gz
+if [ ! -e ${topo} ]; then
+  curl -o ETOPO1_Bed_g_gmt4.grd.gz  https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO1/data/bedrock/grid_registered/netcdf/ETOPO1_Bed_g_gmt4.grd.gz
+fi
+gunzip ETOPO1_Bed_g_gmt4.grd.gz
 
-
-. ./param.sh
 
 #
 # velocity structure
@@ -122,7 +130,7 @@ for (( i=1; i<=23; i++ )); do
     grdfile=JIVSM_${ii}_${lyr_name[$i]}_${ro}_${vp}_${vs}_${qp}_${qs}_.grd
 
     cat jivsm_data/sw.$ii.dat jivsm_data/ne.$ii.dat | \
-        nearneighbor -R${region} -S2k -I${dlon}/${dlat} -Gjivsm/${grdfile}
+        gmt nearneighbor -R${region} -S2k -I${dlon}/${dlat} -Gjivsm/${grdfile}
 
 done
 rm -rif jivsm_data
@@ -155,13 +163,15 @@ done
 rm -f jivsm_layer.dat
 
 
+##
 ## ejivsm part
+##
 
 #
 # Generate NetCDF (GMT grd) files for extended-version of jivsm
 # This script requires to have jivsm grd data are already generated.
 # It requires wider area topography data in grd format, which is defined
-# in the parameter file (param.sh).
+# in the first part of this file
 #
 
 
@@ -172,19 +182,18 @@ if [ ! -e jivsm ]; then
   echo "Generate jivsm first"
   exit
 fi
-. ./param.sh
 
 [ ! -e ejivsm ] && mkdir ejivsm
 
-grdcut -R$region $topo -Gtopo.japan.grd
+gmt grdcut -R$region $topo -Gtopo.japan.grd
 topo_org=`/bin/ls jivsm/*_01_*.grd`
 topo_new=ejivsm/e`basename $topo_org`
 echo "TOPO     = $topo_org"
 echo "TOPO_NEW = $topo_new"
 
 # change topography data to be positive downward
-grdmath topo.japan.grd -1 MUL = topo.japan2.grd
-grdsample topo.japan2.grd -R$region -I$dlon/$dlat -G$topo_new
+gmt grdmath topo.japan.grd -1 MUL = topo.japan2.grd
+gmt grdsample topo.japan2.grd -R$region -I$dlon/$dlat -G$topo_new
 
 #
 # differential depth between internal discontinuity and topography
@@ -208,15 +217,15 @@ do
     echo $ii $grd
 
     # first subtract the topography
-    grdmath $grd $topo_org SUB = tmp.${i}.grd
-    grd2xyz tmp.${i}.grd -bo > tmp.${i}.dat
+    gmt grdmath $grd $topo_org SUB = tmp.${i}.grd
+    gmt grd2xyz tmp.${i}.grd -bo > tmp.${i}.dat
 
     # extrapolation
     ./code/extrap.x tmp.${i}.dat tmp2.${i}.dat $dlon $dlat 129 147 30 47 1
-    surface -bi tmp2.${i}.dat -R$region -I$dlon/$dlat -Gtmp2.${i}.grd
+    gmt surface -bi tmp2.${i}.dat -R$region -I$dlon/$dlat -Gtmp2.${i}.grd
 
     # add the (new) topography
-    grdmath tmp2.${i}.grd ${topo_new} ADD ${out_up} MAX = $out
+    gmt grdmath tmp2.${i}.grd ${topo_new} ADD ${out_up} MAX = $out
 
 done
 
@@ -238,10 +247,10 @@ do
     else
       imode=1
     fi
-    grd2xyz $grd -bo > tmp.$i.dat
+    gmt grd2xyz $grd -bo > tmp.$i.dat
     ./code/extrap.x tmp.${i}.dat tmp2.${i}.dat $dlon $dlat 129 147 30 47 $imode
-    surface -bi tmp2.$i.dat -R$region -I$dlon/$dlat -Gtmp.grd
-    grdmath tmp.grd ${out_up} MAX = $out
+    gmt surface -bi tmp2.$i.dat -R$region -I$dlon/$dlat -Gtmp.grd
+    gmt grdmath tmp.grd ${out_up} MAX = $out
 done
 rm -f tmp*dat topo*grd tmp*grd
 
