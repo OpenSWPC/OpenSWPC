@@ -60,3 +60,6 @@ archives/*
 
 # build documents
 doc/site/*
+
+# python
+*.pyc
