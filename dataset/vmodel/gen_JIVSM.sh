@@ -7,21 +7,60 @@
 # are downloaded and stored in the current directly.
 #
 
-### PARAMETERS #########################################################
-region=129/147/30/47
+function usage {
+  cat << EOF
+Usage: gen_JIVSM.sh [OPTION]
+  -h         Display help
+  -d dh      set grid spacing to dh [0.005]
+  -r region  specify region in lon0/lon1/lat0/lat1 (GMT's -R) format [129/147/30/47]
+  -p npara   number of parallel processings [8]
+  -f fc      specify fortran compiler name [gfortran]
+  -c         classic dataset (obsolete, for archiving purpose)
+EOF
+exit
+}
 
-# grid spacing (in degrees)
+# default parameters
 dlon=0.005
 dlat=0.005
+region=129/147/30/47
+NPARA=8 # number of parallel processing
+FC=gfortran # fortran compiler for extrapolation
+CLASSIC_MODE=false
+
+while getopts ":d:r:p:ch" optkey; do
+case "$optkey" in 
+  d)
+    dlon=${OPTARG}
+    dlat=${OPTARG}
+    ;;
+  r)
+    region=${OPTARG}
+    ;;
+  p)
+    NPARA=${OPTARG}
+    ;;
+  c)
+    CLASSIC_MODE=true
+    ;;
+  f) 
+    FC=${OPTARG}
+    ;;
+  h) 
+    usage
+    ;;
+esac
+done
+
+echo "REGION       $region"
+echo "dlon/dlat    $dlon/$dlat"
+echo "NPARA        $NPARA"
+echo "CLASSIC MODE $CLASSIC_MODE"
+echo "FC           $FC"
+
 
 topo=ETOPO1_Bed_g_gmt4.grd
 
-FC=gfortran # fortran compiler for extrapolation
-########################################################################
-
-# JIVSM for shallower structure
-archive_jivsm_e=lp2012nankai-e_str.zip
-archive_jivsm_w=lp2012nankai-w_str.zip
 
 #
 # File download
@@ -31,20 +70,50 @@ archive_jivsm_w=lp2012nankai-w_str.zip
 
 # JIVSM original data
 
-if [ ! -e ${archive_jivsm_e} ]; then
-  curl  -o ${archive_jivsm_e} https://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-e_str.zip
-fi
-if [ ! -e ${archive_jivsm_w} ]; then
-  curl  -o ${archive_jivsm_w} https://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-w_str.zip
-fi
+[ ! -d jivsm_data ] && mkdir jivsm_data
 
+if "${CLASSIC_MODE}"; then 
+  # JIVSM for shallower structure
+  archive_jivsm_e=lp2012nankai-e_str.zip
+  archive_jivsm_w=lp2012nankai-w_str.zip
+
+  if [ ! -e ${archive_jivsm_e} ]; then
+    curl  -o ${archive_jivsm_e} https://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-e_str.zip
+  fi
+  unzip -o ${archive_jivsm_e} &
+  if [ ! -e ${archive_jivsm_w} ]; then
+    curl  -o ${archive_jivsm_w} https://www.jishin.go.jp/main/chousa/12_choshuki/dat/nankai/lp2012nankai-w_str.zip
+  fi
+  unzip -o ${archive_jivsm_w} &
+  wait
+
+  edata=Ejapan_path20111110.dat
+  wdata=Wjapan_path20111110.dat
+  mv -f $edata ./jivsm_data/
+  mv -f $wdata ./jivsm_data/  
+else
+
+  archive_jivsm=JIVSM_V1R.zip
+  if [ ! -e ${archive_jivsm} ]; then
+    curl -o ${archive_jivsm} http://taro.eri.u-tokyo.ac.jp/saigai/models/JIVSM_V1R.zip
+  fi
+  unzip -o ${archive_jivsm}
+  edata=JIVSMeast_V1R.dat
+  wdata=JIVSMwest_V1R.dat
+  mv -f $edata ./jivsm_data/
+  mv -f $wdata ./jivsm_data/
+  rm -f JIVSMproperties.xlsx
+  rm -f comparison_of_versions.docx
+  rm -f Tectono2009.pdf WCEE2008.pdf WCEE2012.pdf sample_JIVSM.f README.txt
+  rm -f JIVSMeast_V1R.prm JIVSMwest_V1R.prm
+fi
 
 # Topography & bathymetry data for extrapotation
 
 if [ ! -e ${topo} ]; then
   curl -o ETOPO1_Bed_g_gmt4.grd.gz  https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO1/data/bedrock/grid_registered/netcdf/ETOPO1_Bed_g_gmt4.grd.gz
+  gunzip ETOPO1_Bed_g_gmt4.grd.gz
 fi
-gunzip ETOPO1_Bed_g_gmt4.grd.gz
 
 
 #
@@ -75,17 +144,12 @@ echo "1  1.7 0.35 1.80 119  70
 22 6.5 3.5  2.80 510 300
 23 8.1 4.6  3.40 850 500" > jivsm_layer.dat
 
-[ ! -d jivsm_data ] && mkdir jivsm_data
-
 #
 # split original data file
 #
-unzip -o ${archive_jivsm_e} &
-unzip -o ${archive_jivsm_w} &
-wait
-mv -f Ejapan_path20111110.dat ./jivsm_data
-mv -f Wjapan_path20111110.dat ./jivsm_data
 
+
+(( p = 0 ))
 for (( i=1; i<=23; i++ ));do
 
     ii=`echo $i | awk '{printf("%.2d",$1)}'`
@@ -93,10 +157,14 @@ for (( i=1; i<=23; i++ ));do
 
     echo "Extract JIVSM layer $ii"
     awk '{printf("%.5f %.5f %12.5f\n",$1,$2,-$'$ic')}' \
-        jivsm_data/Wjapan_path20111110.dat > jivsm_data/sw.$ii.dat &
+        jivsm_data/$wdata > jivsm_data/sw.$ii.dat &
     awk '{printf("%.5f %.5f %12.5f\n",$1,$2,-$'$ic')}' \
-        jivsm_data/Ejapan_path20111110.dat > jivsm_data/ne.$ii.dat &
-    wait
+        jivsm_data/$edata> jivsm_data/ne.$ii.dat &
+    (( p += 2 )) 
+    if (( p == NPARA )); then
+      (( p = 0 ))
+      wait
+    fi
 done
 
 wait
@@ -112,10 +180,16 @@ lyr_name=( "DUMMY"    "GSURFACE" "BASEMENT" "BASEMENT" "BASEMENT" \
            "UPCRUST2" "LOWCRUST" "C-MANTLE" "PHS-LYR2" "PHS-LYR3" \
            "PHS-MNTL" "PAC-LYR2" "PAC-LYR3" "PAC-MNTL" )
 
-[ ! -d jivsm ] && mkdir jivsm
+if "${CLASSIC_MODE}"; then 
+  dir_jivsm=jivsm-o
+else
+  dir_jivsm=jivsm
+fi
+[ ! -d ${dir_jivsm} ] && mkdir ${dir_jivsm}
 
 rm -f jivsm.lst
 
+(( p = 0 ))
 for (( i=1; i<=23; i++ )); do
 
     ii=`echo $i | awk '{printf("%.2d",$1)}'`
@@ -130,9 +204,16 @@ for (( i=1; i<=23; i++ )); do
     grdfile=JIVSM_${ii}_${lyr_name[$i]}_${ro}_${vp}_${vs}_${qp}_${qs}_.grd
 
     cat jivsm_data/sw.$ii.dat jivsm_data/ne.$ii.dat | \
-        gmt nearneighbor -R${region} -S2k -I${dlon}/${dlat} -Gjivsm/${grdfile}
+        gmt nearneighbor -R${region} -S2k -I${dlon}/${dlat} -G${dir_jivsm}/${grdfile} &
+    (( p += 1 ))
+
+    if (( p == NPARA )); then 
+      (( p = 0 ))
+      wait
+    fi
 
 done
+wait
 rm -rif jivsm_data
 
 #
@@ -175,19 +256,16 @@ rm -f jivsm_layer.dat
 #
 
 
-#
-# need jivsm grd data
-#
-if [ ! -e jivsm ]; then
-  echo "Generate jivsm first"
-  exit
+if "${CLASSIC_MODE}"; then 
+  dir_ejivsm=ejivsm-o
+else
+  dir_ejivsm=ejivsm
 fi
-
-[ ! -e ejivsm ] && mkdir ejivsm
+[ ! -e ${dir_ejivsm} ] && mkdir ${dir_ejivsm}
 
 gmt grdcut -R$region $topo -Gtopo.japan.grd
-topo_org=`/bin/ls jivsm/*_01_*.grd`
-topo_new=ejivsm/e`basename $topo_org`
+topo_org=`/bin/ls ${dir_jivsm}/*_01_*.grd`
+topo_new=${dir_ejivsm}/e`basename $topo_org`
 echo "TOPO     = $topo_org"
 echo "TOPO_NEW = $topo_new"
 
@@ -207,12 +285,12 @@ for (( i=2; i<=13; i++ ));
 do
     ii=`echo $i | awk '{printf("%.2d",$1)}'`
 
-    grd=`/bin/ls jivsm/*_${ii}_*.grd`
-    out=ejivsm/e`basename $grd`
+    grd=`/bin/ls ${dir_jivsm}/*_${ii}_*.grd`
+    out=${dir_ejivsm}/e`basename $grd`
 
     jj=`echo $i | awk '{printf("%.2d",$1-1)}'`
-    grd_up=`/bin/ls jivsm/*_${jj}_*.grd`
-    out_up=ejivsm/e`basename $grd_up`
+    grd_up=`/bin/ls ${dir_jivsm}/*_${jj}_*.grd`
+    out_up=${dir_ejivsm}/e`basename $grd_up`
 
     echo $ii $grd
 
@@ -227,19 +305,18 @@ do
     # add the (new) topography
     gmt grdmath tmp2.${i}.grd ${topo_new} ADD ${out_up} MAX = $out
 
-done
 
+done
 
 for (( i=14; i<=23; i++ ));
 do
     ii=`echo $i | awk '{printf("%.2d",$1)}'`
-    echo "II =  $ii"
-    grd=`/bin/ls jivsm/*_${ii}_*.grd`
+    grd=`/bin/ls ${dir_jivsm}/*_${ii}_*.grd`
     echo "GRD = $grd"
-    out=ejivsm/e`basename $grd`
+    out=${dir_ejivsm}/e`basename $grd`
     jj=`echo $i | awk '{printf("%.2d",$1-1)}'`
-    grd_up=`/bin/ls jivsm/*_${jj}_*.grd`
-    out_up=ejivsm/e`basename $grd_up`
+    grd_up=`/bin/ls ${dir_jivsm}/*_${jj}_*.grd`
+    out_up=${dir_ejivsm}/e`basename $grd_up`
 
     # simple extrapolation in deeper structure
     if (( i>=18 && i<=20 )); then
@@ -251,6 +328,7 @@ do
     ./code/extrap.x tmp.${i}.dat tmp2.${i}.dat $dlon $dlat 129 147 30 47 $imode
     gmt surface -bi tmp2.$i.dat -R$region -I$dlon/$dlat -Gtmp.grd
     gmt grdmath tmp.grd ${out_up} MAX = $out
+
 done
 rm -f tmp*dat topo*grd tmp*grd
 
@@ -258,7 +336,7 @@ rm -f tmp*dat topo*grd tmp*grd
 
 # velocity list file
 rm -f ejivsm.lst
-for f in ejivsm/*.grd
+for f in ${dir_ejivsm}/*.grd
 do
     g=` basename $f `
     ii=` echo $f | awk -F_ '{print $2}' `

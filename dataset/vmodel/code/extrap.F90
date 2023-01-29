@@ -37,7 +37,7 @@ program extrap
 
   n_ns = floor( ( lat_end - lat_beg ) / dlat + 0.5 ) + 1
   n_ew = floor( ( lon_end - lon_beg ) / dlon + 0.5 ) + 1
-  write(STDERR,*) n_ns, n_ew
+!  write(STDERR,*) n_ns, n_ew
   allocate(lon(n_ns,n_ew), lat(n_ns,n_ew), dep(n_ns,n_ew), dep2(n_ns,n_ew))
   allocate(isdat(n_ns,n_ew))
   open(10,file=fn_in,access='stream')
@@ -56,20 +56,20 @@ program extrap
         end if
      end do
   end do
-  write(STDERR,*) dep(N_NS/2, N_EW/2 )
-  write(STDERR,*) maxval(dep), minval(dep)
+!  write(STDERR,*) dep(N_NS/2, N_EW/2 )
+!  write(STDERR,*) maxval(dep), minval(dep)
   close(10)
 
   !! detection of edges of NaN-region A
   isdat(:,:) = .true.
   do i=1, N_EW
-     if( abs( dep(N_NS-1,i) - NOT_A_NUMBER ) > epsilon(1.0) ) then
+     if( abs( dep(N_NS-10,i) - NOT_A_NUMBER ) > epsilon(1.0) ) then
         exit
      end if
      A_E = i
   end do
   do i=N_NS,1,-1
-     if( abs( dep(i,2) - NOT_A_NUMBER ) > epsilon(1.0) ) then
+     if( abs( dep(i,10) - NOT_A_NUMBER ) > epsilon(1.0) ) then
         exit
      end if
      A_S = i
@@ -81,13 +81,13 @@ program extrap
   write(STDERR,*) A_S, A_N, A_E, A_W
   !! same for NaN-region B
   do i=N_EW, 1, -1
-     if( abs( dep(2,i) -  NOT_A_NUMBER ) > epsilon(1.0) ) then
+     if( abs( dep(10,i) -  NOT_A_NUMBER ) > epsilon(1.0) ) then
         exit
      end if
      B_W = i
   end do
   do i=1, N_NS, 1
-     if( abs( dep(i,N_EW-1) - NOT_A_NUMBER ) > epsilon(1.0) ) then
+     if( abs( dep(i,N_EW-10) - NOT_A_NUMBER ) > epsilon(1.0) ) then
         exit
      end if
      B_N = i
