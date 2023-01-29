@@ -20,7 +20,7 @@ def prm_new():
         'title'           : 'swpc', 
         'odir'            : './out', 
         'ntdec_r'         : 50, 
-        'strict_mode'     : True,
+        'strict_mode'     : False,
         'nproc_x'         : 2,
         'nproc_y'         : 2,
         'nx'              : 384,
@@ -44,20 +44,20 @@ def prm_new():
         'fq_ref'          : 1.0,  
         'snp_format'      : 'netcdf',
         'xy_ps%sw'        : False,
-        'xz_ps%sw'        : False,
+        'xz_ps%sw'        : True,
         'yz_ps%sw'        : False,
         'fs_ps%sw'        : False,
-        'ob_ps%sw'        : False,
+        'ob_ps%sw'        : True,
         'xy_v%sw'         : False,
-        'xz_v%sw'         : False,
+        'xz_v%sw'         : True,
         'yz_v%sw'         : False,
         'fs_v%sw'         : False,
-        'ob_v%sw'         : False,
+        'ob_v%sw'         : True,
         'xy_u%sw'         : False,
-        'xz_u%sw'         : False,
+        'xz_u%sw'         : True,
         'yz_u%sw'         : False,
         'fs_u%sw'         : False,
-        'ob_u%sw'         : False,
+        'ob_u%sw'         : True,
         'z0_xy'           :  7.0,
         'x0_yz'           :  0.0,
         'y0_xz'           :  0.0,
@@ -65,7 +65,7 @@ def prm_new():
         'idec'            : 2,
         'jdec'            : 2,
         'kdec'            : 2,
-        'sw_wav_v'        : False,
+        'sw_wav_v'        : True,
         'sw_wav_u'        : False,
         'sw_wav_stress'   : False,
         'sw_wav_strain'   : False,
@@ -162,7 +162,7 @@ def prm_read(fn):
             if k in p:
                 t = type(p[k])
                 if isinstance(p[k], bool):
-                    if v == '.true.' or '.True.' or '.TRUE.':
+                    if v == '.true.' or v == '.True.' or v == '.TRUE.':
                         p[k] = True
                     else:
                         p[k] = False                        
