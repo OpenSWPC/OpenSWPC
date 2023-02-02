@@ -65,10 +65,7 @@ nav:
   - Hints:
     - 4._Hints/0401_modelset.en.md
     - 4._Hints/0402_modification.en.md
-  - Misc:
-    - Misc/New_Feature.en.md
-    - Misc/Revision_History.en.md
-    - Misc/License.en.md
+  - License.en.md
 
 extra_css:
   - "https://fonts.googleapis.com/earlyaccess/notosansjp.css"
@@ -92,7 +89,6 @@ plugins:
           Parameters: パラメタ設定
           Tools: 関連ツール
           Hints: 計算のヒント
-          Misc: その他
 extra:
   font:
 #    text: 'Noto Sans JP'
