@@ -2578,11 +2578,11 @@ contains
   !! --
   subroutine output__station_query( stnm1, is_exist, ist1, jst1, kst1, xst1, yst1, zst1, stlo1, stla1 )
 
-    character(*), intent(in)  :: stnm1
-    logical,      intent(out) :: is_exist
-    integer,      intent(out) :: ist1, jst1, kst1 !< station location indices
-    real(SP),     intent(out) :: xst1, yst1, zst1 !< station location coordinate
-    real(SP),     intent(out) :: stlo1, stla1
+    character(*), intent(in)    :: stnm1
+    logical,      intent(out)   :: is_exist
+    integer,      intent(out)   :: ist1, jst1, kst1 !< station location indices
+    real(SP),     intent(out)   :: xst1, yst1, zst1 !< station location coordinate
+    real(SP),     intent(inout) :: stlo1, stla1
     !! --
     integer :: i
 
