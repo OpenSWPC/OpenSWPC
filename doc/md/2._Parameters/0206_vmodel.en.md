@@ -55,7 +55,9 @@ program can be overlaid onto the model.
             - `dir_grd`: Directory of the velocity structure (`NetCDF`) files.
 
             - `fn_grdslt`: List file that specifies the grd files and the associated
-            medium. Each line contains the grd filename (with a single
+            medium. Each grd file specifies the depth of the top surface of the structural boundary. 
+            The unit of depth is "m".　
+            Each line contains the grd filename (with a single
             or double quotation mark; recommended), density, P-wave
             velocity, S-wave velocity, $Q_P$, $Q_S$, and the layer
             number integers (0-9) separated by spaces (see following

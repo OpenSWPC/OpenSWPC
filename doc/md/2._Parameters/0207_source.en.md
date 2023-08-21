@@ -250,6 +250,8 @@ for `phi=0`). A rake angle of `pw_rake=0`${}^\circ$ or
 `pw_rake=180`${}^\circ$ will result in pure SH waves whose polarization
 is parallel to the free surface.
 
+[^Aki2002]: Aki, K., and P. G. Richards (2002), _Quantitative Seismology: Theory and Methods_, 2nd eidtion ed., University Science Books.
+
 The initial plane wave occupies a depth range of `pw_zlen` (km) starting
 at depths of $z=$`pw_ztop` at the center of the horizontal coordinate.
 The depth dependence of the wave amplitude is determined by the source

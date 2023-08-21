@@ -45,12 +45,12 @@ endif
 ##
 
 ifeq ($(arch),mac-gfortran)
-
+  LOCAL  = /usr/local
   FC      = mpif90
   FFLAGS  = -O2 -ffast-math -D_INFO -I../include -fopenmp
   NCFLAG  = -D_NETCDF
-  NCLIB   = -L/usr/local/lib
-  NCINC   = -I/usr/local/include
+  NCLIB   = -L$(LOCAL)/lib
+  NCINC   = -I$(LOCAL)/include
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
 
   ifeq ($(debug),true)
@@ -86,7 +86,7 @@ endif
 
 
 ##
-## Fujitsu FX10, FX100 (maybe obsolete)
+## Fujitsu FX10, FX100 (obsolete)
 ##
 ifeq ($(arch),fx)
   FC      = mpifrtpx
@@ -99,7 +99,7 @@ endif
 
 
 ##
-## Earth Simulator 3 (Use fortran 90 compiler for better speed) ((obsolete))
+## Earth Simulator 3 (Use fortran 90 compiler for better speed) (obsolete)
 ##
 ifeq ($(arch),es3)
   FC      = sxmpif90
@@ -135,7 +135,7 @@ endif
 ## Ubuntu with Gfortran
 ##
 ifeq ($(arch),ubuntu-gfortran)
-
+  
   FC      = mpif90
   FFLAGS  = -O2 -ffast-math -D_INFO -I../include -fopenmp
   NCFLAG  = -D_NETCDF

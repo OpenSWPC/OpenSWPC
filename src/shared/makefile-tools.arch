@@ -46,12 +46,12 @@ endif
 ## Mac OSX gfortran and netcdf provided by homebrew
 ##
 ifeq ($(arch),mac-gfortran)
-
+  LOCAL   = /usr/local
   FC      = gfortran
   FFLAGS  = -O2 -ffast-math -D_INFO -I../include
   NCFLAG  = -D_NETCDF
-  NCLIB   = -L/usr/local/lib
-  NCINC   = -I/usr/local/include
+  NCLIB   = -L$(LOCAL)/lib
+  NCINC   = -I$(LOCAL)/include
   NETCDF  = -lnetcdf -lnetcdff
 
   ifeq ($(debug),true)
