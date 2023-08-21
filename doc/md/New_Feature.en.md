@@ -22,17 +22,17 @@ Let $N$ be the number of grid, and $P$ the number of MPI partitions. If $N$ is d
 
 #### Example
 
-![](../fig/5.3.0_partition.png)
+![](./fig/5.3.0_partition.png)
 
 
 ### Python integration
 
-An example of processing OpenSWPC input/output in Python is included in [this manual](../3._Tools/0305_python.en.md).
+An example of processing OpenSWPC input/output in Python is included in [this manual](./3._Tools/0305_python.en.md).
 
 ### Updated documentation
 #### Try OpenSWPC on cloud!
 
-See [this example](../1._SetUp/0100_trial.en.md). This is also would be a nice guide to compile the OpenSWPC in Ubuntu Linux. 
+See [this example](./1._SetUp/0100_trial.en.md). This is also would be a nice guide to compile the OpenSWPC in Ubuntu Linux. 
 
 #### Better switching between EN/JP documentation
 
@@ -40,13 +40,13 @@ See [this example](../1._SetUp/0100_trial.en.md). This is also would be a nice g
 
 - Untranslated documents (for example, this page) are displayed in English even in Japanese mode. 
 
-![](../fig/demo-en-jp-switch.gif)
+![](./fig/demo-en-jp-switch.gif)
 
 
 ### Others
 
 - Tune-up in some supercomputers
-- Updated version of Japanese community model [JIVSM](../1._SetUp/0104_dataset.en.md)
+- Updated version of Japanese community model [JIVSM](./1._SetUp/0104_dataset.md).
 
 
 ## Previous Revision Histories
