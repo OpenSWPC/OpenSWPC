@@ -3011,6 +3011,8 @@ contains
     integer :: vid
     !! --
 
+    call pwatch__on('output__closefiles')
+
     if( snp_format == 'native' ) then
       if( yz_ps%sw .and. myid == yz_ps%ionode ) close( yz_ps%io )
       if( xz_ps%sw .and. myid == xz_ps%ionode ) close( xz_ps%io )
@@ -3070,6 +3072,7 @@ contains
       
     end if
 
+    call pwatch__off('output__closefiles')
 
   end subroutine output__closefiles
   !! --------------------------------------------------------------------------------------------------------------------------- !!

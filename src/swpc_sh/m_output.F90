@@ -1364,6 +1364,8 @@ contains
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine output__closefiles
 
+    call pwatch__on('output__closefiles')
+
     if( snp_format == 'native' ) then
       if( xz_v%sw .and. myid == xz_v%ionode ) close( xz_v%io )
       if( xz_u%sw .and. myid == xz_u%ionode ) close( xz_u%io )
@@ -1387,6 +1389,8 @@ contains
       end if
 #endif
     end if
+
+    call pwatch__off('output__closefiles')
 
   end subroutine output__closefiles
 
