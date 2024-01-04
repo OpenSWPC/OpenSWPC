@@ -96,8 +96,8 @@ contains
         aimg(3*(i-1)+2,height-j+1) = transfer(img(2,i,j),'a')
         aimg(3*i      ,height-j+1) = transfer(img(1,i,j),'a')
       end do
+      aimg(3*width+1:imgwid,height-j+1) = transfer(0,'a')
     end do
-    aimg(3*width+1:imgwid,height-j+1) = transfer(0,'a')
     write(io) aimg
 
     close(io)
