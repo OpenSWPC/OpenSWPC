@@ -30,12 +30,12 @@ makefileでは以下の変数を指定する必要がある．
 | mac-intel        | Mac OSX + Intel Compiler + OpenMPI     | `${HOME}/local`         |
 | mac-gfortran     | Mac OSX + gfortran + Open MPI          | `/usr/local`            |
 | eic              | EIC2015環境下のIntel Compiler          | `${HOME}/local`         |
-| fx               | 富士通FX10, FX100 および京コンピュータ | `${HOME}/xlocal`        |
-| es3              | 地球シミュレータ                       | システム提供            |
+| fx  (obsolete) | 富士通FX10, FX100 および京コンピュータ | `${HOME}/xlocal`        |
+| es3 (obsolete)             | 地球シミュレータ                       | システム提供            |
 | ubuntu-gfortran  | Ubuntu 16.04LTS + gfortran + Open MPI  | `apt`によるインストール |
-| ofp (or oak)  | 東京大学情報基盤センター Oakforest-PACS | `module` コマンドを通じて自動指定 |
-| obcx  | 東京大学情報基盤センター Oakbridge-CX | `module` コマンドを通じて自動指定 |
-| bdec-o | 東京大学情報基盤センター Wisteria/BDEC-01 (Odyssey) | `module` コマンドを通じて自動指定 |
+| ofp (or oak)  (obsolete)| 東京大学情報基盤センター Oakforest-PACS | `module` コマンドを通じて自動指定 |
+| obcx (obsolete) | 東京大学情報基盤センター Oakbridge-CX | `module` コマンドを通じて自動指定 |
+| bdec-o |  東京大学情報基盤センター Wisteria-Odyssey/BDEC01 |  `module` コマンドを通じて自動指定 |
 | mac-m1  | macOS + gfortran (Apple Silicon M1/M2 + Homebrew) | `/opt/homebrew/` |
 
 

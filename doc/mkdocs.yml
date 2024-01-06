@@ -35,13 +35,15 @@ theme:
 
 nav:
   - index.en.md
-  - Set up:
-    - 1._SetUp/0101_env.en.md
+  - New_Feature.md
+  - How to build:
+    - 1._SetUp/0100_trial.en.md
+    - 1._SetUp/0101_env.en.md    
     - 1._SetUp/0102_tree.en.md
     - 1._SetUp/0103_compile.en.md
     - 1._SetUp/0104_dataset.en.md
     - 1._SetUp/0105_parallel.en.md
-  - Parameters:
+  - Parameter settings:
     - 2._Parameters/0201_description.en.md
     - 2._Parameters/0202_env.en.md
     - 2._Parameters/0203_coord.en.md
@@ -58,14 +60,12 @@ nav:
     - 3._Tools/0302_vmodel.en.md
     - 3._Tools/0303_parameter.en.md
     - 3._Tools/0304_rmedia.en.md
-    - 3._Tools/0305_misc.en.md
+    - 3._Tools/0305_python.en.md
+    - 3._Tools/0306_misc.en.md
   - Hints:
     - 4._Hints/0401_modelset.en.md
     - 4._Hints/0402_modification.en.md
-  - Misc:
-    - Misc/New_Feature.en.md
-    - Misc/Revision_History.en.md
-    - Misc/License.en.md
+  - License.en.md
 
 extra_css:
   - "https://fonts.googleapis.com/earlyaccess/notosansjp.css"
@@ -85,11 +85,10 @@ plugins:
         ja: Japanese
       nav_translations:
         ja:
-          Set up: 準備
+          How to build: ビルドから実行まで
           Parameters: パラメタ設定
           Tools: 関連ツール
           Hints: 計算のヒント
-          Misc: その他
 extra:
   font:
 #    text: 'Noto Sans JP'

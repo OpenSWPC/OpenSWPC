@@ -1,10 +1,10 @@
-# License
+# ライセンス
 
-This software is provided under the [MIT License](https://osdn.net/projects/opensource/wiki/licenses%2FMIT_license)．
+本ソフトウェアは [MIT License](https://osdn.net/projects/opensource/wiki/licenses%2FMIT_license) のもと提供されます．
 
 ---
 
-Copyright &copy; 2013-2021 Takuto Maeda
+Copyright &copy; 2013-2023 Takuto Maeda
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
@@ -16,7 +16,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ---
 
-The author requests that the user cite (at least one of) the following papers in any publications that result from the use of this software, although this is not an obligation.
+加えて，このソフトウェアを利用した成果を公表する場合には，以下の一連の関連論文の中から適切なものを引用していただくようお願いいたします（ただし，これはライセンス上の義務ではありません）．
 
 ## Accompanying Paper
 
@@ -26,8 +26,6 @@ The author requests that the user cite (at least one of) the following papers in
     Planets Space*, *69*, 102, doi:10.1186/s40623-017-0687-2.
 
 ## Related Papers 
-
-
 
 - Furumura, T. and L. Chen (2004), Large scale parallel simulation and visualization of 3D seismic wavefield using the Earth Simulator, _Comp. Model. Eng. Sci._, _6_, 153-168. doi:[10.3970/cmes.2004.006.153](https://doi.org/10.3970/cmes.2004.006.153)
 

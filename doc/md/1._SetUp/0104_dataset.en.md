@@ -8,18 +8,14 @@ As an example of the velocity structure beneath the Japanese
 Archipelago, an automatic model generation script for the Japan
 Integrated Velocity Structure Model (JIVSM), developed and originally
 distributed by the Headquarters for Earthquake Research Promotion in
-Japan, is included. An extension of JIVSM (eJIVSM), which covers a wider area, is also provided. These velocity structure models contain the ground surface (topography and bathymetry), subsurface soil, Moho, and oceanic crust of the two subducting plates. To generate these models, the Generic Mapping Tools (GMT) is required. If the user does not use this model, thefollowing processing steps may not be necessary.
+Japan, is included. An extension of JIVSM (eJIVSM), which covers a wider area, is also provided. These velocity structure models contain the ground surface (topography and bathymetry), subsurface soil, Moho, and oceanic crust of the two subducting plates. To generate these models, the Generic Mapping Tools (GMT) is required. If the user does not use this model, the following steps may not be necessary.
 
 !!! Note "Model area and vertical cross sections of JIVSM/eJIVSM"
     ![](../fig/jivsm_ext_section.png)
     Area of JIVSM and eJIVSM. The colored area in the map is where the original JIVSM is defined. eJIVSM is extended to the gray-shaded area via an extrapolation. The surrounding graphs show the depth sections along the lines on the map of the model.
 
 
-First, download the original model files `lp2012nankai-e_str.zip` and `lp2012nankai-w_str.zip` and store them in `dataset/vmodel`. The URLs of these files can be found in the comments of the `gen_JIVSM.sh` script. To generate eJIVSM, the ETOPO1 (`ETOPO1_Bed_g_gmt4.grd`) topography data are also necessary. 
-
-Then, specify the Fortran compiler name to `FC` variables in the `params.sh` parameter file. The grid spacing (`dlon`, `dlat`) in the parameter file can be modified if necessary. Note that this spacing is not directly related to the grid width of the numerical simulations. At the time of the simulation, the `OpenSWPC` program automatically interpolates the velocity model data. 
-
-After these steps, execute the generation script: 
+To build this model, first go to  `dataset/vmodel` directory, and then execute the following shell script:
 ```bash
 $ ./gen_JIVSM.sh
 ```
