@@ -35,6 +35,8 @@ makefileでは以下の変数を指定する必要がある．
 | ubuntu-gfortran  | Ubuntu 16.04LTS + gfortran + Open MPI  | `apt`によるインストール |
 | ofp (or oak)  | 東京大学情報基盤センター Oakforest-PACS | `module` コマンドを通じて自動指定 |
 | obcx  | 東京大学情報基盤センター Oakbridge-CX | `module` コマンドを通じて自動指定 |
+| bdec-o | 東京大学情報基盤センター Wisteria/BDEC-01 (Odyssey) | `module` コマンドを通じて自動指定 |
+| mac-m1  | macOS + gfortran (Apple Silicon M1/M2 + Homebrew) | `/opt/homebrew/` |
 
 
 たとえば`mac-gfortran`に相当する環境では，

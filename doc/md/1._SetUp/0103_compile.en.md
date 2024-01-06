@@ -54,6 +54,8 @@ The list of pre-defined architecture (`arch`) options is described in the follow
 |  ubuntu-gfortran   | Ubuntu 16.04LTS + gfortran + Open MPI  |  Installation by `apt` |
 | ofp (or oak) | Oakforest-PACS of the University of Tokyo | automatically specified by the `module` command |
 | obcx | Oakbridge-CX of the University of Tokyo | automatically specified by the `module` command |
+| bdec-o |Wisteria/BDEC-01 (Odyssey)  of the University of Tokyo  | automatically specified by the `module` command |
+| mac-m1  | macOS + gfortran (Apple Silicon (M1/M2) + Homebrew) | `/opt/homebrew/` |
 
 
 ## More about the `NetCDF` library
