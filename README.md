@@ -14,7 +14,7 @@ environment in 3D and 2D (P-SV or SH) media.
 This package also provides a set of tools for visualizing/converting simulation
 output.
 
-The online documentation: https://tktmyd.github.io/OpenSWPC
+The online documentation: https://OpenSWPC.github.io/
 
 ## License
 
@@ -24,10 +24,9 @@ The author request that the user cite (at least one of) the following accompanyi
 
 ## Download
 The newest release and archived versions:
-https://github.com/takuto-maeda/OpenSWPC/releases
+https://github.com/OpenSWPC/OpenSWPC/releases
 
-The development snapshot: https://github.com/takuto-maeda/OpenSWPC/archive/develop.zip
-
+To try the development snapshot: https://github.com/OpenSWPC/OpenSWPC/archive/refs/heads/develop.zip
 
 ## Accompanying Paper
 
