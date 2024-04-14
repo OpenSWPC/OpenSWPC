@@ -59,10 +59,10 @@ contains
     !! ----
 
     call readini( io_prm, 'ntdec_r', ntdec_r, 10 )
-    call version__get(ver)
 
     if( myid == terminal_output_node ) then
 
+      call version__get(ver)
       codename = "  SWPC_3D version " // trim(ver)
       if( benchmark_mode ) then
         codename = trim(codename) // ' (benchmark mode) '
