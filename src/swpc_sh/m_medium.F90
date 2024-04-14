@@ -3,7 +3,7 @@
 !! Set-up medium velocity/attenuation structure
 !!
 !! @copyright
-!!   Copyright 2013-2023 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -272,17 +272,18 @@ contains
 
         end do
       end do
+
       !!
       !! define 2nd-order derivative area #2013-00419
+      !! -> udpated to stable version: 2023-08-06
       !!
-
       do i=ibeg, iend
 
-        kfs_top(i) = min( kfs(i)-1, minval( kfs(i-1:i+2)+1) )
-        kfs_bot(i) = max( kfs(i)+1, maxval( kfs(i-1:i+2)  ) )
-
-        kob_top(i) = min( kob(i)-1, minval( kob(i-1:i+2)+1) )
-        kob_bot(i) = max( kob(i)+1, maxval( kob(i-1:i+2)  ) )
+        kfs_top(i) = max(minval(kfs(i-2:i+3)) - 2, kbeg)
+        kfs_top(i) = min(maxval(kfs(i-2:i+3)) + 2, kend)
+        
+        kob_top(i) = max(minval(kob(i-2:i+3)) - 2, kbeg)
+        kob_bot(i) = min(maxval(kob(i-2:i+3)) + 2, kend)
 
       end do
 

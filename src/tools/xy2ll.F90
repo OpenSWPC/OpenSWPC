@@ -11,7 +11,7 @@
 !!   Calculated longitude and latitude (in degrees) will be printed in STDOUT
 !!
 !! @copyright
-!!   Copyright 2013-2023 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 #include "m_debug.h"
@@ -20,12 +20,19 @@ program xy2ll
   use m_std
   use m_geomap
   use m_system
+  use m_getopt
+  use m_version
   use m_debug
   implicit none
   !! --
   real(SP) :: lat0, lon0, lat, lon, x, y, phi
   integer(SP) :: narg
+  logical :: is_opt1, is_opt2
   !! ----
+
+  call getopt('v', is_opt1)
+  call getopt('-version', is_opt2)
+  if( is_opt1 .or. is_opt2 ) call version__display('xy2ll')
 
   narg = system__iargc()
   if( narg /= 4 .and. narg /= 5 ) call usage_abort

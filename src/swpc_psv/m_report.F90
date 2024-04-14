@@ -3,7 +3,7 @@
 !! terminal/logfile report
 !!
 !! @copyright
-!!   Copyright 2013-2023 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -16,6 +16,7 @@ module m_report
   use m_pwatch
   use m_kernel
   use m_readini
+  use m_version
 
   !! -- Declarations
   implicit none
@@ -52,30 +53,26 @@ contains
     !! --
     integer :: crate
     real(SP) :: mem_all, mem_node, r, c
+    character(256) :: codename, ver
     !! ----
 
     call readini( io_prm, 'ntdec_r', ntdec_r, 10 )
 
 
     if( myid == terminal_output_node ) then
-
-      if( myid == terminal_output_node ) then
-
-        write(STDERR,*)
-        write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-        if( benchmark_mode ) then
-          write(STDERR,'(A)') "  SWPC_PSV (benchmark mode)                                                   "
-        else if ( pw_mode ) then
-          write(STDERR,'(A)') "  SWPC_PSV (plane wave mode)                                                  "
-        else if ( bf_mode ) then
-          write(STDERR,'(A)') "  SWPC_PSV (body force mode)                                                  "
-        else
-          write(STDERR,'(A)') "  SWPC_PSV                                                                    "
+        
+        call version__get(ver)
+        codename ="  SWPC_PSV version " // trim(ver)
+        if( benchmark_mode ) then; codename = trim(codename) // ' (benchmark mode)   '
+        else if ( pw_mode )  then; codename = trim(codename) // ' (plane wave mode)  '
+        else if ( bf_mode )  then; codename = trim(codename) // ' (body force mode)  '
         end if
-        write(STDERR,'(A)') " ------------------------------------------------------------------------------"
 
-      end if
-      write(STDERR,'(A)')
+        write(STDERR,'(A)')
+        write(STDERR,'(A)') " ------------------------------------------------------------------------------"
+        write(STDERR,'(A)') trim(codename)
+        write(STDERR,'(A)') " ------------------------------------------------------------------------------"
+        write(STDERR,'(A)')
 
     end if
 

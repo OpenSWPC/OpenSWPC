@@ -37,6 +37,7 @@ program SWPC_3D
   use m_ckprst
   use m_green
   use m_readini
+  use m_version
   use mpi
 
   !! -- Declarations
@@ -52,6 +53,12 @@ program SWPC_3D
   integer :: it0
   logical :: strict_mode
   !! ----
+
+  !!
+  !! Version 
+  !!
+  call getopt('v', is_opt);        if( is_opt ) call version__display('swpc_3d')
+  call getopt('-version', is_opt); if( is_opt ) call version__display('swpc_3d')
 
   !!
   !! Launch MPI process

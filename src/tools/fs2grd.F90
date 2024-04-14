@@ -7,7 +7,7 @@
 !! fs2grd.x -i swpc-snapshot.nc -R lon0/lon1/lat0/lat1 -dlon delta_lon -dlat delta_lat -v varname
 !!
 !! @copyright
-!! Copyright 2020-2023 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!! Copyright 2020-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 program fs2grd
@@ -17,6 +17,7 @@ program fs2grd
   use m_bicubic
   use m_fdsnap
   use m_geomap
+  use m_version
   use netcdf
   implicit none
 
@@ -34,6 +35,11 @@ program fs2grd
   integer :: var_id
   real :: dlon, dlat
   logical :: is_time_dependent_variable
+  logical :: is_opt1, is_opt2
+  
+  call getopt('v', is_opt1)
+  call getopt('-version', is_opt2)
+  if( is_opt1 .or. is_opt2 ) call version__display('fs2grd')
 
   call option_processings(nlon, nlat, dlon, dlat, lon_g, lat_g, fn_in, varname)
 

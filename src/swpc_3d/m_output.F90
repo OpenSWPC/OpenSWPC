@@ -3,7 +3,7 @@
 !! Snapshot/waveform output
 !!
 !! @copyright
-!!   Copyright 2013-2023 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -2578,11 +2578,11 @@ contains
   !! --
   subroutine output__station_query( stnm1, is_exist, ist1, jst1, kst1, xst1, yst1, zst1, stlo1, stla1 )
 
-    character(*), intent(in)  :: stnm1
-    logical,      intent(out) :: is_exist
-    integer,      intent(out) :: ist1, jst1, kst1 !< station location indices
-    real(SP),     intent(out) :: xst1, yst1, zst1 !< station location coordinate
-    real(SP),     intent(out) :: stlo1, stla1
+    character(*), intent(in)    :: stnm1
+    logical,      intent(out)   :: is_exist
+    integer,      intent(out)   :: ist1, jst1, kst1 !< station location indices
+    real(SP),     intent(out)   :: xst1, yst1, zst1 !< station location coordinate
+    real(SP),     intent(inout) :: stlo1, stla1
     !! --
     integer :: i
 
@@ -3011,6 +3011,8 @@ contains
     integer :: vid
     !! --
 
+    call pwatch__on('output__closefiles')
+
     if( snp_format == 'native' ) then
       if( yz_ps%sw .and. myid == yz_ps%ionode ) close( yz_ps%io )
       if( xz_ps%sw .and. myid == xz_ps%ionode ) close( xz_ps%io )
@@ -3070,6 +3072,7 @@ contains
       
     end if
 
+    call pwatch__off('output__closefiles')
 
   end subroutine output__closefiles
   !! --------------------------------------------------------------------------------------------------------------------------- !!

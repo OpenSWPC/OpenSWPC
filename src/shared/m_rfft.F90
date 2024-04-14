@@ -3,7 +3,7 @@
 !! Frequency-decimate, out-of-place recursive FFT
 !!
 !! @copyright
-!!   Copyright 2013-2023 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 module m_rfft

@@ -3,10 +3,13 @@
 !! FDM model parameter condition check
 !!
 !! @copyright
-!!   Copyright 2013-2023 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! -----
 program fdmcond
+
+  use m_version
+  use m_getopt
 
   implicit none
   real :: ef
@@ -16,7 +19,12 @@ program fdmcond
   integer :: inq
   real :: dt, vmin, vmax, tr, fmax
   real, allocatable :: dh(:)
+  logical :: is_opt1, is_opt2
 
+  call getopt('v', is_opt1)
+  call getopt('-version', is_opt2)
+  if( is_opt1 .or. is_opt2 ) call version__display('fdmcond')
+  
   call term_cls()
   write(*,*)
   write(*,'(A)') "----------------------------------------------------------------------"
