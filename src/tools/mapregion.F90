@@ -3,7 +3,7 @@
 !! Obtains projected area for FDM simulation from input parameter file
 !!
 !! @copyright
-!!   Copyright 2013-2023 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
 program mapregion
