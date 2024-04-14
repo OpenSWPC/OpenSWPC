@@ -13,6 +13,7 @@ program gen_rmed3d
   use m_getopt
   use m_rmedia
   use m_debug
+  use m_version
   use netcdf
 
   implicit none
@@ -31,8 +32,12 @@ program gen_rmed3d
   character(256)        :: fn_out
   integer               :: ncid, vid
   integer :: i, j, k
-
+  logical :: is_opt1, is_opt2
   !! ----
+
+  call getopt('v', is_opt1)
+  call getopt('-version', is_opt2)
+  if( is_opt1 .or. is_opt2 ) call version__display('gen_rmed3d')
 
   !! option processing
   call getopt('nx',    is_opt, nx);    if(.not. is_opt) call usage_exit

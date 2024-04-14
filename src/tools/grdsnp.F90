@@ -16,6 +16,7 @@ program grdsnp
   use m_geomap
   use m_readini
   use m_debug
+  use m_version
   use netcdf
 
 
@@ -36,6 +37,11 @@ program grdsnp
   integer :: ncid, ndim, nvar, xid, yid, zid
   character(80) :: xname, yname, zname
   !! ----
+  logical :: is_opt1, is_opt2
+  
+  call getopt('v', is_opt1)
+  call getopt('-version', is_opt2)
+  if( is_opt1 .or. is_opt2 ) call version__display('grd2snp')
 
   call getopt( 'i', is_opt, fn_prm ); if( .not. is_opt ) call usage_exit
   call getopt( 'g', is_opt, fn_grd ); if( .not. is_opt ) call usage_exit
