@@ -3,7 +3,7 @@
 !! terminal/logfile report
 !!
 !! @copyright
-!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!!   Copyright 2013-2023 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "m_debug.h"
@@ -16,6 +16,7 @@ module m_report
   use m_pwatch
   use m_kernel
   use m_readini
+  use m_version
 
   !! -- Declarations
   implicit none
@@ -53,26 +54,29 @@ contains
     integer :: crate
     real(SP) :: mem_all, mem_node
     real(SP) :: c, r
+    character(20) :: ver
+    character(256) :: codename
     !! ----
 
     call readini( io_prm, 'ntdec_r', ntdec_r, 10 )
-
+    call version__get(ver)
 
     if( myid == terminal_output_node ) then
 
+      codename = "  SWPC_3D version " // trim(ver)
+      if( benchmark_mode ) then
+        codename = trim(codename) // ' (benchmark mode) '
+      else if ( pw_mode ) then
+        codename = trim(codename) // ' (plane wave mode) '
+      else if ( bf_mode ) then
+        codename = trim(codename) // ' (body force mode) '
+      else if ( green_mode ) then
+        codename = trim(codename) // " (Green's function mode) "
+      end if
+
       write(STDERR,*)
       write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-      if( benchmark_mode ) then
-        write(STDERR,'(A)') "  SWPC_3D (benchmark mode)                                                    "
-      else if ( pw_mode ) then
-        write(STDERR,'(A)') "  SWPC_3D (plane wave mode)                                                   "
-      else if ( bf_mode ) then
-        write(STDERR,'(A)') "  SWPC_3D (body force mode)                                                   "
-      else if ( green_mode ) then
-        write(STDERR,'(A)') "  SWPC_3D (Green's function mode)                                             "
-      else
-        write(STDERR,'(A)') "  SWPC_3D                                                                     "
-      end if
+      write(STDERR,'(A)') trim(codename)
       write(STDERR,'(A)') " ------------------------------------------------------------------------------"
 
     end if
