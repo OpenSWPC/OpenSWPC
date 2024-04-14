@@ -20,12 +20,19 @@ program ll2xy
   use m_std
   use m_geomap
   use m_system
+  use m_getopt
   use m_debug
+  use m_version
   implicit none
   !! --
   real(SP) :: lat0, lon0, lat, lon, x, y, phi
   integer(SP) :: narg
+  logical :: is_opt1, is_opt2
   !! ----
+
+  call getopt('v', is_opt1)
+  call getopt('-version', is_opt2)
+  if( is_opt1 .or. is_opt2 ) call version__display('ll2xy')
 
   narg = system__iargc()
   if( narg /= 4 .and. narg /= 5 ) call usage_abort

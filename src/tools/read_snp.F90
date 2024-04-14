@@ -19,6 +19,7 @@ program read_snp
   use m_filt2d
   use m_geomap
   use m_debug
+  use m_version
 #ifdef _NETCDF
   use netcdf
 #endif
@@ -43,7 +44,12 @@ program read_snp
   integer, allocatable :: vid(:)
   character(100) :: vname
   integer :: i
-  !--
+  logical :: is_opt1, is_opt2
+  !! ----
+
+  call getopt('v', is_opt1)
+  call getopt('-version', is_opt2)
+  if( is_opt1 .or. is_opt2 ) call version__display('read_snp')
 
   !!
   !! Check Input File

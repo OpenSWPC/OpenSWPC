@@ -18,6 +18,8 @@ program wvconv
     use m_sac
     use m_rfft
     use m_fk
+    use m_getopt
+    use m_version
     implicit none
 
     character(256) :: fn_in, fn_out
@@ -32,7 +34,12 @@ program wvconv
     complex(dp), parameter  :: zi = ( 0.0_dp, 1.0_dp )
     integer :: p
     character(10) :: adum
-    !---
+    logical :: is_opt1, is_opt2
+    !! ----
+  
+    call getopt('v', is_opt1)
+    call getopt('-version', is_opt2)
+    if( is_opt1 .or. is_opt2 ) call version__display('wvconv')
 
     if( command_argument_count() == 0 ) then
       write(STDERR,*) 'wvconv.x in.sac out.sac (V0)'

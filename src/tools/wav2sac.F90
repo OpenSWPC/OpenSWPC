@@ -11,6 +11,8 @@ program wav2sac
   use m_std
   use m_sac
   use m_system
+  use m_getopt
+  use m_version
   implicit none
 
   character(256) :: fn_wav, fn_sac
@@ -22,6 +24,13 @@ program wav2sac
   integer :: io
   integer :: i, j
   character(80) :: title
+  logical :: is_opt1, is_opt2
+  !! ----
+
+  call getopt('v', is_opt1)
+  call getopt('-version', is_opt2)
+  if( is_opt1 .or. is_opt2 ) call version__display('wav2sac')
+
 
   if( system__iargc() == 0 ) then
     write(*,*) 'wav2sac.x [wavfiles]'

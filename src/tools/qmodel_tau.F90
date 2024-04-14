@@ -12,6 +12,7 @@ program qmodel_tau
   use m_getopt
   use m_fdtool
   use m_readini
+  use m_version
   implicit none
 
   integer :: i
@@ -32,6 +33,13 @@ program qmodel_tau
   real(SP), allocatable :: qinv2(:)
   character(20) :: fmt
   real(SP) :: chi, chi_R
+  logical :: is_opt1, is_opt2
+  !! ----
+
+  call getopt('v', is_opt1)
+  call getopt('-version', is_opt2)
+  if( is_opt1 .or. is_opt2 ) call version__display('qmodel_tau')
+
 
   call getopt( 'nm', sw, nm    ); if( .not. sw ) call usage_exit()
   call getopt( 'i',  sw, fn_prm); if( .not. sw ) call usage_exit()

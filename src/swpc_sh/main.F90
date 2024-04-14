@@ -36,6 +36,7 @@ program SWPC_SH
   use m_absorb
   use m_ckprst
   use m_readini
+  use m_version
   use mpi
 
   !! -- Declarations
@@ -51,6 +52,12 @@ program SWPC_SH
   integer :: it0
   logical :: strict_mode
   !! ----
+
+  !!
+  !! Version 
+  !!
+  call getopt('v', is_opt);        if( is_opt ) call version__display('swpc_sh')
+  call getopt('-version', is_opt); if( is_opt ) call version__display('swpc_sh')
 
   !!
   !! Launch MPI process

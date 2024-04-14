@@ -36,6 +36,7 @@ program SWPC_PSV
   use m_absorb
   use m_ckprst
   use m_readini
+  use m_version
   use mpi
 
   !! -- Declarations
@@ -52,6 +53,12 @@ program SWPC_PSV
   logical :: strict_mode
   !! ----
 
+  !!
+  !! Version 
+  !!
+  call getopt('v', is_opt);        if( is_opt ) call version__display('swpc_psv')
+  call getopt('-version', is_opt); if( is_opt ) call version__display('swpc_psv')
+  
   !!
   !! Launch MPI process
   !!

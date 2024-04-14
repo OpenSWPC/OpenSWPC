@@ -15,6 +15,7 @@ program diff_snp
   use m_fdsnap
   use m_daytim
   use m_debug
+  use m_version
 #ifdef _NETCDF
   use netcdf
 #endif
@@ -39,8 +40,10 @@ program diff_snp
   !! Open input files
   !!
   call system__getarg( 1, fn_in1 )
+  if( trim(fn_in1) == '-v' .or. trim(fn_in1) == '--version') call version__display('diff_snp')
   call system__getarg( 2, fn_in2 )
   call system__getarg( 3, fn_out )
+
 
   call fdsnap__open( fn_in1, io_in1, is_exist, snp_type )
   if( .not. is_exist ) stop
