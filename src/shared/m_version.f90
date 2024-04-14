@@ -11,7 +11,7 @@ module m_version
     implicit none
     public 
     !! Do not modify this unless version up
-    character(80), public :: version = '5.3.1'
+    character(80), public :: version = '5.3.2-dev'
 
 contains
 
