@@ -63,20 +63,15 @@ ifeq ($(arch),mac-gfortran)
 endif
 
 ##
-## EIC @ ERI,U-TOKYO
+## EIC @ ERI,U-TOKYO (2020 System)
 ##
 ifeq ($(arch),eic)
-  FC      = ifort
-  FFLAGS  = -xAVX -O3 -I../include -D_INFO
+  FC      = module purge; module load intel mpt lib/NetCDF lib/HDF5; ifort
+  FFLAGS  = -xCORE-AVX512 -O3 -I../include -D_INFO 
   NCFLAG  = -D_NETCDF
-  NCLIB   = -L$(HOME)/local/lib
-  NCINC   = -I$(HOME)/local/include
-  NETCDF  =  -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
-
-  ifeq ($(publish),true)
-    FFLAGS = -xHOST -O2 -lmpi -I../include -D_INFO -static-intel -mcmodel=small
-  endif
-
+  NCLIB   = 
+  NCINC   = 
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
 endif
 
 ##
