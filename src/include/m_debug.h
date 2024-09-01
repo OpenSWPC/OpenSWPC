@@ -1,11 +1,10 @@
+/*
 !! ------------------------------------------------------------------------- !!
 !!                                                          -*- mode:f90 -*-
 !! Header file for m_debug.F90
 !!
 !! ------------------------------------------------------------------------- !!
-
-
-!! debug
+*/
 
 #if defined(_DEBUG) || defined(DEBUG)
 #if defined(__INTEL_COMPILER)
@@ -20,8 +19,6 @@
 #define DEBUG(a)   debug__void()
 #endif
 
-!! info
-
 #if defined(_INFO) || defined(INFO)
 #define info(a)    info__macro( a, __FILE__, __LINE__ )
 #define INFO(a)    info__macro( a, __FILE__, __LINE__ )
@@ -29,8 +26,6 @@
 #define info(a)    debug__void()
 #define INFO(a)    debug__void()
 #endif
-
-!! assert
 
 #if defined(__INTEL_COMPILER)
 #define assert(a)  assert__macro( a, #a, __FILE__, __LINE__ )
