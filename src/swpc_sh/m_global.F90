@@ -177,8 +177,8 @@ contains
       dz = 0.5
       dt = 0.04
       na = 20
-      xbeg = -nx/2 * dx
-      zbeg = -30   * dz
+      xbeg = -nx/2 * real(dx)
+      zbeg = -30   * real(dz)
       tbeg = 0.0
       clon = 139.7604
       clat = 35.7182
@@ -393,7 +393,7 @@ contains
 
     integer :: err
     integer :: istatus( mpi_status_size, 4 )
-    integer :: ireq(4)
+    integer :: req(4)
     !! ----
 
     if( myid >= nproc_x ) return
@@ -406,13 +406,13 @@ contains
     sbuf_im( nz+1:2*nz ) = Vy(1:nz,ibeg+1)
 
     !! send & receive orders
-    call mpi_irecv(rbuf_ip, 2*nz, mpi_precision, itbl(idx+1), 1, mpi_comm_world, ireq(1), err)
-    call mpi_irecv(rbuf_im, 1*nz, mpi_precision, itbl(idx-1), 2, mpi_comm_world, ireq(2), err)
-    call mpi_isend(sbuf_ip, 1*nz, mpi_precision, itbl(idx+1), 2, mpi_comm_world, ireq(3), err)
-    call mpi_isend(sbuf_im, 2*nz, mpi_precision, itbl(idx-1), 1, mpi_comm_world, ireq(4), err)
+    call mpi_irecv(rbuf_ip, 2*nz, mpi_precision, itbl(idx+1), 1, mpi_comm_world, req(1), err)
+    call mpi_irecv(rbuf_im, 1*nz, mpi_precision, itbl(idx-1), 2, mpi_comm_world, req(2), err)
+    call mpi_isend(sbuf_ip, 1*nz, mpi_precision, itbl(idx+1), 2, mpi_comm_world, req(3), err)
+    call mpi_isend(sbuf_im, 2*nz, mpi_precision, itbl(idx-1), 1, mpi_comm_world, req(4), err)
 
     !! Terminate mpi data communication
-    call mpi_waitall( 4, ireq, istatus, err )
+    call mpi_waitall( 4, req, istatus, err )
 
     !! Resore the data
     Vy(1:nz,iend+1) = rbuf_ip(   1:  nz)
@@ -433,7 +433,7 @@ contains
 
     integer :: err
     integer :: istatus( mpi_status_size, 4)
-    integer :: ireq(4)
+    integer :: req(4)
     !! ----
 
     if( myid >= nproc_x ) return
@@ -446,15 +446,15 @@ contains
     sbuf_im(   1:nz  ) = Sxy(1:nz,ibeg)
 
     !! Issue send & receive orders
-    call mpi_irecv(rbuf_ip, 1*nz, mpi_precision, itbl(idx+1), 3, mpi_comm_world, ireq(1), err)
-    call mpi_irecv(rbuf_im, 2*nz, mpi_precision, itbl(idx-1), 4, mpi_comm_world, ireq(2), err)
-    call mpi_isend(sbuf_ip, 2*nz, mpi_precision, itbl(idx+1), 4, mpi_comm_world, ireq(3), err)
-    call mpi_isend(sbuf_im, 1*nz, mpi_precision, itbl(idx-1), 3, mpi_comm_world, ireq(4), err)
+    call mpi_irecv(rbuf_ip, 1*nz, mpi_precision, itbl(idx+1), 3, mpi_comm_world, req(1), err)
+    call mpi_irecv(rbuf_im, 2*nz, mpi_precision, itbl(idx-1), 4, mpi_comm_world, req(2), err)
+    call mpi_isend(sbuf_ip, 2*nz, mpi_precision, itbl(idx+1), 4, mpi_comm_world, req(3), err)
+    call mpi_isend(sbuf_im, 1*nz, mpi_precision, itbl(idx-1), 3, mpi_comm_world, req(4), err)
 
     !! Terminate mpi data communication
-    call mpi_waitall( 4, ireq, istatus, err )
+    call mpi_waitall( 4, req, istatus, err )
 
-    !! from plus direction
+    !! Resore the data
     Sxy(kbeg:kend,iend+1) = rbuf_ip(1:nz)
     Sxy(kbeg:kend,ibeg-2) = rbuf_im(1:nz)
     Sxy(kbeg:kend,ibeg-1) = rbuf_im(nz+1:2*nz)
@@ -528,7 +528,8 @@ contains
   subroutine global__restart( io )
 
     integer, intent(in) :: io
-    integer :: nl3
+    !! ----
+
     read(io) title(1:80)
     read(io) exedate
 
