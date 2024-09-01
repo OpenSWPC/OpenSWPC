@@ -27,7 +27,7 @@ endif
 ifeq ($(arch),mac-intel)
 
   FC      = mpif90
-  FFLAGS  = -O3 -xHOST -warn all -I../include -D_INFO
+  FFLAGS  = -O3 -xHOST -warn all 
   NCFLAG  = -D_NETCDF
   NCLIB   = -L$(HOME)/local/lib
   NCINC   = -I$(HOME)/local/include
@@ -35,7 +35,7 @@ ifeq ($(arch),mac-intel)
 
   ifeq ($(debug),true)
     FFLAGS  = -CB -traceback -Wl,-no_pie -heap-arrays \
-			  -static-intel -I../include -D_INFO -D_DEBUG
+			  -static-intel  -D_DEBUG
   endif
 
 endif
@@ -47,7 +47,7 @@ endif
 ifeq ($(arch),mac-gfortran)
   LOCAL  = /usr/local
   FC      = mpif90
-  FFLAGS  = -O2 -ffast-math -D_INFO -I../include -fopenmp
+  FFLAGS  = -O2 -ffast-math   -fopenmp
   NCFLAG  = -D_NETCDF
   NCLIB   = -L$(LOCAL)/lib
   NCINC   = -I$(LOCAL)/include
@@ -56,7 +56,7 @@ ifeq ($(arch),mac-gfortran)
   ifeq ($(debug),true)
     FFLAGS  = -Wall -pedantic -fbounds-check -O -Wuninitialized \
 	          -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 \
-	          -D_INFO -D_DEBUG -I../include
+	           -D_DEBUG 
   endif
 
 endif
@@ -68,7 +68,7 @@ endif
 ##
 ifeq ($(arch),eic)
   FC      = module purge; module load intel mpt lib/NetCDF lib/HDF5; ifort
-  FFLAGS  = -xCORE-AVX512 -O3 -I../include -D_INFO -qopenmp -lmpi
+  FFLAGS  = -xCORE-AVX512 -O3   -qopenmp -lmpi
   NCFLAG  = -D_NETCDF
   NCLIB   = 
   NCINC   = 
@@ -81,7 +81,7 @@ endif
 ##
 ifeq ($(arch),fx)
   FC      = mpifrtpx
-  FFLAGS  = -O3 -Kfast -Kopenmp,parallel -Kstriping -Kprefetch_infer -Ksimd=2 -Kocl -D_FX -I../include -Qt
+  FFLAGS  = -O3 -Kfast -Kopenmp,parallel -Kstriping -Kprefetch_infer -Ksimd=2 -Kocl -D_FX  -Qt
   NCFLAG  = -D_NETCDF
   NCLIB   = -L$(HOME)/xlocal/lib
   NCINC   = -I$(HOME)/xlocal/include
@@ -94,14 +94,14 @@ endif
 ##
 ifeq ($(arch),es3)
   FC      = sxmpif90
-  FFLAGS  = -R2 -pi nest=5 -Wf"-pvctl fullmsg" -D_ES -f2003 -I ../include -D_INFO -Popenmp
+  FFLAGS  = -R2 -pi nest=5 -Wf"-pvctl fullmsg" -D_ES -f2003   -Popenmp
   NCFLAG  = -D_NETCDF
   NCLIB   = -L/SX/usr/local/netcdf-4.1.3/lib
   NCINC   = -I/SX/usr/local/netcdf-4.1.3/include
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -size_t64
 
   ifeq ($(debug),true)
-	FFLAGS = -eR -pi nest=5 -Wf"-pvctl fullmsg -init stack=nan heap=nan" -D_ES -f2003 -I ../include -D_INFO -Popenmp
+	FFLAGS = -eR -pi nest=5 -Wf"-pvctl fullmsg -init stack=nan heap=nan" -D_ES -f2003   -Popenmp
   endif
 
 endif
@@ -111,14 +111,14 @@ endif
 ##
 ifeq ($(arch),es4)
   FC      = module purge; module load NECSDK/all NetCDF4_ve/all; mpinfort
-  FFLAGS  = -I ../include -D_INFO -fopenmp -O3 -finline-functions -floop-unroll -fpp -report-format -D_ASSERT -D_ES
+  FFLAGS  =   -fopenmp -O3 -finline-functions -floop-unroll -fpp -report-format -D_ES
   NCFLAG  = -D_NETCDF
   NCLIB   =  -L /opt/nec/ve/lib/
   NCINC   = -I /opt/share/NetCDF4_ve/netcdf-fortran/4.5.2/include/
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lsz -lz 
 
   ifeq ($(debug),true)
-    FFLAGS = -fbounds-check -O0 -D_INFO -fopenmp -I ../include 
+    FFLAGS = -fbounds-check -O0  -fopenmp  
   endif
 endif
 
@@ -128,7 +128,7 @@ endif
 ifeq ($(arch),ubuntu-gfortran)
   
   FC      = mpif90
-  FFLAGS  = -O2 -ffast-math -D_INFO -I../include -fopenmp
+  FFLAGS  = -O2 -ffast-math   -fopenmp
   NCFLAG  = -D_NETCDF
   NCLIB   = -L/usr/lib/x86_64-linux-gnu
   NCINC   = -I/usr/include
@@ -137,7 +137,7 @@ ifeq ($(arch),ubuntu-gfortran)
   ifeq ($(debug),true)
     FFLAGS  = -Wall -pedantic -fbounds-check -O -Wuninitialized \
 	          -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 \
-	          -D_INFO -D_DEBUG -I../include
+	           -D_DEBUG 
   endif
 
 endif
@@ -148,7 +148,7 @@ endif
 ##
 ifeq ($(arch),oak)
   FC      = module load netcdf hdf5 netcdf-fortran; mpiifort
-  FFLAGS  = -axMIC-AVX512 -qopenmp -D_INFO -D_ASSERT -I../include -static-intel -static_mpi -O3 -ipo -align array64byte -qopt-streaming-stores=auto
+  FFLAGS  = -axMIC-AVX512 -qopenmp  -static-intel -static_mpi -O3 -ipo -align array64byte -qopt-streaming-stores=auto
   NCFLAG  = -D_NETCDF 
   NCLIB = 
   NCINC = 
@@ -157,7 +157,7 @@ endif
 # the following is an alias of Oakforest-PACS
 ifeq ($(arch),ofp)
   FC      = module load netcdf hdf5 netcdf-fortran; mpiifort
-  FFLAGS  = -axMIC-AVX512 -qopenmp -D_INFO -D_ASSERT -I../include -static-intel -static_mpi -O3 -ipo -align array64byte -qopt-streaming-stores=auto
+  FFLAGS  = -axMIC-AVX512 -qopenmp  -static-intel -static_mpi -O3 -ipo -align array64byte -qopt-streaming-stores=auto
   NCFLAG  = -D_NETCDF 
   NCLIB = 
   NCINC = 
@@ -170,7 +170,7 @@ endif
 ##
 ifeq ($(arch),obcx)
   FC      = module load netcdf hdf5 netcdf-fortran; mpiifort
-  FFLAGS  = -axCORE-AVX512 -qopenmp -D_INFO -D_ASSERT -I../include -static-intel -static_mpi -O3 -ipo 
+  FFLAGS  = -axCORE-AVX512 -qopenmp  -static-intel -static_mpi -O3 -ipo 
   NCFLAG  = -D_NETCDF 
   NCLIB = 
   NCINC = 
@@ -183,7 +183,7 @@ endif
 ##
 ifeq ($(arch),bdec-o)
   FC      = module purge; module load fj fjmpi netcdf hdf5 netcdf-fortran; mpifrtpx
-  FFLAGS  = -O3 -Keval -Kfp_contract -Kfp_relaxed -Kfz -Kilfunc -Kmfunc -Komitfp -Kopenmp -Kparallel -Ksimd=2 -Kocl -Kassume=memory_bandwidth -Koptmsg=guide -Nlst=t -D_FX -I ../include
+  FFLAGS  = -O3 -Keval -Kfp_contract -Kfp_relaxed -Kfz -Kilfunc -Kmfunc -Komitfp -Kopenmp -Kparallel -Ksimd=2 -Kocl -Kassume=memory_bandwidth -Koptmsg=guide -Nlst=t -D_FX 
   NCFLAG  = -D_NETCDF 
   NCLIB = 
   NCINC = -I/work/opt/local/aarch64/apps/fj/1.2.31/netcdf-fortran/4.5.3/include/
@@ -198,7 +198,7 @@ endif
 ifeq ($(arch),mac-m1)
 
   FC      = mpif90
-  FFLAGS  = -O2 -ffast-math -D_INFO -I../include -fopenmp
+  FFLAGS  = -O2 -ffast-math   -fopenmp
   NCFLAG  = -D_NETCDF
   NCLIB   = -L/opt/homebrew/lib
   NCINC   = -I/opt/homebrew/include
@@ -207,7 +207,7 @@ ifeq ($(arch),mac-m1)
   ifeq ($(debug),true)
     FFLAGS  = -Wall -pedantic -fbounds-check -O -Wuninitialized \
 	          -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 \
-	          -D_INFO -D_DEBUG -I../include
+	           -D_DEBUG 
   endif
 
 endif

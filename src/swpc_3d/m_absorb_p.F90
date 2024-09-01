@@ -25,7 +25,7 @@
 !!
 !<
 !! ----
-#include "m_debug.h"
+#include "../shared/m_debug.h"
 module m_absorb_p
 
   !! -- Dependency

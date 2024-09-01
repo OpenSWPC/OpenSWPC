@@ -6,7 +6,7 @@
 !!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
-#include "../include/m_debug.h"
+#include "../shared/m_debug.h"
 module m_global
 
   !! modules

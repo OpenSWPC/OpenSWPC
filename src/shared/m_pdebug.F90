@@ -20,34 +20,18 @@ module m_debug
   implicit none
   private
 
-  public :: debug
-  public :: info
-  public :: assert
-  public :: debug__macro
-  public :: info__macro
-  public :: assert__macro
-  public :: debug__void
+  public :: debug, debug__macro
+  public :: info, info__macro
+  public :: assert, assert__macro
 
-  !! debug through preprocessor macro
-  interface debug__macro
-    module procedure debug_c,  debug_i,  debug_r,  debug_d,  debug_l,  debug__void
-    module procedure debug_c1, debug_i1, debug_r1, debug_d1, debug_l1
-  end interface debug__macro
-
-  !! regular debug
   interface debug
-    module procedure debug_c0, debug_i0, debug_r0, debug_d0, debug_l0
+    module procedure debug_c0, debug_i0, debug_r0, debug_d0, debug_l0, debug__void
   end interface debug
 
-  !! assersion with priprosessor macro
-  interface assert__macro
-    module procedure  assert_1, assert_2
-  end interface assert__macro
+  interface debug__macro
+    module procedure debug_c,  debug_i,  debug_r,  debug_d,  debug_l,  debug__void
+  end interface debug__macro
 
-  !! regular assertion
-  interface assert
-    module procedure assert_0
-  end interface assert
 
   logical :: initialized = .false.
   integer :: nproc, myid
@@ -67,7 +51,7 @@ contains
   !! Do Nothing: dummy
   !<
   !! --
-  subroutine debug__void
+  subroutine debug__void()
 
     return
 
@@ -94,30 +78,6 @@ contains
     write(STDERR,'(A,I0,A)') '[debug{', myid ,'}] '//fname//' ('//trim(adjustl(cline))//'):  '//trim(adjustl(var))
 
   end subroutine debug_c
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Debug output to STDERR.
-  !<
-  !! --
-  subroutine debug_c1( var, varname, fname, nline )
-
-    character(*), intent(in) :: var
-    character(*), intent(in) :: varname
-    character(*), intent(in) :: fname
-    integer,      intent(in) :: nline
-    !! --
-    character(5) :: cline
-    !! ----
-
-    if( .not. initialized ) call debug_init
-    write(cline,'(I5)') nline
-
-    write(STDERR,'(A,I0,A)') '[debug{', myid ,'}] '//fname// &
-        ' ('//trim(adjustl(cline))//'): '//trim(adjustl(varname)) //' = '//trim(adjustl(var))
-
-  end subroutine debug_c1
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
@@ -154,27 +114,6 @@ contains
     call debug_c( cvar, fname, nline )
 
   end subroutine debug_i
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Debug output to STDERR.
-  !<
-  !! --
-  subroutine debug_i1( var, varname,  fname, nline )
-
-    integer,      intent(in) :: var
-    character(*), intent(in) :: varname
-    character(*), intent(in) :: fname
-    integer,      intent(in) :: nline
-    !! --
-    character(10) :: cvar
-    !! ----
-
-    write(cvar,'(I10)') var
-    call debug_c1( cvar, varname, fname, nline )
-
-  end subroutine debug_i1
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
@@ -224,31 +163,6 @@ contains
   !! Debug output to STDERR.
   !<
   !! --
-  subroutine debug_r1( var, varname, fname, nline )
-
-    real,     intent(in) :: var
-    character(*), intent(in) :: varname
-    character(*), intent(in) :: fname
-    integer,      intent(in) :: nline
-    !! --
-    character(15) :: cvar
-    !! ----
-
-    if( abs(var) < 10000.) then
-      write(cvar,'(F15.5)') var
-    else
-      write(cvar,'(ES15.5)') var
-    end if
-    call debug_c1( cvar, varname, fname, nline )
-
-  end subroutine debug_r1
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Debug output to STDERR.
-  !<
-  !! --
   subroutine debug_r0( var )
 
     real,     intent(in) :: var
@@ -288,30 +202,6 @@ contains
     call debug_c( cvar, fname, nline )
 
   end subroutine debug_d
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Debug output to STDERR.
-  !<
-  !! --
-  subroutine debug_d1( var, varname, fname, nline )
-
-    real(DP),     intent(in) :: var
-    character(*), intent(in) :: varname
-    character(*), intent(in) :: fname
-    integer,      intent(in) :: nline
-    !! --
-    character(15) :: cvar
-    !! ----
-
-    if( abs(var) < 10000.) then
-      write(cvar,'(F15.5)') var
-    else
-      write(cvar,'(ES15.5)') var
-    end if
-    call debug_c1( cvar, varname, fname, nline )
-
-  end subroutine debug_d1
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
@@ -364,30 +254,6 @@ contains
   !! Debug output to STDERR.
   !<
   !! --
-  subroutine debug_l1( var, varname, fname, nline )
-
-    logical,      intent(in) :: var
-    character(*), intent(in) :: varname
-    character(*), intent(in) :: fname
-    integer,      intent(in) :: nline
-    !! --
-    character(15) :: cvar
-    !! ----
-    if( var ) then
-      cvar = '.true.'
-    else
-      cvar = '.false.'
-    end if
-    call debug_c1( cvar, varname, fname, nline )
-
-  end subroutine debug_l1
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Debug output to STDERR.
-  !<
-  !! --
   subroutine debug_l0( var )
 
     logical,      intent(in) :: var
@@ -410,19 +276,19 @@ contains
   !! A simple assetion
   !<
   !! ----
-  subroutine assert_0( cond )
+  subroutine assert( cond )
 
     logical, intent(in) :: cond
-    integer :: ierr
+    integer :: ierr, errcode
     !! ----
 
     if( .not. initialized ) call debug_init
     if( .not. cond ) then
       write(STDERR,'(A,I0,A)') '[assert{', myid, '}] failed'
-      call mpi_abort( mpi_comm_world, ierr, ierr )
+      call mpi_abort( mpi_comm_world, errcode, ierr )
     end if
 
-  end subroutine assert_0
+  end subroutine assert
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -430,14 +296,14 @@ contains
   !! Assertion with filename and line
   !<
   !! ----
-  subroutine assert_1( cond, fname, nline )
+  subroutine assert__macro( cond, fname, nline )
 
     logical,      intent(in) :: cond
     character(*), intent(in) :: fname
     integer,      intent(in) :: nline
     !! --
     character(5) :: cl
-    integer :: ierr
+    integer :: ierr, errcode
     !! ----
 
     if( .not. initialized ) call debug_init
@@ -445,34 +311,10 @@ contains
       write(cl,'(I5)') nline
 
       write(STDERR,'(A,I0,A)') '[assert{', myid, '}] failed at ' // trim(adjustl(fname)) //'('//trim(adjustl(cl))//')'
-      call mpi_abort( mpi_comm_world, ierr, ierr )
+      call mpi_abort( mpi_comm_world, errcode, ierr )
     end if
 
-  end subroutine assert_1
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Assertion with condition name, filename and line
-  !<
-  !! ----
-  subroutine assert_2( cond, cname, fname, nline )
-
-    logical,      intent(in) :: cond
-    character(*), intent(in) :: cname
-    character(*), intent(in) :: fname
-    integer,      intent(in) :: nline
-    integer :: ierr
-    !! ----
-
-    if( .not. initialized ) call debug_init
-    if( .not. cond ) then
-      write(STDERR,'(A,I0,A,I0,A)') '[assert{', myid, '}] failed at ' // trim(adjustl(fname))  &
-          //'(', nline, '): ' // trim(adjustl(cname))
-      call mpi_abort( mpi_comm_world, ierr, ierr )
-    end if
-
-  end subroutine assert_2
+  end subroutine assert__macro
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 
