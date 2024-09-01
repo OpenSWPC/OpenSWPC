@@ -6,7 +6,7 @@
 !!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
-#include "m_debug.h"
+!#include "m_debug.h"
 module m_global
 
   !! modules
@@ -37,8 +37,6 @@ module m_global
   !!
   !! fixed parameters
   !!
-  integer,  parameter :: Nl = 4                                     !< FDM order ( 4th )
-  integer,  parameter :: Nsl = Nl/2                                 !< thickness of "sleeve area"
   real(SP)            :: UC = 10.0**(-15)                           !< Conventional -> SI unit for moment tensor of [Nm]
   integer,  parameter :: MP = DP                                    !< DP for mixed precision, SP for pure single precision
   integer,  parameter :: NM = 3                                     !< Number of memory variables
@@ -207,9 +205,9 @@ contains
       dz = 0.5
       dt = 0.04
       na = 20
-      xbeg = -nx/2.0 * dx ! force x=0 at center
-      ybeg = -ny/2.0 * dy ! force x=0 at center
-      zbeg = - 30 * dz
+      xbeg = -nx/2.0 * real(dx) ! force x=0 at center
+      ybeg = -ny/2.0 * real(dy) ! force y=0 at center
+      zbeg = - 30 * real(dz)
       tbeg = 0.0
       clon = 139.7604
       clat = 35.7182
@@ -246,14 +244,14 @@ contains
   subroutine global__setup( io_prm )
 
     integer, intent(in) :: io_prm
-    integer :: ierr
+    integer :: err
     !! ----
 
 
     !!
     !! MPI status check
     !!
-    call mpi_comm_rank( mpi_comm_world, myid, ierr )
+    call mpi_comm_rank( mpi_comm_world, myid, err )
     if( MP == DP ) then
       mpi_precision = MPI_DOUBLE_PRECISION
     else
@@ -273,14 +271,14 @@ contains
     !! obtain date by unixtime: seconds measured from 1970/1/1 0:0:0
     !!
     if( myid == 0 ) call daytim__getdate( exedate )
-    call mpi_bcast( exedate, 1, MPI_INTEGER, 0, mpi_comm_world, ierr )
+    call mpi_bcast( exedate, 1, MPI_INTEGER, 0, mpi_comm_world, err )
 
     !!
     !! derived parameters
     !!
-    xend = xbeg + nx * dx
-    yend = ybeg + ny * dy
-    zend = zbeg + nz * dz
+    xend = xbeg + nx * real(dx)
+    yend = ybeg + ny * real(dy)
+    zend = zbeg + nz * real(dz)
     tend = ybeg + nt * dt
 
 
@@ -296,23 +294,20 @@ contains
   !! --
   subroutine global__setup2
 
-    integer :: nl3
     integer :: i, j, k
-    integer :: ierr
+    integer :: err
     integer :: nproc_exe
     integer :: mx, my
     integer :: proc_x, proc_y
+    !! ----
+
     call pwatch__on( "global__setup2" ) !! measure from here
 
-    !!
-    !! output directory create (if it does not exist)
-    !!
+    !! create output directory (if it does not exist)
     call system__call('mkdir -p ' // trim(odir) //'> /dev/null 2>&1' )
 
-    !!
     !! size settings
-    !!
-    call mpi_comm_size( mpi_comm_world, nproc_exe, ierr )
+    call mpi_comm_size( mpi_comm_world, nproc_exe, err )
     call assert( nproc == nproc_exe )
 
     mx = mod(nx, nproc_x)
@@ -330,23 +325,13 @@ contains
       nyp = (ny - my)/nproc_y + 1
     end if
 
-    call debug(nxp)
-    call debug(nyp)
-
-    !!
     !! MPI coordinate
-    !!
-
-    !! buffer allocation
-    !  half of FDM order is used for communication.
-    !  Three variables are communicated at once
-    nl3 = ( Nl / 2 ) * 3
 
     allocate( itbl(-1:nproc_x, -1:nproc_y) )
-    allocate( sbuf_ip( nyp*nz*nl3 ), sbuf_im( nyp*nz*nl3 ) )
-    allocate( rbuf_ip( nyp*nz*nl3 ), rbuf_im( nyp*nz*nl3 ) )
-    allocate( sbuf_jp( nxp*nz*nl3 ), sbuf_jm( nxp*nz*nl3 ) )
-    allocate( rbuf_jp( nxp*nz*nl3 ), rbuf_jm( nxp*nz*nl3 ) )
+    allocate( sbuf_ip(5 * nyp * nz), sbuf_im(5 * nyp * nz) )
+    allocate( rbuf_ip(5 * nyp * nz), rbuf_im(5 * nyp * nz) )
+    allocate( sbuf_jp(5 * nxp * nz), sbuf_jm(5 * nxp * nz) )
+    allocate( rbuf_jp(5 * nxp * nz), rbuf_jm(5 * nxp * nz) )
 
     !! initialize buffer
     sbuf_ip(:) = 0.0_MP
@@ -358,15 +343,10 @@ contains
     rbuf_jp(:) = 0.0_MP
     rbuf_jm(:) = 0.0_MP
 
-    !!
     !! MPI communication table
-    !!
     call set_mpi_table
 
-
-    !!
     !! computation region in this node (#244)
-    !!
     if ( proc_x <= nproc_x -mx - 1 ) then
       ibeg =  proc_x      * (nx - mx) / nproc_x + 1
       iend = (proc_x + 1) * (nx - mx) / nproc_x
@@ -395,9 +375,7 @@ contains
     kbeg_m = kbeg - 3
     kend_m = kend + 3 + kpad
 
-    !!
     !! coordinate setting
-    !!
     allocate( xc(ibeg_m:iend_m), yc(jbeg_m:jend_m), zc(kbeg_m:kend_m) )
 
     do i=ibeg_m, iend_m
@@ -442,10 +420,8 @@ contains
       end do
     end do
 
-    !!
     !! Interior Kernel region
-    !!
-
+\
     !! initial value
     ibeg_k = ibeg
     iend_k = iend
@@ -477,9 +453,6 @@ contains
 
     end if
 
-    call debug(kbeg_k)
-    call debug(kend_k)
-
     call pwatch__off( "global__setup2" ) !! measure from here
  
   end subroutine global__setup2
@@ -493,139 +466,66 @@ contains
   subroutine global__comm_vel()
 
 
-    integer :: isize, jsize, s_isize, s_jsize
-    integer :: ierr
+    integer :: isize, jsize
+    integer :: err
     integer :: istatus( mpi_status_size, 4 )
-    integer :: ireq1(4), ireq2(4)
-    integer :: i, j, k, ptr
+    integer :: req_i(4), req_j(4)
+    !! ----
 
     if( myid >= nproc ) return
 
     call pwatch__on( "global__comm_vel" )
 
     !! unit buffer size
-    isize = nyp * Nsl * nz
-    jsize = nxp * Nsl * nz
-    s_isize = 3 * isize   ! send/recv buffer size
-    s_jsize = 3 * jsize   ! send/recv buffer size
+    isize = nyp * nz
+    jsize = nxp * nz
 
-    !!
-    !! packing buffer: i-direction
-    !!
-    !$omp parallel do private(j,k,ptr)
-    do j=jbeg, jend
-#ifdef _ES
-      !NEC$ ivdep
-      !NEC$ nosync
-#endif
-      do k=kbeg, kend
-        ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
+    call mpi_irecv(rbuf_ip, 5*isize, mpi_precision, itbl(idx+1,idy), 1, mpi_comm_world, req_i(1), err)
+    call mpi_irecv(rbuf_im, 4*isize, mpi_precision, itbl(idx-1,idy), 2, mpi_comm_world, req_i(2), err)
+    call mpi_irecv(rbuf_jp, 5*jsize, mpi_precision, itbl(idx,idy+1), 3, mpi_comm_world, req_j(1), err)
+    call mpi_irecv(rbuf_jm, 4*jsize, mpi_precision, itbl(idx,idy-1), 4, mpi_comm_world, req_j(2), err)
 
-        sbuf_ip(        ptr:        ptr+Nsl-1) = Vx(k,iend-Nsl+1:iend,j)
-        sbuf_ip(  isize+ptr:  isize+ptr+Nsl-1) = Vy(k,iend-Nsl+1:iend,j)
-        sbuf_ip(2*isize+ptr:2*isize+ptr+Nsl-1) = Vz(k,iend-Nsl+1:iend,j)
+    sbuf_ip(        1:2*isize) = reshape(Vx(1:nz,iend-1:iend,jbeg:jend), (/2*isize/))
+    sbuf_ip(2*isize+1:3*isize) = reshape(Vy(1:nz,iend  :iend,jbeg:jend), (/  isize/))
+    sbuf_ip(3*isize+1:4*isize) = reshape(Vz(1:nz,iend  :iend,jbeg:jend), (/  isize/))
 
-        sbuf_im(        ptr:        ptr+Nsl-1) = Vx(k,ibeg:ibeg+Nsl-1,j)
-        sbuf_im(  isize+ptr:  isize+ptr+Nsl-1) = Vy(k,ibeg:ibeg+Nsl-1,j)
-        sbuf_im(2*isize+ptr:2*isize+ptr+Nsl-1) = Vz(k,ibeg:ibeg+Nsl-1,j)
+    sbuf_im(        1:  isize) = reshape(Vx(1:nz,ibeg:ibeg  ,jbeg:jend), (/  isize/))
+    sbuf_im(  isize+1:3*isize) = reshape(Vy(1:nz,ibeg:ibeg+1,jbeg:jend), (/2*isize/))
+    sbuf_im(3*isize+1:5*isize) = reshape(Vz(1:nz,ibeg:ibeg+1,jbeg:jend), (/2*isize/))
 
-      end do
-    end do
-    !$omp end parallel do
+    call mpi_isend(sbuf_ip, 4*isize, mpi_precision, itbl(idx+1,idy), 2, mpi_comm_world, req_i(3), err)
+    call mpi_isend(sbuf_im, 5*isize, mpi_precision, itbl(idx-1,idy), 1, mpi_comm_world, req_i(4), err)
 
-    !!
-    !! Issue send & receive orders: i-direction
-    !!
-    call mpi_isend( sbuf_ip, s_isize, mpi_precision, itbl(idx+1,idy), 1, mpi_comm_world, ireq1(1), ierr )
-    call mpi_isend( sbuf_im, s_isize, mpi_precision, itbl(idx-1,idy), 2, mpi_comm_world, ireq1(2), ierr )
-    call mpi_irecv( rbuf_ip, s_isize, mpi_precision, itbl(idx+1,idy), 2, mpi_comm_world, ireq1(3), ierr )
-    call mpi_irecv( rbuf_im, s_isize, mpi_precision, itbl(idx-1,idy), 1, mpi_comm_world, ireq1(4), ierr )
+    sbuf_jp(        1:  jsize) = reshape(Vx(1:nz,ibeg:iend,jend  :jend), (/  jsize/))
+    sbuf_jp(  jsize+1:3*jsize) = reshape(Vy(1:nz,ibeg:iend,jend-1:jend), (/2*jsize/))
+    sbuf_jp(3*jsize+1:4*jsize) = reshape(Vz(1:nz,ibeg:iend,jend  :jend), (/  jsize/))
 
+    sbuf_jm(        1:2*jsize) = reshape(Vx(1:nz,ibeg:iend,jbeg:jbeg+1), (/2*jsize/))
+    sbuf_jm(2*jsize+1:3*jsize) = reshape(Vy(1:nz,ibeg:iend,jbeg:jbeg  ), (/  jsize/))
+    sbuf_jm(3*jsize+1:5*jsize) = reshape(Vz(1:nz,ibeg:iend,jbeg:jbeg+1), (/2*jsize/))
 
-    !!
-    !! packing buffer: j-direction
-    !!
-    !$omp parallel do private(ptr)
-    do i=ibeg,iend
-#ifdef _ES
-      !NEC$ ivdep
-      !NEC$ nosync
-#endif
-      do k=kbeg,kend
-        ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
+    call mpi_isend(sbuf_jp, 4*jsize, mpi_precision, itbl(idx,idy+1), 4, mpi_comm_world, req_j(3), err)
+    call mpi_isend(sbuf_jm, 5*jsize, mpi_precision, itbl(idx,idy-1), 3, mpi_comm_world, req_j(4), err)
 
-        sbuf_jp(        ptr:        ptr+Nsl-1) = Vx(k,i,jend-Nsl+1:jend)
-        sbuf_jp(  jsize+ptr:  jsize+ptr+Nsl-1) = Vy(k,i,jend-Nsl+1:jend)
-        sbuf_jp(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Vz(k,i,jend-Nsl+1:jend)
+    call mpi_waitall( 4, req_i, istatus, err )
 
-        sbuf_jm(        ptr:        ptr+Nsl-1) = Vx(k,i,jbeg:jbeg+Nsl-1)
-        sbuf_jm(  jsize+ptr:  jsize+ptr+Nsl-1) = Vy(k,i,jbeg:jbeg+Nsl-1)
-        sbuf_jm(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Vz(k,i,jbeg:jbeg+Nsl-1)
+    Vx(1:nz,ibeg-2:ibeg-1,jbeg:jend) = reshape(rbuf_im(        1:2*isize), (/nz,2,nyp/))
+    Vy(1:nz,ibeg-1:ibeg-1,jbeg:jend) = reshape(rbuf_im(2*isize+1:3*isize), (/nz,1,nyp/))
+    Vz(1:nz,ibeg-1:ibeg-1,jbeg:jend) = reshape(rbuf_im(3*isize+1:4*isize), (/nz,1,nyp/))
 
-      end do
-    end do
-    !$omp end parallel do
+    Vx(1:nz,iend+1:iend+1,jbeg:jend) = reshape(rbuf_ip(        1:  isize), (/nz,1,nyp/))
+    Vy(1:nz,iend+1:iend+2,jbeg:jend) = reshape(rbuf_ip(  isize+1:3*isize), (/nz,2,nyp/))
+    Vz(1:nz,iend+1:iend+2,jbeg:jend) = reshape(rbuf_ip(3*isize+1:5*isize), (/nz,2,nyp/))
 
-    !!
-    !! Issue send & receive orders: j-direction
-    !!
-    call mpi_isend( sbuf_jp, s_jsize, mpi_precision, itbl(idx,idy+1), 3, mpi_comm_world, ireq2(1), ierr )
-    call mpi_isend( sbuf_jm, s_jsize, mpi_precision, itbl(idx,idy-1), 4, mpi_comm_world, ireq2(2), ierr )
-    call mpi_irecv( rbuf_jp, s_jsize, mpi_precision, itbl(idx,idy+1), 4, mpi_comm_world, ireq2(3), ierr )
-    call mpi_irecv( rbuf_jm, s_jsize, mpi_precision, itbl(idx,idy-1), 3, mpi_comm_world, ireq2(4), ierr )
+    call mpi_waitall( 4, req_j, istatus, err )
 
+    Vx(1:nz,ibeg:iend,jbeg-1:jbeg-1) = reshape(rbuf_jm(        1:  jsize), (/nz,nxp,1/))
+    Vy(1:nz,ibeg:iend,jbeg-2:jbeg-1) = reshape(rbuf_jm(  jsize+1:3*jsize), (/nz,nxp,2/))
+    Vz(1:nz,ibeg:iend,jbeg-1:jbeg-1) = reshape(rbuf_jm(3*jsize+1:4*jsize), (/nz,nxp,1/))
 
-    !! Terminate mpi data communication
-    call mpi_waitall( 4, ireq1, istatus, ierr )
-
-    !!
-    !! restoring the data: i-direction
-    !!
-    !$omp parallel do private(ptr,i,j,k)
-    do j=jbeg, jend
-      do k=kbeg, kend
-
-        ptr = ( (k-kbeg) + (j-jbeg)*nz ) * Nsl + 1
-
-        do i=1,Nsl
-          Vx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
-          Vy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
-          Vz(k,iend+i,j) = rbuf_ip(2*isize+ptr+i-1)
-
-          Vx(k,ibeg-Nsl+i-1,j) = rbuf_im(        ptr+i-1)
-          Vy(k,ibeg-Nsl+i-1,j) = rbuf_im(  isize+ptr+i-1 )
-          Vz(k,ibeg-Nsl+i-1,j) = rbuf_im(2*isize+ptr+i-1 )
-        end do
-
-      end do
-    end do
-    !$omp end parallel do
-
-    !! Terminate mpi data communication
-    call mpi_waitall( 4, ireq2, istatus, ierr )
-
-    !!
-    !! restoring the data: j-direction
-    !!
-    !$omp parallel do private(ptr,i,j,k)
-    do i=ibeg,iend
-      do k=kbeg,kend
-
-        ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
-
-        do j=1, Nsl
-          Vx(k,i,jend+j) = rbuf_jp(ptr+j-1)
-          Vy(k,i,jend+j) = rbuf_jp(jsize+ptr+j-1)
-          Vz(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
-
-          Vx(k,i,jbeg-Nsl+j-1) = rbuf_jm(ptr+j-1)
-          Vy(k,i,jbeg-Nsl+j-1) = rbuf_jm(jsize+ptr+j-1)
-          Vz(k,i,jbeg-Nsl+j-1) = rbuf_jm(2*jsize+ptr+j-1)
-        end do
-
-      end do
-    end do
-    !$omp end parallel do
+    Vx(1:nz,ibeg:iend,jend+1:jend+2) = reshape(rbuf_jp(        1:2*jsize), (/nz,nxp,2/))
+    Vy(1:nz,ibeg:iend,jend+1:jend+1) = reshape(rbuf_jp(2*jsize+1:3*jsize), (/nz,nxp,1/))
+    Vz(1:nz,ibeg:iend,jend+1:jend+2) = reshape(rbuf_jp(3*jsize+1:5*jsize), (/nz,nxp,2/))
 
     call pwatch__off( "global__comm_vel" )
 
@@ -639,142 +539,67 @@ contains
   !!
   subroutine global__comm_stress()
 
-    integer :: isize, jsize, s_isize, s_jsize
-    integer :: ierr
+    integer :: isize, jsize
+    integer :: err
     integer :: istatus( mpi_status_size, 4 )
-    integer :: ireq1(4), ireq2(4)
-    integer :: i, j, k, ptr
+    integer :: req_i(4), req_j(4)
+    !! ----
 
     if( myid >= nproc ) return
 
     call pwatch__on( "global__comm_stress" )
 
     !! unit buffer size
-    isize = nyp * Nsl * nz
-    jsize = nxp * Nsl * nz
-    s_isize = 3 * isize   ! send/recv buffer size
-    s_jsize = 3 * jsize   ! send/recv buffer size
+    isize = nyp *  nz
+    jsize = nxp *  nz
 
-    !!
-    !! packing buffer: i-direction ( Sxx, Sxy, Sxz )
-    !!
-    !$omp parallel do private(i,k,ptr)
-    do j=jbeg, jend
-#ifdef _ES
-      !NEC$ ivdep
-      !NEC$ nosync
-#endif
-      do k=kbeg, kend
-        ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
+    call mpi_irecv( rbuf_ip, 4*isize, mpi_precision, itbl(idx+1,idy), 5, mpi_comm_world, req_i(1), err )
+    call mpi_irecv( rbuf_im, 5*isize, mpi_precision, itbl(idx-1,idy), 6, mpi_comm_world, req_i(2), err )
+    call mpi_irecv( rbuf_jp, 4*jsize, mpi_precision, itbl(idx,idy+1), 7, mpi_comm_world, req_j(1), err )
+    call mpi_irecv( rbuf_jm, 5*jsize, mpi_precision, itbl(idx,idy-1), 8, mpi_comm_world, req_j(2), err )
 
-        sbuf_ip(        ptr:        ptr+Nsl-1) = Sxx(k,iend-Nsl+1:iend,j)
-        sbuf_ip(  isize+ptr:  isize+ptr+Nsl-1) = Sxy(k,iend-Nsl+1:iend,j)
-        sbuf_ip(2*isize+ptr:2*isize+ptr+Nsl-1) = Sxz(k,iend-Nsl+1:iend,j)
+    sbuf_ip(        1:  isize) = reshape(Sxx(1:nz,iend  :iend,jbeg:jend), (/  isize/))
+    sbuf_ip(  isize+1:3*isize) = reshape(Sxy(1:nz,iend-1:iend,jbeg:jend), (/2*isize/))
+    sbuf_ip(3*isize+1:5*isize) = reshape(Sxz(1:nz,iend-1:iend,jbeg:jend), (/2*isize/))
 
-        sbuf_im(        ptr:        ptr+Nsl-1) = Sxx(k,ibeg:ibeg+Nsl-1,j)
-        sbuf_im(  isize+ptr:  isize+ptr+Nsl-1) = Sxy(k,ibeg:ibeg+Nsl-1,j)
-        sbuf_im(2*isize+ptr:2*isize+ptr+Nsl-1) = Sxz(k,ibeg:ibeg+Nsl-1,j)
+    sbuf_im(        1:2*isize) = reshape(Sxx(1:nz,ibeg:ibeg+1,jbeg:jend), (/2*isize/))
+    sbuf_im(2*isize+1:3*isize) = reshape(Sxy(1:nz,ibeg:ibeg  ,jbeg:jend), (/  isize/))
+    sbuf_im(3*isize+1:4*isize) = reshape(Sxz(1:nz,ibeg:ibeg  ,jbeg:jend), (/  isize/))
 
-      end do
-    end do
-    !$omp end parallel do
+    call mpi_isend( sbuf_ip, 5*isize, mpi_precision, itbl(idx+1,idy), 6, mpi_comm_world, req_i(3), err )
+    call mpi_isend( sbuf_im, 4*isize, mpi_precision, itbl(idx-1,idy), 5, mpi_comm_world, req_i(4), err )
 
-    !!
-    !! Issue send & receive orders; i-direction
-    !!
-    !! i-direction
-    call mpi_isend( sbuf_ip, s_isize, mpi_precision, itbl(idx+1,idy), 5, mpi_comm_world, ireq1(1), ierr )
-    call mpi_isend( sbuf_im, s_isize, mpi_precision, itbl(idx-1,idy), 6, mpi_comm_world, ireq1(2), ierr )
-    call mpi_irecv( rbuf_ip, s_isize, mpi_precision, itbl(idx+1,idy), 6, mpi_comm_world, ireq1(3), ierr )
-    call mpi_irecv( rbuf_im, s_isize, mpi_precision, itbl(idx-1,idy), 5, mpi_comm_world, ireq1(4), ierr )
+    sbuf_jp(        1:  jsize) = reshape(Syy(1:nz,ibeg:iend,jend  :jend), (/  jsize/))
+    sbuf_jp(  jsize+1:3*jsize) = reshape(Sxy(1:nz,ibeg:iend,jend-1:jend), (/2*jsize/))
+    sbuf_jp(3*jsize+1:5*jsize) = reshape(Syz(1:nz,ibeg:iend,jend-1:jend), (/2*jsize/))
 
-    !!
-    !! packing buffer: j-direction ( Syy, Syz, Sxy )
-    !!
-    !$omp parallel do private(ptr)
-    do i=ibeg,iend
-#ifdef _ES
-      !NEC$ ivdep
-      !NEC$ nosync
-#endif
-      do k=kbeg,kend
-        ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
+    sbuf_jm(        1:2*jsize) = reshape(Syy(1:nz,ibeg:iend,jbeg:jbeg+1), (/2*jsize/))
+    sbuf_jm(2*jsize+1:3*jsize) = reshape(Sxy(1:nz,ibeg:iend,jbeg:jbeg  ), (/  jsize/))
+    sbuf_jm(3*jsize+1:4*jsize) = reshape(Syz(1:nz,ibeg:iend,jbeg:jbeg  ), (/  jsize/))
 
-        sbuf_jp(        ptr:        ptr+Nsl-1) = Syy(k,i,jend-Nsl+1:jend)
-        sbuf_jp(  jsize+ptr:  jsize+ptr+Nsl-1) = Syz(k,i,jend-Nsl+1:jend)
-        sbuf_jp(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Sxy(k,i,jend-Nsl+1:jend)
-
-        sbuf_jm(        ptr:        ptr+Nsl-1) = Syy(k,i,jbeg:jbeg+Nsl-1)
-        sbuf_jm(  jsize+ptr:  jsize+ptr+Nsl-1) = Syz(k,i,jbeg:jbeg+Nsl-1)
-        sbuf_jm(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Sxy(k,i,jbeg:jbeg+Nsl-1)
-
-      end do
-    end do
-    !$omp end parallel do
-
-
-    !!
-    !! Issue send & receive orders; j-direction
-    !!
-    call mpi_isend( sbuf_jp, s_jsize, mpi_precision, itbl(idx,idy+1), 7, mpi_comm_world, ireq2(1), ierr )
-    call mpi_isend( sbuf_jm, s_jsize, mpi_precision, itbl(idx,idy-1), 8, mpi_comm_world, ireq2(2), ierr )
-    call mpi_irecv( rbuf_jp, s_jsize, mpi_precision, itbl(idx,idy+1), 8, mpi_comm_world, ireq2(3), ierr )
-    call mpi_irecv( rbuf_jm, s_jsize, mpi_precision, itbl(idx,idy-1), 7, mpi_comm_world, ireq2(4), ierr )
-
+    call mpi_isend( sbuf_jp, 5*jsize, mpi_precision, itbl(idx,idy+1), 8, mpi_comm_world, req_j(3), err )
+    call mpi_isend( sbuf_jm, 4*jsize, mpi_precision, itbl(idx,idy-1), 7, mpi_comm_world, req_j(4), err )
 
     !! Terminate mpi data communication
-    call mpi_waitall( 4, ireq1, istatus, ierr )
+    call mpi_waitall( 4, req_i, istatus, err )
 
-    !!
-    !! restore the data: i-direction
-    !!
-    !$omp parallel do private(ptr,i,j,k)
-    do j=jbeg, jend
-      do k=kbeg, kend
+    Sxx(1:nz,ibeg-1:ibeg-1,jbeg:jend) = reshape(rbuf_im(        1:  isize), (/nz,1,nyp/))
+    Sxy(1:nz,ibeg-2:ibeg-1,jbeg:jend) = reshape(rbuf_im(  isize+1:3*isize), (/nz,2,nyp/))
+    Sxz(1:nz,ibeg-2:ibeg-1,jbeg:jend) = reshape(rbuf_im(3*isize+1:5*isize), (/nz,2,nyp/))
 
-        ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
+    Sxx(1:nz,iend+1:iend+2,jbeg:jend) = reshape(rbuf_ip(        1:2*isize), (/nz,2,nyp/))
+    Sxy(1:nz,iend+1:iend+1,jbeg:jend) = reshape(rbuf_ip(2*isize+1:3*isize), (/nz,1,nyp/))
+    Sxz(1:nz,iend+1:iend+1,jbeg:jend) = reshape(rbuf_ip(3*isize+1:4*isize), (/nz,1,nyp/))
 
-        do i=1, Nsl
+    call mpi_waitall( 4, req_j, istatus, err )
 
-          Sxx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
-          Sxy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
-          Sxz(k,iend+i,j) = rbuf_ip(2*isize+ptr+i-1)
+    Syy(1:nz,ibeg:iend,jbeg-1:jbeg-1) = reshape(rbuf_jm(        1:  jsize), (/nz,nxp,1/))
+    Sxy(1:nz,ibeg:iend,jbeg-2:jbeg-1) = reshape(rbuf_jm(  jsize+1:3*jsize), (/nz,nxp,2/))  
+    Syz(1:nz,ibeg:iend,jbeg-2:jbeg-1) = reshape(rbuf_jm(3*jsize+1:5*jsize), (/nz,nxp,2/))
 
-          Sxx(k,ibeg-Nsl+i-1,j) = rbuf_im(       ptr+i-1)
-          Sxy(k,ibeg-Nsl+i-1,j) = rbuf_im(  isize+ptr+i-1)
-          Sxz(k,ibeg-Nsl+i-1,j) = rbuf_im(2*isize+ptr+i-1)
-        end do
-
-      end do
-    end do
-    !$omp end parallel do
-
-
-    !! Terminate mpi data communication
-    call mpi_waitall( 4, ireq2, istatus, ierr )
-
-    !!
-    !! restore the data: j-direction
-    !!
-    !$omp parallel do private(ptr,i,j,k)
-    do i=ibeg,iend
-      do k=kbeg,kend
-
-        ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
-
-        do j=1, Nsl
-          Syy(k,i,jend+j) = rbuf_jp(        ptr+j-1)
-          Syz(k,i,jend+j) = rbuf_jp(  jsize+ptr+j-1)
-          Sxy(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
-
-          Syy(k,i,jbeg-Nsl+j-1) = rbuf_jm(        ptr+j-1)
-          Syz(k,i,jbeg-Nsl+j-1) = rbuf_jm(  jsize+ptr+j-1)
-          Sxy(k,i,jbeg-Nsl+j-1) = rbuf_jm(2*jsize+ptr+j-1)
-        end do
-
-      end do
-    end do
-    !$omp end parallel do
+    Syy(1:nz,ibeg:iend,jend+1:jend+2) = reshape(rbuf_jp(        1:2*jsize), (/nz,nxp,2/))
+    Sxy(1:nz,ibeg:iend,jend+1:jend+1) = reshape(rbuf_jp(2*jsize+1:3*jsize), (/nz,nxp,1/))
+    Syz(1:nz,ibeg:iend,jend+1:jend+1) = reshape(rbuf_jp(3*jsize+1:4*jsize), (/nz,nxp,1/))
 
     call pwatch__off( "global__comm_stress" )
 
@@ -857,10 +682,10 @@ contains
   subroutine global__restart( io )
 
     integer, intent(in) :: io
-    integer :: nl3
     read(io) title(1:80)
     read(io) exedate
     read(io) mpi_precision
+    !! ----
 
     read(io) nproc_x
     read(io) nproc_y
@@ -868,12 +693,11 @@ contains
     read(io) nx, ny, nz
     read(io) nxp,nyp
 
-    nl3 = (Nl/2)*3
     allocate( itbl(-1:nproc_x, -1:nproc_y) )
-    allocate( sbuf_ip( nyp*nz*nl3 ), sbuf_im( nyp*nz*nl3 ) )
-    allocate( rbuf_ip( nyp*nz*nl3 ), rbuf_im( nyp*nz*nl3 ) )
-    allocate( sbuf_jp( nxp*nz*nl3 ), sbuf_jm( nxp*nz*nl3 ) )
-    allocate( rbuf_jp( nxp*nz*nl3 ), rbuf_jm( nxp*nz*nl3 ) )
+    allocate( sbuf_ip(5 * nyp * nz), sbuf_im(5 * nyp * nz) )
+    allocate( rbuf_ip(5 * nyp * nz), rbuf_im(5 * nyp * nz) )
+    allocate( sbuf_jp(5 * nxp * nz), sbuf_jm(5 * nxp * nz) )
+    allocate( rbuf_jp(5 * nxp * nz), rbuf_jm(5 * nxp * nz) )
     call set_mpi_table
 
     read(io) nt
