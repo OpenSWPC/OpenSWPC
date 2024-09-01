@@ -186,7 +186,7 @@ ifeq ($(arch),bdec-o)
   FFLAGS  = -O3 -Keval -Kfp_contract -Kfp_relaxed -Kfz -Kilfunc -Kmfunc -Komitfp -Kopenmp -Kparallel -Ksimd=2 -Kocl -Kassume=memory_bandwidth -Koptmsg=guide -Nlst=t -D_FX 
   NCFLAG  = -D_NETCDF 
   NCLIB = 
-  NCINC = -I/work/opt/local/aarch64/apps/fj/1.2.31/netcdf-fortran/4.5.3/include/
+  NCINC = 
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 
 endif
 
