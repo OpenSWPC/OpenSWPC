@@ -28,7 +28,7 @@ ifeq ($(arch),mac-intel)
 
   FC      = ifort
   FFLAGS  = -O3 -xHOST \
-            -warn all -heap-arrays -static-intel -I../include \
+            -warn all -heap-arrays -static-intel  \
 		    -D_INFO
   NCFLAG  = -D_NETCDF
   NCLIB   = -L$(HOME)/local/lib
@@ -37,7 +37,7 @@ ifeq ($(arch),mac-intel)
 
   ifeq ($(debug),true)
     FFLAGS  = -CB -traceback -Wl,-no_pie -heap-arrays \
-			  -static-intel -I../include -D_INFO -D_DEBUG
+			  -static-intel  -D_INFO -D_DEBUG
   endif
 
 endif
@@ -48,7 +48,7 @@ endif
 ifeq ($(arch),mac-gfortran)
   LOCAL   = /usr/local
   FC      = gfortran
-  FFLAGS  = -O2 -ffast-math -D_INFO -I../include
+  FFLAGS  = -O2 -ffast-math -D_INFO 
   NCFLAG  = -D_NETCDF
   NCLIB   = -L$(LOCAL)/lib
   NCINC   = -I$(LOCAL)/include
@@ -57,7 +57,7 @@ ifeq ($(arch),mac-gfortran)
   ifeq ($(debug),true)
     FFLAGS  = -Wall -pedantic -fbounds-check -O -Wuninitialized \
 	          -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 \
-	          -D_INFO -D_DEBUG -I../include
+	          -D_INFO -D_DEBUG 
   endif
 
 endif
@@ -67,7 +67,7 @@ endif
 ##
 ifeq ($(arch),eic)
   FC      = module purge; module load intel mpt lib/NetCDF lib/HDF5; ifort
-  FFLAGS  = -xCORE-AVX512 -O3 -I../include -D_INFO 
+  FFLAGS  = -xCORE-AVX512 -O3  -D_INFO 
   NCFLAG  = -D_NETCDF
   NCLIB   = 
   NCINC   = 
@@ -79,7 +79,7 @@ endif
 ##
 ifeq ($(arch),fx)
   FC      = gfortran
-  FFLAGS  = -O3 -I../include
+  FFLAGS  = -O3 
   NCFLAG  = -D_NETCDF
   NCLIB   = -L$(HOME)/local/lib
   NCINC   = -I$(HOME)/local/include
@@ -92,7 +92,7 @@ endif
 ifeq ($(arch),es3)
   FC      = ifort
   FFLAGS  = -O3 -xHOST \
-	    -warn all -heap-arrays -static-intel -I../include \
+	    -warn all -heap-arrays -static-intel  \
 	    -D_INFO 
   NCFLAG  = -D_NETCDF
   NCLIB   = -L/usr/local/lib
@@ -106,7 +106,7 @@ endif
 ##
 ifeq ($(arch),es4)
   FC      = module purge; module load NetCDF4/all; gfortran
-  FFLAGS  = -O2 -ffast-math -D_INFO -I ../include
+  FFLAGS  = -O2 -ffast-math -D_INFO 
   NCFLAG  = -D_NETCDF
   NCLIB   = 
   NCINC   = -I /opt/share/NetCDF4/netcdf-fortran/4.5.2/include/
@@ -119,7 +119,7 @@ endif
 ifeq ($(arch),ubuntu-gfortran)
 
   FC      = gfortran
-  FFLAGS  = -O2 -ffast-math -D_INFO -I../include
+  FFLAGS  = -O2 -ffast-math -D_INFO 
   NCFLAG  = -D_NETCDF
   NCLIB   = -L/usr/lib/x86_64-linux-gnu
   NCINC   = -I/usr/include
@@ -128,7 +128,7 @@ ifeq ($(arch),ubuntu-gfortran)
   ifeq ($(debug),true)
     FFLAGS  = -Wall -pedantic -fbounds-check -O -Wuninitialized \
 	          -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 \
-	          -D_INFO -D_DEBUG -I../include
+	          -D_INFO -D_DEBUG 
   endif
 
 endif
@@ -139,7 +139,7 @@ endif
 ifeq ($(arch),oak)
   FC      = module load netcdf netcdf-fortran hdf5; ifort
   FFLAGS  =  -D_INFO -D_ASSERT -O2 -xHOST \
-             -warn all -heap-arrays -I../include
+             -warn all -heap-arrays 
   NCFLAG  = -D_NETCDF
   NCLIB =
   NCINC =
@@ -149,7 +149,7 @@ endif
 ifeq ($(arch),ofp)
   FC      = module load netcdf netcdf-fortran hdf5; ifort
   FFLAGS  =  -D_INFO -D_ASSERT -O2 -xHOST \
-             -warn all -heap-arrays -I../include
+             -warn all -heap-arrays 
   NCFLAG  = -D_NETCDF
   NCLIB =
   NCINC =
@@ -163,7 +163,7 @@ endif
 ifeq ($(arch),obcx)
   FC      = module load netcdf netcdf-fortran hdf5; ifort
   FFLAGS  =  -D_INFO -D_ASSERT -O2 -xHOST \
-             -warn all -heap-arrays -I../include
+             -warn all -heap-arrays 
   NCFLAG  = -D_NETCDF
   NCLIB =
   NCINC =
@@ -175,7 +175,7 @@ endif
 ##
 ifeq ($(arch),bdec-o)
   FC      = module purge; module load intel netcdf netcdf-fortran hdf5; ifort
-  FFLAGS  =  -D_INFO -D_ASSERT -O2 -xHOST -warn all -heap-arrays -I../include
+  FFLAGS  =  -D_INFO -D_ASSERT -O2 -xHOST -warn all -heap-arrays 
   NCFLAG  = -D_NETCDF
   NCLIB =
   NCINC =
@@ -189,7 +189,7 @@ endif
 ifeq ($(arch),mac-m1)
 
   FC      = gfortran
-  FFLAGS  = -O2 -ffast-math -D_INFO -I../include
+  FFLAGS  = -O2 -ffast-math -D_INFO 
   NCFLAG  = -D_NETCDF
   NCLIB   = -L/opt/homebrew/lib
   NCINC   = -I/opt/homebrew/include
@@ -198,7 +198,7 @@ ifeq ($(arch),mac-m1)
   ifeq ($(debug),true)
     FFLAGS  = -Wall -pedantic -fbounds-check -O -Wuninitialized \
 	          -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 \
-	          -D_INFO -D_DEBUG -I../include
+	          -D_INFO -D_DEBUG 
   endif
 
 endif
