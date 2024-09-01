@@ -6,7 +6,7 @@
 !!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
-! #include "m_debug.h"
+#include "../include/m_debug.h"
 module m_global
 
   !! modules
@@ -401,34 +401,28 @@ contains
 
     if( myid >= nproc_x ) return
 
-
     call pwatch__on( "global__comm_vel" )
 
-    sbuf_ip(     1:  nz) = Vx(1:nz,iend-1)
-    sbuf_ip(  nz+1:2*nz) = Vx(1:nz,iend  )
-    sbuf_ip(2*nz+1:3*nz) = Vz(1:nz,iend  )
+    call mpi_irecv(rbuf_ip, 3*nz, mpi_precision, itbl(idx+1), 1, mpi_comm_world, req(1), err)
+    call mpi_irecv(rbuf_im, 3*nz, mpi_precision, itbl(idx-1), 2, mpi_comm_world, req(2), err)
 
-    sbuf_im(     1:  nz) = Vx(1:nz,ibeg  )
-    sbuf_im(  nz+1:2*nz) = Vz(1:nz,ibeg  )
-    sbuf_im(2*nz+1:3*nz) = Vz(1:nz,ibeg+1)
+    sbuf_ip(     1:2*nz) = reshape(Vx(1:nz,iend-1:iend), (/2*nz/))
+    sbuf_ip(2*nz+1:3*nz) = reshape(Vz(1:nz,iend  :iend), (/  nz/))
+    call mpi_isend(sbuf_ip, 3*nz, mpi_precision, itbl(idx+1), 2, mpi_comm_world, req(3), err)
 
-    !! send & receive orders
-    call mpi_irecv( rbuf_ip, 3*nz, mpi_precision, itbl(idx+1), 1, mpi_comm_world, req(1), err )
-    call mpi_irecv( rbuf_im, 3*nz, mpi_precision, itbl(idx-1), 2, mpi_comm_world, req(2), err )
-    call mpi_isend( sbuf_ip, 3*nz, mpi_precision, itbl(idx+1), 2, mpi_comm_world, req(3), err )
-    call mpi_isend( sbuf_im, 3*nz, mpi_precision, itbl(idx-1), 1, mpi_comm_world, req(4), err )
+    sbuf_im(     1:  nz) = reshape(Vx(1:nz,ibeg:ibeg   ), (/  nz/))
+    sbuf_im(  nz+1:3*nz) = reshape(Vz(1:nz,ibeg:ibeg+1 ), (/2*nz/))
+    call mpi_isend(sbuf_im, 3*nz, mpi_precision, itbl(idx-1), 1, mpi_comm_world, req(4), err)
 
     !! Terminate mpi data communication
     call mpi_waitall( 4, req, istatus, err )
 
     !! restore the data
-    Vx(1:nz,ibeg-2) = rbuf_im(     1:  nz)
-    Vx(1:nz,ibeg-1) = rbuf_im(  nz+1:2*nz)
-    Vz(1:nz,ibeg-1) = rbuf_im(2*nz+1:3*nz)
-    Vx(1:nz,iend+1) = rbuf_ip(     1:  nz)
-    Vz(1:nz,iend+1) = rbuf_ip(  nz+1:2*nz)
-    Vz(1:nz,iend+2) = rbuf_ip(2*nz+1:3*nz)
-
+    Vx(1:nz,ibeg-2:ibeg-1) = reshape(rbuf_im(     1:2*nz), (/nz,2/))
+    Vz(1:nz,ibeg-1:ibeg-1) = reshape(rbuf_im(2*nz+1:3*nz), (/nz,1/))
+    Vx(1:nz,iend+1:iend+1) = reshape(rbuf_ip(     1:  nz), (/nz,1/))
+    Vz(1:nz,iend+1:iend+2) = reshape(rbuf_ip(  nz+1:3*nz), (/nz,2/))
+ 
     call pwatch__off( "global__comm_vel" )
 
   end subroutine global__comm_vel
@@ -450,30 +444,24 @@ contains
 
     call pwatch__on( "global__comm_stress" )
 
-    !! pucking buffer
-    sbuf_ip(     1:  nz) = Sxx(1:nz,iend  )
-    sbuf_ip(  nz+1:2*nz) = Sxz(1:nz,iend-1)
-    sbuf_ip(2*nz+1:3*nz) = Sxz(1:nz,iend  )
-    sbuf_im(     1:  nz) = Sxx(1:nz,ibeg  )
-    sbuf_im(  nz+1:2*nz) = Sxx(1:nz,ibeg+1)
-    sbuf_im(2*nz+1:3*nz) = Sxz(1:nz,ibeg  )
-
-    !! Issue send & receive orders
     call mpi_irecv( rbuf_ip, 3*nz, mpi_precision, itbl(idx+1), 3, mpi_comm_world, req(1), err )
     call mpi_irecv( rbuf_im, 3*nz, mpi_precision, itbl(idx-1), 4, mpi_comm_world, req(2), err )
+
+    sbuf_ip(     1:  nz) = reshape(Sxx(1:nz,iend  :iend), (/  nz/))
+    sbuf_ip(  nz+1:3*nz) = reshape(Sxz(1:nz,iend-1:iend), (/2*nz/))
     call mpi_isend( sbuf_ip, 3*nz, mpi_precision, itbl(idx+1), 4, mpi_comm_world, req(3), err )
+
+    sbuf_im(     1:2*nz) = reshape(Sxx(1:nz,ibeg:ibeg+1), (/2*nz/))
+    sbuf_im(2*nz+1:3*nz) = reshape(Sxz(1:nz,ibeg:ibeg  ), (/  nz/))
     call mpi_isend( sbuf_im, 3*nz, mpi_precision, itbl(idx-1), 3, mpi_comm_world, req(4), err )
 
-    !! Terminate mpi data communication
     call mpi_waitall( 4, req, istatus, err )
 
     !! Resore the data
-    Sxx(1:nz,ibeg-1) = rbuf_im(     1:  nz)
-    Sxz(1:nz,ibeg-2) = rbuf_im(  nz+1:2*nz)
-    Sxz(1:nz,ibeg-1) = rbuf_im(2*nz+1:3*nz)
-    Sxx(1:nz,iend+1) = rbuf_ip(     1:  nz)
-    Sxx(1:nz,iend+2) = rbuf_ip(  nz+1:2*nz)
-    Sxz(1:nz,iend+1) = rbuf_ip(2*nz+1:3*nz)
+    Sxx(1:nz,ibeg-1:ibeg-1) = reshape(rbuf_im(     1:  nz), (/nz,1/))
+    Sxz(1:nz,ibeg-2:ibeg-1) = reshape(rbuf_im(  nz+1:3*nz), (/nz,2/))
+    Sxx(1:nz,iend+1:iend+2) = reshape(rbuf_ip(     1:2*nz), (/nz,2/))
+    Sxz(1:nz,iend+1:iend+1) = reshape(rbuf_ip(2*nz+1:3*nz), (/nz,1/))
 
     call pwatch__off( "global__comm_stress" )
 

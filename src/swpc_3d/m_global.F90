@@ -6,7 +6,7 @@
 !!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
-!#include "m_debug.h"
+#include "../include/m_debug.h"
 module m_global
 
   !! modules
@@ -488,23 +488,21 @@ contains
     sbuf_ip(        1:2*isize) = reshape(Vx(1:nz,iend-1:iend,jbeg:jend), (/2*isize/))
     sbuf_ip(2*isize+1:3*isize) = reshape(Vy(1:nz,iend  :iend,jbeg:jend), (/  isize/))
     sbuf_ip(3*isize+1:4*isize) = reshape(Vz(1:nz,iend  :iend,jbeg:jend), (/  isize/))
+    call mpi_isend(sbuf_ip, 4*isize, mpi_precision, itbl(idx+1,idy), 2, mpi_comm_world, req_i(3), err)
 
     sbuf_im(        1:  isize) = reshape(Vx(1:nz,ibeg:ibeg  ,jbeg:jend), (/  isize/))
     sbuf_im(  isize+1:3*isize) = reshape(Vy(1:nz,ibeg:ibeg+1,jbeg:jend), (/2*isize/))
     sbuf_im(3*isize+1:5*isize) = reshape(Vz(1:nz,ibeg:ibeg+1,jbeg:jend), (/2*isize/))
-
-    call mpi_isend(sbuf_ip, 4*isize, mpi_precision, itbl(idx+1,idy), 2, mpi_comm_world, req_i(3), err)
     call mpi_isend(sbuf_im, 5*isize, mpi_precision, itbl(idx-1,idy), 1, mpi_comm_world, req_i(4), err)
 
     sbuf_jp(        1:  jsize) = reshape(Vx(1:nz,ibeg:iend,jend  :jend), (/  jsize/))
     sbuf_jp(  jsize+1:3*jsize) = reshape(Vy(1:nz,ibeg:iend,jend-1:jend), (/2*jsize/))
     sbuf_jp(3*jsize+1:4*jsize) = reshape(Vz(1:nz,ibeg:iend,jend  :jend), (/  jsize/))
+    call mpi_isend(sbuf_jp, 4*jsize, mpi_precision, itbl(idx,idy+1), 4, mpi_comm_world, req_j(3), err)
 
     sbuf_jm(        1:2*jsize) = reshape(Vx(1:nz,ibeg:iend,jbeg:jbeg+1), (/2*jsize/))
     sbuf_jm(2*jsize+1:3*jsize) = reshape(Vy(1:nz,ibeg:iend,jbeg:jbeg  ), (/  jsize/))
     sbuf_jm(3*jsize+1:5*jsize) = reshape(Vz(1:nz,ibeg:iend,jbeg:jbeg+1), (/2*jsize/))
-
-    call mpi_isend(sbuf_jp, 4*jsize, mpi_precision, itbl(idx,idy+1), 4, mpi_comm_world, req_j(3), err)
     call mpi_isend(sbuf_jm, 5*jsize, mpi_precision, itbl(idx,idy-1), 3, mpi_comm_world, req_j(4), err)
 
     call mpi_waitall( 4, req_i, istatus, err )
@@ -561,26 +559,23 @@ contains
     sbuf_ip(        1:  isize) = reshape(Sxx(1:nz,iend  :iend,jbeg:jend), (/  isize/))
     sbuf_ip(  isize+1:3*isize) = reshape(Sxy(1:nz,iend-1:iend,jbeg:jend), (/2*isize/))
     sbuf_ip(3*isize+1:5*isize) = reshape(Sxz(1:nz,iend-1:iend,jbeg:jend), (/2*isize/))
+    call mpi_isend( sbuf_ip, 5*isize, mpi_precision, itbl(idx+1,idy), 6, mpi_comm_world, req_i(3), err )
 
     sbuf_im(        1:2*isize) = reshape(Sxx(1:nz,ibeg:ibeg+1,jbeg:jend), (/2*isize/))
     sbuf_im(2*isize+1:3*isize) = reshape(Sxy(1:nz,ibeg:ibeg  ,jbeg:jend), (/  isize/))
     sbuf_im(3*isize+1:4*isize) = reshape(Sxz(1:nz,ibeg:ibeg  ,jbeg:jend), (/  isize/))
-
-    call mpi_isend( sbuf_ip, 5*isize, mpi_precision, itbl(idx+1,idy), 6, mpi_comm_world, req_i(3), err )
     call mpi_isend( sbuf_im, 4*isize, mpi_precision, itbl(idx-1,idy), 5, mpi_comm_world, req_i(4), err )
 
     sbuf_jp(        1:  jsize) = reshape(Syy(1:nz,ibeg:iend,jend  :jend), (/  jsize/))
     sbuf_jp(  jsize+1:3*jsize) = reshape(Sxy(1:nz,ibeg:iend,jend-1:jend), (/2*jsize/))
     sbuf_jp(3*jsize+1:5*jsize) = reshape(Syz(1:nz,ibeg:iend,jend-1:jend), (/2*jsize/))
+    call mpi_isend( sbuf_jp, 5*jsize, mpi_precision, itbl(idx,idy+1), 8, mpi_comm_world, req_j(3), err )
 
     sbuf_jm(        1:2*jsize) = reshape(Syy(1:nz,ibeg:iend,jbeg:jbeg+1), (/2*jsize/))
     sbuf_jm(2*jsize+1:3*jsize) = reshape(Sxy(1:nz,ibeg:iend,jbeg:jbeg  ), (/  jsize/))
     sbuf_jm(3*jsize+1:4*jsize) = reshape(Syz(1:nz,ibeg:iend,jbeg:jbeg  ), (/  jsize/))
-
-    call mpi_isend( sbuf_jp, 5*jsize, mpi_precision, itbl(idx,idy+1), 8, mpi_comm_world, req_j(3), err )
     call mpi_isend( sbuf_jm, 4*jsize, mpi_precision, itbl(idx,idy-1), 7, mpi_comm_world, req_j(4), err )
 
-    !! Terminate mpi data communication
     call mpi_waitall( 4, req_i, istatus, err )
 
     Sxx(1:nz,ibeg-1:ibeg-1,jbeg:jend) = reshape(rbuf_im(        1:  isize), (/nz,1,nyp/))
