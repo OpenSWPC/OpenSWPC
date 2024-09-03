@@ -38,6 +38,7 @@ program SWPC_3D
   use m_green
   use m_readini
   use m_version
+  use m_wav
   use mpi
 
   !! -- Declarations
@@ -108,6 +109,7 @@ program SWPC_3D
     call source__setup( io_prm )
     call absorb__setup( io_prm )
     call output__setup( io_prm )
+    call wav__setup(io_prm)
     call green__setup( io_prm )
     call report__setup( io_prm )
 
@@ -124,7 +126,7 @@ program SWPC_3D
     call report__progress(it)
 
     call green__store( it )
-    call output__store_wav ( it )
+    call wav__store ( it )
     call output__write_snap( it )
 
     call kernel__update_stress()
@@ -151,7 +153,7 @@ program SWPC_3D
 #endif
 
   call green__export()
-  call output__export_wav()
+  call wav__write()
   call output__closefiles()
 
   !! ending message

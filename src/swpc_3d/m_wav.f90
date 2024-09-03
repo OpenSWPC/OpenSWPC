@@ -21,6 +21,7 @@ module m_wav
 
     public :: wav__setup
     public :: wav__store
+    public :: wav__write
     public :: wav__stquery
 
     integer :: ntdec_w
@@ -489,7 +490,7 @@ contains
             itw = (it-1)/ntdec_w + 1
             if( sw_wav_v ) then
 
-                !$omp parallel do private(m,i,j,k)
+                !$omp parallel do private(n,i,j,k)
                 do n=1, nst
                     i = ist(n); j = jst(n); k = kst(n)
                     wav_vel(itw,1,i) =  ( Vx(k, i, j) + Vx(k  , i-1, j  )) / 2.0 * M0 * UC * 1e9
