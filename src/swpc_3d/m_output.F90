@@ -1,6 +1,6 @@
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
 !>
-!! Snapshot/waveform output
+!! Snapshot output
 !!
 !! @copyright
 !!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
@@ -16,7 +16,6 @@ module m_output
   use m_pwatch
   use m_fdtool
   use m_daytim
-  use m_sac
   use m_readini
   use m_geomap
   use m_system
@@ -31,12 +30,9 @@ module m_output
 
   public :: output__setup
   public :: output__write_snap
-  public :: output__store_wav
-  public :: output__export_wav
   public :: output__checkpoint
   public :: output__restart
   public :: output__closefiles
-  public :: output__station_query
 
   !! -- Internal Parameters
   character(8), parameter :: BINARY_TYPE= "STREAMIO"
@@ -70,20 +66,18 @@ module m_output
     real    :: vmax(10), vmin(10)  ! max/min of dependent vars
     character(10) :: vname(10)
     character(10) :: vunit(10)
+
   end type snp
 
   type(snp) :: xy_ps, yz_ps, xz_ps, fs_ps, ob_ps, xy_v, yz_v, xz_v, fs_v, ob_v, xy_u, yz_u, xz_u, fs_u, ob_u
-  logical   :: sw_wav, sw_wav_v, sw_wav_u, sw_wav_stress, sw_wav_strain
 
   !! switch
-  integer   :: ntdec_s, ntdec_w                                !< time step decimation factor: Snap and Waves
-  integer   :: idec, jdec, kdec                                !< spatial decimation factor: x, y, z directions
-  character(2) :: st_format                                       !< station file format
-  character(3) :: wav_format                                   !< sac, csf, or wav
+  integer   :: ntdec_s                            !< time step decimation factor: Snap and Waves
+  integer   :: idec, jdec, kdec                   !< spatial decimation factor: x, y, z directions
+  character(2) :: st_format                       !< station file format
 
   real(SP) :: z0_xy, x0_yz, y0_xz ! < danmen
   integer  :: k0_xy, i0_yz, j0_xz ! < danmen
-  character(256) :: fn_stloc
 
   integer :: nxs, nys, nzs !< snapshot grid size
   real(SP), allocatable :: xsnp(:), ysnp(:), zsnp(:)
@@ -95,14 +89,6 @@ module m_output
   real(SP), allocatable :: stlo(:), stla(:)
   character(8), allocatable :: stnm(:)
 
-  !! waveform
-  integer :: ntw ! number of wave samples
-  real(SP), allocatable :: wav_vel(:,:,:), wav_disp(:,:,:)
-  real(SP), allocatable :: wav_stress(:,:,:), wav_strain(:,:,:) ! (6,nt,nst)
-  type(sac__hdr), allocatable :: sh_vel(:,:), sh_disp(:,:)
-  type(sac__hdr), allocatable :: sh_stress(:,:), sh_strain(:,:)
-  real(SP), allocatable :: ux(:), uy(:), uz(:)
-  real(SP), allocatable :: exx(:), eyy(:), ezz(:), eyz(:), exz(:), exy(:)
   
   !! I/O area in the node
   integer :: is0, is1, js0, js1, ks0, ks1
@@ -117,12 +103,7 @@ module m_output
   real(SP), allocatable :: buf_yz_u(:,:,:), buf_xz_u(:,:,:), buf_xy_u(:,:,:), buf_fs_u(:,:,:), buf_ob_u(:,:,:)
   real(SP), allocatable :: max_ob_v(:,:,:), max_ob_u(:,:,:), max_fs_v(:,:,:), max_fs_u(:,:,:)
 
-  real(MP) :: r40x, r40y, r40z, r41x, r41y, r41z
-
-  logical :: wav_calc_dist
-  
 contains
-
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
@@ -134,7 +115,6 @@ contains
   !! ----
   subroutine output__setup( io_prm )
     integer, intent(in) :: io_prm
-    logical :: green_mode
     integer :: i, j, k, ii, jj, kk
     integer :: ierr
     !! ----
@@ -167,43 +147,17 @@ contains
     call readini( io_prm, 'jdec',       jdec,        1       )
     call readini( io_prm, 'kdec',       kdec,        1       )
     call readini( io_prm, 'ntdec_s',    ntdec_s,     10      )
-    call readini( io_prm, 'ntdec_w',    ntdec_w,     10      )
-    call readini( io_prm, 'st_format',  st_format,  'xy'    )
-    call readini( io_prm, 'fn_stloc',   fn_stloc,   ''      )
-    call readini( io_prm, 'sw_wav_v',   sw_wav_v,   .false. )
-    call readini( io_prm, 'sw_wav_u',   sw_wav_u,   .false. )
-    call readini( io_prm, 'sw_wav_stress', sw_wav_stress,   .false. )
-    call readini( io_prm, 'sw_wav_strain', sw_wav_strain,   .false. )    
     call readini( io_prm, 'snp_format', snp_format, 'native' )
-    call readini( io_prm, 'wav_format', wav_format, 'sac' ) 
-    call readini( io_prm, 'wav_calc_dist', wav_calc_dist, .false. )
 
     !! Do not output waveform for Green's function mode
     call readini( io_prm, 'green_mode', green_mode, .false. )
 
-    sw_wav = ( sw_wav_v .or. sw_wav_u .or. sw_wav_stress .or. sw_wav_strain )
-    if( green_mode ) then
-      sw_wav_v = .false.
-      sw_wav_u = .false.
-      sw_wav_stress = .false.
-      sw_wav_strain = .false. 
-      sw_wav   = .true.
-    end if
-
-    !!
-    !! snapshot
-    !!
-
-    !!
     !! snapshot size #2013-0440
-    !!
     nxs = ( nx + (idec/2) ) / idec
     nys = ( ny + (jdec/2) ) / jdec
     nzs = ( nz + (kdec/2) ) / kdec
 
-    !!
     !! coordinate
-    !!
     allocate( xsnp(nxs), ysnp(nys), zsnp(nzs) )
     do i=1, nxs
       ii =  i*idec - (idec/2)
@@ -266,7 +220,6 @@ contains
     xy_ps % nmed = 6;  xy_v  % nmed = 6;  xy_u  % nmed = 6;
     ob_ps % nmed = 6;  ob_v  % nmed = 6;  ob_u  % nmed = 6;
     fs_ps % nmed = 6;  fs_v  % nmed = 6;  fs_u  % nmed = 6;
-
 
     yz_ps % snaptype = 'ps';  yz_v % snaptype = 'v3';  yz_u % snaptype = 'u3';
     xz_ps % snaptype = 'ps';  xz_v % snaptype = 'v3';  xz_u % snaptype = 'u3';
@@ -387,30 +340,6 @@ contains
     max_ob_u(:,:,:) = 0.0
     max_fs_v(:,:,:) = 0.0
     max_fs_u(:,:,:) = 0.0
-
-    !!
-    !! waveform
-    !!
-    if( sw_wav ) then
-
-      ntw = floor( real(nt-1)/real(ntdec_w) + 1.0 )
-
-      call read_stinfo()
-      call system__call('mkdir -p '//trim(odir)//'/wav > /dev/null 2>&1' )
-
-    end if
-
-    !! FDM coefficients
-    r40x = 9.0_MP /  8.0_MP / dx
-    r40y = 9.0_MP /  8.0_MP / dy
-    r40z = 9.0_MP /  8.0_MP / dz
-    r41x = 1.0_MP / 24.0_MP / dx
-    r41y = 1.0_MP / 24.0_MP / dy
-    r41z = 1.0_MP / 24.0_MP / dz
-    r20x = 1.  / dx
-    r20y = 1.  / dy
-    r20z = 1.  / dz
-    
     
     call mpi_barrier( mpi_comm_world, ierr )
 
@@ -418,475 +347,6 @@ contains
 
   end subroutine output__setup
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !<
-  !! --
-  subroutine output__export_wav()
-    
-    integer :: i, j
-    character(6) :: cid
-    integer :: io
-    character(256) :: fn
-
-    call pwatch__on("output__export_wav")
-
-    if( nst == 0 ) then
-      call pwatch__off("output__export_wav")
-      return
-    end if
-
-    if( wav_format == 'sac' ) then
-      do i=1, nst
-
-        if( sw_wav_v ) then
-
-          do j=1, 3
-            call export_wav__sac(sh_vel(j,i), wav_vel(:,j,i))
-          end do
-          
-        end if
-
-        if( sw_wav_u ) then
-          
-          do j=1, 3
-            call export_wav__sac(sh_disp(j,i), wav_disp(:,j,i))
-          end do
-
-        end if
-
-        if( sw_wav_stress ) then
-          do j=1, 6
-            call export_wav__sac(sh_stress(j,i), wav_stress(:,j,i))
-          end do
-        end if
-
-        if( sw_wav_strain ) then
-          do j=1, 6
-            call export_wav__sac(sh_strain(j,i), wav_strain(:,j,i))
-          end do
-        end if
-        
-      end do
-
-    else if ( wav_format == 'csf' ) then
-      write(cid,'(I6.6)') myid
-
-      if( sw_wav_v )      call export_wav__csf(nst, 3, sh_vel,    wav_vel)
-      if( sw_wav_u )      call export_wav__csf(nst, 3, sh_disp,   wav_disp)
-      if( sw_wav_stress ) call export_wav__csf(nst, 6, sh_stress, wav_stress)
-      if( sw_wav_strain ) call export_wav__csf(nst, 6, sh_strain, wav_strain)
-
-    else if ( wav_format == 'wav' ) then
-
-      write(cid,'(I6.6)') myid
-      fn = trim(odir) // '/wav/' // trim(title) // '.' // trim(cid) // '.wav'
-
-      if( sw_wav ) then
-        call std__getio(io, is_big=.true.) 
-        open(io, file=trim(fn), access='stream', form='unformatted', action='write', status='replace')
-      end if
-
-      if( sw_wav_v      ) write(io) nst, ntw, title, sh_vel(:,:),    wav_vel(:,:,:)
-      if( sw_wav_u      ) write(io) nst, ntw, title, sh_disp(:,:),   wav_disp(:,:,:)
-      if( sw_wav_stress ) write(io) nst, ntw, title, sh_stress(:,:), wav_stress(:,:,:)
-      if( sw_wav_strain ) write(io) nst, ntw, title, sh_strain(:,:), wav_strain(:,:,:)
-
-      close(io)
-    end if
-
-    call pwatch__off("output__export_wav")
-
-  contains
-    
-    subroutine export_wav__sac( sh, dat )
-
-      type(sac__hdr), intent(in) :: sh
-      real(SP), intent(in) :: dat(:)
-      character(256) :: fn
-      !! --
-      
-      fn = trim(odir) // '/wav/' // trim(title) // '.' // trim(sh%kstnm) // '.' // trim(sh%kcmpnm) // '.sac'
-      call sac__write( fn, sh, dat, .true. )
-      
-    end subroutine export_wav__sac
-
-    subroutine export_wav__csf(nst, ncmp, sh, dat)
-      
-      integer, intent(in) :: nst, ncmp
-      type(sac__hdr), intent(in) :: sh(ncmp, nst)
-      real(SP), intent(in) :: dat(ntw, ncmp, nst)
-      character(5) :: cid
-      character(256) :: fn
-
-      write(cid,'(I5.5)') myid
-      fn = trim(odir) // '/wav/' // trim(title) // '__' // cid // '__.csf'
-      call csf__write(fn, nst*ncmp, ntw, reshape(sh,(/ncmp*nst/)), reshape(dat, (/ntw, ncmp*nst/)))
-
-    end subroutine export_wav__csf
-    
-
-  end subroutine output__export_wav
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Set-up waveform file. Create, header output.
-  !<
-  !! --
-  subroutine read_stinfo( )
-
-    integer                   :: io_stlst
-    real(SP), allocatable     :: xst_g(:), yst_g(:), zst_g(:), stlo_g(:), stla_g(:)
-    integer, allocatable      :: ist_g(:), jst_g(:), kst_g(:), stid(:)
-    character(3), allocatable :: zsw_g(:)
-    character(8), allocatable :: stnm_g(:)
-    character(256)            :: abuf
-    integer                   :: ierr
-    integer :: nst_g
-    integer :: i, ii, j
-    real(SP) :: mw
-    !! ----
-
-!!!!
-!!!! Read station location file
-!!!!
-
-    call std__getio(io_stlst)
-    open(io_stlst, file=trim(fn_stloc), action='read', iostat = ierr, status='old' )
-
-    if( ierr /= 0 ) then
-      nst_g = 0          ! not exist
-      sw_wav = .false.
-      sw_wav_v = .false.
-      sw_wav_u = .false.
-      sw_wav_stress = .false.
-      sw_wav_strain = .false.
-      call info( "No station file found" )
-      return
-    else
-      call std__countline( io_stlst, nst_g, "#" )
-    end if
-
-    !! allocate temp memory
-    allocate( xst_g(nst_g), yst_g(nst_g), zst_g(nst_g), stnm_g(nst_g), zsw_g(nst_g), stlo_g(nst_g), stla_g(nst_g) )
-    allocate( ist_g(nst_g), jst_g(nst_g), kst_g(nst_g), stid(nst_g) )
-
-
-    !!
-    !! First, store all station location into memory, and select station inside the MPI node
-    !!
-    nst = 0
-
-    !! once recet total number of station
-    !! count-up stations only inside the computation domain
-    nst_g = 0
-    i = 0
-
-    !! moment magnitude for header part
-    mw = moment_magnitude( m0 )
-
-    do
-      read(io_stlst,'(A256)', iostat=ierr) abuf
-      if( ierr /= 0)  exit
-      abuf = trim(adjustl(abuf))
-      if( abuf(1:1) == "#" ) cycle ! neglect comment line
-      if( trim(adjustl(abuf)) == "" ) cycle ! neglect blank line
-
-      i = i + 1
-
-      select case ( st_format )
-
-      case( 'xy' )
-
-        read(abuf,*,iostat=ierr) xst_g(i), yst_g(i), zst_g(i), stnm_g(i), zsw_g(i)
-        call assert( ierr==0 )
-        call geomap__c2g( xst_g(i), yst_g(i), clon, clat, phi, stlo_g(i), stla_g(i) )
-
-
-      case( 'll' )
-
-        read(abuf,*,iostat=ierr) stlo_g(i), stla_g(i), zst_g(i), stnm_g(i), zsw_g(i)
-        call assert( ierr==0 )
-        call assert( -360. <= stlo_g(i) .and. stlo_g(i) <= 360. )
-        call assert(  -90. <= stla_g(i) .and. stla_g(i) <=  90. )
-        call geomap__g2c( stlo_g(i), stla_g(i), clon, clat, phi, xst_g(i), yst_g(i) )
-
-      case default
-
-        call assert( .false. )
-
-      end select
-
-
-      ! digitize
-      ist_g(i) = x2i ( xst_g(i), xbeg, real(dx) )
-      jst_g(i) = y2j ( yst_g(i), ybeg, real(dy) )
-      kst_g(i) = z2k ( zst_g(i), zbeg, real(dz) )
-
-
-      !! check if the station is in the computational domain
-      if(  i2x( 1, xbeg, real(dx) ) < xst_g(i) .and. xst_g(i) < i2x( nx, xbeg, real(dx) ) .and. &
-          j2y( 1, ybeg, real(dy) ) < yst_g(i) .and. yst_g(i) < j2y( ny, ybeg, real(dy) ) .and. &
-          kbeg       < kst_g(i) .and. kst_g(i) <          kend             )  then
-
-
-        !! memorize station location
-        nst_g = nst_g + 1
-
-        !! MPI region check: memorize station number
-        if( ibeg <= ist_g(i) .and. ist_g(i) <= iend .and. jbeg <= jst_g(i) .and. jst_g(i) <= jend ) then
-
-          nst = nst + 1
-          stid(nst) = i
-
-        end if
-
-      else
-        if( myid == 0 )  call info( "station " // trim( stnm_g(i) ) // " is out of the region" )
-      end if
-    end do
-
-    close( io_stlst )
-
-    if( nst_g == 0 ) then
-      sw_wav = .false.
-      sw_wav_v = .false.
-      sw_wav_u = .false.
-      if( myid == 0 ) call info( "no station is detected. waveform file will not be created" )
-      return
-    end if
-
-    if( nst == 0 ) return
-
-
-    allocate( xst(nst), yst(nst), zst(nst), ist(nst), jst(nst), kst(nst), stnm(nst), stlo(nst), stla(nst) )
-
-
-    do i = 1, nst
-
-      ii = stid(i)
-
-      xst(i) = xst_g(ii)
-      yst(i) = yst_g(ii)
-      zst(i) = zst_g(ii)
-      ist(i) = ist_g(ii)
-      jst(i) = jst_g(ii)
-      ist(i) = ist_g(ii)
-      stnm(i) = stnm_g(ii)
-      stlo(i) = stlo_g(ii)
-      stla(i) = stla_g(ii)
-
-      !! station depth setting
-      !! this is done only for MPI-node because of the definition of kfs and kob
-      select case ( zsw_g(ii) )
-      case( 'dep' );    kst(i) = kst_g(ii)
-      case( 'fsb' );    kst(i) = kfs( ist(i), jst(i) ) + 1   !! free surface: one-grid below for avoiding vacuum
-      case( 'obb' );    kst(i) = kob( ist(i), jst(i) ) + 1   !! ocean column: below seafloor
-      case( 'oba' );    kst(i) = kob( ist(i), jst(i) ) - 1   !! ocean column: above seafloor
-      case( 'bd0' );    kst(i) = z2k( bddep(ist(i),jst(i),0), zbeg, real(dz) ) !! Boundary interface
-      case( 'bd1' );    kst(i) = z2k( bddep(ist(i),jst(i),1), zbeg, real(dz) ) !! Boundary interface
-      case( 'bd2' );    kst(i) = z2k( bddep(ist(i),jst(i),2), zbeg, real(dz) ) !! Boundary interface
-      case( 'bd3' );    kst(i) = z2k( bddep(ist(i),jst(i),3), zbeg, real(dz) ) !! Boundary interface
-      case( 'bd4' );    kst(i) = z2k( bddep(ist(i),jst(i),4), zbeg, real(dz) ) !! Boundary interface
-      case( 'bd5' );    kst(i) = z2k( bddep(ist(i),jst(i),5), zbeg, real(dz) ) !! Boundary interface
-      case( 'bd6' );    kst(i) = z2k( bddep(ist(i),jst(i),6), zbeg, real(dz) ) !! Boundary interface
-      case( 'bd7' );    kst(i) = z2k( bddep(ist(i),jst(i),7), zbeg, real(dz) ) !! Boundary interface
-      case( 'bd8' );    kst(i) = z2k( bddep(ist(i),jst(i),8), zbeg, real(dz) ) !! Boundary interface
-      case( 'bd9' );    kst(i) = z2k( bddep(ist(i),jst(i),9), zbeg, real(dz) ) !! Boundary interface
-      case default
-        call info( "unknown zsw type in station file. Assume 'dep'")
-        kst(i) = kst_g(ii)
-      end select
-
-      !! depth check
-      if( kst(i) > kend ) then
-        call info( "station depth exceeds kend at station "//trim(stnm(i)) )
-        kst(i) = kend - 1
-      end if
-      if( kst(i) < kbeg ) then
-        write(STDERR,*) 'WARNING[output__setup]: station depth exceeds kbeg at station ' // trim(stnm(i))
-        kst(i) = kbeg + 1
-      end if
-      
-    end do
-
-    if( sw_wav_v ) then
-      allocate( wav_vel(ntw,3,nst) )
-      allocate( sh_vel(3,nst) )
-      wav_vel(:,:,:) = 0.0
-    end if
-    
-    if( sw_wav_u ) then
-      allocate( wav_disp(ntw,3,nst) )
-      allocate( sh_disp(3,nst) )
-      wav_disp(:,:,:) = 0.0
-    end if
-    
-    if( sw_wav_stress ) then
-      allocate( wav_stress(ntw,6,nst) )
-      allocate( sh_stress(6,nst) )
-      wav_stress(:,:,:) = 0.0
-    end if
-
-    if( sw_wav_strain ) then
-      allocate( wav_strain(ntw,6,nst) )
-      allocate( sh_strain(6,nst) )
-      wav_strain(:,:,:) = 0.0
-    end if
-    
-    !!
-    !! set-up sac header
-    !!
-    do i=1, nst
-
-      if( sw_wav_v ) then
-        do j=1, 3
-          call setup_sac_header( sh_vel(j,i), i )
-        end do
-        sh_vel(1,i)%kcmpnm = "Vx"
-        sh_vel(2,i)%kcmpnm = "Vy"
-        sh_vel(3,i)%kcmpnm = "Vz"
-        
-        sh_vel(1,i)%cmpinc = 90.0;  sh_vel(1,i)%cmpaz  =  0.0 + phi
-        sh_vel(2,i)%cmpinc = 90.0;  sh_vel(2,i)%cmpaz  = 90.0 + phi
-        sh_vel(3,i)%cmpinc =  0.0;  sh_vel(3,i)%cmpaz  =  0.0
-
-        sh_vel(1:3,i)%idep = 7 ! velocity [nm/s]
-
-        if( wav_calc_dist ) then
-          sh_vel(:,i)%lcalda = .false. 
-          sh_vel(:,i)%dist = sqrt( (sx0 - xst(i))**2 + (sy0 - yst(i))**2 )
-          sh_vel(:,i)%az = std__rad2deg(atan2(yst(i)-sy0, xst(i)-sx0))
-          sh_vel(:,i)%baz = std__rad2deg(atan2(sy0-yst(i), sx0-xst(i)))
-        end if        
-      end if
-      
-      if( sw_wav_u ) then
-        do j=1, 3
-          call setup_sac_header( sh_disp(j,i), i )
-        end do
-        sh_disp(1,i)%kcmpnm = "Ux"
-        sh_disp(2,i)%kcmpnm = "Uy"
-        sh_disp(3,i)%kcmpnm = "Uz"
-
-        sh_disp(1,i)%cmpinc = 90.0;  sh_disp(1,i)%cmpaz  =  0.0 + phi
-        sh_disp(2,i)%cmpinc = 90.0;  sh_disp(2,i)%cmpaz  = 90.0 + phi
-        sh_disp(3,i)%cmpinc =  0.0;  sh_disp(3,i)%cmpaz  =  0.0
-
-        sh_disp(1:3,i)%idep = 6 ! displacement [nm]
-
-        if( wav_calc_dist ) then
-          sh_disp(:,i)%lcalda = .false. 
-          sh_disp(:,i)%dist = sqrt( (sx0 - xst(i))**2 + (sy0 - yst(i))**2 )
-          sh_disp(:,i)%az = std__rad2deg(atan2(yst(i)-sy0, xst(i)-sx0))
-          sh_disp(:,i)%baz = std__rad2deg(atan2(sy0-yst(i), sx0-xst(i)))
-        end if
-                
-      end if
-      
-      if( sw_wav_stress ) then
-        do j=1, 6
-          call setup_sac_header( sh_stress(j,i), i)
-        end do
-        
-        sh_stress(1,i)%kcmpnm = "Sxx"
-        sh_stress(2,i)%kcmpnm = "Syy"
-        sh_stress(3,i)%kcmpnm = "Szz"
-        sh_stress(4,i)%kcmpnm = "Syz"
-        sh_stress(5,i)%kcmpnm = "Sxz"
-        sh_stress(6,i)%kcmpnm = "Sxy"
-
-        sh_stress(:,i)%idep = 5 ! unknown
-        
-        if( wav_calc_dist ) then
-          sh_stress(:,i)%lcalda = .false. 
-          sh_stress(:,i)%dist = sqrt( (sx0 - xst(i))**2 + (sy0 - yst(i))**2 )
-          sh_stress(:,i)%az = std__rad2deg(atan2(yst(i)-sy0, xst(i)-sx0))
-          sh_stress(:,i)%baz = std__rad2deg(atan2(sy0-yst(i), sx0-xst(i)))
-        end if
-      end if
-
-      if( sw_wav_strain ) then
-        do j=1, 6
-          call setup_sac_header( sh_strain(j,i), i)
-        end do
-        
-        sh_strain(1,i)%kcmpnm = "Exx"
-        sh_strain(2,i)%kcmpnm = "Eyy"
-        sh_strain(3,i)%kcmpnm = "Ezz"
-        sh_strain(4,i)%kcmpnm = "Eyz"
-        sh_strain(5,i)%kcmpnm = "Exz"
-        sh_strain(6,i)%kcmpnm = "Exy"
-
-        sh_strain(:,i)%idep = 5 ! unknown        
-        
-        if( wav_calc_dist ) then
-          sh_strain(:,i)%lcalda = .false. 
-          sh_strain(:,i)%dist = sqrt( (sx0 - xst(i))**2 + (sy0 - yst(i))**2 )
-          sh_strain(:,i)%az = std__rad2deg(atan2(yst(i)-sy0, xst(i)-sx0))
-          sh_strain(:,i)%baz = std__rad2deg(atan2(sy0-yst(i), sx0-xst(i)))
-        end if
-      end if
-
-    end do
-
-  contains
-    
-    subroutine setup_sac_header( sh, ist )
-
-      type(sac__hdr), intent(out) :: sh
-      integer,        intent(in)  :: ist
-
-      call sac__init(sh)
-      sh%evlo    = evlo
-      sh%evla    = evla
-      sh%evdp    = evdp  !! evdp changed to km unit from SWPC 5.0
-      sh%tim     = exedate
-      sh%b       = tbeg
-      sh%delta   = ntdec_w * dt
-      sh%npts    = ntw
-      sh%mag     = mw
-      
-      if( bf_mode ) then
-        sh%user0   = fx0
-        sh%user1   = fy0
-        sh%user2   = fz0
-      else
-        sh%user0   = mxx0
-        sh%user1   = myy0
-        sh%user2   = mzz0
-        sh%user3   = myz0
-        sh%user4   = mxz0
-        sh%user5   = mxy0
-      end if
-      
-      sh%user6   = clon  !< coordinate
-      sh%user7   = clat  !< coordinate
-      sh%user8   = phi
-      sh%o       = otim
-
-      call daytim__localtime( sh%tim, sh%nzyear, sh%nzmonth, sh%nzday, sh%nzhour, sh%nzmin, sh%nzsec )
-      call daytim__ymd2jul  ( sh%nzyear, sh%nzmonth, sh%nzday, sh%nzjday )
-      sh%nzmsec = 0      
-
-      !! station dependent
-      sh%kevnm = trim(adjustl( title(1:16) ))
-      sh%kstnm = trim(stnm(ist))
-      sh%stlo  = stlo(ist)
-      sh%stla  = stla(ist)
-      sh%stdp  = zst(ist)*1000 ! in meter unit
-      
-    end subroutine setup_sac_header
-
-  end subroutine read_stinfo
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
-
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
@@ -2409,280 +1869,20 @@ contains
   end subroutine wbuf_ob_u
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-
-
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
-  !! write waveform
-  !<
-  !! ----
-  subroutine output__store_wav(it)
-    integer, intent(in) :: it
-    integer :: i, itw
-    real(MP) :: dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz
-    integer :: ii, jj, kk
-
-    if( .not. sw_wav ) return
-
-    call pwatch__on( "output__store_wav" )
-
-    if( it == 1 ) then
-      allocate( ux(nst), uy(nst), uz(nst) )
-      ux(:) = 0.0
-      uy(:) = 0.0
-      uz(:) = 0.0
-
-      if( sw_wav_strain ) then
-        allocate( exx(nst), eyy(nst), ezz(nst), eyz(nst), exz(nst), exy(nst) )
-        exx(:) = 0.0
-        eyy(:) = 0.0
-        ezz(:) = 0.0
-        eyz(:) = 0.0
-        exz(:) = 0.0
-        exy(:) = 0.0
-      end if
-      
-    end if
-
-    !! integrate waveform
-    if( sw_wav_u ) then
-      !$omp parallel do private(i)
-      do i=1, nst
-        ux(i) = ux(i) + ( Vx( kst(i), ist(i), jst(i) ) + Vx( kst(i),   ist(i)-1, jst(i)   ) ) * 0.5 * dt
-        uy(i) = uy(i) + ( Vy( kst(i), ist(i), jst(i) ) + Vy( kst(i),   ist(i)  , jst(i)-1 ) ) * 0.5 * dt
-        uz(i) = uz(i) - ( Vz( kst(i), ist(i), jst(i) ) + Vz( kst(i)-1, ist(i)  , jst(i)   ) ) * 0.5 * dt ! positive upward
-      end do
-      !$omp end parallel do
-    end if
-
-    if( sw_wav_strain ) then
-      !$omp parallel do private(i, ii, jj, kk, dxVx, dyVy, dzVz, dyVz, dzVy, dxVz, dzVx, dxVy, dyVx)
-      do i=1, nst
-        ii = ist(i)
-        jj = jst(i)
-        kk = kst(i)
-
-        dxVx = (Vx(kk  ,ii  ,jj  ) - Vx(kk  ,ii-1,jj  )) * r40x  -  (Vx(kk  ,ii+1,jj  ) - Vx(kk  ,ii-2,jj  )) * r41x
-        dyVy = (Vy(kk  ,ii  ,jj  ) - Vy(kk  ,ii  ,jj-1)) * r40y  -  (Vy(kk  ,ii  ,jj+1) - Vy(kk  ,ii  ,jj-2)) * r41y
-        dzVz = (Vz(kk  ,ii  ,jj  ) - Vz(kk-1,ii  ,jj  )) * r40z  -  (Vz(kk+1,ii  ,jj  ) - Vz(kk-2,ii  ,jj  )) * r41z
-
-        dxVy = ( (Vy(kk  ,ii+1,jj  ) - Vy(kk  ,ii  ,jj  )) * r40x  -  (Vy(kk  ,ii+2,jj  ) - Vy(kk  ,ii-1,jj  )) * r41x &
-               + (Vy(kk  ,ii+1,jj-1) - Vy(kk  ,ii  ,jj-1)) * r40x  -  (Vy(kk  ,ii+2,jj-1) - Vy(kk  ,ii-1,jj-1)) * r41x &
-               + (Vy(kk  ,ii  ,jj  ) - Vy(kk  ,ii-1,jj  )) * r40x  -  (Vy(kk  ,ii+1,jj  ) - Vy(kk  ,ii-2,jj  )) * r41x &
-               + (Vy(kk  ,ii  ,jj-1) - Vy(kk  ,ii-1,jj-1)) * r40x  -  (Vy(kk  ,ii+1,jj-1) - Vy(kk  ,ii-2,jj-1)) * r41x ) * 0.25
-
-        dxVz = ( (Vz(kk  ,ii+1,jj  ) - Vz(kk  ,ii  ,jj  )) * r40x  -  (Vz(kk  ,ii+2,jj  ) - Vz(kk  ,ii-1,jj  )) * r41x &
-               + (Vz(kk-1,ii+1,jj  ) - Vz(kk-1,ii  ,jj  )) * r40x  -  (Vz(kk-1,ii+2,jj  ) - Vz(kk-1,ii-1,jj  )) * r41x &
-               + (Vz(kk  ,ii  ,jj  ) - Vz(kk  ,ii-1,jj  )) * r40x  -  (Vz(kk  ,ii+1,jj  ) - Vz(kk  ,ii-2,jj  )) * r41x &
-               + (Vz(kk-1,ii  ,jj  ) - Vz(kk-1,ii-1,jj  )) * r40x  -  (Vz(kk-1,ii+1,jj  ) - Vz(kk-1,ii-2,jj  )) * r41x ) * 0.25
-
-        dyVx = ( (Vx(kk  ,ii  ,jj+1) - Vx(kk  ,ii  ,jj  )) * r40y  -  (Vx(kk  ,ii  ,jj+2) - Vx(kk  ,ii  ,jj-1)) * r41y &
-               + (Vx(kk  ,ii-1,jj+1) - Vx(kk  ,ii-1,jj  )) * r40y  -  (Vx(kk  ,ii-1,jj+2) - Vx(kk  ,ii-1,jj-1)) * r41y &
-               + (Vx(kk  ,ii  ,jj  ) - Vx(kk  ,ii  ,jj-1)) * r40y  -  (Vx(kk  ,ii  ,jj+1) - Vx(kk  ,ii  ,jj-2)) * r41y &
-               + (Vx(kk  ,ii-1,jj  ) - Vx(kk  ,ii-1,jj-1)) * r40y  -  (Vx(kk  ,ii-1,jj+1) - Vx(kk  ,ii-1,jj-2)) * r41y ) * 0.25
-
-        dyVz = ( (Vz(kk  ,ii  ,jj+1) - Vz(kk  ,ii  ,jj  )) * r40y  -  (Vz(kk  ,ii  ,jj+2) - Vz(kk  ,ii  ,jj-1)) * r41y &
-               + (Vz(kk-1,ii  ,jj+1) - Vz(kk-1,ii  ,jj  )) * r40y  -  (Vz(kk-1,ii  ,jj+2) - Vz(kk-1,ii  ,jj-1)) * r41y &
-               + (Vz(kk  ,ii  ,jj  ) - Vz(kk  ,ii  ,jj-1)) * r40y  -  (Vz(kk  ,ii  ,jj+1) - Vz(kk  ,ii  ,jj-2)) * r41y &
-               + (Vz(kk-1,ii  ,jj  ) - Vz(kk-1,ii  ,jj-1)) * r40y  -  (Vz(kk-1,ii  ,jj+1) - Vz(kk-1,ii  ,jj-2)) * r41y ) * 0.25
-
-        dzVx = ( (Vx(kk+1,ii  ,jj  ) - Vx(kk  ,ii  ,jj  )) * r40z  -  (Vx(kk+2,ii  ,jj  ) - Vx(kk-1,ii  ,jj  )) * r41z &
-               + (Vx(kk+1,ii-1,jj  ) - Vx(kk  ,ii-1,jj  )) * r40z  -  (Vx(kk+2,ii-1,jj  ) - Vx(kk-1,ii-1,jj  )) * r41z &
-               + (Vx(kk  ,ii  ,jj  ) - Vx(kk-1,ii  ,jj  )) * r40z  -  (Vx(kk+1,ii  ,jj  ) - Vx(kk-2,ii  ,jj  )) * r41z &
-               + (Vx(kk  ,ii-1,jj  ) - Vx(kk-1,ii-1,jj  )) * r40z  -  (Vx(kk+1,ii-1,jj  ) - Vx(kk-2,ii-1,jj  )) * r41z ) * 0.25
-
-        dzVy = ( (Vy(kk+1,ii  ,jj  ) - Vy(kk  ,ii  ,jj  )) * r40z  -  (Vy(kk+2,ii  ,jj  ) - Vy(kk-1,ii  ,jj  )) * r41z &
-               + (Vy(kk+1,ii  ,jj-1) - Vy(kk  ,ii  ,jj-1)) * r40z  -  (Vy(kk+2,ii  ,jj-1) - Vy(kk-1,ii  ,jj-1)) * r41z &
-               + (Vy(kk  ,ii  ,jj  ) - Vy(kk-1,ii  ,jj  )) * r40z  -  (Vy(kk+1,ii  ,jj  ) - Vy(kk-2,ii  ,jj  )) * r41z &
-               + (Vy(kk  ,ii  ,jj-1) - Vy(kk-1,ii  ,jj-1)) * r40z  -  (Vy(kk+1,ii  ,jj-1) - Vy(kk-2,ii  ,jj-1)) * r41z ) * 0.25
-
-        exx(i) = exx(i) + dxVx * dt
-        eyy(i) = eyy(i) + dyVy * dt
-        ezz(i) = ezz(i) + dzVz * dt
-        eyz(i) = eyz(i) + (dyVz + dzVy) * 0.5 * dt
-        exz(i) = exz(i) + (dxVz + dzVx) * 0.5 * dt
-        exy(i) = exy(i) + (dxVy + dyVx) * 0.5 * dt
-
-      end do
-      !$omp end parallel do
-      
-    end if
-    
-      
-    !! output
-    if( mod( it-1, ntdec_w ) == 0 ) then
-      itw = (it-1)/ntdec_w + 1
-      if( sw_wav_v ) then
-        !$omp parallel do private(i)
-        do i=1, nst
-          wav_vel(itw,1,i) =  ( Vx( kst(i), ist(i), jst(i) ) + Vx( kst(i)  , ist(i)-1, jst(i)   ) )*0.5 * M0 * UC * 1e9 !! [nm/s]
-          wav_vel(itw,2,i) =  ( Vy( kst(i), ist(i), jst(i) ) + Vy( kst(i)  , ist(i)  , jst(i)-1 ) )*0.5 * M0 * UC * 1e9 !! [nm/s]
-          wav_vel(itw,3,i) = -( Vz( kst(i), ist(i), jst(i) ) + Vz( kst(i)-1, ist(i)  , jst(i)   ) )*0.5 * M0 * UC * 1e9 !! [nm/s]
-        end do
-        !$omp end parallel do
-      end if
-
-      if( sw_wav_u ) then
-        !$omp parallel do private(i)
-        do i=1, nst
-          wav_disp(itw,1,i) = ux(i) * M0 * UC * 1e9                          !! [nm]
-          wav_disp(itw,2,i) = uy(i) * M0 * UC * 1e9                          !! [nm]
-          wav_disp(itw,3,i) = uz(i) * M0 * UC * 1e9                          !! [nm]
-        end do
-        !$omp end parallel do
-      end if
-
-      if( sw_wav_stress ) then
-        !$omp parallel do private(i)
-        do i=1, nst
-          wav_stress(itw,1,i) = Sxx(kst(i), ist(i), jst(i)) * M0 * UC * 1e6
-          wav_stress(itw,2,i) = Syy(kst(i), ist(i), jst(i)) * M0 * UC * 1e6
-          wav_stress(itw,3,i) = Szz(kst(i), ist(i), jst(i)) * M0 * UC * 1e6
-          wav_stress(itw,4,i) = ( Syz(kst(i),   ist(i), jst(i)) + Syz(kst(i),   ist(i), jst(i)-1)  &
-                                + Syz(kst(i)-1, ist(i), jst(i)) + Syz(kst(i)-1, ist(i), jst(i)-1) ) * 0.25 * M0 * UC * 1e6
-          wav_stress(itw,5,i) = ( Sxz(kst(i),   ist(i), jst(i)) + Sxz(kst(i),   ist(i)-1, jst(i))  &
-                                + Sxz(kst(i)-1, ist(i), jst(i)) + Sxz(kst(i)-1, ist(i)-1, jst(i)) ) * 0.25 * M0 * UC * 1e6
-          wav_stress(itw,6,i) = ( Sxy(kst(i), ist(i),   jst(i)) + Sxy(kst(i), ist(i),   jst(i)-1)  &
-                                + Sxy(kst(i), ist(i)-1, jst(i)) + Sxy(kst(i), ist(i)-1, jst(i)-1) ) * 0.25 * M0 * UC * 1e6
-        end do
-        !$omp end parallel do
-      end if
-
-      if( sw_wav_strain ) then
-        !$omp parallel do private(i)
-        do i=1, nst
-          wav_strain(itw,1,i) = exx(i) * M0 * UC * 1e-3
-          wav_strain(itw,2,i) = eyy(i) * M0 * UC * 1e-3
-          wav_strain(itw,3,i) = ezz(i) * M0 * UC * 1e-3
-          wav_strain(itw,4,i) = eyz(i) * M0 * UC * 1e-3
-          wav_strain(itw,5,i) = exz(i) * M0 * UC * 1e-3
-          wav_strain(itw,6,i) = exy(i) * M0 * UC * 1e-3
-        end do
-        !$omp end parallel do
-      end if
-
-      
-    end if
-
-    call pwatch__off( "output__store_wav" )
-
-  end subroutine output__store_wav
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Return location and indices of the requested station
+ 
   !!
   !! Used for Green's function computation with reciprocity theorem
   !<
   !! --
-  subroutine output__station_query( stnm1, is_exist, ist1, jst1, kst1, xst1, yst1, zst1, stlo1, stla1 )
 
-    character(*), intent(in)    :: stnm1
-    logical,      intent(out)   :: is_exist
-    integer,      intent(out)   :: ist1, jst1, kst1 !< station location indices
-    real(SP),     intent(out)   :: xst1, yst1, zst1 !< station location coordinate
-    real(SP),     intent(inout) :: stlo1, stla1
-    !! --
-    integer :: i
-
-    !! ----
-
-    is_exist = .false.
-    do i=1, nst
-      if( trim(stnm1) == trim(stnm(i)) ) then
-
-        !! copy station information
-        ist1  = ist(i)
-        jst1  = jst(i)
-        kst1  = kst(i)
-        xst1  = xst(i)
-        yst1  = yst(i)
-        zst1  = zst(i)
-        stlo1 = stlo(i)
-        stla1 = stla(i)
-        is_exist = .true.
-        exit
-      end if
-    end do
-
-
-  end subroutine output__station_query
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine output__checkpoint( io )
     integer, intent(in) :: io
     !! ----
-
-    write( io ) xy_ps, yz_ps, xz_ps, fs_ps, ob_ps, xy_v, yz_v, xz_v, fs_v, ob_v, xy_u, yz_u, xz_u, fs_u, ob_u
-    write( io ) sw_wav, sw_wav_u, sw_wav_v
-    write( io ) sw_wav_stress, sw_wav_strain
-    write( io ) wav_format
-
-    write( io ) ntdec_s
-    write( io ) idec, jdec, kdec
-
-    write( io ) z0_xy, x0_yz, y0_xz
-    write( io ) k0_xy, i0_yz, j0_xz
-
-    write( io ) nxs, nys, nzs
-    write( io ) xsnp(1:nxs)
-    write( io ) ysnp(1:nys)
-    write( io ) zsnp(1:nzs)
-
-    write( io ) is0, is1, js0, js1, ks0, ks1
-    write( io ) r20x, r20y, r20z
-
-    write( io ) buf_yz_u(js0:js1,ks0:ks1,1:3)
-    write( io ) buf_xz_u(is0:is1,ks0:ks1,1:3)
-    write( io ) buf_xy_u(is0:is1,js0:js1,1:3)
-    write( io ) buf_fs_u(is0:is1,js0:js1,1:3)
-    write( io ) buf_ob_u(is0:is1,js0:js1,1:3)
-
-    write( io ) snp_format
-
-    write( io ) max_ob_v(is0:is1, js0:js1, 1:3 )
-    write( io ) max_ob_u(is0:is1, js0:js1, 1:3 )
-    write( io ) max_fs_v(is0:is1, js0:js1, 1:3 )
-    write( io ) max_fs_u(is0:is1, js0:js1, 1:3 )
-    
-    if( sw_wav ) then
-      write( io ) ntdec_w
-      write( io ) nst
-      write( io ) ntw
-
-      if( nst > 0 ) then
-        write( io ) xst(1:nst)
-        write( io ) yst(1:nst)
-        write( io ) zst(1:nst)
-        write( io ) ist(1:nst)
-        write( io ) jst(1:nst)
-        write( io ) kst(1:nst)
-        write( io ) stlo(1:nst)
-        write( io ) stla(1:nst)
-        write( io ) stnm(1:nst)
-
-        if( sw_wav_v  ) then
-          write( io ) sh_vel(:,:), wav_vel(:,:,:)
-        end if
-        
-        if( sw_wav_u ) then
-          write( io ) sh_disp(:,:), wav_disp(:,:,:)
-          write( io ) ux(:), uy(:), uz(:)
-        end if
-
-        if( sw_wav_stress ) then
-          write( io ) sh_stress(:,:), wav_stress(:,:,:)
-        end if
-        
-        if( sw_wav_strain ) then
-          write( io ) sh_strain(:,:), wav_strain(:,:,:)
-          write( io ) exx(:), eyy(:), ezz(:), eyz(:), exz(:), exy(:)
-        end if
-      end if
-    end if
-
   end subroutine output__checkpoint
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -2690,301 +1890,6 @@ contains
   subroutine output__restart( io )
     integer, intent(in) :: io
     !! ----
-
-
-    read( io ) xy_ps, yz_ps, xz_ps, fs_ps, ob_ps, xy_v, yz_v, xz_v, fs_v, ob_v, xy_u, yz_u, xz_u, fs_u, ob_u
-    read( io ) sw_wav, sw_wav_u, sw_wav_v
-    read( io ) sw_wav_stress, sw_wav_strain
-    read( io ) wav_format
-
-    read( io ) ntdec_s
-    read( io ) idec, jdec, kdec
-
-    read( io ) z0_xy, x0_yz, y0_xz
-    read( io ) k0_xy, i0_yz, j0_xz
-
-    read( io ) nxs, nys, nzs
-
-    allocate( xsnp(1:nxs) )
-    allocate( ysnp(1:nys) )
-    allocate( zsnp(1:nzs) )
-    read( io ) xsnp(1:nxs)
-    read( io ) ysnp(1:nys)
-    read( io ) zsnp(1:nzs)
-
-    read( io ) is0, is1, js0, js1, ks0, ks1
-    read( io ) r20x, r20y, r20z
-
-    allocate( buf_yz_u(nys,nzs,3), buf_xz_u(nxs,nzs,3), buf_xy_u(nxs,nys,3), buf_fs_u(nxs,nys,3), buf_ob_u(nxs,nys,3) )
-    buf_yz_u = 0.0
-    buf_xz_u = 0.0
-    buf_xy_u = 0.0
-    buf_fs_u = 0.0
-    buf_ob_u = 0.0
-
-    read( io ) buf_yz_u(js0:js1,ks0:ks1,1:3)
-    read( io ) buf_xz_u(is0:is1,ks0:ks1,1:3)
-    read( io ) buf_xy_u(is0:is1,js0:js1,1:3)
-    read( io ) buf_fs_u(is0:is1,js0:js1,1:3)
-    read( io ) buf_ob_u(is0:is1,js0:js1,1:3)
-
-    read( io ) snp_format
-
-    allocate( max_ob_v(nxs,nys,3) )
-    allocate( max_ob_u(nxs,nys,3) )
-    allocate( max_fs_v(nxs,nys,3) )
-    allocate( max_fs_u(nxs,nys,3) )
-    max_ob_v(:,:,:) = 0.0
-    max_ob_u(:,:,:) = 0.0
-    max_fs_v(:,:,:) = 0.0
-    max_fs_u(:,:,:) = 0.0
-    read( io ) max_ob_v(is0:is1, js0:js1, 1:3 )
-    read( io ) max_ob_u(is0:is1, js0:js1, 1:3 )
-    read( io ) max_fs_v(is0:is1, js0:js1, 1:3 )
-    read( io ) max_fs_u(is0:is1, js0:js1, 1:3 )    
-
-    if( sw_wav ) then
-      read( io ) ntdec_w
-      read( io ) nst
-      read( io ) ntw
-      
-      if( nst > 0 ) then
-        allocate( xst(nst), yst(nst), zst(nst) )
-        allocate( ist(nst), jst(nst), kst(nst) )
-        allocate( stnm(nst) )
-        allocate( stlo(nst), stla(nst) )
-
-        read( io ) xst(1:nst)
-        read( io ) yst(1:nst)
-        read( io ) zst(1:nst)
-        read( io ) ist(1:nst)
-        read( io ) jst(1:nst)
-        read( io ) kst(1:nst)
-        read( io ) stlo(1:nst)
-        read( io ) stla(1:nst)
-        read( io ) stnm(1:nst)
-
-        if( sw_wav_v ) then
-          allocate(sh_vel(3,nst), wav_vel(ntw,3,nst) )
-          read( io ) sh_vel, wav_vel
-        end if
-
-        if( sw_wav_u ) then
-          allocate( sh_disp(3,nst), wav_disp(ntw,3,nst), ux(nst), uy(nst), uz(nst) )
-          read(io) sh_disp, wav_disp
-          read(io) ux, uy, uz
-        end if
-
-        if( sw_wav_stress ) then
-          allocate(sh_stress(3,nst), wav_stress(ntw,3,nst) )
-          read( io ) sh_stress, wav_stress
-        end if
-
-        if( sw_wav_strain ) then
-          allocate( sh_strain(3,nst), wav_strain(ntw,3,nst) )
-          allocate( exx(nst), eyy(nst), ezz(nst), eyz(nst), exz(nst), exy(nst) )
-          read(io) sh_strain, wav_strain
-          read(io) exx, eyy, ezz, eyz, exz, exy
-        end if
-      end if
-      
-    end if
-    
-    if( snp_format == 'native' ) then
-
-#ifdef _ES
-      if( yz_ps%sw .and. myid == yz_ps%ionode ) then
-        open( yz_ps%io, file=trim(odir) //'/'// trim(title) //'.yz.ps.snp', &
-            status='old', position='append', form='unformatted' )
-      end if
-
-      if( xz_ps%sw .and. myid == xz_ps%ionode ) then
-        open( xz_ps%io, file=trim(odir) //'/'// trim(title) //'.xz.ps.snp', &
-            status='old', position='append', form='unformatted' )
-      end if
-
-      if( xy_ps%sw .and. myid == xy_ps%ionode ) then
-        open( xy_ps%io, file=trim(odir) //'/'// trim(title) //'.xy.ps.snp', &
-            status='old', position='append', form='unformatted' )
-      end if
-
-      if( fs_ps%sw .and. myid == fs_ps%ionode ) then
-        open( fs_ps%io, file=trim(odir) //'/'// trim(title) //'.fs.ps.snp', &
-            status='old', position='append', form='unformatted' )
-      end if
-
-      if( ob_ps%sw .and. myid == ob_ps%ionode ) then
-        open( ob_ps%io, file=trim(odir) //'/'// trim(title) //'.ob.ps.snp', &
-            status='old', position='append', form='unformatted' )
-      end if
-
-      if( yz_v%sw .and. myid == yz_v%ionode ) then
-        open( yz_v%io, file=trim(odir) //'/'// trim(title) //'.yz.v.snp', &
-            status='old', position='append', form='unformatted' )
-      end if
-
-      if( xz_v%sw .and. myid == xz_v%ionode ) then
-        open( xz_v%io, file=trim(odir) //'/'// trim(title) //'.xz.v.snp', &
-            status='old', position='append', form='unformatted' )
-      end if
-
-      if( xy_v%sw .and. myid == xy_v%ionode ) then
-        open( xy_v%io, file=trim(odir) //'/'// trim(title) //'.xy.v.snp', &
-            status='old', position='append', form='unformatted' )
-      end if
-
-      if( fs_v%sw .and. myid == fs_v%ionode ) then
-        open( fs_v%io, file=trim(odir) //'/'// trim(title) //'.fs.v.snp', &
-            status='old', position='append', form='unformatted' )
-      end if
-
-      if( ob_v%sw .and. myid == ob_v%ionode ) then
-        open( ob_v%io, file=trim(odir) //'/'// trim(title) //'.ob.v.snp', &
-            status='old', position='append', form='unformatted' )
-      end if
-#else
-      if( yz_ps%sw .and. myid == yz_ps%ionode ) then
-        open( yz_ps%io, file=trim(odir) //'/'// trim(title) //'.yz.ps.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( xz_ps%sw .and. myid == xz_ps%ionode ) then
-        open( xz_ps%io, file=trim(odir) //'/'// trim(title) //'.xz.ps.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( xy_ps%sw .and. myid == xy_ps%ionode ) then
-        open( xy_ps%io, file=trim(odir) //'/'// trim(title) //'.xy.ps.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( fs_ps%sw .and. myid == fs_ps%ionode ) then
-        open( fs_ps%io, file=trim(odir) //'/'// trim(title) //'.fs.ps.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( ob_ps%sw .and. myid == ob_ps%ionode ) then
-        open( ob_ps%io, file=trim(odir) //'/'// trim(title) //'.ob.ps.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( yz_v%sw .and. myid == yz_v%ionode ) then
-        open( yz_v%io, file=trim(odir) //'/'// trim(title) //'.yz.v.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( xz_v%sw .and. myid == xz_v%ionode ) then
-        open( xz_v%io, file=trim(odir) //'/'// trim(title) //'.xz.v.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( xy_v%sw .and. myid == xy_v%ionode ) then
-        open( xy_v%io, file=trim(odir) //'/'// trim(title) //'.xy.v.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( fs_v%sw .and. myid == fs_v%ionode ) then
-        open( fs_v%io, file=trim(odir) //'/'// trim(title) //'.fs.v.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( ob_v%sw .and. myid == ob_v%ionode ) then
-        open( ob_v%io, file=trim(odir) //'/'// trim(title) //'.ob.v.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( yz_u%sw .and. myid == yz_u%ionode ) then
-        open( yz_u%io, file=trim(odir) //'/'// trim(title) //'.yz.u.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( xz_u%sw .and. myid == xz_u%ionode ) then
-        open( xz_u%io, file=trim(odir) //'/'// trim(title) //'.xz.u.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( xy_u%sw .and. myid == xy_u%ionode ) then
-        open( xy_u%io, file=trim(odir) //'/'// trim(title) //'.xy.u.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( fs_u%sw .and. myid == fs_u%ionode ) then
-        open( fs_u%io, file=trim(odir) //'/'// trim(title) //'.fs.u.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-      if( ob_u%sw .and. myid == ob_u%ionode ) then
-        open( ob_u%io, file=trim(odir) //'/'// trim(title) //'.ob.u.snp', &
-            status='old', access='stream', position='append', form='unformatted' )
-      end if
-
-#endif
-    else
-
-#ifdef _NETCDF
-      if( yz_ps%sw .and. myid == yz_ps%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.yz.ps.nc', NF90_WRITE, yz_ps%io ) )
-      end if
-
-      if( xz_ps%sw .and. myid == xz_ps%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xz.ps.nc', NF90_WRITE, xz_ps%io ) )
-      end if
-
-      if( xy_ps%sw .and. myid == xy_ps%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xy.ps.nc', NF90_WRITE, xy_ps%io ) )
-      end if
-
-      if( fs_ps%sw .and. myid == fs_ps%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.fs.ps.nc', NF90_WRITE, fs_ps%io ) )
-      end if
-
-      if( ob_ps%sw .and. myid == ob_ps%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.ob.ps.nc', NF90_WRITE, ob_ps%io ) )
-      end if
-
-
-      if( yz_v%sw .and. myid == yz_v%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.yz.v.nc', NF90_WRITE, yz_v%io ) )
-      end if
-
-      if( xz_v%sw .and. myid == xz_v%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xz.v.nc', NF90_WRITE, xz_v%io ) )
-      end if
-
-      if( xy_v%sw .and. myid == xy_v%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xy.v.nc', NF90_WRITE, xy_v%io ) )
-      end if
-
-      if( fs_v%sw .and. myid == fs_v%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.fs.v.nc', NF90_WRITE, fs_v%io ) )
-      end if
-
-      if( ob_v%sw .and. myid == ob_v%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.ob.v.nc', NF90_WRITE, ob_v%io ) )
-      end if
-
-
-      if( yz_u%sw .and. myid == yz_u%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.yz.u.nc', NF90_WRITE, yz_u%io ) )
-      end if
-
-      if( xz_u%sw .and. myid == xz_u%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xz.u.nc', NF90_WRITE, xz_u%io ) )
-      end if
-
-      if( xy_u%sw .and. myid == xy_u%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.xy.u.nc', NF90_WRITE, xy_u%io ) )
-      end if
-
-      if( fs_u%sw .and. myid == fs_u%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.fs.u.nc', NF90_WRITE, fs_u%io ) )
-      end if
-
-      if( ob_u%sw .and. myid == ob_u%ionode ) then
-        call nc_chk( nf90_open( trim(odir) //'/'// trim(title) //'.ob.u.nc', NF90_WRITE, ob_u%io ) )
-      end if
-#endif
-    end if
 
   end subroutine output__restart
   !! --------------------------------------------------------------------------------------------------------------------------- !!
