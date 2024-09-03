@@ -183,7 +183,7 @@ endif
 ##
 ifeq ($(arch),bdec-o)
   FC      = module purge; module load fj fjmpi netcdf hdf5 netcdf-fortran; mpifrtpx
-  FFLAGS  = -O3 -Keval -Kfp_contract -Kfp_relaxed -Kfz -Kilfunc -Kmfunc -Komitfp -Kopenmp -Kparallel -Ksimd=2 -Kocl -Kassume=memory_bandwidth -Koptmsg=guide -Nlst=t -D_FX 
+  FFLAGS  = -O3 -Keval -Kfp_contract -Kfp_relaxed -Kfz -Kilfunc -Kmfunc -Komitfp -Kopenmp -Kparallel -Ksimd=2 -Kocl -Kassume=memory_bandwidth -Koptmsg=guide -Nlst=t -D_FX -Cpp
   NCFLAG  = -D_NETCDF 
   NCLIB = 
   NCINC = 
