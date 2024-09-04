@@ -31,7 +31,7 @@ module m_global
   public :: global__setup2
   public :: global__comm_vel
   public :: global__comm_stress
-
+  public :: global__getnode
 
 
   !!
@@ -749,6 +749,38 @@ contains
     idy = myid / nproc_x
   end subroutine set_mpi_table
 
+  subroutine global__getnode(i, j, idx_ij, idy_ij)
 
+    integer, intent(in) :: i, j
+    integer, intent(out) :: idx_ij, idy_ij
+    integer :: mx, my
+    integer :: iproc_x, nxp_node, ibeg_node, iend_node
+    integer :: iproc_y, nyp_node, jbeg_node, jend_node
+
+    mx = mod(nx, nproc_x)
+    my = mod(ny, nproc_y)
+
+    do iproc_x=0, nproc_x - 1
+        if (iproc_x <= nproc_x - mx - 1) then
+            ibeg_node =  iproc_x      * (nx - mx) / nproc_x + 1
+            iend_node = (iproc_x + 1) * (nx - mx) / nproc_x
+            if ( ibeg_node <= i .and. i <= iend_node ) then
+                idx_ij = iproc_x
+                exit
+            end if
+        end if
+    end do
+
+    do iproc_y =0, nproc_y - 1 
+        if (iproc_y <= nproc_y - my - 1) then
+            jbeg_node =  iproc_y      * (ny - my) / nproc_y + 1
+            jend_node = (iproc_y + 1) * (ny - my) / nproc_y
+            if (jbeg_node <= j .and. j <= jend_node) then
+                idy_ij = iproc_y
+                exit
+            end if
+        end if
+    end do
+  end subroutine global__getnode
 end module m_global
 !! ------------------------------------------------------------------------------------------------------------------------------ !!

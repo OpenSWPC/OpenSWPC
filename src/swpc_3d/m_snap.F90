@@ -19,9 +19,10 @@ module m_output
   use m_readini
   use m_geomap
   use m_system
-#ifdef _NETCDF
+  use mpi
+!#ifdef _NETCDF
   use netcdf
-#endif
+!#endif
 
   !! -- Declarations
   implicit none
@@ -50,7 +51,8 @@ module m_output
   type snp
     logical :: sw     ! true for output
     integer :: io     ! file I/O number (or netcdf file id)
-    integer :: ionode ! output MPI node
+    integer :: ionode ! output MPI node (mpi_comm_world)
+    integer :: ionode_local ! output MPI node (local comm, if necessary)
     integer :: nsnp
     character(2) :: snaptype ! snapshot type
     character(2) :: coordinate
@@ -103,6 +105,12 @@ module m_output
   real(SP), allocatable :: buf_yz_u(:,:,:), buf_xz_u(:,:,:), buf_xy_u(:,:,:), buf_fs_u(:,:,:), buf_ob_u(:,:,:)
   real(SP), allocatable :: max_ob_v(:,:,:), max_ob_u(:,:,:), max_fs_v(:,:,:), max_fs_u(:,:,:)
 
+  !! cross-section data MPI communicator
+  integer :: mpi_comm_xz, mpi_comm_yz
+  integer :: myid_xz, myid_yz
+  integer :: idy_xz
+  integer :: idx_yz
+
 contains
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -116,7 +124,8 @@ contains
   subroutine output__setup( io_prm )
     integer, intent(in) :: io_prm
     integer :: i, j, k, ii, jj, kk
-    integer :: ierr
+    integer :: err
+    integer :: idum
     !! ----
 
     call pwatch__on( "output__setup" )
@@ -148,9 +157,6 @@ contains
     call readini( io_prm, 'kdec',       kdec,        1       )
     call readini( io_prm, 'ntdec_s',    ntdec_s,     10      )
     call readini( io_prm, 'snp_format', snp_format, 'native' )
-
-    !! Do not output waveform for Green's function mode
-    call readini( io_prm, 'green_mode', green_mode, .false. )
 
     !! snapshot size #2013-0440
     nxs = ( nx + (idec/2) ) / idec
@@ -185,25 +191,42 @@ contains
     i0_yz = x2i( x0_yz, xbeg, real(dx) )
     j0_xz = y2j( y0_xz, ybeg, real(dy) )
 
+    !! snapshot data communicator
+    call mpi_comm_split(mpi_comm_world, idy, idx, mpi_comm_xz, err)
+    call mpi_comm_split(mpi_comm_world, idx, idy, mpi_comm_yz, err)
+    call mpi_comm_rank(mpi_comm_xz, myid_xz, err)
+    call mpi_comm_rank(mpi_comm_yz, myid_yz, err)
 
     !!
     !! output node definition: cyclic
     !!
-    yz_ps%ionode = mod( 0, nproc )
-    xz_ps%ionode = mod( 1, nproc )
+    xy_v%ionode  = mod( 0, nproc )
+    xy_u%ionode  = mod( 1, nproc )
     xy_ps%ionode = mod( 2, nproc )
-    fs_ps%ionode = mod( 3, nproc )
-    ob_ps%ionode = mod( 4, nproc )
-    yz_v%ionode  = mod( 5, nproc )
-    xz_v%ionode  = mod( 6, nproc )
-    xy_v%ionode  = mod( 7, nproc )
-    fs_v%ionode  = mod( 8, nproc )
-    ob_v%ionode  = mod( 9, nproc )
-    yz_u%ionode  = mod( 10, nproc )
-    xz_u%ionode  = mod( 11, nproc )
-    xy_u%ionode  = mod( 12, nproc )
-    fs_u%ionode  = mod( 13, nproc )
-    ob_u%ionode  = mod( 14, nproc )
+    fs_v%ionode  = mod( 3, nproc )
+    fs_u%ionode  = mod( 4, nproc )
+    fs_ps%ionode = mod( 5, nproc )
+    ob_v%ionode  = mod( 6, nproc )
+    ob_u%ionode  = mod( 7, nproc )
+    ob_ps%ionode = mod( 8, nproc )
+
+    call global__getnode(1, j0_xz, idum, idy_xz)
+    call global__getnode(i0_yz, 1, idx_yz, idum)
+
+    xz_v %ionode_local = mod(0, nproc_x)
+    xz_u %ionode_local = mod(1, nproc_x)
+    xz_ps%ionode_local = mod(2, nproc_x)    
+    xz_v %ionode = itbl(xz_v %ionode_local, idy_xz)
+    xz_u %ionode = itbl(xz_u %ionode_local, idy_xz)
+    xz_ps%ionode = itbl(xz_ps%ionode_local, idy_xz)
+    
+    yz_v %ionode_local = mod(0, nproc_y)
+    yz_u %ionode_local = mod(1, nproc_y)
+    yz_ps%ionode_local = mod(2, nproc_y)
+    yz_v %ionode = itbl(idx_yz, yz_v %ionode_local)
+    yz_u %ionode = itbl(idx_yz, yz_u %ionode_local)
+    yz_ps%ionode = itbl(idx_yz, yz_ps%ionode_local)
+
 
     !!
     !! snapshot settings
@@ -341,7 +364,7 @@ contains
     max_fs_v(:,:,:) = 0.0
     max_fs_u(:,:,:) = 0.0
     
-    call mpi_barrier( mpi_comm_world, ierr )
+    call mpi_barrier( mpi_comm_world, err )
 
     call pwatch__off( "output__setup" )
 
@@ -472,11 +495,7 @@ contains
     if( myid == hdr % ionode ) then
 
       call std__getio( hdr % io, is_big=.true. )
-#ifdef _ES
-      open( hdr % io, file=trim(fname), action='write', status='replace', form='unformatted' )
-#else
       open( hdr % io, file=trim(fname), access='stream', action='write', status='replace', form='unformatted' )
-#endif
       call write_snp_header( hdr, nxs, nys, xsnp(1:nxs), ysnp(1:nys) )
 
     end if
@@ -536,8 +555,10 @@ contains
     type(snp),    intent(inout) :: hdr
     !!
     real(SP), allocatable :: sbuf(:), rbuf1(:), rbuf2(:), rbuf3(:), buf(:,:,:)
-    integer :: j, k, ii, jj, kk, ierr
+    integer :: j, k, ii, jj, kk, err
     !! --
+
+    if( idx /= idx_yz )  return
 
 #ifdef _NETCDF
 
@@ -550,7 +571,6 @@ contains
       hdr % na2 = na / kdec
       hdr % ds1 = jdec * dy
       hdr % ds2 = kdec * dz
-
       call nc_chk( nf90_create( trim(fname), NF90_NETCDF4, hdr%io ) )
       call write_nc_header( hdr, nys, nzs, ysnp, zsnp )
 
@@ -577,14 +597,13 @@ contains
     !! medium
     allocate( sbuf(nys*nzs), rbuf1(nys*nzs), rbuf2(nys*nzs), rbuf3(nys*nzs) )
     sbuf = reshape( buf(:,:,1), shape(sbuf) )
-    call mpi_reduce( sbuf, rbuf1, nys*nzs, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf1, nys*nzs, MPI_REAL, MPI_SUM, hdr%ionode_local, mpi_comm_yz, err )
     sbuf = reshape( buf(:,:,2), shape(sbuf) )
-    call mpi_reduce( sbuf, rbuf2, nys*nzs, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf2, nys*nzs, MPI_REAL, MPI_SUM, hdr%ionode_local, mpi_comm_yz, err )
     sbuf = reshape( buf(:,:,3), shape(sbuf) )
-    call mpi_reduce( sbuf, rbuf3, nys*nzs, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf3, nys*nzs, MPI_REAL, MPI_SUM, hdr%ionode_local, mpi_comm_yz, err )
 
     if( myid == hdr%ionode ) then
-
       call nc_chk( nf90_put_att( hdr%io, hdr%medid(1), 'actual_range', (/minval(rbuf1), maxval(rbuf1)/) ) )
       call nc_chk( nf90_put_att( hdr%io, hdr%medid(2), 'actual_range', (/minval(rbuf2), maxval(rbuf2)/) ) )
       call nc_chk( nf90_put_att( hdr%io, hdr%medid(3), 'actual_range', (/minval(rbuf3), maxval(rbuf3)/) ) )
@@ -617,8 +636,10 @@ contains
     type(snp),    intent(inout) :: hdr
     !!
     real(SP), allocatable :: sbuf(:), rbuf1(:), rbuf2(:), rbuf3(:), buf(:,:,:)
-    integer :: i, k, ii, jj, kk, ierr
+    integer :: i, k, ii, jj, kk, err
     !! --
+
+    if( idy /= idy_xz ) return
 
 #ifdef _NETCDF
 
@@ -661,11 +682,11 @@ contains
     !! medium
     allocate( sbuf(nxs*nzs), rbuf1(nxs*nzs), rbuf2(nxs*nzs), rbuf3(nxs*nzs) )
     sbuf = reshape( buf(:,:,1), shape(sbuf) )
-    call mpi_reduce( sbuf, rbuf1, nxs*nzs, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf1, nxs*nzs, MPI_REAL, MPI_SUM, hdr%ionode_local, mpi_comm_xz, err )
     sbuf = reshape( buf(:,:,2), shape(sbuf) )
-    call mpi_reduce( sbuf, rbuf2, nxs*nzs, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf2, nxs*nzs, MPI_REAL, MPI_SUM, hdr%ionode_local, mpi_comm_xz, err )
     sbuf = reshape( buf(:,:,3), shape(sbuf) )
-    call mpi_reduce( sbuf, rbuf3, nxs*nzs, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf3, nxs*nzs, MPI_REAL, MPI_SUM, hdr%ionode_local, mpi_comm_xz, err )
 
     if( myid == hdr%ionode ) then
       call nc_chk( nf90_put_att( hdr%io, hdr%medid(1), 'actual_range', (/minval(rbuf1), maxval(rbuf1)/) ) )
@@ -828,7 +849,7 @@ contains
     type(snp),    intent(inout) :: hdr
     !!
     real(SP), allocatable :: sbuf(:), rbuf1(:), rbuf2(:), rbuf3(:), rbuf4(:), rbuf5(:), rbuf6(:), buf(:,:,:)
-    integer :: i, j, ii, jj, kk, ierr
+    integer :: i, j, ii, jj, kk, err
     !! --
 
 #ifdef _NETCDF
@@ -882,17 +903,17 @@ contains
     allocate( sbuf(nxs*nys), rbuf1(nxs*nys), rbuf2(nxs*nys), rbuf3(nxs*nys) )
     allocate( rbuf4(nxs*nys), rbuf5(nxs*nys), rbuf6(nxs*nys) )
     sbuf = reshape( buf(:,:,1), shape(sbuf) )
-    call mpi_reduce( sbuf, rbuf1, nxs*nys, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf1, nxs*nys, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, err )
     sbuf = reshape( buf(:,:,2), shape(sbuf) )
-    call mpi_reduce( sbuf, rbuf2, nxs*nys, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf2, nxs*nys, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, err )
     sbuf = reshape( buf(:,:,3), shape(sbuf) )
-    call mpi_reduce( sbuf, rbuf3, nxs*nys, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf3, nxs*nys, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, err )
     sbuf = reshape( buf(:,:,4), shape(sbuf) )
-    call mpi_reduce( sbuf, rbuf4, nxs*nys, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf4, nxs*nys, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, err )
     sbuf = reshape( buf(:,:,5), shape(sbuf) )
-    call mpi_reduce( sbuf, rbuf5, nxs*nys, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf5, nxs*nys, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, err )
     sbuf = reshape( buf(:,:,6), shape(sbuf) )
-    call mpi_reduce( sbuf, rbuf6, nxs*nys, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf6, nxs*nys, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, err )
 
     if( myid == hdr%ionode ) then
 
@@ -990,13 +1011,13 @@ contains
 
     real(SP) :: sbuf(nx1*nx2)
     real(SP) :: rbuf(nx1*nx2)
-    integer  :: ierr
+    integer  :: err
 
     !! prepare send buffer
     sbuf = reshape( array, shape(sbuf) )
 
     !! gather to io_node
-    call mpi_reduce( sbuf, rbuf, nx1*nx2, MPI_REAL, MPI_SUM, ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf, nx1*nx2, MPI_REAL, MPI_SUM, ionode, mpi_comm_world, err )
 
     !! write
     if( myid == ionode ) write(io) rbuf
@@ -1019,7 +1040,7 @@ contains
 
     real(SP) :: sbuf(nx1*nx2)
     real(SP) :: rbuf(nx1*nx2)
-    integer  :: ierr
+    integer  :: err
     integer :: count(3)
     integer :: start(3)
 
@@ -1028,7 +1049,7 @@ contains
     sbuf = reshape( array, shape(sbuf) )
 
     !! gather to io_node
-    call mpi_reduce( sbuf, rbuf, nx1*nx2, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce( sbuf, rbuf, nx1*nx2, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, err )
 
     !! write
     if( myid == hdr%ionode ) then
@@ -1046,6 +1067,84 @@ contains
 
   end subroutine write_reduce_array2d_r_nc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
+  subroutine write_reduce_array2d_r_yz_nc( it, vid, nx1, nx2, hdr, array )
+
+    integer,   intent(in) :: it
+    integer,   intent(in) :: vid
+    integer,   intent(in) :: nx1, nx2
+    type(snp), intent(inout) :: hdr
+    real(SP),  intent(in) :: array(nx1,nx2)
+
+    real(SP) :: sbuf(nx1*nx2)
+    real(SP) :: rbuf(nx1*nx2)
+    integer  :: err
+    integer :: count(3)
+    integer :: start(3)
+
+    if( idx /= idx_yz )  return
+
+#ifdef _NETCDF
+    !! prepare send buffer
+    sbuf = reshape( array, shape(sbuf) )
+
+    !! gather to io_node
+    call mpi_reduce( sbuf, rbuf, nx1*nx2, MPI_REAL, MPI_SUM, hdr%ionode_local, mpi_comm_yz, err )
+
+    !! write
+    if( myid == hdr%ionode ) then
+      count = (/ nx1, nx2, 1/)
+      start = (/ 1, 1, it/ntdec_s+1 /)
+      call nc_chk( nf90_put_var( hdr%io, hdr%varid(vid), reshape(rbuf,shape(array)), start, count ))
+      call nc_chk( nf90_put_var( hdr%io, hdr%vid_t, it*dt, start=(/ it/ntdec_s+1 /) ) )
+      hdr%vmax(vid) = max( hdr%vmax(vid), maxval(rbuf) )
+      hdr%vmin(vid) = min( hdr%vmin(vid), minval(rbuf) )
+      call nc_chk( nf90_redef( hdr%io ) )
+      call nc_chk( nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)) )
+      call nc_chk( nf90_enddef( hdr%io ) )
+    end if
+#endif
+
+  end subroutine write_reduce_array2d_r_yz_nc
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  subroutine write_reduce_array2d_r_xz_nc( it, vid, nx1, nx2, hdr, array )
+
+    integer,   intent(in) :: it
+    integer,   intent(in) :: vid
+    integer,   intent(in) :: nx1, nx2
+    type(snp), intent(inout) :: hdr
+    real(SP),  intent(in) :: array(nx1,nx2)
+
+    real(SP) :: sbuf(nx1*nx2)
+    real(SP) :: rbuf(nx1*nx2)
+    integer  :: err
+    integer :: count(3)
+    integer :: start(3)
+
+    if( idy /= idy_xz )  return
+
+#ifdef _NETCDF
+    !! prepare send buffer
+    sbuf = reshape( array, shape(sbuf) )
+
+    !! gather to io_node
+    call mpi_reduce( sbuf, rbuf, nx1*nx2, MPI_REAL, MPI_SUM, hdr%ionode_local, mpi_comm_xz, err )
+
+    !! write
+    if( myid == hdr%ionode ) then
+      count = (/ nx1, nx2, 1/)
+      start = (/ 1, 1, it/ntdec_s+1 /)
+      call nc_chk( nf90_put_var( hdr%io, hdr%varid(vid), reshape(rbuf,shape(array)), start, count ))
+      call nc_chk( nf90_put_var( hdr%io, hdr%vid_t, it*dt, start=(/ it/ntdec_s+1 /) ) )
+      hdr%vmax(vid) = max( hdr%vmax(vid), maxval(rbuf) )
+      hdr%vmin(vid) = min( hdr%vmin(vid), minval(rbuf) )
+      call nc_chk( nf90_redef( hdr%io ) )
+      call nc_chk( nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)) )
+      call nc_chk( nf90_enddef( hdr%io ) )
+    end if
+#endif
+
+  end subroutine write_reduce_array2d_r_xz_nc
+  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
@@ -1060,10 +1159,10 @@ contains
     real(SP), intent(in) :: array(nx)
 
     real(SP) :: rbuf(nx)
-    integer  :: ierr
+    integer  :: err
 
     !! gather to io_node
-    call mpi_reduce( array, rbuf, nx, MPI_REAL, MPI_SUM, ionode, mpi_comm_world, ierr )
+    call mpi_reduce( array, rbuf, nx, MPI_REAL, MPI_SUM, ionode, mpi_comm_world, err )
 
     !! write
     if( myid == ionode ) write(io) rbuf
@@ -1160,6 +1259,8 @@ contains
     real, allocatable :: buf(:,:,:)
     !! ----
 
+    if( idx /= idx_yz )  return
+
     if( .not. allocated(buf) ) then
       allocate( buf(nys,nzs,4) )
       buf(1:nys,1:nzs,1:4) = 0.0
@@ -1194,10 +1295,10 @@ contains
         call write_reduce_array2d_r( nys, nzs, yz_ps%ionode, yz_ps%io, buf(:,:,3) )
         call write_reduce_array2d_r( nys, nzs, yz_ps%ionode, yz_ps%io, buf(:,:,4) )
       else
-        call write_reduce_array2d_r_nc ( it, 1, nys, nzs, yz_ps, buf(:,:,1) )
-        call write_reduce_array2d_r_nc ( it, 2, nys, nzs, yz_ps, buf(:,:,2) )
-        call write_reduce_array2d_r_nc ( it, 3, nys, nzs, yz_ps, buf(:,:,3) )
-        call write_reduce_array2d_r_nc ( it, 4, nys, nzs, yz_ps, buf(:,:,4) )
+        call write_reduce_array2d_r_yz_nc ( it, 1, nys, nzs, yz_ps, buf(:,:,1) )
+        call write_reduce_array2d_r_yz_nc ( it, 2, nys, nzs, yz_ps, buf(:,:,2) )
+        call write_reduce_array2d_r_yz_nc ( it, 3, nys, nzs, yz_ps, buf(:,:,3) )
+        call write_reduce_array2d_r_yz_nc ( it, 4, nys, nzs, yz_ps, buf(:,:,4) )
       end if
 
     end if
@@ -1214,6 +1315,8 @@ contains
     real(SP) :: div, rot(3)
     real, allocatable :: buf(:,:,:)
     !! ----
+
+    if( idy /= idy_xz) return 
 
     if( .not. allocated(buf) ) then
       allocate( buf(nxs,nzs,4) )
@@ -1249,10 +1352,10 @@ contains
         call write_reduce_array2d_r( nxs, nzs, xz_ps%ionode, xz_ps%io, buf(:,:,3) )
         call write_reduce_array2d_r( nxs, nzs, xz_ps%ionode, xz_ps%io, buf(:,:,4) )
       else
-        call write_reduce_array2d_r_nc( it, 1, nxs, nzs, xz_ps, buf(:,:,1) )
-        call write_reduce_array2d_r_nc( it, 2, nxs, nzs, xz_ps, buf(:,:,2) )
-        call write_reduce_array2d_r_nc( it, 3, nxs, nzs, xz_ps, buf(:,:,3) )
-        call write_reduce_array2d_r_nc( it, 4, nxs, nzs, xz_ps, buf(:,:,4) )
+        call write_reduce_array2d_r_xz_nc( it, 1, nxs, nzs, xz_ps, buf(:,:,1) )
+        call write_reduce_array2d_r_xz_nc( it, 2, nxs, nzs, xz_ps, buf(:,:,2) )
+        call write_reduce_array2d_r_xz_nc( it, 3, nxs, nzs, xz_ps, buf(:,:,3) )
+        call write_reduce_array2d_r_xz_nc( it, 4, nxs, nzs, xz_ps, buf(:,:,4) )
       end if
 
     end if
@@ -1422,6 +1525,7 @@ contains
     real(SP), allocatable :: buf(:,:,:)
     !! --
 
+    if( idx /= idx_yz) return 
     if( mod( it-1, ntdec_s ) /= 0 ) return
 
     if( .not. allocated(buf) ) allocate(buf(nys,nzs,3))
@@ -1451,9 +1555,9 @@ contains
       call write_reduce_array2d_r( nys, nzs, yz_v%ionode, yz_v%io, buf(:,:,2) )
       call write_reduce_array2d_r( nys, nzs, yz_v%ionode, yz_v%io, buf(:,:,3) )
     else
-      call write_reduce_array2d_r_nc( it, 1, nys, nzs, yz_v, buf(:,:,1) )
-      call write_reduce_array2d_r_nc( it, 2, nys, nzs, yz_v, buf(:,:,2) )
-      call write_reduce_array2d_r_nc( it, 3, nys, nzs, yz_v, buf(:,:,3) )
+      call write_reduce_array2d_r_yz_nc( it, 1, nys, nzs, yz_v, buf(:,:,1) )
+      call write_reduce_array2d_r_yz_nc( it, 2, nys, nzs, yz_v, buf(:,:,2) )
+      call write_reduce_array2d_r_yz_nc( it, 3, nys, nzs, yz_v, buf(:,:,3) )
     end if
 
   end subroutine wbuf_yz_v
@@ -1466,6 +1570,8 @@ contains
     integer :: i, j, k
     integer :: ii, kk
     real(SP), allocatable :: buf(:,:,:)
+
+    if(idy /= idy_xz) return 
 
     if( mod( it-1, ntdec_s ) /= 0 ) return
     if( .not. allocated(buf) )  allocate( buf(nxs,nzs,3) )
@@ -1495,9 +1601,9 @@ contains
       call write_reduce_array2d_r( nxs, nzs, xz_v%ionode, xz_v%io, buf(:,:,2) )
       call write_reduce_array2d_r( nxs, nzs, xz_v%ionode, xz_v%io, buf(:,:,3) )
     else
-      call write_reduce_array2d_r_nc( it, 1, nxs, nzs, xz_v, buf(:,:,1) )
-      call write_reduce_array2d_r_nc( it, 2, nxs, nzs, xz_v, buf(:,:,2) )
-      call write_reduce_array2d_r_nc( it, 3, nxs, nzs, xz_v, buf(:,:,3) )
+      call write_reduce_array2d_r_xz_nc( it, 1, nxs, nzs, xz_v, buf(:,:,1) )
+      call write_reduce_array2d_r_xz_nc( it, 2, nxs, nzs, xz_v, buf(:,:,2) )
+      call write_reduce_array2d_r_xz_nc( it, 3, nxs, nzs, xz_v, buf(:,:,3) )
     end if
 
   end subroutine wbuf_xz_v
@@ -1511,6 +1617,7 @@ contains
     real(SP), allocatable :: buf(:,:,:)
     !! ---
 
+   
     if( mod( it-1, ntdec_s ) /= 0 ) return
     if( .not. allocated(buf) ) allocate( buf(nxs,nys,3) )
 
@@ -1655,6 +1762,8 @@ contains
     integer :: jj, kk
     !! --
 
+    if( idx /= idx_yz) return 
+
     i = i0_yz
 
     if( ibeg <= i .and. i <= iend ) then
@@ -1680,9 +1789,9 @@ contains
         call write_reduce_array2d_r( nys, nzs, yz_u%ionode, yz_u%io, buf_yz_u(:,:,2) )
         call write_reduce_array2d_r( nys, nzs, yz_u%ionode, yz_u%io, buf_yz_u(:,:,3) )
       else
-        call write_reduce_array2d_r_nc( it, 1, nys, nzs, yz_u, buf_yz_u(:,:,1) )
-        call write_reduce_array2d_r_nc( it, 2, nys, nzs, yz_u, buf_yz_u(:,:,2) )
-        call write_reduce_array2d_r_nc( it, 3, nys, nzs, yz_u, buf_yz_u(:,:,3) )
+        call write_reduce_array2d_r_yz_nc( it, 1, nys, nzs, yz_u, buf_yz_u(:,:,1) )
+        call write_reduce_array2d_r_yz_nc( it, 2, nys, nzs, yz_u, buf_yz_u(:,:,2) )
+        call write_reduce_array2d_r_yz_nc( it, 3, nys, nzs, yz_u, buf_yz_u(:,:,3) )
       end if
     end if
 
@@ -1695,6 +1804,8 @@ contains
     integer, intent(in) :: it
     integer :: i, j, k
     integer :: ii, kk
+
+    if (idy /= idy_xz) return 
 
     j = j0_xz
 
@@ -1722,9 +1833,9 @@ contains
         call write_reduce_array2d_r( nxs, nzs, xz_u%ionode, xz_u%io, buf_xz_u(:,:,2) )
         call write_reduce_array2d_r( nxs, nzs, xz_u%ionode, xz_u%io, buf_xz_u(:,:,3) )
       else
-        call write_reduce_array2d_r_nc( it, 1, nxs, nzs, xz_u, buf_xz_u(:,:,1) )
-        call write_reduce_array2d_r_nc( it, 2, nxs, nzs, xz_u, buf_xz_u(:,:,2) )
-        call write_reduce_array2d_r_nc( it, 3, nxs, nzs, xz_u, buf_xz_u(:,:,3) )
+        call write_reduce_array2d_r_xz_nc( it, 1, nxs, nzs, xz_u, buf_xz_u(:,:,1) )
+        call write_reduce_array2d_r_xz_nc( it, 2, nxs, nzs, xz_u, buf_xz_u(:,:,2) )
+        call write_reduce_array2d_r_xz_nc( it, 3, nxs, nzs, xz_u, buf_xz_u(:,:,3) )
       end if
 
     end if
@@ -1987,11 +2098,11 @@ contains
     type(snp), intent(in) :: hdr
     real(SP), intent(inout) :: maxv(nxs,nys,3)
     real(SP) :: sbuf(nxs*nys*3), rbuf(nxs*nys*3)
-    integer :: ierr
+    integer :: err
     integer :: vid_V, vid_H, vid_A
 
     sbuf = reshape( maxv, shape(sbuf) )
-    call mpi_reduce(sbuf, rbuf, nxs*nys*3, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    call mpi_reduce(sbuf, rbuf, nxs*nys*3, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, err )
     maxv = reshape( rbuf, shape(maxv) )
     if( myid == hdr%ionode ) then
       
@@ -2038,13 +2149,13 @@ contains
   !! An internal subroutine to check error in netcdf function calls
   !<
   !! --
-  subroutine nc_chk( ierr )
+  subroutine nc_chk( err )
 
-    integer, intent(in) :: ierr
+    integer, intent(in) :: err
     !! ----
 
 #ifdef _NETCDF
-    if( ierr /= NF90_NOERR )  write(STDERR,*) NF90_STRERROR( ierr )
+    if( err /= NF90_NOERR )  write(STDERR,*) NF90_STRERROR( err )
 #endif
 
   end subroutine nc_chk

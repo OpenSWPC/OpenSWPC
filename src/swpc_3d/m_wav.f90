@@ -225,11 +225,7 @@ contains
                     if( kst_g < kbeg ) then
                         call info("station depth fall short of kbeg at station" // trim(stnm_g))
                         kst_g = kbeg + 1
-                     end if                 
-
-                    write(*,*) myid, "STNM-G", stnm_g
-                    write(*,*) myid, "STLO-G", stlo_g
-        
+                     end if                         
 
                     nst  = nst + 1
                     if (nst == 1 ) then
@@ -267,11 +263,6 @@ contains
             return
         end if
 
-        if( nst > 0 ) then
-            write(*,*) myid, "STNM", stnm
-            write(*,*) myid, "STLO", stlo
-        end if
-      
     end subroutine set_stinfo
 
     subroutine set_sac_header()
