@@ -24,15 +24,14 @@ module m_debug
 
   !! regular debug
   interface debug
-    module procedure debug_c,  debug_i,  debug_r,  debug_d,  debug_l
-    module procedure debug__void
+      module procedure debug_c0, debug_i0, debug_r0, debug_d0, debug_l0
+      module procedure debug__void
   end interface debug
 
   interface debug__macro
-  module procedure debug_c0, debug_i0, debug_r0, debug_d0, debug_l0
-  module procedure debug__void
+      module procedure debug_c,  debug_i,  debug_r,  debug_d,  debug_l
+      module procedure debug__void
   end interface debug__macro
-
 
 contains
 
