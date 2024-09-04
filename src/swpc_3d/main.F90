@@ -122,7 +122,6 @@ program SWPC_3D
 #endif
   !! mainloop
   do it = it0, nt
-
     call report__progress(it)
 
     call green__store( it )

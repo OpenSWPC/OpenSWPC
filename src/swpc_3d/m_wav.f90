@@ -64,7 +64,7 @@ contains
         call pwatch__on('wav__setup')
 
         call readini( io_prm, 'green_mode', green_mode, .false. )        
-        if (.not. green_mode) then
+        if (green_mode) then
             sw_wav_v      = .false.
             sw_wav_u      = .false.
             sw_wav_stress = .false.
@@ -129,7 +129,7 @@ contains
         r41x = 1.0_MP / 24.0_MP / dx
         r41y = 1.0_MP / 24.0_MP / dy
         r41z = 1.0_MP / 24.0_MP / dz
-                
+              
         call pwatch__off('wav__setup')
 
     end subroutine wav__setup
@@ -155,16 +155,7 @@ contains
             call info('no station location file found')
             nst = 0
             return
-        end if
-
-        xst  = [real(SP) ::]
-        yst  = [real(SP) ::]
-        zst  = [real(SP) ::]
-        stlo = [real(SP) ::]
-        stla = [real(SP) ::]
-        ist  = [integer  ::]
-        jst  = [integer  ::]
-        kst  = [integer  ::]      
+        end if 
 
         do
             read(io_stlst, '(a256)', iostat=err) abuf
@@ -196,6 +187,7 @@ contains
 
             ist_g = x2i ( xst_g, xbeg, real(dx) )
             jst_g = y2j ( yst_g, ybeg, real(dy) )
+            kst_g = z2k ( zst_g, zbeg, real(dz))
       
             if(i2x(1, xbeg, real(dx)) < xst_g .and. xst_g < i2x(nx, xbeg, real(dx)) .and. &
                j2y(1, ybeg, real(dy)) < yst_g .and. yst_g < j2y(ny, ybeg, real(dy)) .and. &
@@ -229,23 +221,38 @@ contains
                     if(kst_g > kend) then
                         call info("station depth exceeds kend at station " // trim(stnm_g))
                         kst_g = kend - 1
-                      end if
-                      if( kst_g < kbeg ) then
+                    end if
+                    if( kst_g < kbeg ) then
                         call info("station depth fall short of kbeg at station" // trim(stnm_g))
                         kst_g = kbeg + 1
-                      end if                    
+                     end if                 
+
+                    write(*,*) myid, "STNM-G", stnm_g
+                    write(*,*) myid, "STLO-G", stlo_g
+        
 
                     nst  = nst + 1
-                    xst  = [xst,  xst_g ]
-                    yst  = [yst,  yst_g ]
-                    zst  = [zst,  zst_g ]
-                    stnm = [stnm, stnm_g]
-                    stlo = [stlo, stlo_g]
-                    stla = [stla, stla_g]
-                    ist  = [ist,  ist_g ]
-                    jst  = [jst,  jst_g ]
-                    kst  = [kst,  kst_g ]
-
+                    if (nst == 1 ) then
+                        allocate(xst(1), source=xst_g)
+                        allocate(yst(1), source=yst_g)
+                        allocate(zst(1), source=zst_g)
+                        allocate(stnm(1), source=stnm_g)
+                        allocate(stlo(1), source=stlo_g)
+                        allocate(stla(1), source=stla_g)
+                        allocate(ist(1), source=ist_g)
+                        allocate(jst(1), source=jst_g)
+                        allocate(kst(1), source=kst_g)
+                    else
+                        call std__extend_array(xst, xst_g)
+                        call std__extend_array(yst, yst_g)
+                        call std__extend_array(zst, zst_g)
+                        call std__extend_array(8, stnm, stnm_g)
+                        call std__extend_array(stlo, stlo_g)
+                        call std__extend_array(stla, stla_g)
+                        call std__extend_array(ist, ist_g)
+                        call std__extend_array(jst, jst_g)
+                        call std__extend_array(kst, kst_g)
+                    end if
                 end if
             else
                 if( myid == 0 )  call info("station " // trim(stnm_g) // " is out of the region")                
@@ -258,6 +265,11 @@ contains
             nst = 0
             if( myid == 0 ) call info("no station is detected. waveform files will not be created")
             return
+        end if
+
+        if( nst > 0 ) then
+            write(*,*) myid, "STNM", stnm
+            write(*,*) myid, "STLO", stlo
         end if
       
     end subroutine set_stinfo
@@ -287,11 +299,11 @@ contains
                 do j=1, 3
                     call initialize_sac_header(sh_disp(j,i), stnm(i), stlo(i), stla(i), xst(i), yst(i), zst(i), mag)
                 end do
-                sh_vel(1,i)%kcmpnm = "Ux"; sh_vel(1,i)%cmpinc = 90.0; sh_vel(1,i)%cmpaz =  0.0 + phi
-                sh_vel(2,i)%kcmpnm = "Uy"; sh_vel(2,i)%cmpinc = 90.0; sh_vel(2,i)%cmpaz = 90.0 + phi
-                sh_vel(3,i)%kcmpnm = "Uz"; sh_vel(3,i)%cmpinc = 90.0; sh_vel(3,i)%cmpaz =  0.0 
+                sh_disp(1,i)%kcmpnm = "Ux"; sh_disp(1,i)%cmpinc = 90.0; sh_disp(1,i)%cmpaz =  0.0 + phi
+                sh_disp(2,i)%kcmpnm = "Uy"; sh_disp(2,i)%cmpinc = 90.0; sh_disp(2,i)%cmpaz = 90.0 + phi
+                sh_disp(3,i)%kcmpnm = "Uz"; sh_disp(3,i)%cmpinc = 90.0; sh_disp(3,i)%cmpaz =  0.0 
 
-                sh_vel(:,i)%idep = 6 
+                sh_disp(:,i)%idep = 6 
             end if
 
             if (sw_wav_stress) then
@@ -314,14 +326,14 @@ contains
                     call initialize_sac_header(sh_strain(j,i), stnm(i), stlo(i), stla(i), xst(i), yst(i), zst(i), mag)
                 end do
 
-                sh_stress(1,i)%kcmpnm = "Exx"
-                sh_stress(2,i)%kcmpnm = "Eyy"
-                sh_stress(3,i)%kcmpnm = "Ezz"
-                sh_stress(4,i)%kcmpnm = "Eyz"
-                sh_stress(5,i)%kcmpnm = "Exz"
-                sh_stress(6,i)%kcmpnm = "Exy"
+                sh_strain(1,i)%kcmpnm = "Exx"
+                sh_strain(2,i)%kcmpnm = "Eyy"
+                sh_strain(3,i)%kcmpnm = "Ezz"
+                sh_strain(4,i)%kcmpnm = "Eyz"
+                sh_strain(5,i)%kcmpnm = "Exz"
+                sh_strain(6,i)%kcmpnm = "Exy"
         
-                sh_stress(:,i)%idep = 5
+                sh_strain(:,i)%idep = 5
             end if
 
         end do
@@ -474,12 +486,12 @@ contains
                        + (Vy(k  ,i  ,j  ) - Vy(k-1,i  ,j  )) * r40z - (Vy(k+1,i  ,j  ) - Vy(k-2,i  ,j  )) * r41z &
                        + (Vy(k  ,i  ,j-1) - Vy(k-1,i  ,j-1)) * r40z - (Vy(k+1,i  ,j-1) - Vy(k-2,i  ,j-1)) * r41z ) / 4.0
       
-                exx(i) = exx(i) + dxVx * dt
-                eyy(i) = eyy(i) + dyVy * dt
-                ezz(i) = ezz(i) + dzVz * dt
-                eyz(i) = eyz(i) + (dyVz + dzVy) / 2.0 * dt
-                exz(i) = exz(i) + (dxVz + dzVx) / 2.0 * dt
-                exy(i) = exy(i) + (dxVy + dyVx) / 2.0 * dt
+                exx(n) = exx(i) + dxVx * dt
+                eyy(n) = eyy(i) + dyVy * dt
+                ezz(n) = ezz(i) + dzVz * dt
+                eyz(n) = eyz(i) + (dyVz + dzVy) / 2.0 * dt
+                exz(n) = exz(i) + (dxVz + dzVx) / 2.0 * dt
+                exy(n) = exy(i) + (dxVy + dyVx) / 2.0 * dt
       
             end do
             !$omp end parallel do
@@ -493,9 +505,9 @@ contains
                 !$omp parallel do private(n,i,j,k)
                 do n=1, nst
                     i = ist(n); j = jst(n); k = kst(n)
-                    wav_vel(itw,1,i) =  ( Vx(k, i, j) + Vx(k  , i-1, j  )) / 2.0 * M0 * UC * 1e9
-                    wav_vel(itw,2,i) =  ( Vy(k, i, j) + Vy(k  , i  , j-1)) / 2.0 * M0 * UC * 1e9
-                    wav_vel(itw,3,i) = -( Vz(k, i, j) + Vz(k-1, i  , j  )) / 2.0 * M0 * UC * 1e9
+                    wav_vel(itw,1,n) =  ( Vx(k, i, j) + Vx(k  , i-1, j  )) / 2.0 * M0 * UC * 1e9
+                    wav_vel(itw,2,n) =  ( Vy(k, i, j) + Vy(k  , i  , j-1)) / 2.0 * M0 * UC * 1e9
+                    wav_vel(itw,3,n) = -( Vz(k, i, j) + Vz(k-1, i  , j  )) / 2.0 * M0 * UC * 1e9
                 end do
                 !$omp end parallel do
 
