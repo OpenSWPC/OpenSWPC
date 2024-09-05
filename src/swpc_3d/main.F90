@@ -177,6 +177,7 @@ program SWPC_3D
   !!
   !! Program termination
   !!
+  call mpi_barrier( mpi_comm_world, ierr ) 
   call mpi_finalize( ierr )
 
 end program SWPC_3D
