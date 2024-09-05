@@ -11,7 +11,7 @@
   !! Control
   !!
 
-  title            = 'swpc_W'        !! exe title: used for output filenames
+  title            = 'swpc_W'         !! exe title: used for output filenames
   odir             = './out'          !! output directory
   ntdec_r          = 50               !! screen report timing (1/cycle)
   strict_mode      = .false. 
@@ -21,7 +21,7 @@
   !!
 
   nproc_x          = 6                !! parallelization in x-dir
-  nproc_y          = 6                !! parallelization in x-dir
+  nproc_y          = 6                !! parallelization in y-dir
   nx               = 2000             !! total grid number in x-dir
   ny               = 2560             !! total grid number in y-dir
   nz               = 500              !! total grid number in z-dir

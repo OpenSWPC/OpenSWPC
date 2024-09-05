@@ -21,7 +21,7 @@
   !!
 
   nproc_x          = 2                !! parallelization in x-dir
-  nproc_y          = 2                !! parallelization in x-dir
+  nproc_y          = 2                !! parallelization in y-dir
   nx               = 384              !! total grid number in x-dir
   ny               = 384              !! total grid number in y-dir
   nz               = 384              !! total grid number in z-dir
