@@ -6,7 +6,7 @@
 !!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
-#include "m_debug.h"
+#include "../shared/m_debug.h"
 module m_green
 
   !! -- Declarations
@@ -14,7 +14,7 @@ module m_green
   use m_debug
   use m_global
   use m_sac
-  use m_output
+  use m_wav
   use m_readini
   use m_geomap
   use m_pwatch
@@ -180,7 +180,7 @@ contains
     !! initialize with unrealistic value
     evlo1 = -12345.0
     evla1 = -12345.0
-    call output__station_query( green_stnm, is_src, isrc, jsrc, ksrc, xsrc, ysrc, zsrc, evlo1, evla1 )
+    call wav__stquery( green_stnm, is_src, isrc, jsrc, ksrc, xsrc, ysrc, zsrc, evlo1, evla1 )
 
     !! Confirm if the computational domain contains the source
     call mpi_allreduce( is_src, src_somewhere, 1, MPI_LOGICAL, MPI_LOR, mpi_comm_world, ierr )

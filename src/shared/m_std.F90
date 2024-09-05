@@ -39,6 +39,7 @@ module m_std
   public :: std__countline
   public :: std__deg2rad
   public :: std__rad2deg
+  public :: std__extend_array
 
 
   interface std__deg2rad
@@ -47,7 +48,9 @@ module m_std
   interface std__rad2deg
     module procedure r2d_s, r2d_d
   end interface std__rad2deg
-
+  interface std__extend_array
+    module procedure extend_array_c, extend_array_d, extend_array_f, extend_array_i
+  end interface
 
   !! -- Private variables
   integer, parameter, private :: io0        = 10     !< initial number for file I/O
@@ -74,6 +77,83 @@ module m_std
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 contains
+
+  subroutine extend_array_f(array, val)
+      real(SP), intent(inout), allocatable :: array(:)
+      real(SP), intent(in) :: val
+      !! --
+      real(SP), allocatable :: tmp(:)
+      integer :: n
+
+      n = size(array)
+
+      allocate(tmp(n+1))
+      tmp(1:n) = array(1:n)
+      deallocate(array)
+      allocate(array(n+1))
+      array(1:n) = tmp(1:n)        
+      array(n+1) = val
+      deallocate(tmp)
+
+    end subroutine extend_array_f
+  subroutine extend_array_d(array, val)
+    real(DP), intent(inout), allocatable :: array(:)
+    real(DP), intent(in) :: val
+    !! --
+    integer, allocatable :: tmp(:)
+    integer :: n
+
+    n = size(array)
+
+    allocate(tmp(n+1))
+    tmp(1:n) = array(1:n)
+    deallocate(array)
+    allocate(array(n+1))
+    array(1:n) = tmp(1:n)        
+    array(n+1) = val
+    deallocate(tmp)
+
+  end subroutine extend_array_d
+  subroutine extend_array_i(array, val)
+    integer, intent(inout), allocatable :: array(:)
+    integer, intent(in) :: val
+    !! --
+    integer, allocatable :: tmp(:)
+    integer :: n
+
+    n = size(array)
+
+    allocate(tmp(n+1))
+    tmp(1:n) = array(1:n)
+    deallocate(array)
+    allocate(array(n+1))
+    array(1:n) = tmp(1:n)        
+    array(n+1) = val
+    deallocate(tmp)
+
+  end subroutine extend_array_i
+
+  subroutine extend_array_c(clen, array, val)
+    integer, intent(in) :: clen
+    character(clen), intent(inout), allocatable :: array(:)
+    character(*),    intent(in) :: val
+    !! --
+    character(clen), allocatable :: tmp(:)
+    integer :: n
+    !! ----
+
+    n = size(array)
+
+    allocate(tmp(n+1))
+    tmp(1:n) = array(1:n)
+    deallocate(array)
+    allocate(array(n+1))
+    array(1:n) = tmp(1:n)        
+    array(n+1) = val
+    deallocate(tmp)
+
+  end subroutine extend_array_c
+
 
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!

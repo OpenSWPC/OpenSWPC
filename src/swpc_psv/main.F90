@@ -19,7 +19,7 @@
 !!   - Furumura ad Chen   (2005) PARCO   doi:10.1016/j.parco.2005.02.003
 !<
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
-#include "m_debug.h"
+#include "../shared/m_debug.h"
 program SWPC_PSV
 
   !! -- Dependency

@@ -6,7 +6,7 @@
 !!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
-#include "m_debug.h"
+#include "../shared/m_debug.h"
 module m_global
 
   !! modules
@@ -35,8 +35,6 @@ module m_global
   !!
   !! fixed parameters
   !!
-  integer,  parameter :: Nl = 4                                     !< FDM order ( 4th )
-  integer,  parameter :: Nsl = Nl/2                                 !< thickness of "sleeve area"
   real(SP)            :: UC = 10.0**(-12)                           !< Conventional -> SI unit for moment tensor 
   integer,  parameter :: MP = DP                                    !< DP for mixed precision, SP for pure single precision
   integer,  parameter :: NM = 3                                     !< Number of memory variables
@@ -145,8 +143,8 @@ module m_global
   !!
   !! private variables
   !!
-  real(SP), private, allocatable :: sbuf_ip(:), sbuf_im(:)          !<  mpi send buffer for x-dir
-  real(SP), private, allocatable :: rbuf_ip(:), rbuf_im(:)          !<  mpi recv buffer for x-dir
+  real(MP), private, allocatable :: sbuf_ip(:), sbuf_im(:)          !<  mpi send buffer
+  real(MP), private, allocatable :: rbuf_ip(:), rbuf_im(:)          !<  mpi recv buffer
   integer :: mpi_precision
 
 
@@ -179,8 +177,8 @@ contains
       dz = 0.5
       dt = 0.04
       na = 20
-      xbeg = -nx/2 * dx
-      zbeg = -30   * dz
+      xbeg = -nx/2 * real(dx)
+      zbeg = -30   * real(dz)
       tbeg = 0.0
       clon = 139.7604
       clat = 35.7182
@@ -214,7 +212,7 @@ contains
   subroutine global__setup( io_prm )
 
     integer, intent(in) :: io_prm
-    integer :: ierr
+    integer :: err
     !! ----
 
     call pwatch__on( "global__setup" ) !! measure from here
@@ -222,7 +220,7 @@ contains
     !!
     !! MPI status check
     !!
-    call mpi_comm_rank( mpi_comm_world, myid, ierr )
+    call mpi_comm_rank( mpi_comm_world, myid, err )
     if( MP == DP ) then
       mpi_precision = MPI_DOUBLE_PRECISION
     else
@@ -238,15 +236,15 @@ contains
     !!
     !! obtain date by unixtime: seconds measured from 1970/1/1 0:0:0
     !!
-    if(myid==0 )call daytim__getdate( exedate )
-    call mpi_bcast( exedate, 1, MPI_INTEGER, 0, mpi_comm_world, ierr )
+    if(myid == 0) call daytim__getdate( exedate )
+    call mpi_bcast( exedate, 1, MPI_INTEGER, 0, mpi_comm_world, err )
 
 
     !!
     !! derived parameters
     !!
-    xend = xbeg + nx * dx
-    zend = zbeg + nz * dz
+    xend = xbeg + nx * real(dx)
+    zend = zbeg + nz * real(dz)
     tend = tbeg + nt * dt
 
     call pwatch__off( "global__setup" ) !! measure from here
@@ -262,9 +260,8 @@ contains
   !! --
   subroutine global__setup2
 
-    integer :: nl3
     integer :: i, k
-    integer :: ierr, nproc_exe
+    integer :: err, nproc_exe
     integer :: mx, proc_x
 
     call pwatch__on( "global__setup2" ) !! measure from here
@@ -275,7 +272,7 @@ contains
     call system__call('mkdir -p ' // trim(odir) // '> /dev/null 2>&1' )
 
 
-    call mpi_comm_size( mpi_comm_world, nproc_exe, ierr )
+    call mpi_comm_size( mpi_comm_world, nproc_exe, err )
     call assert( nproc_x == nproc_exe )
 
 
@@ -292,14 +289,9 @@ contains
     !! MPI coordinate
     !!
 
-    !! buffer allocation
-    !  half of FDM order is used for communication.
-    !  Three variables are communicated at once
-    nl3 = ( Nl / 2 )
-
     allocate( itbl(-1:nproc_x) )
-    allocate( sbuf_ip( nz*nl3 ), sbuf_im( nz*nl3 ) )
-    allocate( rbuf_ip( nz*nl3 ), rbuf_im( nz*nl3 ) )
+    allocate( sbuf_ip(2 * nz), sbuf_im(2 * nz) )
+    allocate( rbuf_ip(2 * nz), rbuf_im(2 * nz) )
 
     !! initialize buffer
     sbuf_ip(:) = 0.0_MP
@@ -399,63 +391,29 @@ contains
   !!
   subroutine global__comm_vel()
 
-    integer :: isize, s_isize
-    integer :: ierr
+    integer :: err
     integer :: istatus( mpi_status_size, 4 )
-    integer :: ireq(4)
-    integer :: sh1i(1), sh3i(2)
+    integer :: req(4)
+    !! ----
 
     if( myid >= nproc_x ) return
 
-
     call pwatch__on( "global__comm_vel" )
 
-    !! unit buffer size
-    isize = Nsl * nz
-    s_isize = isize   ! send/recv buffer size
+    call mpi_irecv(rbuf_ip, 2*nz, mpi_precision, itbl(idx+1), 1, mpi_comm_world, req(1), err)
+    call mpi_irecv(rbuf_im, 1*nz, mpi_precision, itbl(idx-1), 2, mpi_comm_world, req(2), err)
 
-    !! array shape
-    sh1i = shape( sbuf_ip(1:isize) )
-    sh3i = shape( Vy(kbeg:kend,iend+1:iend+Nsl) )
+    sbuf_ip(1:  nz) = reshape(Vy(1:nz,iend:iend  ), (/  nz/))
+    call mpi_isend(sbuf_ip, 1*nz, mpi_precision, itbl(idx+1), 2, mpi_comm_world, req(3), err)
+    sbuf_im(1:2*nz) = reshape(Vy(1:nz,ibeg:ibeg+1), (/2*nz/))
+    call mpi_isend(sbuf_im, 2*nz, mpi_precision, itbl(idx-1), 1, mpi_comm_world, req(4), err)
 
-    !!
-    !! packing buffer: i-direction
-    !!
+    call mpi_waitall( 4, req, istatus, err )
 
-    ! to plus direction
-    sbuf_ip( 1:isize ) = reshape( Vy(kbeg:kend,iend-Nsl+1:iend), sh1i )
-
-    ! to minus direction
-    sbuf_im( 1:isize) = reshape( Vy(kbeg:kend,ibeg:ibeg+Nsl-1), sh1i )
-
-
-    !!
-    !! Issue send & receive orders
-    !!
-
-    !! i-direction
-    call mpi_isend( sbuf_ip, s_isize, mpi_real, itbl(idx+1), 1, mpi_comm_world, ireq(1), ierr )
-    call mpi_isend( sbuf_im, s_isize, mpi_real, itbl(idx-1), 2, mpi_comm_world, ireq(2), ierr )
-    call mpi_irecv( rbuf_ip, s_isize, mpi_real, itbl(idx+1), 2, mpi_comm_world, ireq(3), ierr )
-    call mpi_irecv( rbuf_im, s_isize, mpi_real, itbl(idx-1), 1, mpi_comm_world, ireq(4), ierr )
-
-    !! Terminate mpi data communication
-    call mpi_waitall( 4, ireq, istatus, ierr )
-
-
-    !!
-    !! restoring the data: i-direction
-    !!
-
-    !! from plus direction
-    Vy(kbeg:kend,iend+1:iend+Nsl) = reshape( rbuf_ip( 1:isize ), sh3i )
-
-    !! from minus direction
-    Vy(kbeg:kend,ibeg-Nsl:ibeg-1) = reshape( rbuf_im( 1:isize ), sh3i )
-
+    Vy(1:nz,iend+1:iend+2) = reshape(rbuf_ip(   1:2*nz), (/nz,2/))
+    Vy(1:nz,ibeg-1:ibeg-1) = reshape(rbuf_im(   1:  nz), (/nz,1/))
 
     call pwatch__off( "global__comm_vel" )
-
 
   end subroutine global__comm_vel
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
@@ -467,67 +425,34 @@ contains
   !!
   subroutine global__comm_stress()
 
-    integer :: isize, s_isize
-    integer :: ierr
+    integer :: err
     integer :: istatus( mpi_status_size, 4)
-    integer :: ireq(4)
-    integer :: sh1i(1), sh3i(2)
+    integer :: req(4)
+    !! ----
 
     if( myid >= nproc_x ) return
 
     call pwatch__on( "global__comm_stress" )
 
+    call mpi_irecv(rbuf_ip, 1*nz, mpi_precision, itbl(idx+1), 3, mpi_comm_world, req(1), err)
+    call mpi_irecv(rbuf_im, 2*nz, mpi_precision, itbl(idx-1), 4, mpi_comm_world, req(2), err)
 
-    !! unit buffer size
-    isize = Nsl * nz
-    s_isize = isize   ! send/recv buffer size
+    sbuf_ip(1:2*nz) = reshape(Sxy(1:nz,iend-1:iend), (/2*nz/))
+    call mpi_isend(sbuf_ip, 2*nz, mpi_precision, itbl(idx+1), 4, mpi_comm_world, req(3), err)
 
-    !! array shape
-    sh1i = shape( sbuf_ip(1:isize) )
-    sh3i = shape( Syz(kbeg:kend,iend+1:iend+Nsl) )
+    sbuf_im(1:  nz) = reshape(Sxy(1:nz,ibeg  :ibeg), (/  nz/))
+    call mpi_isend(sbuf_im, 1*nz, mpi_precision, itbl(idx-1), 3, mpi_comm_world, req(4), err)
 
-    !!
-    !! packing buffer: i-direction ( Sxx, Sxy, Sxz )
-    !!
+    call mpi_waitall( 4, req, istatus, err )
 
-    ! to plus direction
-    sbuf_ip( 1:isize ) = reshape( Sxy(kbeg:kend,iend-Nsl+1:iend), sh1i )
-
-    ! to minus direction
-    sbuf_im( 1:isize ) = reshape( Sxy(kbeg:kend,ibeg:ibeg+Nsl-1), sh1i )
-
-
-    !!
-    !! Issue send & receive orders
-    !!
-
-    !! i-direction
-    call mpi_isend( sbuf_ip, s_isize, mpi_real, itbl(idx+1), 5, mpi_comm_world, ireq(1), ierr )
-    call mpi_isend( sbuf_im, s_isize, mpi_real, itbl(idx-1), 6, mpi_comm_world, ireq(2), ierr )
-    call mpi_irecv( rbuf_ip, s_isize, mpi_real, itbl(idx+1), 6, mpi_comm_world, ireq(3), ierr )
-    call mpi_irecv( rbuf_im, s_isize, mpi_real, itbl(idx-1), 5, mpi_comm_world, ireq(4), ierr )
-
-
-    !! Terminate mpi data communication
-    call mpi_waitall( 4, ireq, istatus, ierr )
-
-
-    !!
-    !! restore the data: i-direction
-    !!
-
-    !! from plus direction
-    Sxy(kbeg:kend,iend+1:iend+Nsl) = reshape( rbuf_ip( 1:isize ), sh3i )
-
-    !! from minus direction
-    Sxy(kbeg:kend,ibeg-Nsl:ibeg-1) = reshape( rbuf_im( 1:isize ), sh3i )
+    !! Resore the data
+    Sxy(kbeg:kend,iend+1:iend+1) = reshape(rbuf_ip(1:  nz), (/nz,1/))
+    Sxy(kbeg:kend,ibeg-2:ibeg-1) = reshape(rbuf_im(1:2*nz), (/nz,2/))
 
     call pwatch__off( "global__comm_stress" )
 
   end subroutine global__comm_stress
-
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
-
 
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
@@ -591,7 +516,8 @@ contains
   subroutine global__restart( io )
 
     integer, intent(in) :: io
-    integer :: nl3
+    !! ----
+
     read(io) title(1:80)
     read(io) exedate
 
@@ -599,10 +525,9 @@ contains
     read(io) nx, nz
     read(io) nxp
 
-    nl3 = (Nl/2)
     allocate( itbl(-1:nproc_x) )
-    allocate( sbuf_ip( nz*nl3 ), sbuf_im( nz*nl3 ) )
-    allocate( rbuf_ip( nz*nl3 ), rbuf_im( nz*nl3 ) )
+    allocate( sbuf_ip(2 * nz), sbuf_im(2 * nz) )
+    allocate( rbuf_ip(2 * nz), rbuf_im(2 * nz) )
     call set_mpi_table
 
     read(io) nt
@@ -646,7 +571,6 @@ contains
       itbl(ii) = i
 
     end do
-
 
     !! location of this process
     idx = mod( myid, nproc_x )

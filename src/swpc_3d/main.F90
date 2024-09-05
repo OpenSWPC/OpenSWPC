@@ -19,7 +19,7 @@
 !!   - Furumura ad Chen   (2005) PARCO   doi:10.1016/j.parco.2005.02.003
 !<
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
-#include "m_debug.h"
+#include "../shared/m_debug.h"
 program SWPC_3D
 
   !! -- Dependency
@@ -38,6 +38,7 @@ program SWPC_3D
   use m_green
   use m_readini
   use m_version
+  use m_wav
   use mpi
 
   !! -- Declarations
@@ -108,6 +109,7 @@ program SWPC_3D
     call source__setup( io_prm )
     call absorb__setup( io_prm )
     call output__setup( io_prm )
+    call wav__setup(io_prm)
     call green__setup( io_prm )
     call report__setup( io_prm )
 
@@ -120,11 +122,10 @@ program SWPC_3D
 #endif
   !! mainloop
   do it = it0, nt
-
     call report__progress(it)
 
     call green__store( it )
-    call output__store_wav ( it )
+    call wav__store ( it )
     call output__write_snap( it )
 
     call kernel__update_stress()
@@ -151,7 +152,7 @@ program SWPC_3D
 #endif
 
   call green__export()
-  call output__export_wav()
+  call wav__write()
   call output__closefiles()
 
   !! ending message
@@ -176,6 +177,7 @@ program SWPC_3D
   !!
   !! Program termination
   !!
+  call mpi_barrier( mpi_comm_world, ierr ) 
   call mpi_finalize( ierr )
 
 end program SWPC_3D
