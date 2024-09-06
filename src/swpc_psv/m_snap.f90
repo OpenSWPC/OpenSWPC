@@ -678,49 +678,40 @@ contains
       if( xz_v%sw .and. myid == xz_v%ionode ) close( xz_v%io )
       if( xz_u%sw .and. myid == xz_u%ionode ) close( xz_u%io )
     else
-! #ifdef _NETCDF
-      if( xz_ps%sw .and. myid == xz_ps%ionode ) then
 
-        ! set max & min for each vars
-        call nc_chk( nf90_redef( xz_ps%io ) )
-        do vid=1, 2
-          call nc_chk( nf90_put_att( xz_ps%io, xz_ps%varid(vid), 'actual_range', (/xz_ps%vmin(vid), xz_ps%vmax(vid)/) ) )
-        end do
-        call nc_chk( nf90_enddef( xz_ps%io ) )
-        call nc_chk( nf90_close( xz_ps%io ) )
+        if( xz_ps%sw  ) call wbuf_xz_ps(nt+1)
+        if( xz_v%sw   ) call wbuf_xz_v(nt+1)
+        if( xz_u%sw   ) call wbuf_xz_u(nt+1)
+  
+        if( xz_ps%sw .and. myid == xz_ps%ionode ) call close_nc(xz_ps)
+        if( xz_v%sw  .and. myid == xz_v%ionode  ) call close_nc(xz_v)
+        if( xz_u%sw  .and. myid == xz_u%ionode  ) call close_nc(xz_u)
 
-      end if
-
-      if( xz_v%sw  .and. myid == xz_v%ionode  ) then
-
-        ! set max & min for each vars
-        call nc_chk( nf90_redef( xz_v%io ) )
-        do vid=1, 2
-          call nc_chk( nf90_put_att( xz_v%io, xz_v%varid(vid), 'actual_range', (/xz_v%vmin(vid), xz_v%vmax(vid)/) ) )
-        end do
-        call nc_chk( nf90_close( xz_v%io ) )
-
-      end if
-
-      if( xz_u%sw  .and. myid == xz_u%ionode  ) then
-
-        ! set max & min for each vars
-        call nc_chk( nf90_redef( xz_u%io ) )
-        do vid=1, 2
-          call nc_chk( nf90_put_att( xz_u%io, xz_u%varid(vid), 'actual_range', (/xz_u%vmin(vid), xz_u%vmax(vid)/) ) )
-        end do
-        call nc_chk( nf90_close( xz_u%io ) )
-
-      end if
-! #endif
     end if
 
     call pwatch__off('output__closefiles')
 
   end subroutine output__closefiles
 
+  subroutine close_nc( hdr )
+    type(snp), intent(in) :: hdr
+    integer :: vid
 
-  !! An internal subroutine to check error in netcdf function calls
+! #ifdef _NETCDF
+
+    call nc_chk( nf90_redef( hdr%io ) )
+    do vid = 1, hdr%nsnp
+      call nc_chk( nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)) )
+    end do
+    call nc_chk( nf90_enddef( hdr%io ) )
+    call nc_chk( nf90_sync( hdr%io ))
+    call nc_chk( nf90_close( hdr%io ) )
+! #endif
+
+  end subroutine close_nc
+
+
+    !! An internal subroutine to check error in netcdf function calls
   subroutine nc_chk( err )
 
     integer, intent(in) :: err

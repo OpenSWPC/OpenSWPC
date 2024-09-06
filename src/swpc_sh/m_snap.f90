@@ -30,8 +30,6 @@ module m_output
 
   public :: output__setup
   public :: output__write_snap
-  public :: output__store_wav
-  public :: output__export_wav
   public :: output__checkpoint
   public :: output__restart
   public :: output__closefiles
@@ -71,48 +69,24 @@ module m_output
   end type snp
 
   type(snp) :: xz_v, xz_u
-  logical   :: sw_wav, sw_wav_v, sw_wav_u, sw_wav_stress, sw_wav_strain
 
   !! switch
-  integer   :: ntdec_s, ntdec_w                                !< time step decimation factor: Snap and Waves
+  integer   :: ntdec_s                                !< time step decimation factor: Snap and Waves
   integer   :: idec, kdec                                !< spatial decimation factor: x, y, z
-  character(2):: st_format                                       !< station file format
-  character(3) :: wav_format
-  character(256) :: fn_stloc
 
   integer :: nxs, nzs !< snapshot grid size
   real(SP), allocatable :: xsnp(:), zsnp(:)
-
-  !! station
-  integer :: nst
-  real(SP), allocatable :: xst(:), zst(:)
-  integer,  allocatable :: ist(:), kst(:)
-  real(SP), allocatable :: stlo(:), stla(:)
-  character(8), allocatable :: stnm(:)
-
-  !! waveform
-  integer :: ntw ! number of wave samples
-  real(SP), allocatable :: wav_vel(:,:,:)
-  real(SP), allocatable :: wav_disp(:,:,:)
-  real(SP), allocatable :: wav_stress(:,:,:)
-  real(SP), allocatable :: wav_strain(:,:,:)
-  type(sac__hdr), allocatable :: sh_vel(:,:), sh_disp(:,:), sh_stress(:,:), sh_strain(:,:)
-  real(SP), allocatable :: uy(:)
 
   !! I/O area in the node
   integer :: is0, is1, ks0, ks1
 
   !! derivative coefficient
   real(MP) :: r20x, r20z
-  real(MP) :: r40x, r40z, r41x, r41z  
 
   character(6) :: snp_format ! native or netcdf
 
   real(SP), allocatable :: buf_u(:,:) !! displacement buffer
 
-  real(MP), allocatable :: eyz(:), exy(:)
-
-  logical :: wav_calc_dist
 
 contains
 
@@ -141,34 +115,13 @@ contains
     call readini( io_prm, 'idec',      idec,      1       )
     call readini( io_prm, 'kdec',      kdec,      1       )
     call readini( io_prm, 'ntdec_s',   ntdec_s,   10      )
-    call readini( io_prm, 'ntdec_w',   ntdec_w,   10      )
-    call readini( io_prm, 'st_format', st_format, 'xy'    )
-    call readini( io_prm, 'fn_stloc',  fn_stloc,  ''      )
-    call readini( io_prm, 'sw_wav_v',  sw_wav_v,  .false. )
-    call readini( io_prm, 'sw_wav_u',  sw_wav_u,  .false. )
-    call readini( io_prm, 'sw_wav_stress',  sw_wav_stress, .false. )
-    call readini( io_prm, 'sw_wav_strain',  sw_wav_strain, .false. )
-    
     call readini( io_prm, 'snp_format', snp_format, 'native' )
-    call readini( io_prm, 'wav_format', wav_format, 'sac' )
 
-    call readini( io_prm, 'wav_calc_dist', wav_calc_dist, .false. )
-    
-    sw_wav = ( sw_wav_v .or. sw_wav_u .or. sw_wav_stress .or. sw_wav_strain )
-
-!!!!
-!!!! snapshot
-!!!!
-
-    !!
     !! snapshot size #2013-0440
-    !!
     nxs = ( nx + (idec/2) ) / idec
     nzs = ( nz + (kdec/2) ) / kdec
 
-    !!
     !! coordinate
-    !!
     allocate( xsnp(nxs), zsnp(nzs) )
     do i=1, nxs
       ii = i*idec - (idec/2)
@@ -185,7 +138,6 @@ contains
     ks0 = ceiling( ( kbeg + kdec/2) / real(kdec) )
     ks1 = floor  ( ( kend + kdec/2) / real(kdec) )
 
-
     !! number of snapshots per cycle
     xz_v  % nsnp = 1
     xz_u  % nsnp = 1
@@ -198,20 +150,11 @@ contains
     xz_u  % vname(1) = 'Uy'
     xz_u  % vunit(1) = 'm'
 
-    !!
     !! output node definition: cyclic
-    !!
     xz_v%ionode = mod( 1, nproc_x )
     xz_u%ionode = mod( 2, nproc_x )
 
-
-    !!
-    !! open
-    !!
-
-    !!
     !! output settings
-    !!
     if( snp_format == 'native' ) then
       if( xz_v%sw ) call newfile_xz(   trim(odir) // '/' // trim(title) //'.xz.v.snp', xz_v )
       if( xz_u%sw ) call newfile_xz(   trim(odir) // '/' // trim(title) //'.xz.u.snp', xz_u )
@@ -220,34 +163,12 @@ contains
       if( xz_u%sw ) call newfile_xz_nc(   trim(odir) // '/' // trim(title) //'.xz.u.nc', xz_u )
     end if
 
-    !! for taking derivatives
-    r40x = 9.0_MP /  8.0_MP / dx
-    r40z = 9.0_MP /  8.0_MP / dz
-    r41x = 1.0_MP / 24.0_MP / dx
-    r41z = 1.0_MP / 24.0_MP / dz
-    r20x = 1.  / dx
-    r20z = 1.  / dz
-
     allocate(buf_u(nxs,nzs))
     buf_u(:,:) = 0.0
-
-!!!!
-!!!! waveform
-!!!!
-
-    if( sw_wav ) then
-
-      ntw = floor( real(nt-1)/real(ntdec_w) + 1.0 )
-
-      call read_stinfo()
-
-    end if
-
 
     call pwatch__off( "output__setup" )
 
   end subroutine output__setup
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -1132,14 +1053,6 @@ contains
         ii = ist(i)
         kk = kst(i)
 
-        dxVy = ( (Vy(kk  ,ii+1) - Vy(kk  ,ii  )) * r40x  -  (Vy(kk  ,ii+2) - Vy(kk  ,ii-1)) * r41x &
-               + (Vy(kk  ,ii  ) - Vy(kk  ,ii-1)) * r40x  -  (Vy(kk  ,ii+1) - Vy(kk  ,ii-2)) * r41x ) * 0.5
-
-        dzVy = ( (Vy(kk+1,ii  ) - Vy(kk  ,ii  )) * r40z  -  (Vy(kk+2,ii  ) - Vy(kk-1,ii  )) * r41z &
-               + (Vy(kk  ,ii  ) - Vy(kk-1,ii  )) * r40z  -  (Vy(kk+1,ii  ) - Vy(kk-2,ii  )) * r41z ) * 0.5
-
-        eyz(i) = eyz(i) + dzVy * 0.5 * dt
-        exy(i) = exy(i) + dxVy * 0.5 * dt
 
       end do
       !$omp end parallel do
@@ -1191,177 +1104,8 @@ contains
   end subroutine output__store_wav
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine output__checkpoint( io )
-    integer, intent(in) :: io
-    !! ----
 
-    write( io ) xz_v, xz_u
-    write( io ) sw_wav, sw_wav_u, sw_wav_v
-    write( io ) sw_wav_stress, sw_wav_strain
-    write( io ) wav_format
-    
-    write( io ) ntdec_s
-    write( io ) idec,kdec
-
-    write( io ) nxs, nzs
-    write( io ) xsnp(1:nxs)
-    write( io ) zsnp(1:nzs)
-
-    write( io ) is0, is1, ks0, ks1
-    write( io ) r20x, r20z
-
-    write( io ) buf_u(is0:is1,ks0:ks1)
-
-    write( io ) snp_format
-
-    if( sw_wav ) then
-      write( io ) ntdec_w
-      write( io ) nst
-      write( io ) ntw
-
-      if( nst > 0 ) then
-        write( io ) xst(1:nst)
-        write( io ) zst(1:nst)
-        write( io ) ist(1:nst)
-        write( io ) kst(1:nst)
-        write( io ) stlo(1:nst)
-        write( io ) stla(1:nst)
-        write( io ) stnm(1:nst)
-
-        if( sw_wav_v  ) then
-          write( io ) sh_vel(:,:), wav_vel(:,:,:)
-        end if
-        
-        if( sw_wav_u ) then
-          write( io ) sh_disp(:,:), wav_disp(:,:,:)
-          write( io ) uy(:)
-        end if
-
-        if( sw_wav_stress ) then
-          write( io ) sh_stress(:,:), wav_stress(:,:,:)
-        end if
-        
-        if( sw_wav_strain ) then
-          write( io ) sh_strain(:,:), wav_strain(:,:,:)
-          write( io ) eyz(:), exy(:)
-        end if
-      end if
-
-    end if
-
-
-  end subroutine output__checkpoint
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine output__restart( io )
-    integer, intent(in) :: io
-    !! ----
-
-
-    read( io ) xz_v, xz_u
-    read( io ) sw_wav, sw_wav_u, sw_wav_v
-    read( io ) sw_wav_stress, sw_wav_strain
-    read( io ) wav_format
-    
-    read( io ) ntdec_s
-    read( io ) idec, kdec
-
-    read( io ) nxs, nzs
-
-    allocate( xsnp(1:nxs) )
-    allocate( zsnp(1:nzs) )
-    read( io ) xsnp(1:nxs)
-    read( io ) zsnp(1:nzs)
-
-    read( io ) is0, is1, ks0, ks1
-    read( io ) r20x, r20z
-
-    allocate( buf_u(nxs,nzs) )
-    read( io ) buf_u(is0:is1,ks0:ks1)
-
-    read( io ) snp_format
-
-    if( sw_wav ) then
-      read( io ) ntdec_w
-      read( io ) nst
-      read( io ) ntw
-
-      if( nst > 0 ) then
-        allocate( xst(nst), zst(nst) )
-        allocate( ist(nst), kst(nst) )
-        allocate( stnm(nst) )
-        allocate( stlo(nst), stla(nst) )
-
-        read( io ) xst(1:nst)
-        read( io ) zst(1:nst)
-        read( io ) ist(1:nst)
-        read( io ) kst(1:nst)
-        read( io ) stlo(1:nst)
-        read( io ) stla(1:nst)
-        read( io ) stnm(1:nst)
-
-
-        if( sw_wav_v ) then
-          allocate( sh_vel(1,nst), wav_vel(ntw,1,nst) )
-          read(io) sh_vel, wav_vel
-        end if
-        
-        if( sw_wav_u ) then
-          allocate( sh_disp(1,nst), wav_disp(ntw,1,nst), uy(nst) )
-          read(io) sh_disp, wav_disp
-          read(io) uy
-        end if
-        
-        if( sw_wav_stress  ) then
-          allocate( wav_stress(ntw,2,nst), sh_stress(2,nst) )      
-          read( io ) sh_stress, wav_stress
-        end if
-
-        if( sw_wav_strain ) then
-          allocate( wav_strain(ntw,2,nst), sh_strain(2,nst), eyz(nst), exy(nst) )
-          read( io ) sh_strain, wav_strain
-          read( io ) eyz, exy
-        end if
-        
-      end if
-      
-    end if
-
-    if( snp_format == 'native' ) then
-#ifdef _ES
-      if( xz_v%sw .and. myid == xz_v%ionode ) then
-        open( xz_v%io, file=trim(odir)//'/'//trim(title) //'.xz.v.snp', &
-            position='append', form='unformatted', status='old' )
-      end if
-      if( xz_u%sw .and. myid == xz_u%ionode ) then
-        open( xz_u%io, file=trim(odir)//'/'//trim(title) //'.xz.u.snp', &
-            position='append', form='unformatted', status='old' )
-      end if
-#else
-      if( xz_v%sw .and. myid == xz_v%ionode ) then
-        open( xz_v%io, file=trim(odir)//'/'//trim(title) //'.xz.v.snp', &
-            access='stream', position='append', form='unformatted', status='old' )
-      end if
-      if( xz_u%sw .and. myid == xz_u%ionode ) then
-        open( xz_u%io, file=trim(odir)//'/'//trim(title) //'.xz.u.snp', &
-            access='stream', position='append', form='unformatted', status='old' )
-      end if
-#endif
-
-    else
-#ifdef _NETCDF      
-      if( xz_v%sw .and. myid == xz_v%ionode ) then
-        call nc_chk( nf90_open( trim(odir)//'/'//trim(title) //'.xz.v.nc', NF90_WRITE, xz_v%io ) )
-      end if
-      if( xz_u%sw .and. myid == xz_u%ionode ) then
-        call nc_chk( nf90_open( trim(odir)//'/'//trim(title) //'.xz.u.nc', NF90_WRITE, xz_u%io ) )
-      end if
-#endif      
-    end if
-
-  end subroutine output__restart
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  
   subroutine output__closefiles
 
     call pwatch__on('output__closefiles')

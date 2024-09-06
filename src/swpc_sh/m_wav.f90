@@ -32,22 +32,21 @@ module m_wav
     logical :: sw_wav_strain = .false.
 
     integer :: ntw ! number of wave samples
-    real(SP), allocatable :: wav_vel(:,:,:), wav_disp(:,:,:)
-    real(SP), allocatable :: wav_stress(:,:,:), wav_strain(:,:,:) ! (6,nt,nst)
-    type(sac__hdr), allocatable :: sh_vel   (:,:), sh_disp  (:,:)
+    real(SP), allocatable :: wav_vel(:,:), wav_disp(:,:)
+    real(SP), allocatable :: wav_stress(:,:,:), wav_strain(:,:,:)
+    type(sac__hdr), allocatable :: sh_vel   (:), sh_disp  (:)
     type(sac__hdr), allocatable :: sh_stress(:,:), sh_strain(:,:)
-    real(SP), allocatable :: ux(:), uz(:)
-    real(SP), allocatable :: exx(:), ezz(:),exz(:)
+    real(SP), allocatable :: uy(:)
+    real(SP), allocatable :: exy(:), eyz(:)
 
     integer :: nst = 0
     real(SP),     allocatable :: xst(:), zst(:)
     integer,      allocatable :: ist(:), kst(:)
     real(SP),     allocatable :: stlo(:), stla(:)
     character(8), allocatable :: stnm(:)
-
     real(MP) :: r40x, r40z, r41x, r41z, r20x, r20z 
 
-contains
+    contains
 
     subroutine wav__setup(io_prm)
 
@@ -83,32 +82,32 @@ contains
         r41z = 1.0_MP / 24.0_MP / dz
         r20x = 1.  / dx
         r20z = 1.  / dz
-    
+
         call set_stinfo(fn_stloc, st_format)
 
         call system__call('mkdir -p '//trim(odir)//'/wav > /dev/null 2>&1' )
 
         if (sw_wav_v) then
-            allocate(wav_vel(ntw,2,nst))
-            allocate(sh_vel(2,nst))
-            wav_vel(:,:,:) = 0.0
+            allocate(wav_vel(ntw,nst))
+            allocate(sh_vel(nst))
+            wav_vel(:,:) = 0.0
         end if
-          
+        
         if (sw_wav_u ) then
-            allocate(wav_disp(ntw,2,nst))
-            allocate(sh_disp(2,nst))
-            wav_disp(:,:,:) = 0.0
+            allocate(wav_disp(ntw,nst))
+            allocate(sh_disp(nst))
+            wav_disp(:,:) = 0.0
         end if
-          
+        
         if (sw_wav_stress) then
-            allocate(wav_stress(ntw,3,nst))
-            allocate(sh_stress(3,nst))
+            allocate(wav_stress(ntw,2,nst))
+            allocate(sh_stress(2,nst))
             wav_stress(:,:,:) = 0.0
         end if
-      
+    
         if (sw_wav_strain) then
-            allocate(wav_strain(ntw,3,nst))
-            allocate(sh_strain(3,nst))
+            allocate(wav_strain(ntw,2,nst))
+            allocate(sh_strain(2,nst))
             wav_strain(:,:,:) = 0.0
         end if        
 
@@ -119,7 +118,7 @@ contains
         r40z = 9.0_MP /  8.0_MP / dz
         r41x = 1.0_MP / 24.0_MP / dx
         r41z = 1.0_MP / 24.0_MP / dz
-              
+            
         call pwatch__off('wav__setup')
 
     end subroutine wav__setup
@@ -129,7 +128,7 @@ contains
         integer, intent(in) :: it
         !! --
         integer :: n, itw
-        real(MP) :: dxVx, dxVz, dzVx, dzVz
+        real(MP) :: dxVy, dzVy
         integer :: i, k
         !! ----       
 
@@ -142,14 +141,12 @@ contains
 
         if( it == 1 ) then
             if (sw_wav_u) then
-                allocate(ux(nst), source=0.0)
-                allocate(uz(nst), source=0.0)
+                allocate(uy(nst), source=0.0)
             end if
 
             if( sw_wav_strain ) then
-                allocate(exx(nst), source=0.0)
-                allocate(ezz(nst), source=0.0)
-                allocate(exz(nst), source=0.0)
+                allocate(exy(nst), source=0.0)
+                allocate(eyz(nst), source=0.0)
             end if
         end if
         
@@ -158,8 +155,7 @@ contains
             !$omp parallel do private(n,i,k)
              do n=1, nst
                  i = ist(n); k = kst(n)
-                 ux(n) = ux(n) + real(Vx(k, i) + Vx(k,   i-1)) * 0.5 * dt
-                 uz(n) = uz(n) - real(Vz(k, i) + Vz(k-1, i  )) * 0.5 * dt ! positive upward
+                 uy(n) = uy(n) + real(Vy(k, i)) * dt
              end do
              !$omp end parallel do
  
@@ -171,21 +167,15 @@ contains
             do n=1, nst
                 i = ist(n); k = kst(n)
       
-                dxVx =   (Vx(k  ,i  ) - Vx(k  ,i-1)) * r40x - (Vx(k  ,i+1) - Vx(k  ,i-2)) * r41x
-                dzVz =   (Vz(k  ,i  ) - Vz(k-1,i  )) * r40z - (Vz(k+1,i  ) - Vz(k-2,i  )) * r41z
-                dxVz = ( (Vz(k  ,i+1) - Vz(k  ,i  )) * r40x - (Vz(k  ,i+2) - Vz(k  ,i-1)) * r41x &
-                       + (Vz(k-1,i+1) - Vz(k-1,i  )) * r40x - (Vz(k-1,i+2) - Vz(k-1,i-1)) * r41x &
-                       + (Vz(k  ,i  ) - Vz(k  ,i-1)) * r40x - (Vz(k  ,i+1) - Vz(k  ,i-2)) * r41x &
-                       + (Vz(k-1,i  ) - Vz(k-1,i-1)) * r40x - (Vz(k-1,i+1) - Vz(k-1,i-2)) * r41x ) / 4.0
-                dzVx = ( (Vx(k+1,i  ) - Vx(k  ,i  )) * r40z - (Vx(k+2,i  ) - Vx(k-1,i  )) * r41z &
-                       + (Vx(k+1,i-1) - Vx(k  ,i-1)) * r40z - (Vx(k+2,i-1) - Vx(k-1,i-1)) * r41z &
-                       + (Vx(k  ,i  ) - Vx(k-1,i  )) * r40z - (Vx(k+1,i  ) - Vx(k-2,i  )) * r41z &
-                       + (Vx(k  ,i-1) - Vx(k-1,i-1)) * r40z - (Vx(k+1,i-1) - Vx(k-2,i-1)) * r41z ) / 4.0
-              
-                exx(n) = exx(n) + real(dxVx) * dt
-                ezz(n) = ezz(n) + real(dzVz) * dt
-                exz(n) = exz(n) + real(dxVz + dzVx) / 2.0 * dt
-      
+                dxVy = ( (Vy(k  ,i+1) - Vy(k  ,i  )) * r40x  -  (Vy(k  ,i+2) - Vy(k  ,i-1)) * r41x &
+                       + (Vy(k  ,i  ) - Vy(k  ,i-1)) * r40x  -  (Vy(k  ,i+1) - Vy(k  ,i-2)) * r41x ) * 0.5
+ 
+                dzVy = ( (Vy(k+1,i  ) - Vy(k  ,i  )) * r40z  -  (Vy(k+2,i  ) - Vy(k-1,i  )) * r41z &
+                       + (Vy(k  ,i  ) - Vy(k-1,i  )) * r40z  -  (Vy(k+1,i  ) - Vy(k-2,i  )) * r41z ) * 0.5
+ 
+                eyz(i) = eyz(i) + real(dzVy) * 0.5 * dt
+                exy(i) = exy(i) + real(dxVy) * 0.5 * dt
+ 
             end do
             !$omp end parallel do
         end if         
@@ -198,8 +188,7 @@ contains
                 !$omp parallel do private(n,i,k)
                 do n=1, nst
                     i = ist(n); k = kst(n)
-                    wav_vel(itw,1,n) =   real(Vx(k, i) + Vx(k  , i-1)) / 2.0 * M0 * UC * 1e9
-                    wav_vel(itw,2,n) = - real(Vz(k, i) + Vz(k-1, i  )) / 2.0 * M0 * UC * 1e9
+                    wav_vel(itw,n) =   real(Vy(k, i)) * M0 * UC * 1e9
                 end do
                 !$omp end parallel do
 
@@ -209,8 +198,7 @@ contains
 
                 !$omp parallel do private(n)
                 do n=1, nst
-                    wav_disp(itw,1,n) = ux(n) * M0 * UC * 1e9
-                    wav_disp(itw,2,n) = uz(n) * M0 * UC * 1e9
+                    wav_disp(itw,n) = uy(n) * M0 * UC * 1e9
                 end do
                 !$omp end parallel do
 
@@ -221,11 +209,9 @@ contains
                 !$omp parallel do private(n, i, k)
                 do n=1, nst
                     i = ist(n); k = kst(n)
-                    wav_stress(itw,1,n) = real(Sxx(k, i)) * M0 * UC * 1e6
-                    wav_stress(itw,2,n) = real(Szz(k, i)) * M0 * UC * 1e6
-                    wav_stress(itw,3,n) = real( Sxz(k,   i) + Sxz(k,   i-1)  &
-                                          + Sxz(k-1, i) + Sxz(k-1, i-1)) / 4.0 * M0 * UC * 1e6
-                end do
+                    wav_stress(itw,1,i) = real(Syz(k,i) + Syz(k-1,i  )) * 0.5 * M0 * UC * 1e6
+                    wav_stress(itw,2,i) = real(Sxy(k,i) + Sxy(k,  i-1)) * 0.5 * M0 * UC * 1e6
+                 end do
                 !$omp end parallel do
       
             end if
@@ -234,9 +220,8 @@ contains
 
                 !$omp parallel do private(n)
                 do n=1, nst
-                    wav_strain(itw,1,n) = exx(n) * M0 * UC * 1e-3
-                    wav_strain(itw,2,n) = ezz(n) * M0 * UC * 1e-3
-                    wav_strain(itw,3,n) = exz(n) * M0 * UC * 1e-3
+                    wav_strain(itw,1,n) = real(eyz(n)) * M0 * UC * 1e-3
+                    wav_strain(itw,2,n) = real(exy(n)) * M0 * UC * 1e-3
                 end do
                 !$omp end parallel do
         
@@ -264,19 +249,15 @@ contains
             do i=1, nst
       
                 if (sw_wav_v ) then
-                    do j=1, 2
-                        call export_wav__sac(sh_vel(j,i), wav_vel(:,j,i))
-                    end do
+                    call export_wav__sac(sh_vel(i), wav_vel(:,i))
                 end if
         
                 if( sw_wav_u ) then
-                    do j=1, 2
-                        call export_wav__sac(sh_disp(j,i), wav_disp(:,j,i))
-                    end do
+                    call export_wav__sac(sh_disp(i), wav_disp(:,i))
                 end if
       
                 if( sw_wav_stress ) then
-                    do j=1, 3
+                    do j=1, 2
                         call export_wav__sac(sh_stress(j,i), wav_stress(:,j,i))
                     end do
                 end if
@@ -293,16 +274,16 @@ contains
 
             write(cid,'(I6.6)') myid
       
-            if( sw_wav_v )      call export_wav__csf(nst, 2, sh_vel,    wav_vel)
-            if( sw_wav_u )      call export_wav__csf(nst, 2, sh_disp,   wav_disp)
-            if( sw_wav_stress ) call export_wav__csf(nst, 3, sh_stress, wav_stress)
-            if( sw_wav_strain ) call export_wav__csf(nst, 3, sh_strain, wav_strain)
+            if( sw_wav_v )      call export_wav__csf(nst, 1, sh_vel,    wav_vel)
+            if( sw_wav_u )      call export_wav__csf(nst, 1, sh_disp,   wav_disp)
+            if( sw_wav_stress ) call export_wav__csf(nst, 2, sh_stress, wav_stress)
+            if( sw_wav_strain ) call export_wav__csf(nst, 2, sh_strain, wav_strain)
       
         end if 
 
         call pwatch__off("wav__write")
 
-    end subroutine wav__write
+    end subroutine wav__write    
 
     subroutine set_stinfo(fn_stloc, st_format)
 
@@ -441,45 +422,38 @@ contains
         do i=1, nst
 
             if (sw_wav_v) then
-                do j=1, 2
-                    call initialize_sac_header(sh_vel(j,i), stnm(i), stlo(i), stla(i), xst(i), zst(i), mag)
-                end do
-                sh_vel(1,i)%kcmpnm = "Vx"; sh_vel(1,i)%cmpinc = 90.0; sh_vel(1,i)%cmpaz =  0.0 + phi
-                sh_vel(2,i)%kcmpnm = "Vz"; sh_vel(2,i)%cmpinc = 90.0; sh_vel(2,i)%cmpaz =  0.0 
+                call initialize_sac_header(sh_vel(i), stnm(i), stlo(i), stla(i), xst(i), zst(i), mag)
+                sh_vel(i)%kcmpnm = "Vy"; sh_vel(i)%cmpinc = 90.0; sh_vel(i)%cmpaz =  90.0 + phi
 
-                sh_vel(:,i)%idep = 7 
+                sh_vel(i)%idep = 7 
             end if
 
             if (sw_wav_u) then
-                do j=1, 2
-                    call initialize_sac_header(sh_disp(j,i), stnm(i), stlo(i), stla(i), xst(i), zst(i), mag)
+                call initialize_sac_header(sh_disp(i), stnm(i), stlo(i), stla(i), xst(i), zst(i), mag)
                 end do
-                sh_disp(1,i)%kcmpnm = "Ux"; sh_disp(1,i)%cmpinc = 90.0; sh_disp(1,i)%cmpaz =  0.0 + phi
-                sh_disp(2,i)%kcmpnm = "Uz"; sh_disp(3,i)%cmpinc = 90.0; sh_disp(3,i)%cmpaz =  0.0 
+                sh_disp(i)%kcmpnm = "Uy"; sh_disp(i)%cmpinc = 90.0; sh_disp(i)%cmpaz = 90.0 + phi
 
-                sh_disp(:,i)%idep = 6 
+                sh_disp(i)%idep = 6 
             end if
 
             if (sw_wav_stress) then
-                do j=1, 3
+                do j=1, 2
                     call initialize_sac_header(sh_stress(j,i), stnm(i), stlo(i), stla(i), xst(i), zst(i), mag)
                 end do
 
-                sh_stress(1,i)%kcmpnm = "Sxx"
-                sh_stress(2,i)%kcmpnm = "Szz"
-                sh_stress(3,i)%kcmpnm = "Sxz"
+                sh_stress(1,i)%kcmpnm = "Syz"
+                sh_stress(2,i)%kcmpnm = "Sxy"
         
                 sh_stress(:,i)%idep = 5
             end if
 
             if (sw_wav_strain) then
-                do j=1, 3
+                do j=1, 2
                     call initialize_sac_header(sh_strain(j,i), stnm(i), stlo(i), stla(i), xst(i), zst(i), mag)
                 end do
 
-                sh_strain(1,i)%kcmpnm = "Exx"
-                sh_strain(2,i)%kcmpnm = "Ezz"
-                sh_strain(3,i)%kcmpnm = "Exz"
+                sh_strain(1,i)%kcmpnm = "Eyz"
+                sh_strain(2,i)%kcmpnm = "Exy"
         
                 sh_strain(:,i)%idep = 5
             end if
@@ -573,6 +547,6 @@ contains
         call csf__write(fn, nst1*ncmp, ntw, reshape(sh,(/ncmp*nst1/)), reshape(dat, (/ntw, ncmp*nst1/)))
   
     end subroutine export_wav__csf
-          
               
+    
 end module m_wav

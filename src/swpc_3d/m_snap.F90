@@ -18,7 +18,6 @@ module m_output
   use m_daytim
   use m_readini
   use m_geomap
-  use m_system
   use mpi
 !#ifdef _NETCDF
   use netcdf
@@ -76,27 +75,18 @@ module m_output
   !! switch
   integer   :: ntdec_s                            !< time step decimation factor: Snap and Waves
   integer   :: idec, jdec, kdec                   !< spatial decimation factor: x, y, z directions
-  character(2) :: st_format                       !< station file format
 
   real(SP) :: z0_xy, x0_yz, y0_xz ! < danmen
   integer  :: k0_xy, i0_yz, j0_xz ! < danmen
 
   integer :: nxs, nys, nzs !< snapshot grid size
   real(SP), allocatable :: xsnp(:), ysnp(:), zsnp(:)
-
-  !! station
-  integer :: nst
-  real(SP), allocatable :: xst(:), yst(:), zst(:)
-  integer,  allocatable :: ist(:), jst(:), kst(:)
-  real(SP), allocatable :: stlo(:), stla(:)
-  character(8), allocatable :: stnm(:)
-
   
   !! I/O area in the node
   integer :: is0, is1, js0, js1, ks0, ks1
 
   !! derivative coefficient
-  real(SP) :: r20x, r20y, r20z
+  real(MP) :: r20x, r20y, r20z
 
   !! snapshot data format
   character(6) :: snp_format ! native or netcdf
@@ -113,26 +103,16 @@ module m_output
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Setup
-  !!
-  !! @see
-  !! #2012-41 #32013-00440
-  !<
-  !! ----
-  subroutine output__setup( io_prm )
+  subroutine output__setup(io_prm)
+
     integer, intent(in) :: io_prm
+    !! --
     integer :: i, j, k, ii, jj, kk
     integer :: err
     integer :: idum
     !! ----
 
     call pwatch__on( "output__setup" )
-
-    !!
-    !! read parameter
-    !!
 
     call readini( io_prm, 'xy_ps%sw',   xy_ps%sw,   .false. )
     call readini( io_prm, 'yz_ps%sw',   yz_ps%sw,   .false. )
@@ -292,13 +272,7 @@ contains
     ob_ps % coordinate = 'ob';  ob_v % coordinate = 'ob';  ob_u % coordinate = 'ob';
     fs_ps % coordinate = 'fs';  fs_v % coordinate = 'fs';  fs_u % coordinate = 'fs';
 
-    !!
-    !! open
-    !!
-
-    !!
     !! output settings
-    !!
     if( snp_format == 'native' ) then
 
       if( yz_ps%sw ) call newfile_yz(   trim(odir) // '/' // trim(title) //'.yz.ps.snp',  yz_ps  )
@@ -342,9 +316,9 @@ contains
     end if
 
     !! for taking derivatives
-    r20x = 1 / dx
-    r20y = 1 / dy
-    r20z = 1 / dz
+    r20x = 1.0_MP / dx
+    r20y = 1.0_MP / dy
+    r20z = 1.0_MP / dz
 
     !! displacement snapshot buffers
     allocate( buf_yz_u(nys,nzs,3), buf_xz_u(nxs,nzs,3), buf_xy_u(nxs,nys,3), buf_fs_u(nxs,nys,3), buf_ob_u(nxs,nys,3) )
@@ -369,13 +343,8 @@ contains
     call pwatch__off( "output__setup" )
 
   end subroutine output__setup
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Open new file and write header information, and medium parameters for YZ-cross section
-  !<
-  !! ----
+   !! Open new file and write header information, and medium parameters for YZ-cross section
   subroutine newfile_yz ( fname, hdr )
 
     character(*), intent(in)  :: fname
@@ -391,8 +360,7 @@ contains
 
     if( myid == hdr % ionode ) then
 
-      call std__getio( hdr%io, is_big=.true. )
-
+      call std__getio( hdr%io )
       open( hdr%io, file=trim(fname), access='stream', action='write', status='replace', form='unformatted' )
       call write_snp_header( hdr, nys, nzs, ysnp(1:nys), zsnp(1:nzs) )
 
@@ -560,7 +528,7 @@ contains
 
     if( idx /= idx_yz )  return
 
-#ifdef _NETCDF
+!#ifdef _NETCDF
 
 
     if( myid == hdr%ionode ) then
@@ -570,17 +538,16 @@ contains
       hdr%vmin = 0.0
       hdr % na1 = na / jdec
       hdr % na2 = na / kdec
-      hdr % ds1 = jdec * dy
-      hdr % ds2 = kdec * dz
+      hdr % ds1 = jdec * real(dy)
+      hdr % ds2 = kdec * real(dz)
 
       call nc_chk( nf90_create( trim(fname), NF90_CLOBBER, hdr%io ) )
       call write_nc_header( hdr, nys, nzs, ysnp, zsnp )
 
     end if
 
-    allocate( buf(nys,nzs,3) )
+    allocate(buf(nys,nzs,3), source=0.0)
 
-    buf = 0.0
     ii = i0_yz
     if( ibeg <= ii .and. ii <= iend ) then
       do j = js0, js1
@@ -615,14 +582,14 @@ contains
       call nc_chk( nf90_put_var( hdr%io, hdr%vid_x1, ysnp ) )
       call nc_chk( nf90_put_var( hdr%io, hdr%vid_x2, zsnp ) )
       call nc_chk( nf90_put_var( hdr%io, hdr%medid(1), reshape(rbuf1, shape(buf(:,:,1)) ) ) )
-      call nc_chk( nf90_put_var( hdr%io, hdr%medid(2), reshape(rbuf2, shape(buf(:,:,1)) ) ) )
-      call nc_chk( nf90_put_var( hdr%io, hdr%medid(3), reshape(rbuf3, shape(buf(:,:,1)) ) ) )
+      call nc_chk( nf90_put_var( hdr%io, hdr%medid(2), reshape(rbuf2, shape(buf(:,:,2)) ) ) )
+      call nc_chk( nf90_put_var( hdr%io, hdr%medid(3), reshape(rbuf3, shape(buf(:,:,3)) ) ) )
 
     end if
 
     deallocate( sbuf, rbuf1, rbuf2, rbuf3, buf )
 
-#endif
+!#endif
 
   end subroutine newfile_yz_nc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -643,7 +610,7 @@ contains
 
     if( idy /= idy_xz ) return
 
-#ifdef _NETCDF
+! #ifdef _NETCDF
 
     if( myid == hdr%ionode ) then
 
@@ -707,7 +674,7 @@ contains
 
     deallocate( sbuf, rbuf1, rbuf2, rbuf3, buf )
 
-#endif
+!#endif
 
   end subroutine newfile_xz_nc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -724,7 +691,7 @@ contains
     real(SP), intent(in) :: xs1(ns1), xs2(ns2)
     integer :: i
     !! --
-#ifdef _NETCDF
+!#ifdef _NETCDF
     if( hdr % coordinate == 'yz' ) then
       call nc_chk( nf90_def_dim( hdr%io, 'y', nys, hdr%did_x1 ) )
       call nc_chk( nf90_def_dim( hdr%io, 'z', nzs, hdr%did_x2 ) )
@@ -1040,15 +1007,15 @@ contains
 
     real(SP) :: dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz
 
-    dxVx = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
-    dxVy = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x
-    dxVz = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x
-    dyVx = (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
-    dyVy = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
-    dyVz = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y
-    dzVx = (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
-    dzVy = (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
-    dzVz = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r20z
+    dxVx = real( ( Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  ) ) * r20x)
+    dxVy = real( ( Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  ) ) * r20x)
+    dxVz = real( ( Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  ) ) * r20x)
+    dyVx = real( ( Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  ) ) * r20y)
+    dyVy = real( ( Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1) ) * r20y)
+    dyVz = real( ( Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  ) ) * r20y)
+    dzVx = real( ( Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  ) ) * r20z)
+    dzVy = real( ( Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  ) ) * r20z)
+    dzVz = real( ( Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  ) ) * r20z)
 
     div = dxVx + dyVy + dzVz
     rot(1) = dyVz - dzVy  ! x
@@ -1184,7 +1151,7 @@ contains
     !! ----
 
     ns = nx1 * nx2
-    cnt = (/ nys, nzs, 1/)
+    cnt = (/ nx1, nx2, 1/)
     stt = (/ 1, 1, it0 / ntdec_s + 1 /)
     do vid=1, nvar
         ib = (vid-1)*ns + 1
