@@ -32,7 +32,8 @@ program SWPC_PSV
   use m_medium
   use m_report
   use m_pwatch
-  use m_output
+  use m_snap
+  use m_wav
   use m_absorb
   use m_ckprst
   use m_readini
@@ -107,6 +108,7 @@ program SWPC_PSV
     call source__setup( io_prm )
     call absorb__setup( io_prm )
     call output__setup( io_prm )
+    call wav__setup(io_prm)
     call report__setup( io_prm )
 
   end if
@@ -119,7 +121,7 @@ program SWPC_PSV
     call report__progress(it)
 
     call output__write_snap( it )
-    call output__store_wav ( it )
+    call wav__store ( it )
 
     call kernel__update_stress()
 
@@ -137,7 +139,7 @@ program SWPC_PSV
 
   end do
   call output__closefiles()
-  call output__export_wav()
+  call wav__write()
 
   !! ending message
   call report__terminate()
