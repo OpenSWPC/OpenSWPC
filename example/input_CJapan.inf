@@ -20,8 +20,8 @@
   !! Model/Grid Size and Area
   !!
 
-  nproc_x          = 6                !! parallelization in x-dir
-  nproc_y          = 6                !! parallelization in y-dir
+  nproc_x          = 4                !! parallelization in x-dir
+  nproc_y          = 2                !! parallelization in y-dir
   nx               = 2200             !! total grid number in x-dir
   ny               = 2200             !! total grid number in y-dir
   nz               = 500              !! total grid number in z-dir
