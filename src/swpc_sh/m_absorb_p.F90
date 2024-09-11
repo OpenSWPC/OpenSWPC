@@ -43,8 +43,6 @@ module m_absorb_p
   public :: absorb_p__setup
   public :: absorb_p__update_stress
   public :: absorb_p__update_vel
-  public :: absorb_p__checkpoint
-  public :: absorb_p__restart
   !! --
 
   !! Damping profiles
@@ -406,59 +404,6 @@ contains
   end subroutine absorb_p__update_stress
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! checkpoint data export
-  !<
-  !! --
-  subroutine absorb_p__checkpoint( io )
-
-    integer, intent(in) :: io
-    !! --
-
-    write(io) r20x, r20z
-    write(io) kbeg_min
-    write(io) gxc(:,ibeg:iend), gxe(:,ibeg:iend)
-    write(io) gzc(:,kbeg:kend), gze(:,kbeg:kend)
-    deallocate( gxc, gxe, gzc, gze )
-
-    write(io)  axVy(kbeg_min:kend,ibeg:iend); deallocate( axVy )
-    write(io)  azVy(kbeg_min:kend,ibeg:iend); deallocate( azVy )
-    write(io) axSxy(kbeg_min:kend,ibeg:iend); deallocate( axSxy )
-    write(io) azSyz(kbeg_min:kend,ibeg:iend); deallocate( azSyz )
-
-  end subroutine absorb_p__checkpoint
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine absorb_p__restart(io)
-
-    integer, intent(in) :: io
-
-    read(io) r20x, r20z
-    read(io) kbeg_min
-
-    !! memory allocation
-    allocate( gxc( 4,ibeg:iend ), gxe( 4,ibeg:iend ) )
-    allocate( gzc( 4,kbeg:kend ), gze( 4,kbeg:kend ) )
-
-    allocate(  axVy(kbeg_min:kend,ibeg:iend) )
-    allocate(  azVy(kbeg_min:kend,ibeg:iend) )
-    allocate( axSxy(kbeg_min:kend,ibeg:iend) )
-    allocate( azSyz(kbeg_min:kend,ibeg:iend) )
-
-    read(io) gxc( :,ibeg:iend ), gxe( :,ibeg:iend )
-    read(io) gzc( :,kbeg:kend ), gze( :,kbeg:kend )
-
-
-    read(io)  axVy(kbeg_min:kend,ibeg:iend)
-    read(io)  azVy(kbeg_min:kend,ibeg:iend)
-
-    read(io) axSxy(kbeg_min:kend,ibeg:iend)
-    read(io) azSyz(kbeg_min:kend,ibeg:iend)
-
-  end subroutine absorb_p__restart
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
   !! ADE-CFS PML damping factor according to Zhao and Shen

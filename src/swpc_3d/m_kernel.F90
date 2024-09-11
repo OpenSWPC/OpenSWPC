@@ -26,8 +26,6 @@ module m_kernel
   public :: kernel__update_vel
   public :: kernel__update_stress
   public :: kernel__vmax
-  public :: kernel__checkpoint
-  public :: kernel__restart
 
   !! -- Parameters
   real(MP), parameter   :: C20 = 1.0_MP
@@ -220,7 +218,7 @@ contains
   !! ----
   subroutine kernel__update_stress()
 
-    integer :: i, j, k, m, ierr
+    integer :: i, j, k, m
     real(SP) :: mu2, lam2mu
     real(SP) :: taup1, taus1, taup_plus1, taus_plus1
     real(SP) :: d3v3, dxVx_dyVy, dxVx_dzVz, dyVy_dzVz
@@ -303,10 +301,10 @@ contains
           !!
 
           !! working variables for combinations of velocity derivatives
-          d3v3      = dxVx(k) + dyVy(k) + dzVz(k)
-          dyVy_dzVz = dyVy(k) + dzVz(k)
-          dxVx_dzVz = dxVx(k) + dzVz(k)
-          dxVx_dyVy = dxVx(k) + dyVy(k)
+          d3v3      = real(dxVx(k) + dyVy(k) + dzVz(k))
+          dyVy_dzVz = real(dyVy(k) + dzVz(k))
+          dxVx_dzVz = real(dxVx(k) + dzVz(k))
+          dxVx_dyVy = real(dxVx(k) + dyVy(k))
 
 
           Rxx_n = 0.0
@@ -419,9 +417,9 @@ contains
           Rxz_n = 0.0
           Rxy_n = 0.0
           do m=1, nm
-            Ryz(k,i,j,m) = c1(m) * Ryz(k,i,j,m) - c2(m) * muyz(k,i,j) * taus1 * dyVz_dzVy(k) * dt
-            Rxz(k,i,j,m) = c1(m) * Rxz(k,i,j,m) - c2(m) * muxz(k,i,j) * taus1 * dxVz_dzVx(k) * dt
-            Rxy(k,i,j,m) = c1(m) * Rxy(k,i,j,m) - c2(m) * muxy(k,i,j) * taus1 * dxVy_dyVx(k) * dt
+            Ryz(k,i,j,m) = c1(m) * Ryz(k,i,j,m) - real(c2(m) * muyz(k,i,j) * taus1 * dyVz_dzVy(k) * dt)
+            Rxz(k,i,j,m) = c1(m) * Rxz(k,i,j,m) - real(c2(m) * muxz(k,i,j) * taus1 * dxVz_dzVx(k) * dt)
+            Rxy(k,i,j,m) = c1(m) * Rxy(k,i,j,m) - real(c2(m) * muxy(k,i,j) * taus1 * dxVy_dyVx(k) * dt)
             Ryz_n = Ryz_n + d1(m) * Ryz(k,i,j,m)
             Rxz_n = Rxz_n + d1(m) * Rxz(k,i,j,m)
             Rxy_n = Rxy_n + d1(m) * Rxy(k,i,j,m)
@@ -477,93 +475,6 @@ contains
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! checkpoint data export
-  !<
-  !! --
-  subroutine kernel__checkpoint( io )
-
-    integer, intent(in) :: io
-    integer :: i, j
-    !! --
-
-    write(io) r40x, r40y, r40z, r41x, r41y, r41z, r20x, r20y, r20z
-    do j=jbeg_m,jend_m; write(io)  Vx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate(  Vx )
-    do j=jbeg_m,jend_m; write(io)  Vy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate(  Vy )
-    do j=jbeg_m,jend_m; write(io)  Vz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate(  Vz )
-    do j=jbeg_m,jend_m; write(io) Sxx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Sxx )
-    do j=jbeg_m,jend_m; write(io) Syy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Syy )
-    do j=jbeg_m,jend_m; write(io) Szz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Szz )
-    do j=jbeg_m,jend_m; write(io) Syz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Syz )
-    do j=jbeg_m,jend_m; write(io) Sxz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Sxz )
-    do j=jbeg_m,jend_m; write(io) Sxy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do; deallocate( Sxy )
-
-    if( nm > 0 ) then
-      write(io) c1(1:nm)
-      write(io) c2(1:nm)
-      write(io) d1(1:nm)
-      write(io) d2
-      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxx(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxx )
-      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Ryy(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Ryy )
-      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rzz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rzz )
-      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Ryz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Ryz )
-      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxz )
-      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxy(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxy )
-        
-    end if
-
-    
-  end subroutine kernel__checkpoint
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! checkpoint data inport
-  !<
-  !! --
-  subroutine kernel__restart( io )
-    
-    integer, intent(in) :: io
-    integer :: i, j
-    !! --
-    
-    
-    call memory_allocate()
-    
-    read(io) r40x, r40y, r40z, r41x, r41y, r41z, r20x, r20y, r20z
-    
-    do j=jbeg_m,jend_m; read(io)  Vx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m; read(io)  Vy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m; read(io)  Vz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m; read(io) Sxx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m; read(io) Syy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m; read(io) Szz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m; read(io) Syz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m; read(io) Sxz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m; read(io) Sxy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-                      
-    if( nm > 0 ) then
-      read(io) c1(1:nm)
-      read(io) c2(1:nm)
-      read(io) d1(1:nm)
-      read(io) d2
-      
-      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxx(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Ryy(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rzz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Ryz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-      do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxy(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-        
-    end if
-    
-  end subroutine kernel__restart
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
-
-  
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine memory_allocate
     !!

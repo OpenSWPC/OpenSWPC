@@ -22,8 +22,6 @@ module m_pwatch
   public :: pwatch__on
   public :: pwatch__off
   public :: pwatch__report
-  public :: pwatch__checkpoint
-  public :: pwatch__restart
 
   !! ----
 
@@ -238,54 +236,6 @@ contains
     end if
 
   end subroutine pwatch__report
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! snapshot the memory status
-  !<
-  !! --
-  subroutine pwatch__checkpoint( io )
-
-    integer, intent(in) :: io
-
-    write(io)  irank
-    write(io)  measure_time
-    write(io)  nblock
-    write(io)  iblock(1:NBLOCK_MAX)
-    write(io)  tim(1:NBLOCK_MAX)
-    write(io)  tim_total
-    write(io)  block_name(1:NBLOCK_MAX)(1:255)
-    write(io)  nproc
-    write(io)  myid
-
-  end subroutine pwatch__checkpoint
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! recovery snapshot
-  !<
-  !! --
-  subroutine pwatch__restart( io )
-
-    integer, intent(in) :: io
-    integer :: cc, count_rate, count_max
-
-    read(io)  irank
-    read(io)  measure_time
-    read(io)  nblock
-    read(io)  iblock(1:NBLOCK_MAX)
-    read(io)  tim
-    read(io)  tim_total
-    read(io)  block_name(1:NBLOCK_MAX)(1:255)
-    read(io)  nproc
-    read(io)  myid
-
-    call system_clock(cc, count_rate, count_max)
-    c0(:) = cc
-
-  end subroutine pwatch__restart
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_pwatch

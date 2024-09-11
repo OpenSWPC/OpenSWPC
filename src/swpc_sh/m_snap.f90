@@ -29,8 +29,6 @@ module m_output
 
   public :: output__setup
   public :: output__write_snap
-!  public :: output__checkpoint
-!  public :: output__restart
   public :: output__closefiles
 
   !! -- Internal Parameters

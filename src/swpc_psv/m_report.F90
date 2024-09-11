@@ -27,8 +27,6 @@ module m_report
   public :: report__setup
   public :: report__progress
   public :: report__terminate
-  public :: report__checkpoint
-  public :: report__restart
 
   integer :: ntdec_r
 
@@ -211,38 +209,6 @@ contains
 
 
   end subroutine report__terminate
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine report__checkpoint( io )
-
-    integer, intent(in) :: io
-
-    write( io ) ntdec_r
-    write( io ) ttotal
-
-  end subroutine report__checkpoint
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine report__restart( io )
-
-    integer, intent(in) :: io
-    integer :: crate
-
-    read( io ) ntdec_r
-    read( io ) ttotal
-
-    !! Initialize elapsed time counter
-    if( myid == terminal_output_node ) then
-
-      call system_clock( timcount, crate )
-      timcount0 = timcount
-      timprev   = timcount
-
-    end if
-
-  end subroutine report__restart
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_report

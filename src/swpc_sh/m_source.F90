@@ -28,8 +28,6 @@ module m_source
   public :: source__setup
   public :: source__stressdrop
   public :: source__bodyforce
-  public :: source__checkpoint
-  public :: source__restart
 
   !! local variables
   character(16)         :: stftype                                        !< type of source time function: used in u_source
@@ -695,93 +693,6 @@ contains
     call pwatch__off("source__bodyforce")
   end subroutine source__bodyforce
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine source__checkpoint( io )
-    integer, intent(in) :: io
-    !! ----
-
-    write( io ) stftype
-    write( io ) stf_file_type
-    write( io ) nsrc
-    write( io ) n_stfprm
-    write( io ) bf_mode
-
-    if( nsrc > 0 ) then
-      write( io ) srcprm(1:n_stfprm,1:nsrc)
-      write( io ) sx(1:nsrc)
-      write( io ) sz(1:nsrc)
-      write( io ) isrc(1:nsrc)
-      write( io ) ksrc(1:nsrc)
-      if( bf_mode ) then
-        write(io) fy(1:nsrc)
-      else
-        write( io ) myz(1:nsrc)
-        write( io ) mxy(1:nsrc)
-        write( io ) mo(1:nsrc)
-      end if
-    end if
-
-    write( io ) dt_dxz
-    write( io ) M0
-
-    if( bf_mode ) then
-      write( io ) fx0, fy0, fz0
-    else
-      write( io ) mxx0, myy0, mzz0, myz0, mxz0, mxy0
-    end if
-
-  end subroutine source__checkpoint
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine source__restart( io )
-    integer, intent(in) :: io
-    !! ----
-
-    read( io ) stftype
-    read( io ) stf_file_type
-    read( io ) nsrc
-    read( io ) n_stfprm
-    read( io ) bf_mode
-
-    allocate( sx(nsrc), sz(nsrc) )
-    allocate( isrc(nsrc), ksrc(nsrc) )
-    if( bf_mode ) then
-      allocate( fy(nsrc) )
-    else
-      allocate( mo(nsrc), myz(nsrc), mxy(nsrc) )
-    end if
-    allocate( srcprm(n_stfprm,nsrc) )
-
-    if( nsrc > 0 ) then
-      read( io ) srcprm(1:n_stfprm,1:nsrc)
-      read( io ) sx(1:nsrc)
-      read( io ) sz(1:nsrc)
-      read( io ) isrc(1:nsrc)
-      read( io ) ksrc(1:nsrc)
-      if( bf_mode ) then
-        read(io) fy(1:nsrc)
-      else
-        read( io ) myz(1:nsrc)
-        read( io ) mxy(1:nsrc)
-        read( io ) mo(1:nsrc)
-      end if
-    end if
-
-    read( io ) dt_dxz
-    read( io ) M0
-
-    if( bf_mode ) then
-      read( io ) fx0, fy0, fz0
-    else
-      read( io ) mxx0, myy0, mzz0, myz0, mxz0, mxy0
-    end if
-
-  end subroutine source__restart
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
   !>

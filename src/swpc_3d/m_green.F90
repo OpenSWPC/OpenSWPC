@@ -63,7 +63,6 @@ module m_green
   type(sac__hdr), allocatable :: sh(:)
   real(SP), allocatable :: gf(:,:)
   character(256), allocatable :: fn(:)
-  character(256) :: fn_csf
 
   real(SP), allocatable :: Ux(:), Uy(:), Uz(:)
   real(SP), allocatable :: dxUx(:), dyUx(:), dzUx(:), dxUy(:), dyUy(:), dzUy(:), dxUz(:), dyUz(:), dzUz(:)
@@ -71,8 +70,6 @@ module m_green
   real(SP) :: green_trise
   character :: green_cmp
   character(16) :: stftype
-  logical :: green_pbmode
-  character(3) :: green_plate
   logical :: green_bforce
   integer :: ncmp
 contains
@@ -175,7 +172,7 @@ contains
       stop
     end select
 
-    dt_dxyz = dt / ( dx*dy*dz )
+    dt_dxyz = real(dt / ( dx*dy*dz ))
 
     !! initialize with unrealistic value
     evlo1 = -12345.0
@@ -504,20 +501,20 @@ contains
       dzVx = ( dzVx1 + dzVx2 + dzVx3 + dzVx4 ) * 0.25
       dzVy = ( dzVy1 + dzVy2 + dzVy3 + dzVy4 ) * 0.25
 
-      dxUx(i) = dxUx(i) + dxVx * dt
-      dxUy(i) = dxUy(i) + dxVy * dt
-      dxUz(i) = dxUz(i) + dxVz * dt
-      dyUx(i) = dyUx(i) + dyVx * dt
-      dyUy(i) = dyUy(i) + dyVy * dt
-      dyUz(i) = dyUz(i) + dyVz * dt
-      dzUx(i) = dzUx(i) + dzVx * dt
-      dzUy(i) = dzUy(i) + dzVy * dt
-      dzUz(i) = dzUz(i) + dzVz * dt
+      dxUx(i) = dxUx(i) + real(dxVx * dt)
+      dxUy(i) = dxUy(i) + real(dxVy * dt)
+      dxUz(i) = dxUz(i) + real(dxVz * dt)
+      dyUx(i) = dyUx(i) + real(dyVx * dt)
+      dyUy(i) = dyUy(i) + real(dyVy * dt)
+      dyUz(i) = dyUz(i) + real(dyVz * dt)
+      dzUx(i) = dzUx(i) + real(dzVx * dt)
+      dzUy(i) = dzUy(i) + real(dzVy * dt)
+      dzUz(i) = dzUz(i) + real(dzVz * dt)
 
       if( green_bforce ) then
-        ux(i) = ux(i) + 0.5 * ( Vx(kk,ii,jj)+Vx(kk,ii-1,jj) ) * dt
-        uy(i) = uy(i) + 0.5 * ( Vy(kk,ii,jj)+Vy(kk,ii,jj-1) ) * dt
-        uz(i) = uz(i) + 0.5 * ( Vz(kk,ii,jj)+Vz(kk-1,ii,jj) ) * dt
+        ux(i) = ux(i) + 0.5 * real( Vx(kk,ii,jj)+Vx(kk,ii-1,jj) ) * dt
+        uy(i) = uy(i) + 0.5 * real( Vy(kk,ii,jj)+Vy(kk,ii,jj-1) ) * dt
+        uz(i) = uz(i) + 0.5 * real( Vz(kk,ii,jj)+Vz(kk-1,ii,jj) ) * dt
       end if
 
 

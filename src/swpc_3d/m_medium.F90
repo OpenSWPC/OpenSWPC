@@ -27,8 +27,6 @@ module m_medium
 
   public :: medium__setup
   public :: medium__initialized
-  public :: medium__checkpoint
-  public :: medium__restart
 
   logical :: init = .false.
 
@@ -278,7 +276,7 @@ contains
     !!
     subroutine relaxed_medium()
       
-      integer :: i, j, k, im
+      integer :: im
       real(SP) :: rho_beta2, rho_alpha2
       real(SP) :: chi_mu, chi_lam
       complex(SP) :: cc
@@ -288,10 +286,10 @@ contains
 
       if( nm == 0 ) return
 
-      omega = 2 * PI * fq_ref
+      omega = real(2 * PI * fq_ref)
       cc = 0.0
       do im=1, nm
-        cc = cc + ( EI * omega * ts(im) ) / ( 1.0 - EI * omega * ts(im) )
+        cc = cc + cmplx( ( EI * omega * ts(im) ) / ( 1.0 - EI * omega * ts(im) ))
       end do
       cc = cc / nm
 
@@ -566,71 +564,6 @@ contains
 
   end subroutine memory_allocate
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine medium__checkpoint( io )
-
-    integer, intent(in) :: io
-    integer :: j
-    !! ----
-
-    do j=jbeg_m,jend_m;  write(io)   bx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;  deallocate(bx)
-    do j=jbeg_m,jend_m;  write(io)   by(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;  deallocate(by)
-    do j=jbeg_m,jend_m;  write(io)   bz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;  deallocate(bz)
-    do j=jbeg_m,jend_m;  write(io)  lam(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;  deallocate(lam)
-    do j=jbeg_m,jend_m;  write(io)   mu(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;  deallocate(mu)
-    do j=jbeg_m,jend_m;  write(io) muyz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;  deallocate(muyz)
-    do j=jbeg_m,jend_m;  write(io) muxz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;  deallocate(muxz)
-    do j=jbeg_m,jend_m;  write(io) muxy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;  deallocate(muxy)
-    do j=jbeg_m,jend_m;  write(io) taup(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;  deallocate(taup)
-    do j=jbeg_m,jend_m;  write(io) taus(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;  deallocate(taus)
-
-    write(io) kfs    ( ibeg_m:iend_m, jbeg_m:jend_m )
-    write(io) kob    ( ibeg_m:iend_m, jbeg_m:jend_m )
-    write(io) kfs_top( ibeg_m:iend_m, jbeg_m:jend_m )
-    write(io) kfs_bot( ibeg_m:iend_m, jbeg_m:jend_m )
-    write(io) kob_top( ibeg_m:iend_m, jbeg_m:jend_m )
-    write(io) kob_bot( ibeg_m:iend_m, jbeg_m:jend_m )
-    write(io) bddep  ( ibeg_m:iend_m, jbeg_m:jend_m, 0:NBD )
-    if( nm > 0 ) write(io) ts(  1:nm )
-    
-    deallocate( kfs, kob, kfs_top, kfs_bot, kob_top, kob_bot, bddep )
-    
-  end subroutine medium__checkpoint
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine medium__restart( io )
-    
-    integer, intent(in) :: io
-    integer :: j
-    !! ----
-    
-    call memory_allocate()
-    do j=jbeg_m,jend_m;  read(io)   bx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m;  read(io)   by(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m;  read(io)   bz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m;  read(io)  lam(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m;  read(io)   mu(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m;  read(io) muyz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m;  read(io) muxz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m;  read(io) muxy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m;  read(io) taup(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-    do j=jbeg_m,jend_m;  read(io) taus(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-
-    read(io) kfs    ( ibeg_m:iend_m, jbeg_m:jend_m )
-    read(io) kob    ( ibeg_m:iend_m, jbeg_m:jend_m )
-    read(io) kfs_top( ibeg_m:iend_m, jbeg_m:jend_m )
-    read(io) kfs_bot( ibeg_m:iend_m, jbeg_m:jend_m )
-    read(io) kob_top( ibeg_m:iend_m, jbeg_m:jend_m )
-    read(io) kob_bot( ibeg_m:iend_m, jbeg_m:jend_m )
-    read(io) bddep  ( ibeg_m:iend_m, jbeg_m:jend_m, 0:NBD )
-    
-    if( nm > 0 ) read(io) ts(  1:nm )
-    
-  end subroutine medium__restart
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
   
 end module m_medium
 !! ----------------------------------------------------------------------------------------------------------------------------- !!

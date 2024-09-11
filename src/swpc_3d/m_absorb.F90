@@ -24,8 +24,6 @@ module m_absorb
   public :: absorb__setup
   public :: absorb__update_stress
   public :: absorb__update_vel
-  public :: absorb__checkpoint
-  public :: absorb__restart
 
 contains
 
@@ -89,44 +87,6 @@ contains
     call pwatch__off( "absorb__update_stress")
 
   end subroutine absorb__update_stress
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine absorb__checkpoint(io)
-
-    integer, intent(in) :: io
-
-    write(io) abc_type
-
-    select case( trim(abc_type) )
-    case( 'pml' )
-      call absorb_p__checkpoint(io)
-    case( 'cerjan' )
-      call absorb_c__checkpoint(io)
-    case default
-      continue
-    end select
-
-  end subroutine absorb__checkpoint
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine absorb__restart(io)
-
-    integer, intent(in) :: io
-
-    read(io) abc_type
-
-    select case( trim(abc_type) )
-    case( 'pml' )
-      call absorb_p__restart(io)
-    case( 'cerjan' )
-      call absorb_c__restart(io)
-    case default
-      continue
-    end select
-
-  end subroutine absorb__restart
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_absorb

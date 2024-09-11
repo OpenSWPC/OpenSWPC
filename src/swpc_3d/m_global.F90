@@ -625,109 +625,6 @@ contains
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine global__checkpoint( io )
-
-    integer, intent(in) :: io
-
-    write(io) title(1:80)
-    write(io) exedate
-    write(io) mpi_precision
-
-    write(io) nproc_x
-    write(io) nproc_y
-    write(io) nproc
-    write(io) nx, ny, nz
-    write(io) nxp,nyp
-
-    write(io) nt
-    write(io) na
-    write(io) dx, dy, dz
-    write(io) dt
-    write(io) xbeg, xend
-    write(io) ybeg, yend
-    write(io) zbeg, zend
-    write(io) tbeg, tend
-    write(io) ibeg, iend
-    write(io) jbeg, jend
-    write(io) kbeg, kend
-    write(io) ibeg_m, iend_m
-    write(io) jbeg_m, jend_m
-    write(io) kbeg_m, kend_m
-    write(io) ibeg_k, iend_k
-    write(io) jbeg_k, jend_k
-    write(io) kbeg_k, kend_k
-    write(io) odir(1:256)
-    write(io) clon
-    write(io) clat
-    write(io) phi
-    write(io) xc(ibeg_m:iend_m)
-    write(io) yc(jbeg_m:jend_m)
-    write(io) zc(kbeg_m:kend_m)
-!    write(io) fullspace_mode
-    write(io) kbeg_a(ibeg:iend,jbeg:jend)
-
-    deallocate( sbuf_ip, sbuf_im, sbuf_jp, sbuf_jm )
-    deallocate( rbuf_ip, rbuf_im, rbuf_jp, rbuf_jm )
-    deallocate( xc, yc, zc )
-    deallocate( kbeg_a )
-
-  end subroutine global__checkpoint
-
-  subroutine global__restart( io )
-
-    integer, intent(in) :: io
-    read(io) title(1:80)
-    read(io) exedate
-    read(io) mpi_precision
-    !! ----
-
-    read(io) nproc_x
-    read(io) nproc_y
-    read(io) nproc
-    read(io) nx, ny, nz
-    read(io) nxp,nyp
-
-    allocate( itbl(-1:nproc_x, -1:nproc_y) )
-    allocate( sbuf_ip(5 * nyp * nz), sbuf_im(5 * nyp * nz) )
-    allocate( rbuf_ip(5 * nyp * nz), rbuf_im(5 * nyp * nz) )
-    allocate( sbuf_jp(5 * nxp * nz), sbuf_jm(5 * nxp * nz) )
-    allocate( rbuf_jp(5 * nxp * nz), rbuf_jm(5 * nxp * nz) )
-    call set_mpi_table
-
-    read(io) nt
-    read(io) na
-    read(io) dx, dy, dz
-    read(io) dt
-    read(io) xbeg, xend
-    read(io) ybeg, yend
-    read(io) zbeg, zend
-    read(io) tbeg, tend
-    read(io) ibeg, iend
-    read(io) jbeg, jend
-    read(io) kbeg, kend
-    read(io) ibeg_m, iend_m
-    read(io) jbeg_m, jend_m
-    read(io) kbeg_m, kend_m
-    read(io) ibeg_k, iend_k
-    read(io) jbeg_k, jend_k
-    read(io) kbeg_k, kend_k
-    read(io) odir(1:256)
-    read(io) clon
-    read(io) clat
-    read(io) phi
-
-
-    allocate( xc(ibeg_m:iend_m), yc(jbeg_m:jend_m), zc(kbeg_m:kend_m) )
-    read(io) xc(ibeg_m:iend_m)
-    read(io) yc(jbeg_m:jend_m)
-    read(io) zc(kbeg_m:kend_m)
-!    read(io) fullspace_mode
-    allocate( kbeg_a(ibeg:iend, jbeg:jend) )
-    read(io) kbeg_a(ibeg:iend,jbeg:jend)
-
-  end subroutine global__restart
-
   subroutine set_mpi_table
     integer :: i
     integer :: ii, jj
@@ -754,8 +651,8 @@ contains
     integer, intent(in) :: i, j
     integer, intent(out) :: idx_ij, idy_ij
     integer :: mx, my
-    integer :: iproc_x, nxp_node, ibeg_node, iend_node
-    integer :: iproc_y, nyp_node, jbeg_node, jend_node
+    integer :: iproc_x, ibeg_node, iend_node
+    integer :: iproc_y, jbeg_node, jend_node
 
     mx = mod(nx, nproc_x)
     my = mod(ny, nproc_y)

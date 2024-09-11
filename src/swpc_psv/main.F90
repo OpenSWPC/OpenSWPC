@@ -35,7 +35,6 @@ program SWPC_PSV
   use m_snap
   use m_wav
   use m_absorb
-  use m_ckprst
   use m_readini
   use m_version
   use mpi
@@ -50,7 +49,6 @@ program SWPC_PSV
   logical :: is_opt
   logical :: stopwatch_mode
   integer :: io_prm, io_watch
-  integer :: it0
   logical :: strict_mode
   !! ----
 
@@ -83,40 +81,27 @@ program SWPC_PSV
   call global__setup( io_prm )
 
   !!
-  !! check if there are restart files
+  !! stopwatch start
   !!
-  call ckprst__setup( io_prm )
-  call ckprst__restart( it0 )
+  call pwatch__setup( stopwatch_mode )
 
   !!
-  !! setup for new simulation
+  !! set-up each module
   !!
-  if( it0 == 1 ) then
-
-    !!
-    !! stopwatch start
-    !!
-    call pwatch__setup( stopwatch_mode )
-
-    !!
-    !! set-up each module
-    !!
-    call global__setup2( )
-    call medium__setup( io_prm )
-    call mpi_barrier( mpi_comm_world, ierr )
-    call kernel__setup( )
-    call source__setup( io_prm )
-    call absorb__setup( io_prm )
-    call output__setup( io_prm )
-    call wav__setup(io_prm)
-    call report__setup( io_prm )
-
-  end if
+  call global__setup2( )
+  call medium__setup( io_prm )
+  call mpi_barrier( mpi_comm_world, ierr )
+  call kernel__setup( )
+  call source__setup( io_prm )
+  call absorb__setup( io_prm )
+  call output__setup( io_prm )
+  call wav__setup(io_prm)
+  call report__setup( io_prm )
 
   close( io_prm )
 
   !! mainloop
-  do it = it0, nt
+  do it = 1, nt
 
     call report__progress(it)
 
@@ -135,19 +120,12 @@ program SWPC_PSV
     call absorb__update_vel()
     call global__comm_vel()
 
-    call ckprst__checkpoint( it )
-
   end do
   call output__closefiles()
   call wav__write()
 
   !! ending message
   call report__terminate()
-
-  !!
-  !! Checkpoint file delete
-  !!
-  call ckprst__filedelete()
 
   !!
   !! stopwatch report from 0-th node

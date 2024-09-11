@@ -26,8 +26,6 @@ module m_kernel
   public :: kernel__update_vel
   public :: kernel__update_stress
   public :: kernel__vmax
-  public :: kernel__checkpoint
-  public :: kernel__restart
 
   !! -- Parameters
   real(MP), parameter   :: C20 = 1.0_MP
@@ -318,64 +316,6 @@ contains
 
   end subroutine kernel__vmax
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! checkpoint data export
-  !<
-  !! --
-  subroutine kernel__checkpoint( io )
-
-    integer, intent(in) :: io
-    integer :: m
-    !! --
-
-    write(io) r40x, r40z, r41x, r41z, r20x, r20z
-
-    write(io) Vy (       kbeg_m:kend_m, ibeg_m:iend_m )
-    write(io) Syz(       kbeg_m:kend_m, ibeg_m:iend_m )
-    write(io) Sxy(       kbeg_m:kend_m, ibeg_m:iend_m )
-
-    do m=1, nm
-      write(io) c1(m), c2(m)
-      write(io) Ryz( m, kbeg_k:kend_k, ibeg_k:iend_k )
-      write(io) Rxy( m, kbeg_k:kend_k, ibeg_k:iend_k )
-    end do
-
-  end subroutine kernel__checkpoint
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! checkpoint data inport
-  !<
-  !! --
-  subroutine kernel__restart( io )
-
-    integer, intent(in) :: io
-    integer :: m
-    !! --
-
-
-    call memory_allocate()
-
-    read(io) r40x, r40z, r41x, r41z, r20x, r20z
-    read(io) Vy (       kbeg_m:kend_m, ibeg_m:iend_m )
-    read(io) Syz(       kbeg_m:kend_m, ibeg_m:iend_m )
-    read(io) Sxy(       kbeg_m:kend_m, ibeg_m:iend_m )
-
-    do m=1, nm
-      read(io) c1(m), c2(m)
-      read(io) Ryz( m, kbeg_k:kend_k, ibeg_k:iend_k )
-      read(io) Rxy( m, kbeg_k:kend_k, ibeg_k:iend_k )
-    end do
-
-  end subroutine kernel__restart
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine memory_allocate

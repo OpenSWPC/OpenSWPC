@@ -25,8 +25,6 @@ module m_absorb_c
   public :: absorb_c__setup
   public :: absorb_c__update_stress
   public :: absorb_c__update_vel
-  public :: absorb_c__checkpoint
-  public :: absorb_c__restart
 
   real(SP), allocatable :: gx_c(:), gy_c(:), gz_c(:)                !<  attenuator for Q and B.C. for voxel center
   real(SP), allocatable :: gx_b(:), gy_b(:), gz_b(:)                !<  attenuator for Q and B.C. for voxel boundary
@@ -154,24 +152,6 @@ contains
 
   end subroutine absorb_c__update_vel
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  subroutine absorb_c__checkpoint( io )
-    integer, intent(in) :: io
-
-    write( io ) gx_c( ibeg_m:iend_m ), gx_b( ibeg_m:iend_m )
-    write( io ) gz_c( kbeg_m:kend_m ), gz_b( kbeg_m:kend_m )
-
-  end subroutine absorb_c__checkpoint
-
-  subroutine absorb_c__restart( io )
-    integer, intent(in) :: io
-
-    allocate( gx_c( ibeg_m:iend_m ), gx_b( ibeg_m:iend_m ) )
-    allocate( gz_c( kbeg_m:kend_m ), gz_b( kbeg_m:kend_m ) )
-    read( io ) gx_c( ibeg_m:iend_m ), gx_b( ibeg_m:iend_m )
-    read( io ) gz_c( kbeg_m:kend_m ), gz_b( kbeg_m:kend_m )
-
-  end subroutine absorb_c__restart
 
 end module m_absorb_c
 !! ----------------------------------------------------------------------------------------------------------------------------- !!

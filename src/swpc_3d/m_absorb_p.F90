@@ -44,8 +44,6 @@ module m_absorb_p
   public :: absorb_p__setup
   public :: absorb_p__update_stress
   public :: absorb_p__update_vel
-  public :: absorb_p__checkpoint
-  public :: absorb_p__restart
   !! --
 
   !! Damping profiles
@@ -96,9 +94,9 @@ contains
     allocate( gyc(4,jbeg:jend), gye(4,jbeg:jend) )
     allocate( gzc(4,kbeg:kend), gze(4,kbeg:kend) )
 
-    hx = na * dx
-    hy = na * dy
-    hz = na * dz
+    hx = na * real(dx)
+    hy = na * real(dy)
+    hz = na * real(dz)
     do i=ibeg, iend
       call damping_profile( xc(i),              hx, xbeg, xend, gxc(:,i) )
       call damping_profile( xc(i)+real(dx)/2.0, hx, xbeg, xend, gxe(:,i) )
@@ -301,15 +299,15 @@ contains
           !! Velocity Updates
           !!
           Vx(k,i,j) = Vx(k,i,j) &
-              + bx(k,i,j) * ( gxe0(1) * dxSxx(k)     + gyc0(1) * dySxy(k)     + gzc0(1) * dzSxz(k)       &
+              + bx(k,i,j) * real( gxe0(1) * dxSxx(k)     + gyc0(1) * dySxy(k)     + gzc0(1) * dzSxz(k)   &
               + gxe0(2) * axSxx(k,i,j) + gyc0(2) * aySxy(k,i,j) + gzc0(2) * azSxz(k,i,j)  ) * dt
 
           Vy(k,i,j) = Vy(k,i,j) &
-              + by(k,i,j) * ( gxc0(1) * dxSxy(k)     + gye0(1) * dySyy(k)     + gzc0(1) * dzSyz(k)       &
+              + by(k,i,j) * real( gxc0(1) * dxSxy(k)     + gye0(1) * dySyy(k)     + gzc0(1) * dzSyz(k)   &
               + gxc0(2) * axSxy(k,i,j) + gye0(2) * aySyy(k,i,j) + gzc0(2) * azSyz(k,i,j)  ) * dt
 
           Vz(k,i,j) = Vz(k,i,j) &
-              + bz(k,i,j) * ( gxc0(1) * dxSxz(k)     + gyc0(1) * dySyz(k)     + gze0(1) * dzSzz(k)       &
+              + bz(k,i,j) * real( gxc0(1) * dxSxz(k)     + gyc0(1) * dySyz(k)     + gze0(1) * dzSzz(k)   &
               + gxc0(2) * axSxz(k,i,j) + gyc0(2) * aySyz(k,i,j) + gze0(2) * azSzz(k,i,j)  ) * dt
 
 
@@ -317,17 +315,17 @@ contains
           !! ADE updates
           !!
 
-          axSxx(k,i,j) = gxe0(3) * axSxx(k,i,j) + gxe0(4) * dxSxx(k) * dt
-          aySxy(k,i,j) = gyc0(3) * aySxy(k,i,j) + gyc0(4) * dySxy(k) * dt
-          azSxz(k,i,j) = gzc0(3) * azSxz(k,i,j) + gzc0(4) * dzSxz(k) * dt
+          axSxx(k,i,j) = gxe0(3) * axSxx(k,i,j) + gxe0(4) * real(dxSxx(k)) * dt
+          aySxy(k,i,j) = gyc0(3) * aySxy(k,i,j) + gyc0(4) * real(dySxy(k)) * dt
+          azSxz(k,i,j) = gzc0(3) * azSxz(k,i,j) + gzc0(4) * real(dzSxz(k)) * dt
 
-          axSxy(k,i,j) = gxc0(3) * axSxy(k,i,j) + gxc0(4) * dxSxy(k) * dt
-          aySyy(k,i,j) = gye0(3) * aySyy(k,i,j) + gye0(4) * dySyy(k) * dt
-          azSyz(k,i,j) = gzc0(3) * azSyz(k,i,j) + gzc0(4) * dzSyz(k) * dt
+          axSxy(k,i,j) = gxc0(3) * axSxy(k,i,j) + gxc0(4) * real(dxSxy(k)) * dt
+          aySyy(k,i,j) = gye0(3) * aySyy(k,i,j) + gye0(4) * real(dySyy(k)) * dt
+          azSyz(k,i,j) = gzc0(3) * azSyz(k,i,j) + gzc0(4) * real(dzSyz(k)) * dt
 
-          axSxz(k,i,j) = gxc0(3) * axSxz(k,i,j) + gxc0(4) * dxSxz(k) * dt
-          aySyz(k,i,j) = gyc0(3) * aySyz(k,i,j) + gyc0(4) * dySyz(k) * dt
-          azSzz(k,i,j) = gze0(3) * azSzz(k,i,j) + gze0(4) * dzSzz(k) * dt
+          axSxz(k,i,j) = gxc0(3) * axSxz(k,i,j) + gxc0(4) * real(dxSxz(k)) * dt
+          aySyz(k,i,j) = gyc0(3) * aySyz(k,i,j) + gyc0(4) * real(dySyz(k)) * dt
+          azSzz(k,i,j) = gze0(3) * azSzz(k,i,j) + gze0(4) * real(dzSzz(k)) * dt
 
         end do
       end do
@@ -473,9 +471,9 @@ contains
           !!
           !! Normal Stress
           !!
-          dxVx_ade = gxc0(1) * dxVx(k) + gxc0(2) * axVx(k,i,j)
-          dyVy_ade = gyc0(1) * dyVy(k) + gyc0(2) * ayVy(k,i,j)
-          dzVz_ade = gzc0(1) * dzVz(k) + gzc0(2) * azVz(k,i,j)
+          dxVx_ade = gxc0(1) * real(dxVx(k)) + gxc0(2) * axVx(k,i,j)
+          dyVy_ade = gyc0(1) * real(dyVy(k)) + gyc0(2) * ayVy(k,i,j)
+          dzVz_ade = gzc0(1) * real(dzVz(k)) + gzc0(2) * azVz(k,i,j)
           Sxx(k,i,j) = Sxx(k,i,j) + ( lam2mu_R * dxVx_ade + lam_R * ( dyVy_ade + dzVz_ade ) ) * dt
           Syy(k,i,j) = Syy(k,i,j) + ( lam2mu_R * dyVy_ade + lam_R * ( dxVx_ade + dzVz_ade ) ) * dt
           Szz(k,i,j) = Szz(k,i,j) + ( lam2mu_R * dzVz_ade + lam_R * ( dxVx_ade + dyVy_ade ) ) * dt
@@ -484,9 +482,9 @@ contains
           !!
           !! ADE
           !!
-          axVx(k,i,j) = gxc0(3) * axVx(k,i,j) + gxc0(4) * dxVx(k) * dt
-          ayVy(k,i,j) = gyc0(3) * ayVy(k,i,j) + gyc0(4) * dyVy(k) * dt
-          azVz(k,i,j) = gzc0(3) * azVz(k,i,j) + gzc0(4) * dzVz(k) * dt
+          axVx(k,i,j) = gxc0(3) * axVx(k,i,j) + gxc0(4) * real(dxVx(k)) * dt
+          ayVy(k,i,j) = gyc0(3) * ayVy(k,i,j) + gyc0(4) * real(dyVy(k)) * dt
+          azVz(k,i,j) = gzc0(3) * azVz(k,i,j) + gzc0(4) * real(dzVz(k)) * dt
 
         end do
 
@@ -507,12 +505,12 @@ contains
           Sxy(k,i,j) = Sxy(k,i,j) + muxy(k,i,j) * ( gxe0(1) * dxVy(k)     + gye0(1) * dyVx(k) &
               + gxe0(2) * axVy(k,i,j) + gye0(2) * ayVx(k,i,j) ) * dt
 
-          ayVx(k,i,j) = gye0(3) * ayVx(k,i,j) + gye0(4) * dyVx(k) * dt
-          azVx(k,i,j) = gze0(3) * azVx(k,i,j) + gze0(4) * dzVx(k) * dt
-          axVy(k,i,j) = gxe0(3) * axVy(k,i,j) + gxe0(4) * dxVy(k) * dt
-          azVy(k,i,j) = gze0(3) * azVy(k,i,j) + gze0(4) * dzVy(k) * dt
-          axVz(k,i,j) = gxe0(3) * axVz(k,i,j) + gxe0(4) * dxVz(k) * dt
-          ayVz(k,i,j) = gye0(3) * ayVz(k,i,j) + gye0(4) * dyVz(k) * dt
+          ayVx(k,i,j) = gye0(3) * ayVx(k,i,j) + gye0(4) * real(dyVx(k)) * dt
+          azVx(k,i,j) = gze0(3) * azVx(k,i,j) + gze0(4) * real(dzVx(k)) * dt
+          axVy(k,i,j) = gxe0(3) * axVy(k,i,j) + gxe0(4) * real(dxVy(k)) * dt
+          azVy(k,i,j) = gze0(3) * azVy(k,i,j) + gze0(4) * real(dzVy(k)) * dt
+          axVz(k,i,j) = gxe0(3) * axVz(k,i,j) + gxe0(4) * real(dxVz(k)) * dt
+          ayVz(k,i,j) = gye0(3) * ayVz(k,i,j) + gye0(4) * real(dyVz(k)) * dt
 
 
         end do
@@ -525,119 +523,16 @@ contains
   end subroutine absorb_p__update_stress
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! checkpoint data export
-  !<
-  !! --
-  subroutine absorb_p__checkpoint( io )
-
-    integer, intent(in) :: io
-    integer :: j
-    !! --
-
-    write(io) r20x, r20y, r20z
-    write(io) kbeg_min
-
-    write(io) gxc(:,ibeg:iend), gxe(:,ibeg:iend)
-    write(io) gyc(:,jbeg:jend), gye(:,jbeg:jend)
-    write(io) gzc(:,kbeg:kend), gze(:,kbeg:kend)
-    deallocate( gxc, gxe, gyc, gye, gzc, gze )
-
-    do j=jbeg,jend;  write(io)  axVx(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( axVx )
-    do j=jbeg,jend;  write(io)  ayVx(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( ayVx )
-    do j=jbeg,jend;  write(io)  azVx(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( azVx )
-    do j=jbeg,jend;  write(io)  axVy(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( axVy )
-    do j=jbeg,jend;  write(io)  ayVy(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( ayVy )
-    do j=jbeg,jend;  write(io)  azVy(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( azVy )
-    do j=jbeg,jend;  write(io)  axVz(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( axVz )
-    do j=jbeg,jend;  write(io)  ayVz(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( ayVz )
-    do j=jbeg,jend;  write(io)  azVz(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( azVz )
-
-    do j=jbeg,jend;  write(io) axSxx(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( axSxx )
-    do j=jbeg,jend;  write(io) aySxy(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( aySxy )
-    do j=jbeg,jend;  write(io) azSxz(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( azSxz )
-    do j=jbeg,jend;  write(io) axSxy(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( axSxy )
-    do j=jbeg,jend;  write(io) aySyy(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( aySyy )
-    do j=jbeg,jend;  write(io) azSyz(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( azSyz )
-    do j=jbeg,jend;  write(io) axSxz(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( axSxz )
-    do j=jbeg,jend;  write(io) aySyz(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( aySyz )
-    do j=jbeg,jend;  write(io) azSzz(kbeg_min:kend,ibeg:iend,j); end do;  deallocate( azSzz )
-
-  end subroutine absorb_p__checkpoint
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine absorb_p__restart(io)
-
-    integer, intent(in) :: io
-    integer :: j
-    
-    read(io) r20x, r20y, r20z
-    read(io) kbeg_min
-
-    !! memory allocation
-    allocate( gxc( 4,ibeg:iend ), gxe( 4,ibeg:iend ) )
-    allocate( gyc( 4,jbeg:jend ), gye( 4,jbeg:jend ) )
-    allocate( gzc( 4,kbeg:kend ), gze( 4,kbeg:kend ) )
-
-    allocate(  axVx(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate(  ayVx(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate(  azVx(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate(  axVy(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate(  ayVy(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate(  azVy(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate(  axVz(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate(  ayVz(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate(  azVz(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate( axSxx(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate( aySxy(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate( azSxz(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate( axSxy(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate( aySyy(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate( azSyz(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate( axSxz(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate( aySyz(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-    allocate( azSzz(kbeg_min:kend,ibeg:iend,jbeg:jend) )
-
-    read(io) gxc( :,ibeg:iend ), gxe( :,ibeg:iend )
-    read(io) gyc( :,jbeg:jend ), gye( :,jbeg:jend )
-    read(io) gzc( :,kbeg:kend ), gze( :,kbeg:kend )
-
-
-    do j=jbeg,jend;  read(io)  axVx(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io)  ayVx(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io)  azVx(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io)  axVy(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io)  ayVy(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io)  azVy(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io)  axVz(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io)  ayVz(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io)  azVz(kbeg_min:kend,ibeg:iend,j); end do;
-      
-    do j=jbeg,jend;  read(io) axSxx(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io) aySxy(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io) azSxz(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io) axSxy(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io) aySyy(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io) azSyz(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io) axSxz(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io) aySyz(kbeg_min:kend,ibeg:iend,j); end do;
-    do j=jbeg,jend;  read(io) azSzz(kbeg_min:kend,ibeg:iend,j); end do;
-
-  end subroutine absorb_p__restart
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
   !! ADE-CFS PML damping factor according to Zhao and Shen
   !!
-  subroutine damping_profile( x, H, xbeg, xend, g )
+  subroutine damping_profile( x, H, xbeg0, xend0, g )
     
     real(SP), intent(in) :: x   !< cartesian coordinate location
     real(SP), intent(in) :: H   !< absorption layer thickness
-    real(SP), intent(in) :: xbeg
-    real(SP), intent(in) :: xend
+    real(SP), intent(in) :: xbeg0
+    real(SP), intent(in) :: xend0
     real(SP), intent(out) :: g(4) !< damping prof
 
     real(SP) :: R0 !! reflection coefficient
@@ -652,12 +547,12 @@ contains
     R0 = 10**( - ( log10( real(na) ) - 1 ) / log10( 2.0 )  - 3.0 )
     d0 = - ( 1.0 / (2.0*H) ) * ( pd +1 ) * cp * log( R0 )
     b0 = 7.0
-    a0 = PI * fcut
+    a0 = real(PI * fcut)
 
-    if( x <= xbeg + H ) then
-      xx = ( xbeg + H ) - x
-    else if ( x >= xend - H ) then
-      xx = x - ( xend - H )
+    if( x <= xbeg0 + H ) then
+      xx = ( xbeg0 + H ) - x
+    else if ( x >= xend0 - H ) then
+      xx = x - ( xend0 - H )
     else
       xx = 0.0 !! no absorption
     end if

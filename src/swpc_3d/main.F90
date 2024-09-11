@@ -20,7 +20,7 @@
 !<
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
 #include "../shared/m_debug.h"
-program SWPC_3D
+program swpc_3d
 
   !! -- Dependency
   use m_std
@@ -34,7 +34,6 @@ program SWPC_3D
   use m_pwatch
   use m_output
   use m_absorb
-  use m_ckprst
   use m_green
   use m_readini
   use m_version
@@ -51,7 +50,6 @@ program SWPC_3D
   logical :: is_opt
   logical :: stopwatch_mode
   integer :: io_prm, io_watch
-  integer :: it0
   logical :: strict_mode
   !! ----
 
@@ -78,50 +76,30 @@ program SWPC_3D
   call readini( io_prm, 'strict_mode', strict_mode, .false. )
   call readini__strict_mode( strict_mode )
 
-  !!
   !! Read control parameters
-  !!
   call global__setup( io_prm )
 
-  !!
-  !! check if there are restart files
-  !!
-  call ckprst__setup( io_prm )
-  call ckprst__restart( it0 )
+  !! stopwatch start
+  call pwatch__setup( stopwatch_mode )
 
-  !!
-  !! setup for new simulation
-  !!
-  if( it0 == 1 ) then
+  !! set-up each module
+  call global__setup2( )
+  call medium__setup( io_prm )
+  call mpi_barrier( mpi_comm_world, ierr ) !! wait until deallocation by medium__setup
+  call kernel__setup( )
+  call source__setup( io_prm )
+  call absorb__setup( io_prm )
+  call output__setup( io_prm )
+  call wav__setup(io_prm)
+  call green__setup( io_prm )
+  call report__setup( io_prm )
 
-    !!
-    !! stopwatch start
-    !!
-    call pwatch__setup( stopwatch_mode )
-
-    !!
-    !! set-up each module
-    !!
-    call global__setup2( )
-    call medium__setup( io_prm )
-    call mpi_barrier( mpi_comm_world, ierr ) !! wait until deallocation by medium__setup
-    call kernel__setup( )
-    call source__setup( io_prm )
-    call absorb__setup( io_prm )
-    call output__setup( io_prm )
-    call wav__setup(io_prm)
-    call green__setup( io_prm )
-    call report__setup( io_prm )
-
-  end if
 
   close( io_prm )
 
-#ifdef _FX
-  call fipp_start()  !! performance measurement
-#endif
+
   !! mainloop
-  do it = it0, nt
+  do it = 1, nt
     call report__progress(it)
 
     call green__store( it )
@@ -142,14 +120,7 @@ program SWPC_3D
     call green__source( it )
 
     call global__comm_vel()
-
-    call ckprst__checkpoint( it )
-
-
   end do
-#ifdef _FX
-  call fipp_stop()  !! performance measurement
-#endif
 
   call green__export()
   call wav__write()
@@ -157,11 +128,6 @@ program SWPC_3D
 
   !! ending message
   call report__terminate()
-
-  !!
-  !! Checkpoint file delete
-  !!
-  call ckprst__filedelete()
 
   !!
   !! stopwatch report from 0-th node
@@ -180,6 +146,5 @@ program SWPC_3D
   call mpi_barrier( mpi_comm_world, ierr ) 
   call mpi_finalize( ierr )
 
-end program SWPC_3D
+end program swpc_3d
 
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

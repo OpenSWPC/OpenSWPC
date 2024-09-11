@@ -43,8 +43,6 @@ module m_absorb_p
   public :: absorb_p__setup
   public :: absorb_p__update_stress
   public :: absorb_p__update_vel
-  public :: absorb_p__checkpoint
-  public :: absorb_p__restart
   !! --
 
   !! Damping profiles
@@ -531,73 +529,6 @@ contains
   end subroutine absorb_p__update_stress
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! checkpoint data export
-  !<
-  !! --
-  subroutine absorb_p__checkpoint( io )
-
-    integer, intent(in) :: io
-    !! --
-
-    write(io) r20x, r20z
-    write(io) kbeg_min
-
-    write(io) gxc(:,ibeg:iend), gxe(:,ibeg:iend)
-    write(io) gzc(:,kbeg:kend), gze(:,kbeg:kend)
-    deallocate( gxc, gxe, gzc, gze )
-
-    write(io)  axVx(kbeg_min:kend,ibeg:iend);  deallocate( axVx )
-    write(io)  azVx(kbeg_min:kend,ibeg:iend);  deallocate( azVx )
-    write(io)  axVz(kbeg_min:kend,ibeg:iend);  deallocate( axVz )
-    write(io)  azVz(kbeg_min:kend,ibeg:iend);  deallocate( azVz )
-
-    write(io) axSxx(kbeg_min:kend,ibeg:iend);  deallocate( axSxx )
-    write(io) azSxz(kbeg_min:kend,ibeg:iend);  deallocate( azSxz )
-    write(io) axSxz(kbeg_min:kend,ibeg:iend);  deallocate( axSxz )
-    write(io) azSzz(kbeg_min:kend,ibeg:iend);  deallocate( azSzz )
-
-  end subroutine absorb_p__checkpoint
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine absorb_p__restart(io)
-
-    integer, intent(in) :: io
-
-    read(io) r20x, r20z
-    read(io) kbeg_min
-
-    !! memory allocation
-    allocate( gxc( 4,ibeg:iend ), gxe( 4,ibeg:iend ) )
-    allocate( gzc( 4,kbeg:kend ), gze( 4,kbeg:kend ) )
-
-    allocate(  axVx(kbeg_min:kend,ibeg:iend) )
-    allocate(  azVx(kbeg_min:kend,ibeg:iend) )
-    allocate(  axVz(kbeg_min:kend,ibeg:iend) )
-    allocate(  azVz(kbeg_min:kend,ibeg:iend) )
-    allocate( axSxx(kbeg_min:kend,ibeg:iend) )
-    allocate( azSxz(kbeg_min:kend,ibeg:iend) )
-    allocate( axSxz(kbeg_min:kend,ibeg:iend) )
-    allocate( azSzz(kbeg_min:kend,ibeg:iend) )
-
-    read(io) gxc( :,ibeg:iend ), gxe( :,ibeg:iend )
-    read(io) gzc( :,kbeg:kend ), gze( :,kbeg:kend )
-
-
-    read(io)  axVx(kbeg_min:kend,ibeg:iend)
-    read(io)  azVx(kbeg_min:kend,ibeg:iend)
-    read(io)  axVz(kbeg_min:kend,ibeg:iend)
-    read(io)  azVz(kbeg_min:kend,ibeg:iend)
-
-    read(io) axSxx(kbeg_min:kend,ibeg:iend)
-    read(io) azSxz(kbeg_min:kend,ibeg:iend)
-    read(io) axSxz(kbeg_min:kend,ibeg:iend)
-    read(io) azSzz(kbeg_min:kend,ibeg:iend)
-
-  end subroutine absorb_p__restart
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
   !! ADE-CFS PML damping factor according to Zhao and Shen

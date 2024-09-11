@@ -29,8 +29,6 @@ module m_medium
 
   public :: medium__setup
   public :: medium__initialized
-  public :: medium__checkpoint
-  public :: medium__restart
 
   logical :: init = .false.
 
@@ -423,53 +421,6 @@ contains
     end do
 
   end subroutine stabilize_absorber
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine medium__checkpoint( io )
-
-    integer, intent(in) :: io
-    !! ----
-
-    write(io) rho ( kbeg_m:kend_m, ibeg_m:iend_m )
-    write(io) lam ( kbeg_m:kend_m, ibeg_m:iend_m )
-    write(io) mu  ( kbeg_m:kend_m, ibeg_m:iend_m )
-    write(io) taup( kbeg_m:kend_m, ibeg_m:iend_m )
-    write(io) taus( kbeg_m:kend_m, ibeg_m:iend_m )
-    write(io) kfs    ( ibeg_m:iend_m )
-    write(io) kob    ( ibeg_m:iend_m )
-    write(io) kfs_top( ibeg_m:iend_m )
-    write(io) kfs_bot( ibeg_m:iend_m )
-    write(io) kob_top( ibeg_m:iend_m )
-    write(io) kob_bot( ibeg_m:iend_m )
-    write(io) bddep  ( ibeg_m:iend_m, 0:NBD )
-    if( nm > 0 ) write(io) ts(  1:nm )
-
-  end subroutine medium__checkpoint
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine medium__restart( io )
-
-    integer, intent(in) :: io
-    !! ----
-
-    call memory_allocate()
-    read(io) rho ( kbeg_m:kend_m, ibeg_m:iend_m )
-    read(io) lam ( kbeg_m:kend_m, ibeg_m:iend_m )
-    read(io) mu  ( kbeg_m:kend_m, ibeg_m:iend_m )
-    read(io) taup( kbeg_m:kend_m, ibeg_m:iend_m )
-    read(io) taus( kbeg_m:kend_m, ibeg_m:iend_m )
-    read(io) kfs    ( ibeg_m:iend_m )
-    read(io) kob    ( ibeg_m:iend_m )
-    read(io) kfs_top( ibeg_m:iend_m )
-    read(io) kfs_bot( ibeg_m:iend_m )
-    read(io) kob_top( ibeg_m:iend_m )
-    read(io) kob_bot( ibeg_m:iend_m )
-    read(io) bddep  ( ibeg_m:iend_m, 0:NBD )
-    if( nm > 0 )read(io) ts(  1:nm )
-
-  end subroutine medium__restart
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_medium
