@@ -244,7 +244,8 @@ contains
             end if
 
         end if
-
+        call pwatch__off("wav__store")
+        
     end subroutine wav__store
 
     subroutine wav__write()
@@ -456,7 +457,7 @@ contains
                     call initialize_sac_header(sh_disp(j,i), stnm(i), stlo(i), stla(i), xst(i), zst(i), mag)
                 end do
                 sh_disp(1,i)%kcmpnm = "Ux"; sh_disp(1,i)%cmpinc = 90.0; sh_disp(1,i)%cmpaz =  0.0 + phi
-                sh_disp(2,i)%kcmpnm = "Uz"; sh_disp(3,i)%cmpinc = 90.0; sh_disp(3,i)%cmpaz =  0.0 
+                sh_disp(2,i)%kcmpnm = "Uz"; sh_disp(2,i)%cmpinc = 90.0; sh_disp(2,i)%cmpaz =  0.0 
 
                 sh_disp(:,i)%idep = 6 
             end if

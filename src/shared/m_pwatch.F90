@@ -27,7 +27,7 @@ module m_pwatch
 
   !! ----
 
-  integer, parameter :: NBLOCK_MAX = 100 !< maximum number of stopwatch blocks
+  integer, parameter :: NBLOCK_MAX = 500 !< maximum number of stopwatch blocks
   integer            :: irank
   logical            :: measure_time
   integer            :: nblock

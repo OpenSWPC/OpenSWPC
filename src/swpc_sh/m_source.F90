@@ -641,9 +641,10 @@ contains
     t = n2t( it, tbeg, dt )
 
     do i=1, nsrc
-
+        
       stime = source__momentrate( t, stftype, n_stfprm, srcprm(:,i) )
       sdrop = mo(i) * stime * dt_dxz
+   
 
       ii = isrc(i)
       kk = ksrc(i)

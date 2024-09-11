@@ -472,7 +472,6 @@ contains
     if( xz_v%sw ) call wbuf_xz_v(it)
     if( xz_u%sw ) call wbuf_xz_u(it)
 
-
     call pwatch__off( "output__write_snap" )
 
   end subroutine output__write_snap
@@ -483,7 +482,7 @@ contains
     integer :: it
     integer :: i, k
     integer :: ii, kk
-    real(SP), allocatable :: buf(:,:), sbuf(:), rbuf(:)
+    real(SP), allocatable, save :: buf(:,:), sbuf(:), rbuf(:)
     integer, save :: req
     integer, save :: it0
     integer :: stat(mpi_status_size)
@@ -493,22 +492,21 @@ contains
     if( .not. allocated(buf) ) allocate(buf(nxs,nzs), source=0.0)
 
     if( (mod( it-1, ntdec_s ) == 0) .or. ( it > nt) ) then
-
         buf(:,:) = 0.0
         !$omp parallel do private(ii,kk,i,k)
         do ii = is0, is1
-        do kk= ks0, ks1
-            k = kk * kdec - kdec/2
-            i = ii * idec - idec/2
+            do kk= ks0, ks1
+                k = kk * kdec - kdec/2
+                i = ii * idec - idec/2
 
-            buf(ii,kk) = Vy(k,i) * UC * M0
+                buf(ii,kk) = Vy(k,i) * UC * M0
 
-        end do
+            end do
         end do
         !$omp end parallel do
 
         if( snp_format == 'native' ) then
-        call write_reduce_array2d_r( nxs, nzs, xz_v%ionode, xz_v%io, buf )
+            call write_reduce_array2d_r( nxs, nzs, xz_v%ionode, xz_v%io, buf )
         else
             if (.not. allocated(sbuf)) then
                 allocate(sbuf(nxs*nzs), rbuf(nxs*nzs))

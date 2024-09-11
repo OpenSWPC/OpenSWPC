@@ -174,8 +174,8 @@ module m_wav
                 dzVy = ( (Vy(k+1,i  ) - Vy(k  ,i  )) * r40z  -  (Vy(k+2,i  ) - Vy(k-1,i  )) * r41z &
                        + (Vy(k  ,i  ) - Vy(k-1,i  )) * r40z  -  (Vy(k+1,i  ) - Vy(k-2,i  )) * r41z ) * 0.5
  
-                eyz(i) = eyz(i) + real(dzVy) * 0.5 * dt
-                exy(i) = exy(i) + real(dxVy) * 0.5 * dt
+                eyz(n) = eyz(n) + real(dzVy) * 0.5 * dt
+                exy(n) = exy(n) + real(dxVy) * 0.5 * dt
  
             end do
             !$omp end parallel do
@@ -229,6 +229,8 @@ module m_wav
             end if
 
         end if
+
+        call pwatch__off('wav__store')
 
     end subroutine wav__store
 
