@@ -128,7 +128,7 @@ endif
 ifeq ($(arch),ubuntu-gfortran)
   
   FC      = mpif90
-  FFLAGS  = -O2 -ffast-math   -fopenmp
+  FFLAGS  = -O2 -ffast-math -fopenmp -cpp
   NCFLAG  = -D_NETCDF
   NCLIB   = -L/usr/lib/x86_64-linux-gnu
   NCINC   = -I/usr/include

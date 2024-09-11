@@ -24,6 +24,7 @@ module m_wav
     public :: wav__stquery
 
     integer :: ntdec_w
+    integer :: ntdec_w_prg
     character(3) :: wav_format !! sac or csf
     logical :: wav_calc_dist = .false.
 
@@ -81,6 +82,7 @@ contains
         call readini( io_prm, 'wav_calc_dist', wav_calc_dist, .false. )
         call readini( io_prm, 'st_format',     st_format,  'xy'    )
         call readini( io_prm, 'fn_stloc',      fn_stloc,   ''      )
+        call readini( io_prm, 'ntdec_w_prg',   ntdec_w_prg, 0 )
 
         if(.not. ( sw_wav_v .or. sw_wav_u .or. sw_wav_stress .or. sw_wav_strain)) then
             nst = 0
@@ -551,6 +553,8 @@ contains
 
         end if
         
+        if( ntdec_w_prg > 0 .and. mod(it-1, ntdec_w_prg) == 0) call wav__write()
+
         call pwatch__off("wav__store")
 
     end subroutine wav__store
