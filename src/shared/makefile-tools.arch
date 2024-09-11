@@ -17,12 +17,12 @@
 
 ## EIC @ ERI,U-TOKYO (2020 System)
 ifeq ($(arch),eic)
-  FC      = module purge; module load intel mpt lib/NetCDF lib/HDF5; ifort
+  FC      = module purge; module load intel mpt lib/NetCDF; ifort
   FFLAGS  = -xCORE-AVX512 -O3 -D_INFO -fpp
   NCFLAG  = -D_NETCDF
   NCLIB   = 
   NCINC   = 
-  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
+  NETCDF  = -lnetcdff -lnetcdf
 endif
 
 
@@ -46,19 +46,19 @@ endif
 
 ## Wisteria/BDEC-01
 ifeq ($(arch),bdec-o)
-  FC      = module purge; module load intel netcdf netcdf-fortran hdf5; ifort
+  FC      = module purge; module load intel netcdf netcdf-fortran; ifort
   FFLAGS  = -D_INFO -D_ASSERT -O2 -xHOST -warn all -heap-arrays -fpp
   NCFLAG  = -D_NETCDF
   NCLIB =
   NCINC =
-  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5
+  NETCDF  = -lnetcdff -lnetcdf
 endif
 
 ## Apple Silicon macOS gfortran and netcdf provided by homebrew
 ifeq ($(arch),mac-m1)
 
   FC      = gfortran
-  FFLAGS  = -O2 -ffast-math -D_INFO 
+  FFLAGS  = -O2 -ffast-math -D_INFO -cpp
   NCFLAG  = -D_NETCDF
   NCLIB   = -L/opt/homebrew/lib
   NCINC   = -I/opt/homebrew/include

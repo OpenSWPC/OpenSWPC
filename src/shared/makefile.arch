@@ -42,12 +42,12 @@ endif
 
 ## Wisteria/BDEC-01 Odyssey at the University of Tokyo
 ifeq ($(arch),bdec-o)
-  FC      = module purge; module load fj fjmpi netcdf hdf5 netcdf-fortran; mpifrtpx
+  FC      = module purge; module load fj fjmpi netcdf netcdf-fortran; mpifrtpx
   FFLAGS  = -O3 -Keval -Kfp_contract -Kfp_relaxed -Kfz -Kilfunc -Kmfunc -Komitfp -Kopenmp -Kparallel -Ksimd=2 -Kocl -Kassume=memory_bandwidth -Koptmsg=guide -Nlst=t -D_FX -Cpp
   NCFLAG  = -D_NETCDF 
   NCLIB = 
   NCINC = 
-  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 
+  NETCDF  = -lnetcdff -lnetcdf
 endif
 
 
@@ -59,7 +59,7 @@ ifeq ($(arch),mac-m1)
   NCFLAG  = -D_NETCDF
   NCLIB   = -L/opt/homebrew/lib
   NCINC   = -I/opt/homebrew/include
-  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
+  NETCDF  = -lnetcdff -lnetcdf
 
   ifeq ($(debug),true)
     FFLAGS  = -Wall -pedantic -fbounds-check -O -Wuninitialized \
@@ -139,7 +139,7 @@ endif
 
 ## EIC @ ERI,U-TOKYO (2020 System)
 ifeq ($(arch),eic)
-  FC      = module purge; module load intel mpt lib/NetCDF lib/HDF5; ifort
+  FC      = module purge; module load intel mpt lib/NetCDF; ifort
   FFLAGS  = -xCORE-AVX512 -O3 -qopenmp -lmpi -fpp
   NCFLAG  = -D_NETCDF
   NCLIB   = 
