@@ -18,7 +18,7 @@ module m_ckprst
   use m_absorb
   use m_report
   use m_source
-  use m_output
+!  use m_output
   use m_pwatch
   use m_readini
   implicit none
@@ -77,7 +77,7 @@ contains
     if( arrived_checkpoint ) then
 
 
-      call output__closefiles()
+!      call output__closefiles()
 
       call checkpoint_fname( fn_ckp )
       call std__getio( io_ckp )
@@ -91,7 +91,7 @@ contains
       call absorb__checkpoint( io_ckp )
       call report__checkpoint( io_ckp )
       call source__checkpoint( io_ckp )
-      call output__checkpoint( io_ckp )
+!      call output__checkpoint( io_ckp )
       call pwatch__off( "ckprst__checkpoint" )    !! to save pwatch data, stop mesurement before checkpoint of pwatch itself
       call pwatch__checkpoint( io_ckp )
 
@@ -186,7 +186,7 @@ contains
     call absorb__restart( io_ckp )
     call report__restart( io_ckp )
     call source__restart( io_ckp )
-    call output__restart( io_ckp )
+!    call output__restart( io_ckp )
     call pwatch__restart( io_ckp )
 
     close( io_ckp )

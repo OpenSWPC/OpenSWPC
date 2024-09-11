@@ -1,7 +1,6 @@
 !!
 !! waveform output
 !!
-!! copyright
 !!   Copyright 2024 Takuto Maeda. All rights reseaved. This project is released under the MIT license. 
 !!
 #include "../shared/m_debug.h"
@@ -330,12 +329,12 @@ contains
         end do
     end subroutine set_sac_header
 
-    subroutine initialize_sac_header(sh, stnm, stlo, stla, xst, yst, zst, mag)
+    subroutine initialize_sac_header(sh, stnm1, stlo1, stla1, xst1, yst1, zst1, mag1)
 
         use m_daytim
         type(sac__hdr), intent(inout) :: sh
-        character(*), intent(in) :: stnm
-        real, intent(in) :: stlo, stla, xst, yst, zst, mag
+        character(*), intent(in) :: stnm1
+        real, intent(in) :: stlo1, stla1, xst1, yst1, zst1, mag1
         logical, save :: first_call = .true.
         type(sac__hdr), save :: sh0
         !! ----
@@ -349,7 +348,7 @@ contains
             sh0%b       = tbeg
             sh0%delta   = ntdec_w * dt
             sh0%npts    = ntw
-            sh0%mag     = mag
+            sh0%mag     = mag1
 
             if( bf_mode ) then
                 sh0%user0   = fx0
@@ -378,16 +377,16 @@ contains
 
         sh = sh0
         sh%kevnm = trim(adjustl( title(1:16) ))
-        sh%kstnm = trim(stnm)
-        sh%stlo  = stlo
-        sh%stla  = stla
-        sh%stdp  = zst * 1000 ! in meter unit
+        sh%kstnm = trim(stnm1)
+        sh%stlo  = stlo1
+        sh%stla  = stla1
+        sh%stdp  = zst1 * 1000 ! in meter unit
 
         if (wav_calc_dist) then
             sh%lcalda = .false. 
-            sh%dist = sqrt((sx0 - xst)**2 + (sy0 - yst)**2)
-            sh%az   = std__rad2deg(atan2(yst - sy0, xst - sx0))
-            sh%baz  = std__rad2deg(atan2(sy0 - yst, sx0 - xst))
+            sh%dist = sqrt((sx0 - xst1)**2 + (sy0 - yst1)**2)
+            sh%az   = std__rad2deg(atan2(yst1 - sy0, xst1 - sx0))
+            sh%baz  = std__rad2deg(atan2(sy0 - yst1, sx0 - xst1))
         end if
             
     end subroutine initialize_sac_header
@@ -429,9 +428,9 @@ contains
            !$omp parallel do private(n,i,j,k)
             do n=1, nst
                 i = ist(n); j = jst(n); k = kst(n)
-                ux(n) = ux(n) + (Vx(k, i, j) + Vx(k,   i-1, j  )) * 0.5 * dt
-                uy(n) = uy(n) + (Vy(k, i, j) + Vy(k,   i  , j-1)) * 0.5 * dt
-                uz(n) = uz(n) - (Vz(k, i, j) + Vz(k-1, i  , j  )) * 0.5 * dt ! positive upward
+                ux(n) = ux(n) + real(Vx(k, i, j) + Vx(k,   i-1, j  )) * 0.5 * dt
+                uy(n) = uy(n) + real(Vy(k, i, j) + Vy(k,   i  , j-1)) * 0.5 * dt
+                uz(n) = uz(n) - real(Vz(k, i, j) + Vz(k-1, i  , j  )) * 0.5 * dt ! positive upward
             end do
             !$omp end parallel do
 
@@ -477,12 +476,12 @@ contains
                        + (Vy(k  ,i  ,j  ) - Vy(k-1,i  ,j  )) * r40z - (Vy(k+1,i  ,j  ) - Vy(k-2,i  ,j  )) * r41z &
                        + (Vy(k  ,i  ,j-1) - Vy(k-1,i  ,j-1)) * r40z - (Vy(k+1,i  ,j-1) - Vy(k-2,i  ,j-1)) * r41z ) / 4.0
       
-                exx(n) = exx(i) + dxVx * dt
-                eyy(n) = eyy(i) + dyVy * dt
-                ezz(n) = ezz(i) + dzVz * dt
-                eyz(n) = eyz(i) + (dyVz + dzVy) / 2.0 * dt
-                exz(n) = exz(i) + (dxVz + dzVx) / 2.0 * dt
-                exy(n) = exy(i) + (dxVy + dyVx) / 2.0 * dt
+                exx(n) = exx(n) + real(dxVx) * dt
+                eyy(n) = eyy(n) + real(dyVy) * dt
+                ezz(n) = ezz(n) + real(dzVz) * dt
+                eyz(n) = eyz(n) + real(dyVz + dzVy) / 2.0 * dt
+                exz(n) = exz(n) + real(dxVz + dzVx) / 2.0 * dt
+                exy(n) = exy(n) + real(dxVy + dyVx) / 2.0 * dt
       
             end do
             !$omp end parallel do
@@ -496,9 +495,9 @@ contains
                 !$omp parallel do private(n,i,j,k)
                 do n=1, nst
                     i = ist(n); j = jst(n); k = kst(n)
-                    wav_vel(itw,1,n) =  ( Vx(k, i, j) + Vx(k  , i-1, j  )) / 2.0 * M0 * UC * 1e9
-                    wav_vel(itw,2,n) =  ( Vy(k, i, j) + Vy(k  , i  , j-1)) / 2.0 * M0 * UC * 1e9
-                    wav_vel(itw,3,n) = -( Vz(k, i, j) + Vz(k-1, i  , j  )) / 2.0 * M0 * UC * 1e9
+                    wav_vel(itw,1,n) =   real(Vx(k, i, j) + Vx(k  , i-1, j  )) / 2.0 * M0 * UC * 1e9
+                    wav_vel(itw,2,n) =   real(Vy(k, i, j) + Vy(k  , i  , j-1)) / 2.0 * M0 * UC * 1e9
+                    wav_vel(itw,3,n) = - real(Vz(k, i, j) + Vz(k-1, i  , j  )) / 2.0 * M0 * UC * 1e9
                 end do
                 !$omp end parallel do
 
@@ -508,9 +507,9 @@ contains
 
                 !$omp parallel do private(n)
                 do n=1, nst
-                    wav_disp(itw,1,n) = ux(n) * M0 * UC * 1e9
-                    wav_disp(itw,2,n) = uy(n) * M0 * UC * 1e9
-                    wav_disp(itw,3,n) = uz(n) * M0 * UC * 1e9
+                    wav_disp(itw,1,n) = real(ux(n)) * M0 * UC * 1e9
+                    wav_disp(itw,2,n) = real(uy(n)) * M0 * UC * 1e9
+                    wav_disp(itw,3,n) = real(uz(n)) * M0 * UC * 1e9
                 end do
                 !$omp end parallel do
 
@@ -521,15 +520,15 @@ contains
                 !$omp parallel do private(n, i, j, k)
                 do n=1, nst
                     i = ist(n); j = jst(n); k = kst(n)
-                    wav_stress(itw,1,n) = Sxx(k, i, j) * M0 * UC * 1e6
-                    wav_stress(itw,2,n) = Syy(k, i, j) * M0 * UC * 1e6
-                    wav_stress(itw,3,n) = Szz(k, i, j) * M0 * UC * 1e6
-                    wav_stress(itw,4,n) = ( Syz(k,   i,   j) + Syz(k,   i,   j-1)  &
-                                          + Syz(k-1, i,   j) + Syz(k-1, i,   j-1)) / 4.0 * M0 * UC * 1e6
-                    wav_stress(itw,5,n) = ( Sxz(k,   i,   j) + Sxz(k,   i-1, j  )  &
-                                          + Sxz(k-1, i,   j) + Sxz(k-1, i-1, j  )) / 4.0 * M0 * UC * 1e6
-                    wav_stress(itw,6,n) = ( Sxy(k,   i,   j) + Sxy(k,   i,   j-1)  &
-                                          + Sxy(k,   i-1, j) + Sxy(k,   i-1, j-1)) / 4.0 * M0 * UC * 1e6
+                    wav_stress(itw,1,n) = real(Sxx(k, i, j)) * M0 * UC * 1e6
+                    wav_stress(itw,2,n) = real(Syy(k, i, j)) * M0 * UC * 1e6
+                    wav_stress(itw,3,n) = real(Szz(k, i, j)) * M0 * UC * 1e6
+                    wav_stress(itw,4,n) = real( Syz(k,   i,   j) + Syz(k,   i,   j-1)  &
+                                              + Syz(k-1, i,   j) + Syz(k-1, i,   j-1)) / 4.0 * M0 * UC * 1e6
+                    wav_stress(itw,5,n) = real( Sxz(k,   i,   j) + Sxz(k,   i-1, j  )  &
+                                              + Sxz(k-1, i,   j) + Sxz(k-1, i-1, j  )) / 4.0 * M0 * UC * 1e6
+                    wav_stress(itw,6,n) = real( Sxy(k,   i,   j) + Sxy(k,   i,   j-1)  &
+                                              + Sxy(k,   i-1, j) + Sxy(k,   i-1, j-1)) / 4.0 * M0 * UC * 1e6
                 end do
                 !$omp end parallel do
       
@@ -658,11 +657,11 @@ contains
         
     end subroutine export_wav__sac
   
-    subroutine export_wav__csf(nst, ncmp, sh, dat)
+    subroutine export_wav__csf(nst1, ncmp, sh, dat)
         
-        integer, intent(in) :: nst, ncmp
-        type(sac__hdr), intent(in) :: sh(ncmp, nst)
-        real(SP), intent(in) :: dat(ntw, ncmp, nst)
+        integer, intent(in) :: nst1, ncmp
+        type(sac__hdr), intent(in) :: sh(ncmp, nst1)
+        real(SP), intent(in) :: dat(ntw, ncmp, nst1)
         !! --
         character(5) :: cid
         character(256) :: fn
@@ -670,7 +669,7 @@ contains
 
         write(cid,'(I5.5)') myid
         fn = trim(odir) // '/wav/' // trim(title) // '__' // cid // '__.csf'
-        call csf__write(fn, nst*ncmp, ntw, reshape(sh,(/ncmp*nst/)), reshape(dat, (/ntw, ncmp*nst/)))
+        call csf__write(fn, nst1*ncmp, ntw, reshape(sh,(/ncmp*nst1/)), reshape(dat, (/ntw, ncmp*nst/)))
   
     end subroutine export_wav__csf
           
