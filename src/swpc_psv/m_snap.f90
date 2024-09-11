@@ -162,6 +162,10 @@ contains
       if( xz_u%sw  ) call newfile_xz_nc( trim(odir) // '/' // trim(title) //'.xz.u.nc',  xz_u )
     end if
 
+    !! for taking derivatives
+    r20x = 1.0_MP / dx
+    r20z = 1.0_MP / dz
+
     !! always allocate displacement buffer
     allocate(buf_u(nxs,nzs,2))
     buf_u(:,:,:) = 0.0
@@ -498,10 +502,12 @@ contains
     integer :: stat(mpi_status_size)
     integer :: err
     !! ----
+    call pwatch__on("wbuf_xz_ps")
 
     if (.not. allocated(buf)) allocate(buf(nxs,nzs,2), source=0.0)
 
     if( (mod( it-1, ntdec_s ) == 0) .or. ( it > nt) ) then
+
         !$omp parallel do private( ii, kk, i, k, div, rot )
         do ii = is0, is1
             do kk= ks0, ks1
@@ -536,6 +542,7 @@ contains
             end if
         end if
     end if
+    call pwatch__off("wbuf_xz_ps")
 
   end subroutine wbuf_xz_ps
 
@@ -551,6 +558,7 @@ contains
     integer :: stat(mpi_status_size)
     integer :: err
     !! ----
+    call pwatch__on("wbuf_xz_v")
 
     if (.not. allocated(buf)) allocate(buf(nxs,nzs,2), source=0.0)
 
@@ -561,8 +569,8 @@ contains
                 k = kk * kdec - kdec/2
                 i = ii * idec - idec/2
 
-                buf(ii,kk,1) = real(Vx(k,i)) * UC * M0
-                buf(ii,kk,2) = real(Vz(k,i)) * UC * M0
+                buf(ii,kk,1) = Vx(k,i) * UC * M0
+                buf(ii,kk,2) = Vz(k,i) * UC * M0
 
             end do
         end do
@@ -585,6 +593,7 @@ contains
             end if
         end if
     end if
+    call pwatch__off("wbuf_xz_v")
 
   end subroutine wbuf_xz_v
 
@@ -600,14 +609,16 @@ contains
     integer :: err       
     !! --
 
+    call pwatch__on("wbuf_xz_u")
+
     !$omp parallel do private(ii,kk,i,k)
     do ii = is0, is1
       do kk= ks0, ks1
         k = kk * kdec - kdec/2
         i = ii * idec - idec/2
 
-        buf_u(ii,kk,1) = buf_u(ii,kk,1) + real(Vx(k,i) * UC * M0 * dt)
-        buf_u(ii,kk,2) = buf_u(ii,kk,2) + real(Vz(k,i) * UC * M0 * dt)
+        buf_u(ii,kk,1) = buf_u(ii,kk,1) + Vx(k,i) * UC * M0 * dt
+        buf_u(ii,kk,2) = buf_u(ii,kk,2) + Vz(k,i) * UC * M0 * dt
 
       end do
     end do
@@ -634,6 +645,9 @@ contains
 
     end if 
 
+    call pwatch__off("wbuf_xz_u")
+
+
   end subroutine wbuf_xz_u
 
   subroutine wbuf_nc(hdr, nvar, nx1, nx2, it0, rbuf)
@@ -647,6 +661,7 @@ contains
     integer :: stt(3), cnt(3)
     integer :: vid
     !! ----
+    call pwatch__on("wbuf_nc")
 
     ns = nx1 * nx2
     cnt = (/ nx1, nx2, 1/)
@@ -665,6 +680,7 @@ contains
         call nc_chk( nf90_sync( hdr%io ))
 
     end do
+    call pwatch__off("wbuf_nc")
 
     end subroutine wbuf_nc
 

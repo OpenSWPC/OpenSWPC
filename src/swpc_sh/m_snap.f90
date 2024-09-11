@@ -543,7 +543,7 @@ contains
         k = kk * kdec - kdec/2
         i = ii * idec - idec/2
 
-        buf_u(ii,kk) = buf_u(ii,kk) +  real(Vy(k,i) * UC * M0 * dt)
+        buf_u(ii,kk) = buf_u(ii,kk) +  Vy(k,i) * UC * M0 * dt
 
       end do
     end do
@@ -598,7 +598,7 @@ contains
         call nc_chk(nf90_redef( hdr%io ))
         call nc_chk(nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)))
         call nc_chk(nf90_enddef( hdr%io ))
-        call nc_chk(nf90_sync(hdr%io))
+!        call nc_chk(nf90_sync(hdr%io))
     end do
 
   end subroutine wbuf_nc  

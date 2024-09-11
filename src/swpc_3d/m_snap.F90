@@ -1164,7 +1164,7 @@ contains
         call nc_chk(nf90_redef( hdr%io ))
         call nc_chk(nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)))
         call nc_chk(nf90_enddef( hdr%io ))
-        call nc_chk(nf90_sync(hdr%io))
+!        call nc_chk(nf90_sync(hdr%io))
     end do
 #endif
 end subroutine wbuf_nc
