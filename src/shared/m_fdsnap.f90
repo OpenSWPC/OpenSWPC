@@ -11,9 +11,7 @@ module m_fdsnap
   !! -- Dependency
   use m_std
   use m_daytim
-#ifdef _NETCDF
   use netcdf
-#endif
 
   !! -- Declarations
   implicit none
@@ -76,7 +74,6 @@ contains
     !! ----
 
     !! first, try open as netcdf file
-#ifdef _NETCDF
     ierr = nf90_open(fname, NF90_NOWRITE, io)
     if(ierr /= NF90_NOERR) then
       snp_type = 'native'
@@ -87,11 +84,6 @@ contains
       snp_type = 'netcdf'
       return
     endif
-#else
-    snp_type = 'native'
-    call native_file_open(fname, io, is_exist)
-    return
-#endif
 
   end subroutine fdsnap__open
   !! ----------------------------------------------------------------------- !!
@@ -245,7 +237,6 @@ contains
 
     !! ----
 
-#ifdef _NETCDF
     if(snp_type == 'netcdf') then
       hdr%bintype = 'netcdf'
       call nc_chk(nf90_get_att(io, NF90_GLOBAL, 'codetype',   hdr%codetype))
@@ -269,7 +260,7 @@ contains
       call nc_chk(nf90_get_att(io, NF90_GLOBAL, 'clat',       hdr%clat))
       call nc_chk(nf90_get_att(io, NF90_GLOBAL, 'phi',        hdr%phi))
     endif
-#endif
+
     if(snp_type == 'native') then
       read(io) hdr % bintype
       read(io) hdr % codetype
@@ -334,9 +325,7 @@ contains
     integer, intent(in) :: ierr
     !! ----
 
-#ifdef _NETCDF
     if( ierr /= NF90_NOERR )  write(STDERR,*) NF90_STRERROR( ierr )
-#endif
 
   end subroutine nc_chk
   !! ------------------------------------------------------------------------ !!

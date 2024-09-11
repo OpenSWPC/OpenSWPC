@@ -19,9 +19,7 @@ module m_output
   use m_readini
   use m_geomap
   use mpi
-#ifdef _NETCDF
   use netcdf
-#endif
 
   !! -- Declarations
   implicit none
@@ -526,9 +524,6 @@ contains
 
     if( idx /= idx_yz )  return
 
-#ifdef _NETCDF
-
-
     if( myid == hdr%ionode ) then
 
       !! initialize
@@ -587,8 +582,6 @@ contains
 
     deallocate( sbuf, rbuf1, rbuf2, rbuf3, buf )
 
-#endif
-
   end subroutine newfile_yz_nc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -607,8 +600,6 @@ contains
     !! --
 
     if( idy /= idy_xz ) return
-
-#ifdef _NETCDF
 
     if( myid == hdr%ionode ) then
 
@@ -672,8 +663,6 @@ contains
 
     deallocate( sbuf, rbuf1, rbuf2, rbuf3, buf )
 
-#endif
-
   end subroutine newfile_xz_nc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -689,7 +678,7 @@ contains
     real(SP), intent(in) :: xs1(ns1), xs2(ns2)
     integer :: i
     !! --
-#ifdef _NETCDF
+
     if( hdr % coordinate == 'yz' ) then
       call nc_chk( nf90_def_dim( hdr%io, 'y', nys, hdr%did_x1 ) )
       call nc_chk( nf90_def_dim( hdr%io, 'z', nzs, hdr%did_x2 ) )
@@ -800,8 +789,6 @@ contains
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'clat', clat ) )
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'phi',  phi  ) )
 
-#endif
-
   end subroutine write_nc_header
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -818,8 +805,6 @@ contains
     real(SP), allocatable :: sbuf(:), rbuf1(:), rbuf2(:), rbuf3(:), rbuf4(:), rbuf5(:), rbuf6(:), buf(:,:,:)
     integer :: i, j, ii, jj, kk, err
     !! --
-
-#ifdef _NETCDF
 
     if( myid == hdr%ionode ) then
 
@@ -905,8 +890,6 @@ contains
     end if
 
     deallocate( sbuf, rbuf1, rbuf2, rbuf3, rbuf4, rbuf5, rbuf6, buf )
-
-#endif
 
   end subroutine newfile_xy_nc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -1147,7 +1130,7 @@ contains
     integer :: stt(3), cnt(3)
     integer :: vid
     !! ----
-#ifdef _NETCDF
+
     ns = nx1 * nx2
     cnt = (/ nx1, nx2, 1/)
     stt = (/ 1, 1, it0 / ntdec_s + 1 /)
@@ -1162,10 +1145,10 @@ contains
         call nc_chk(nf90_redef( hdr%io ))
         call nc_chk(nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)))
         call nc_chk(nf90_enddef( hdr%io ))
-!        call nc_chk(nf90_sync(hdr%io))
+        ! call nc_chk(nf90_sync(hdr%io))
     end do
-#endif
-end subroutine wbuf_nc
+
+  end subroutine wbuf_nc
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine wbuf_xz_ps(it)
@@ -2028,8 +2011,6 @@ end if
     type(snp), intent(in) :: hdr
     integer :: vid
 
-#ifdef _NETCDF
-
     call nc_chk( nf90_redef( hdr%io ) )
     do vid = 1, hdr%nsnp
       call nc_chk( nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)) )
@@ -2037,9 +2018,8 @@ end if
     call nc_chk( nf90_enddef( hdr%io ) )
     call nc_chk( nf90_sync( hdr%io ))
     call nc_chk( nf90_close( hdr%io ) )
-#endif
 
-  end subroutine close_nc
+end subroutine close_nc
 
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -2148,7 +2128,7 @@ end if
       if( snp_format == 'native' ) then
         !! pass
       else
-#ifdef _NETCDF
+
         call nc_chk( nf90_redef( hdr%io ) )
         call nc_chk( nf90_def_var( hdr%io, 'max-V', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), vid_V ) )
         call nc_chk( nf90_def_var( hdr%io, 'max-H', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), vid_H ) )
@@ -2159,15 +2139,21 @@ end if
         call nc_chk( nf90_put_att( hdr%io, vid_V, 'coordinates', 'lat lon' ) )
         call nc_chk( nf90_put_att( hdr%io, vid_H, 'coordinates', 'lat lon' ) )
         call nc_chk( nf90_put_att( hdr%io, vid_A, 'coordinates', 'lat lon' ) )
+
         if( hdr%snaptype == 'v3' ) then
+
           call nc_chk( nf90_put_att( hdr%io, vid_V, 'units', 'm/s' ))
           call nc_chk( nf90_put_att( hdr%io, vid_H, 'units', 'm/s' ))
           call nc_chk( nf90_put_att( hdr%io, vid_A, 'units', 'm/s' ))
+
         else if( hdr%snaptype == 'u3' ) then
+
           call nc_chk( nf90_put_att( hdr%io, vid_V, 'units', 'm' ))
           call nc_chk( nf90_put_att( hdr%io, vid_H, 'units', 'm' ))
           call nc_chk( nf90_put_att( hdr%io, vid_A, 'units', 'm' ))
+
         end if
+
         call nc_chk( nf90_put_att( hdr%io, vid_V, 'actual_range', (/minval(maxv(:,:,1)), maxval(maxv(:,:,1))/)))
         call nc_chk( nf90_put_att( hdr%io, vid_H, 'actual_range', (/minval(maxv(:,:,2)), maxval(maxv(:,:,2))/)))
         call nc_chk( nf90_put_att( hdr%io, vid_A, 'actual_range', (/minval(maxv(:,:,3)), maxval(maxv(:,:,3))/)))
@@ -2175,7 +2161,7 @@ end if
         call nc_chk( nf90_put_var( hdr%io, vid_V, maxv(:,:,1) ))
         call nc_chk( nf90_put_var( hdr%io, vid_H, maxv(:,:,2) ))
         call nc_chk( nf90_put_var( hdr%io, vid_A, maxv(:,:,3) ))
-#endif
+
       end if
     end if
     
@@ -2193,9 +2179,7 @@ end if
     integer, intent(in) :: err
     !! ----
 
-#ifdef _NETCDF
     if( err /= NF90_NOERR )  write(STDERR,*) NF90_STRERROR( err )
-#endif
 
   end subroutine nc_chk
   !! --------------------------------------------------------------------------------------------------------------------------- !!

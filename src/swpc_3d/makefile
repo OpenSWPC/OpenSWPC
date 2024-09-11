@@ -157,9 +157,9 @@ $(o_wav): $(s_wav) $(o_std) $(o_global) $(o_pwatch) $(o_readini) $(o_geomap) $(o
 ## Module Compile Rule
 ##
 .f90.o:
-	$(FC) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ 	-c $<
+	$(FC) $(NCINC) $(FFLAGS) -o $@ 	-c $<
 .f90.o:
-	$(FC) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ 	-c $<
+	$(FC) $(NCINC) $(FFLAGS) -o $@ 	-c $<
 
 
 ##

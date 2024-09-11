@@ -20,7 +20,7 @@ VPATH = ../shared/:../../bin/
 include ../shared/makefile-tools.arch
 
 .f90.o:
-	$(FC) $(NCINC) $(FFLAGS) $(NCFLAG) -c $< -o $@ $(NETCDF)
+	$(FC) $(NCINC) $(FFLAGS) -c $< -o $@ $(NETCDF)
 
 ## file dependency
 
@@ -51,22 +51,22 @@ m_version.o: m_version.f90
 .SUFFIXES: .f90 .f90 .o
 
 ../../bin/gen_rmed2d.x: gen_rmed2d.f90 m_std.o m_system.o m_getopt.o m_rmedia.o m_daytim.o m_fk.o m_rfft.o m_gammaf.o  m_debug.o m_version.o
-	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ -D_DEBUG $(NETCDF)
+	$(FC) $(NCLIB) $(NCINC) $(FFLAGS) -o $@ $^ -D_DEBUG $(NETCDF)
 
 ../../bin/gen_rmed3d.x: gen_rmed3d.f90 m_std.o m_system.o m_getopt.o m_rmedia.o m_fk.o m_rfft.o m_gammaf.o m_debug.o m_version.o
-	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ -D_DEBUG $(NETCDF)
+	$(FC) $(NCLIB) $(NCINC) $(FFLAGS) -o $@ $^ -D_DEBUG $(NETCDF)
 
 ../../bin/qmodel_tau.x: qmodel_tau.f90 m_std.o m_system.o m_getopt.o m_fdtool.o m_readini.o m_debug.o m_version.o
 	$(FC) $(FFLAGS) -o $@ $^
 
 ../../bin/grdsnp.x: grdsnp.f90 m_std.o m_system.o m_getopt.o m_fdtool.o m_readini.o m_bicubic.o m_geomap.o m_gk.o m_debug.o m_version.o
-	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
+	$(FC) $(NCLIB) $(NCINC) $(FFLAGS) -o $@ $^ $(NETCDF)
 
 ../../bin/read_snp.x: read_snp.f90 m_std.o m_system.o m_getopt.o m_pnm.o m_stamp.o m_fdsnap.o m_daytim.o m_color.o m_fk.o m_rfft.o m_filt2d.o m_geomap.o m_gk.o m_bmp.o m_debug.o m_version.o
-	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
+	$(FC) $(NCLIB) $(NCINC) $(FFLAGS) -o $@ $^ $(NETCDF)
 
 ../../bin/diff_snp.x: diff_snp.f90 m_std.o m_system.o m_fdsnap.o m_daytim.o m_gk.o m_debug.o m_version.o
-	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
+	$(FC) $(NCLIB) $(NCINC) $(FFLAGS) -o $@ $^ $(NETCDF)
 
 ../../bin/mapregion.x: mapregion.f90 m_std.o m_system.o m_fdtool.o m_gk.o m_readini.o m_getopt.o m_geomap.o m_debug.o m_version.o
 	$(FC) $(FFLAGS) -o $@ $^
@@ -84,7 +84,7 @@ m_version.o: m_version.f90
 	$(FC) $(FFLAGS) -o $@ $^ 
 
 ../../bin/fs2grd.x: fs2grd.f90 m_std.o m_system.o m_gk.o m_geomap.o m_getopt.o m_bicubic.o m_fdsnap.o m_daytim.o m_version.o
-	$(FC) $(NCLIB) $(NCINC) $(NCFLAG) $(FFLAGS) -o $@ $^ $(NETCDF)
+	$(FC) $(NCLIB) $(NCINC) $(FFLAGS) -o $@ $^ $(NETCDF)
 
 ../../bin/wvconv.x: wvconv.f90 m_std.o m_rfft.o m_fk.o m_sac.o m_version.o m_getopt.o m_system.o
 	$(FC) $(FFLAGS) -o $@ $^ 

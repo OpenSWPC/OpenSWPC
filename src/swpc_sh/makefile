@@ -150,7 +150,7 @@ $(o_vmodel3r): $(s_vmodel3r) $(o_std) $(o_global) $(o_readini)  $(o_pdebug) $(o_
 ## Module Compile Rule
 ##
 .f90.o:
-	$(FC) $(NCINC) $(NCFLAG) $(FFLAGS)  -o $@	  -c $<
+	$(FC) $(NCINC) $(FFLAGS)  -o $@	  -c $<
 
 
 ##

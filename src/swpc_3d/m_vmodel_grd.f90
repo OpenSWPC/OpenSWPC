@@ -7,8 +7,6 @@
 !<
 !! ----
 #include "../shared/m_debug.h"
-#ifdef _NETCDF
-
 module m_vmodel_grd
 
   use m_std
@@ -336,55 +334,3 @@ contains
 
 end module m_vmodel_grd
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
-
-#else
-
-module m_vmodel_grd
-
-  !! This is a dummy module for non-netcdf mode
-
-  use m_std
-  use m_global
-  use mpi
-
-contains
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine vmodel_grd( io, i0, i1, j0, j1, k0, k1, xc, yc, zc, vcut, rho, lam, mu, Qp, Qs, bd )
-
-    !! -- Arguments
-    integer,  intent(in)  :: io                             !< prm file io
-    integer,  intent(in)  :: i0, i1                         !< i-region
-    integer,  intent(in)  :: j0, j1                         !< j-region
-    integer,  intent(in)  :: k0, k1                         !< k-region
-    real(SP), intent(in)  :: xc  ( i0:i1 )                  !< x-coordinate location
-    real(SP), intent(in)  :: yc  ( j0:j1 )                  !< y-coordinate location
-    real(SP), intent(in)  :: zc  ( k0:k1 )                  !< z-coordinate location
-    real(SP), intent(in)  :: vcut                           !< cut-off velocity
-    real(SP), intent(out) :: rho ( k0:k1, i0:i1, j0:j1 )    !< mass density [g/cm^3]
-    real(SP), intent(out) :: lam ( k0:k1, i0:i1, j0:j1 )    !< Lame's parameter lambda [ (g/cm^3) * (km/s) ]
-    real(SP), intent(out) :: mu  ( k0:k1, i0:i1, j0:j1 )    !< Lame's parameter mu     [ (g/cm^3) * (km/s) ]
-    real(SP), intent(out) :: qp  ( k0:k1, i0:i1, j0:j1 )    !< P-wave attenuation
-    real(SP), intent(out) :: qs  ( k0:k1, i0:i1, j0:j1 )    !< S-wave attenuation
-    real(SP), intent(out) :: bd  ( i0:i1, j0:j1, 0:NBD )    !< boundary depths
-
-    integer :: ierr
-    !! --
-
-    rho = 0.0
-    lam = 0.0
-    mu = 0.0
-    qp = 0.0
-    qs = 0.0
-    bd = 0.0
-
-    if( myid == 0 ) then
-      call info('This program is not compiled with netcdf. ')
-      call assert( .false. )
-    end if
-
-  end subroutine vmodel_grd
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-end module m_vmodel_grd
-
-#endif

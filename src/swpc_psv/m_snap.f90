@@ -15,9 +15,7 @@ module m_snap
   use m_daytim
   use m_readini
   use m_geomap
-! #ifdef _NETCDF
   use netcdf
-! #endif
 
   !! -- Declarations
   implicit none
@@ -227,8 +225,6 @@ contains
     integer :: i, k, ierr, ii, kk
     !! ----
 
-#ifdef _NETCDF
-
     if( myid == hdr%ionode ) then
 
       !! initialize
@@ -285,7 +281,6 @@ contains
 
     deallocate( sbuf, rbuf1, rbuf2, rbuf3, buf )
 
-#endif
   end subroutine newfile_xz_nc
 
   !! write snapshot header in fixed format
@@ -344,7 +339,6 @@ contains
     integer :: i
     !! --
 
-! #ifdef _NETCDF
     call nc_chk( nf90_def_dim( hdr%io, 'x', nxs, hdr%did_x1 ) )
     call nc_chk( nf90_def_dim( hdr%io, 'z', nzs, hdr%did_x2 ) )
     call nc_chk( nf90_def_dim( hdr%io, 't', NF90_UNLIMITED, hdr%did_t ) )
@@ -412,7 +406,7 @@ contains
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'clon', clon ) )
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'clat', clat ) )
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'phi',  phi  ) )
-!#endif
+
   end subroutine write_nc_header
  
 
@@ -715,8 +709,6 @@ contains
     type(snp), intent(in) :: hdr
     integer :: vid
 
-#ifdef _NETCDF
-
     call nc_chk( nf90_redef( hdr%io ) )
     do vid = 1, hdr%nsnp
       call nc_chk( nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)) )
@@ -724,7 +716,6 @@ contains
     call nc_chk( nf90_enddef( hdr%io ) )
     call nc_chk( nf90_sync( hdr%io ))
     call nc_chk( nf90_close( hdr%io ) )
-#endif
 
   end subroutine close_nc
 
@@ -735,9 +726,7 @@ contains
     integer, intent(in) :: err
     !! ----
 
-! #ifdef _NETCDF
     if( err /= NF90_NOERR )  write(STDERR,*) NF90_STRERROR( err )
-! #endif
 
   end subroutine nc_chk
 

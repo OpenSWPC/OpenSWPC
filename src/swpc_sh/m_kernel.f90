@@ -110,11 +110,7 @@ contains
     !$omp parallel &
     !$omp private(dzSyz, dxSxy, i, k, by) 
     !$omp do &
-#ifdef _ES
-    !$omp schedule(static)
-#else
     !$omp schedule(static,1)
-#endif    
     do i=ibeg_k, iend_k
 
       !! derivateives
@@ -124,17 +120,11 @@ contains
       end do
 
       !! surfaces
-#ifdef _ES
-      !NEC$ novector
-#endif
       do k=kfs_top(i), kfs_bot(i)
         dzSyz(k) = (  Syz(k  ,i  ) - Syz(k-1,i  )  ) * r20z
         dxSxy(k) = (  Sxy(k  ,i  ) - Sxy(k  ,i-1)  ) * r20x
       end do
 
-#ifdef _ES
-      !NEC$ novector
-#endif
       do k=kob_top(i), kob_bot(i)
         dzSyz(k) = (  Syz(k  ,i  ) - Syz(k-1,i  )  ) * r20z
         dxSxy(k) = (  Sxy(k  ,i  ) - Sxy(k  ,i-1)  ) * r20x
@@ -196,11 +186,7 @@ contains
     !$omp parallel  &
     !$omp private( dxVy, dzVy, nnn, pnn, npn, mu_yz, mu_xy, taus1, taus_plus1, f_Ryz, f_Rxy, Ryz_o, Rxy_o, Ryz_n, Rxy_n )
     !$omp do &
-#ifdef _ES
-    !$omp schedule(static)
-#else
     !$omp schedule(static,1)
-#endif
     do i=ibeg_k, iend_k
 
       !!
@@ -214,9 +200,6 @@ contains
       end do
 
       !! free surface
-#ifdef _ES
-      !NEC$ novector
-#endif
       do k=kfs_top(i), kfs_bot(i)
 
         dxVy(k) = (  Vy(k  ,i+1) - Vy(k  ,i  )  ) * r20x
@@ -225,9 +208,6 @@ contains
       end do
 
       !! seafloor
-#ifdef _ES
-      !NEC$ novector
-#endif
       do k=kob_top(i), kob_bot(i)
 
         dxVy(k) = (  Vy(k  ,i+1) - Vy(k  ,i  )  ) * r20x

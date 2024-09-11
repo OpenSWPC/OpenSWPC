@@ -151,9 +151,6 @@ contains
         end do
 
         !! overwrite around free surface
-#ifdef _ES
-        !NEC$ novector
-#endif
         do k=kfs_top(i,j), kfs_bot(i,j)
           d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
                    + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
@@ -169,9 +166,6 @@ contains
         end do
 
         !! overwrite around seafloor
-#ifdef _ES
-        !NEC$ novector
-#endif
         do k=kob_top(i,j), kob_bot(i,j)
           d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
                    + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
@@ -253,9 +247,6 @@ contains
         end do
 
         !! overwrite around free surface
-#ifdef _ES
-        !NEC$ novector
-#endif
         do k=kfs_top(i,j), kfs_bot(i,j)
 
           dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
@@ -265,9 +256,6 @@ contains
         end do
 
         !! overwrite around seafloor
-#ifdef _ES
-        !NEC$ novector
-#endif
         do k=kob_top(i,j), kob_bot(i,j)
 
           dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
@@ -280,10 +268,6 @@ contains
         !!
         !! update memory variables and stress tensors: normal stress components
         !!
-
-#ifdef _FX
-        !ocl unroll('full')
-#endif
         do k=kbeg_k, kend_k
 
           !!
@@ -363,9 +347,6 @@ contains
         end do
 
         !! overwrite around free surface
-#ifdef _ES
-        !NEC$ novector
-#endif
         do k=kfs_top(i,j), kfs_bot(i,j)
 
           dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
@@ -378,9 +359,6 @@ contains
         end do
 
         !! overwrite around seafloor
-#ifdef _ES
-        !NEC$ novector
-#endif
         do k=kob_top(i,j), kob_bot(i,j)
 
           dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
@@ -396,10 +374,6 @@ contains
         !!
         !! update memory variables and stress tensors: shear stress components
         !!
-
-#ifdef _FX
-        !ocl unroll('full')
-#endif
         do k=kbeg_k, kend_k
 
           !!

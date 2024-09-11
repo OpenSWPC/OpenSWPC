@@ -18,9 +18,7 @@ module m_output
   use m_daytim
   use m_readini
   use m_geomap
-!#ifdef _NETCDF
   use netcdf
-!#endif
 
   !! -- Declarations
   implicit none
@@ -191,11 +189,7 @@ contains
     if( myid == hdr%ionode ) then
 
       call std__getio( hdr%io, is_big=.true. )
-#ifdef _ES
-      open( hdr%io, file=trim(fname), action='write', form='unformatted', status='replace' )
-#else
       open( hdr%io, file=trim(fname), access='stream', action='write', form='unformatted', status='replace' )
-#endif
       call write_snp_header( hdr, nxs, nzs, xsnp(1:nxs), zsnp(1:nzs) )
 
     end if
@@ -286,7 +280,7 @@ contains
     real(SP), intent(in) :: xs1(ns1), xs2(ns2)
     integer :: i
     !! --
-#ifdef _NETCDF
+
     call nc_chk( nf90_def_dim( hdr%io, 'x', nxs, hdr%did_x1 ) )
     call nc_chk( nf90_def_dim( hdr%io, 'z', nzs, hdr%did_x2 ) )
     call nc_chk( nf90_def_dim( hdr%io, 't', NF90_UNLIMITED, hdr%did_t ) )
@@ -353,7 +347,7 @@ contains
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'clon', clon ) )
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'clat', clat ) )
     call nc_chk( nf90_put_att( hdr%io, NF90_GLOBAL, 'phi',  phi  ) )
-#endif
+
   end subroutine write_nc_header
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -365,8 +359,6 @@ contains
     real, allocatable :: sbuf(:), rbuf1(:), rbuf2(:), rbuf3(:), buf(:,:,:)
     integer :: i, k, ierr, ii, kk
     !! ---
-
-!#ifdef _NETCDF
 
     if( myid == hdr%ionode ) then
 
@@ -422,7 +414,6 @@ contains
 
     deallocate( sbuf, rbuf1, rbuf2, rbuf3, buf )
 
-!#endif
   end subroutine newfile_xz_nc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -609,13 +600,13 @@ contains
       if( xz_v%sw .and. myid == xz_v%ionode ) close( xz_v%io )
       if( xz_u%sw .and. myid == xz_u%ionode ) close( xz_u%io )
     else
-#ifdef _NETCDF
+
     if( xz_v%sw   ) call wbuf_xz_v(nt+1)
     if( xz_u%sw   ) call wbuf_xz_u(nt+1)
 
     if( xz_v%sw .and. myid == xz_v%ionode ) call close_nc(xz_v)
     if( xz_u%sw .and. myid == xz_u%ionode ) call close_nc(xz_u)
-#endif
+
     end if
 
     call pwatch__off('snap__closefiles')
@@ -626,8 +617,6 @@ contains
     type(snp), intent(in) :: hdr
     integer :: vid
 
-#ifdef _NETCDF
-
     call nc_chk( nf90_redef( hdr%io ) )
     do vid = 1, hdr%nsnp
       call nc_chk( nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)) )
@@ -635,7 +624,6 @@ contains
     call nc_chk( nf90_enddef( hdr%io ) )
     call nc_chk( nf90_sync( hdr%io ))
     call nc_chk( nf90_close( hdr%io ) )
-#endif
 
   end subroutine close_nc  
 
@@ -649,9 +637,7 @@ contains
     integer, intent(in) :: ierr
     !! ----
 
-#ifdef _NETCDF
     if( ierr /= NF90_NOERR )  write(STDERR,*) NF90_STRERROR( ierr )
-#endif
 
   end subroutine nc_chk
   !! --------------------------------------------------------------------------------------------------------------------------- !!

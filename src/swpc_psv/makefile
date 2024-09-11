@@ -151,7 +151,7 @@ $(o_pdebug):  $(s_pdebug) $(o_std)
 ## Module Compile Rule
 ##
 .f90.o:
-	$(FC) $(NCINC) $(NCFLAG) $(FFLAGS)  -o $@	  -c $<
+	$(FC) $(NCINC) $(FFLAGS)  -o $@	  -c $<
 
 ##
 ## Targets

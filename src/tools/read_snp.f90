@@ -20,9 +20,7 @@ program read_snp
   use m_geomap
   use m_debug
   use m_version
-#ifdef _NETCDF
   use netcdf
-#endif
 
   !! -- Declarations
   implicit none
@@ -80,7 +78,6 @@ program read_snp
   call fdsnap__readhdr( fn_snp, io_snp, snp_type, hdr )
   nx = hdr%ns1
   ny = hdr%ns2
-#ifdef _NETCDF
   if( snp_type == 'netcdf') then
     allocate(vid(hdr%nsnp))
     do i=1, hdr%nsnp
@@ -89,7 +86,7 @@ program read_snp
       call nc_chk(nf90_inquire_dimension(io_snp, 3, tname, nt))
     end do
   end if
-#endif
+
   !!
   !! header output mode
   !!
@@ -116,10 +113,8 @@ program read_snp
 
   if( snp_type == 'native' ) then
     close( io_snp )
-#ifdef _NETCDF
   else
     ierr = nf90_close( io_snp )
-#endif
   end if
 
 contains
@@ -219,7 +214,6 @@ contains
     !!
     if( snp_type == 'native' ) then
       read( io_snp ) den, lam, rig
-#ifdef _NETCDF
     else
       call nc_chk( nf90_inq_varid( io_snp, 'rho',    vid_rho ) )
       call nc_chk( nf90_inq_varid( io_snp, 'lambda', vid_lambda ) )
@@ -227,7 +221,6 @@ contains
       call nc_chk( nf90_get_var( io_snp, vid_rho,    den ) )
       call nc_chk( nf90_get_var( io_snp, vid_lambda, lam ) )
       call nc_chk( nf90_get_var( io_snp, vid_mu,     rig ) )
-#endif
     end if
 
     do j=1, ny
@@ -301,7 +294,6 @@ contains
           end if
         end do
         if( is_eof ) exit
-#ifdef _NETCDF
       else
         count = (/ nx, ny, 1/)
         start = (/ 1, 1, it + iskip + 1 /)
@@ -313,7 +305,6 @@ contains
           is_eof = .true.
           exit
         end if
-#endif
       end if
 
       if( it >= 0 ) then
@@ -497,7 +488,6 @@ contains
     !!
     if( snp_type == 'native' ) then
       read( io_snp ) den, lam, rig
-#ifdef _NETCDF
     else
       call nc_chk( nf90_inq_varid( io_snp, 'rho',    vid_rho ) )
       call nc_chk( nf90_inq_varid( io_snp, 'lambda', vid_lambda ) )
@@ -505,7 +495,6 @@ contains
       call nc_chk( nf90_get_var( io_snp, vid_rho,    den ) )
       call nc_chk( nf90_get_var( io_snp, vid_lambda, lam ) )
       call nc_chk( nf90_get_var( io_snp, vid_mu,     rig ) )
-#endif
     end if
 
     do j=1, ny
@@ -518,11 +507,9 @@ contains
     if( hdr%coordinate == 'fs' .or. hdr%coordinate == 'ob' .or. hdr%coordinate == 'xy' ) then
       if( snp_type == 'native' ) then
         read( io_snp ) topo
-#ifdef _NETCDF
       else
         call nc_chk( nf90_inq_varid( io_snp, 'topo', vid_topo ) )
         call nc_chk( nf90_get_var( io_snp, vid_topo, topo ) )
-#endif
       end if
     end if
 
@@ -636,7 +623,6 @@ contains
 
         end do
         if( is_eof ) exit
-#ifdef _NETCDF
       else
         if( it == nt ) then
           is_eof = .true.
@@ -647,7 +633,6 @@ contains
         do i=1, hdr%nsnp
           call nc_chk( nf90_get_var( io_snp, vid(i), amp(i,:,:), start=start, count=count ) )
         end do
-#endif
       end if
 
       if( it < 0 ) then
@@ -888,9 +873,7 @@ contains
     integer, intent(in) :: ierr
     !! ----
 
-#ifdef _NETCDF
     if( ierr /= NF90_NOERR )  write(STDERR,*) NF90_STRERROR( ierr )
-#endif
 
   end subroutine nc_chk
   !! ------------------------------------------------------------------------ !!

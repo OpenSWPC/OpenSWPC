@@ -115,11 +115,7 @@ contains
     !$omp private(i,k) &
     !$omp private(bx, bz) 
     !$omp do &
-#ifdef _ES
-    !$omp schedule(static)
-#else
     !$omp schedule(static,1)
-#endif
     do i=ibeg_k, iend_k
 
       !! derivateives
@@ -131,9 +127,6 @@ contains
       end do
 
       !! surfaces
-#ifdef _ES
-      !NEC$ novector
-#endif
       do k=kfs_top(i), kfs_bot(i)
         dxSxx(k) = (  Sxx(k  ,i+1) - Sxx(k  ,i  )  ) * r20x
         dzSzz(k) = (  Szz(k+1,i  ) - Szz(k  ,i  )  ) * r20z
@@ -141,9 +134,6 @@ contains
         dzSxz(k) = (  Sxz(k  ,i  ) - Sxz(k-1,i  )  ) * r20z
       end do
 
-#ifdef _ES
-      !NEC$ novector
-#endif
       do k=kob_top(i), kob_bot(i)
         dxSxx(k) = (  Sxx(k  ,i+1) - Sxx(k  ,i  )  ) * r20x
         dzSzz(k) = (  Szz(k+1,i  ) - Szz(k  ,i  )  ) * r20z
@@ -163,9 +153,6 @@ contains
       dzSxz(nz)   = (  Sxz(nz  ,i  ) - Sxz(nz-1,i  )  ) * r20z
 
       !! i-boundary 
-#ifdef _ES
-      !NEC$ novector
-#endif
       if( i == 1 ) then
         do k=kbeg_k, kend_k
           dxSxx(k) = (  Sxx(k  ,2  ) - Sxx(k  ,1  )  ) * r20x
@@ -254,11 +241,7 @@ contains
     !$omp private( Rxx_o, Rzz_o, Rxz_o, Rxx_n, Rzz_n, Rxz_n ) &
     !$omp private( i, k, m )
     !$omp do &
-#ifdef _ES
-    !$omp schedule(static)
-#else
     !$omp schedule(static,1)
-#endif
     do i=ibeg_k, iend_k
 
       !!
@@ -274,9 +257,6 @@ contains
       end do
 
       !! free surface
-#ifdef _ES
-      !NEC$ novector
-#endif
       do k=kfs_top(i), kfs_bot(i)
 
         dxVx(k) = (  Vx(k  ,i  ) - Vx(k  ,i-1)  ) * r20x
@@ -287,9 +267,6 @@ contains
       end do
 
       !! seafloor
-#ifdef _ES
-      !NEC$ novector
-#endif
       do k=kob_top(i), kob_bot(i)
 
         dxVx(k) = (  Vx(k  ,i  ) - Vx(k  ,i-1)  ) * r20x
@@ -317,9 +294,6 @@ contains
       !!
       !! i-edge
       !!
-#ifdef _ES
-      !NEC$ novector
-#endif
       if( i == 1 ) then
         do k=kbeg_k, kend_k
           dxVx(k) = (  Vx(k  ,i  ) - 0.0       ) * r20x

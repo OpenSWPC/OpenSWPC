@@ -16,9 +16,7 @@ program diff_snp
   use m_daytim
   use m_debug
   use m_version
-#ifdef _NETCDF
   use netcdf
-#endif
 
   !! -- Declarations
   implicit none
@@ -73,8 +71,6 @@ program diff_snp
   !!
   if(snp_type == 'netcdf') then
 
-#ifdef _NETCDF
-
     !! file generation by a simple copy, then modify in what follows
     call system__call('/bin/cp '//trim(fn_in1)//' '//trim(fn_out))
     call nc_chk(nf90_open(fn_out, NF90_WRITE, io_out))
@@ -103,8 +99,6 @@ program diff_snp
     call nc_chk(nf90_close(io_in1))
     call nc_chk(nf90_close(io_in2))
     call nc_chk(nf90_close(io_out))
-
-#endif
 
   else
     call std__getio( io_out, is_big=.true. )
@@ -155,9 +149,8 @@ contains
 
     integer, intent(in) :: ierr
     !! --
-#ifdef _NETCDF
+
     if(ierr /= NF90_NOERR)  write(STDERR,*) NF90_STRERROR(ierr)
-#endif
     
   end subroutine nc_chk
   !! ----------------------------------------------------------------------- !!

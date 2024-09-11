@@ -7,7 +7,6 @@
 !<
 !! ----
 #include "../shared/m_debug.h"
-#ifdef _NETCDF
 module m_vmodel_grd_rmed
 
   use m_std
@@ -329,48 +328,3 @@ contains
   end subroutine vmodel_grd_rmed
 
 end module m_vmodel_grd_rmed
-
-#else
-
-module m_vmodel_grd_rmed
-
-  !! This is a dummy module for non-netcdf mode
-  use m_std
-  use m_global
-  use mpi
-
-contains
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine vmodel_grd_rmed( io_prm, i0, i1, k0, k1, xc, zc, vcut, rho, lam, mu, Qp, Qs, bd )
-
-    !! -- Arguments
-    integer,  intent(in)  :: io_prm
-    integer,  intent(in)  :: i0, i1                  !< i-region
-    integer,  intent(in)  :: k0, k1                  !< k-region
-    real(SP), intent(in)  :: xc  ( i0:i1 )           !< x-coordinate location
-    real(SP), intent(in)  :: zc  ( k0:k1 )           !< z-coordinate location
-    real(SP), intent(in)  :: vcut                    !< cut-off velocity
-    real(SP), intent(out) :: rho ( k0:k1, i0:i1 )    !< mass density [g/cm^3]
-    real(SP), intent(out) :: lam ( k0:k1, i0:i1 )    !< Lame's parameter lambda [ (g/cm^3) * (km/s) ]
-    real(SP), intent(out) :: mu  ( k0:k1, i0:i1 )    !< Lame's parameter mu     [ (g/cm^3) * (km/s) ]
-    real(SP), intent(out) :: qp  ( k0:k1, i0:i1 )    !< P-wave attenuation
-    real(SP), intent(out) :: qs  ( k0:k1, i0:i1 )    !< S-wave attenuation
-    real(SP), intent(out) :: bd  ( i0:i1, 0:NBD )    !< Boundary depths
-
-    integer :: ierr
-    !! --
-
-    if( myid == 0 ) then
-      write(STDERR,'(A)') 'ERROR [vmodel_grd]: This program is not compiled with netcdf. Abort.'
-      call mpi_finalize( ierr )
-      stop
-    end if
-
-  end subroutine vmodel_grd_rmed
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-end module m_vmodel_grd_rmed
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-
-#endif

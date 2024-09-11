@@ -11,9 +11,7 @@ module m_rdrmed
 
   use m_std
   use m_debug
-#ifdef _NETCDF
   use netcdf
-#endif
   implicit none
 
   public
@@ -36,7 +34,6 @@ contains
     integer :: nxc, nzc !< netcdf volume size
     !! ----
 
-#ifdef _NETCDF
     call debug( fn_rmed )
     call assert( nf90_open( fn_rmed, NF90_NOWRITE, ncid ) == NF90_NOERR )
     !! size
@@ -74,9 +71,6 @@ contains
       vol(k,ib:ie) = vol(kk,ib:ie)
     end do
 
-
-#endif
-
   end subroutine rdrmed__2d
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -97,8 +91,6 @@ contains
     integer :: nxc, nyc, nzc !< netcdf volume size
     integer :: st(3), ct(3)
     !! ----
-
-#ifdef _NETCDF
 
     call assert( nf90_open( fn_rmed, NF90_NOWRITE, ncid ) == NF90_NOERR )
     !! size
@@ -145,8 +137,6 @@ contains
       kk = mod(k,nzc)
       vol(k,ib:ie,jb:je) = vol(kk,ib:ie,jb:je)
     end do
-
-#endif
 
   end subroutine rdrmed__3d
   !! --------------------------------------------------------------------------------------------------------------------------- !!
