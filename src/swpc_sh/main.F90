@@ -140,8 +140,9 @@ program SWPC_SH
     call ckprst__checkpoint( it )
 
   end do
-  call output__closefiles()
+
   call wav__write()
+  call output__closefiles()
 
   !! ending message
   call report__terminate()
@@ -166,6 +167,7 @@ program SWPC_SH
   !!
   !! Program termination
   !!
+  call mpi_barrier( mpi_comm_world, ierr ) 
   call mpi_finalize( ierr )
 
   stop

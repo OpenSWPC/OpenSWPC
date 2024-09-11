@@ -490,37 +490,38 @@ contains
     integer :: err
     !! ----
 
-    if( mod( it-1, ntdec_s ) /= 0 ) return
+    if( .not. allocated(buf) ) allocate(buf(nxs,nzs), source=0.0)
 
-    if( .not. allocated(buf) ) then
-      allocate(buf(nxs,nzs))
-    end if
+    if( (mod( it-1, ntdec_s ) == 0) .or. ( it > nt) ) then
 
-    buf(:,:) = 0.0
-    do ii = is0, is1
-      do kk= ks0, ks1
-        k = kk * kdec - kdec/2
-        i = ii * idec - idec/2
+        buf(:,:) = 0.0
+        !$omp parallel do private(ii,kk,i,k)
+        do ii = is0, is1
+        do kk= ks0, ks1
+            k = kk * kdec - kdec/2
+            i = ii * idec - idec/2
 
-        buf(ii,kk) = Vy(k,i) * UC * M0
+            buf(ii,kk) = Vy(k,i) * UC * M0
 
-      end do
-    end do
+        end do
+        end do
+        !$omp end parallel do
 
-    if( snp_format == 'native' ) then
-      call write_reduce_array2d_r( nxs, nzs, xz_v%ionode, xz_v%io, buf )
-    else
-        if (.not. allocated(sbuf)) then
-            allocate(sbuf(nxs*nzs), rbuf(nxs*nzs))
+        if( snp_format == 'native' ) then
+        call write_reduce_array2d_r( nxs, nzs, xz_v%ionode, xz_v%io, buf )
         else
-            call mpi_wait(req, stat, err)
-            if( myid == xz_v%ionode ) call wbuf_nc(xz_v, 1, nxs, nzs, it0, rbuf)
+            if (.not. allocated(sbuf)) then
+                allocate(sbuf(nxs*nzs), rbuf(nxs*nzs))
+            else
+                call mpi_wait(req, stat, err)
+                if( myid == xz_v%ionode ) call wbuf_nc(xz_v, 1, nxs, nzs, it0, rbuf)
+            end if
+            if( it <= nt ) then ! except for the last call
+                sbuf = reshape(buf(:,:), (/nxs * nzs/))
+                call mpi_ireduce(sbuf, rbuf, nxs * nzs , mpi_real, mpi_sum, xz_v%ionode, mpi_comm_world, req, err)
+                it0 = it ! remember
+            end if    
         end if
-        if( it <= nt ) then ! except for the last call
-            sbuf = reshape(buf(:,:), (/nxs * nzs/))
-            call mpi_ireduce(sbuf, rbuf, nxs * nzs , mpi_real, mpi_sum, xz_v%ionode, mpi_comm_world, req, err)
-            it0 = it ! remember
-        end if    
     end if
 
   end subroutine wbuf_xz_v
@@ -538,11 +539,7 @@ contains
     integer :: err       
     !! ----
 
-    if( .not. allocated(buf_u) ) then
-
-    end if
-
-
+    !$omp parallel do private(ii, kk, i, k)
     do ii = is0, is1
       do kk= ks0, ks1
         k = kk * kdec - kdec/2
@@ -552,8 +549,9 @@ contains
 
       end do
     end do
+    !$omp end parallel do
 
-    if( mod( it-1, ntdec_s ) == 0 ) then
+    if( mod( it-1, ntdec_s ) == 0 .or. ( it > nt) ) then
 
       if( snp_format == 'native' ) then
         call write_reduce_array2d_r( nxs, nzs, xz_u%ionode, xz_u%io, buf_u )
@@ -602,6 +600,7 @@ contains
         call nc_chk(nf90_redef( hdr%io ))
         call nc_chk(nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)))
         call nc_chk(nf90_enddef( hdr%io ))
+        call nc_chk(nf90_sync(hdr%io))
     end do
 
   end subroutine wbuf_nc  

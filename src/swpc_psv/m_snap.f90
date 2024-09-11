@@ -620,14 +620,14 @@ contains
         call write_reduce_array2d_r( nxs, nzs, xz_u%ionode, xz_u%io, buf_u(:,:,2) )
       else
         if (.not. allocated(sbuf)) then
-            allocate(sbuf(nxs*nzs*3), rbuf(nxs*nzs*3))
+            allocate(sbuf(nxs*nzs*2), rbuf(nxs*nzs*2))
         else
             call mpi_wait(req, stat, err)
-            if( myid == xz_u%ionode ) call wbuf_nc(xz_u, 3, nxs, nzs, it0, rbuf)
+            if( myid == xz_u%ionode ) call wbuf_nc(xz_u, 2, nxs, nzs, it0, rbuf)
         end if
         if( it <= nt ) then ! except for the last call
-            sbuf = reshape(buf_u(:,:,:), (/nxs * nzs * 3/))
-            call mpi_ireduce(sbuf, rbuf, nxs * nzs * 3, mpi_real, mpi_sum, xz_u%ionode, mpi_comm_world, req, err)
+            sbuf = reshape(buf_u(:,:,:), (/nxs * nzs * 2/))
+            call mpi_ireduce(sbuf, rbuf, nxs * nzs * 2, mpi_real, mpi_sum, xz_u%ionode, mpi_comm_world, req, err)
             it0 = it ! remember
         end if
       end if
@@ -662,6 +662,8 @@ contains
         call nc_chk(nf90_redef( hdr%io ))
         call nc_chk(nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)))
         call nc_chk(nf90_enddef( hdr%io ))
+        call nc_chk( nf90_sync( hdr%io ))
+
     end do
 
     end subroutine wbuf_nc

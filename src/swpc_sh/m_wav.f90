@@ -65,6 +65,7 @@ module m_wav
         call readini( io_prm, 'sw_wav_strain',  sw_wav_strain,  .false. )
         call readini( io_prm, 'wav_format', wav_format, 'sac' )
         call readini( io_prm, 'wav_calc_dist', wav_calc_dist, .false. )
+        call readini( io_prm, 'st_format',     st_format,  'xy'    )
         call readini( io_prm, 'fn_stloc',  fn_stloc,  ''      )
 
         if(.not. ( sw_wav_v .or. sw_wav_u .or. sw_wav_stress .or. sw_wav_strain)) then
@@ -209,8 +210,8 @@ module m_wav
                 !$omp parallel do private(n, i, k)
                 do n=1, nst
                     i = ist(n); k = kst(n)
-                    wav_stress(itw,1,i) = real(Syz(k,i) + Syz(k-1,i  )) * 0.5 * M0 * UC * 1e6
-                    wav_stress(itw,2,i) = real(Sxy(k,i) + Sxy(k,  i-1)) * 0.5 * M0 * UC * 1e6
+                    wav_stress(itw,1,n) = real(Syz(k,i) + Syz(k-1,i  )) * 0.5 * M0 * UC * 1e6
+                    wav_stress(itw,2,n) = real(Sxy(k,i) + Sxy(k,  i-1)) * 0.5 * M0 * UC * 1e6
                  end do
                 !$omp end parallel do
       
@@ -263,7 +264,7 @@ module m_wav
                 end if
       
                 if( sw_wav_strain ) then
-                    do j=1, 3
+                    do j=1, 2
                         call export_wav__sac(sh_strain(j,i), wav_strain(:,j,i))
                     end do
                 end if

@@ -164,6 +164,7 @@ program SWPC_PSV
   !!
   !! Program termination
   !!
+  call mpi_barrier( mpi_comm_world, ierr ) 
   call mpi_finalize( ierr )
 
   stop

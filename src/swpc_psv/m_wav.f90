@@ -66,6 +66,7 @@ contains
         call readini( io_prm, 'sw_wav_strain',  sw_wav_strain,  .false. )
         call readini( io_prm, 'wav_format', wav_format, 'sac' )
         call readini( io_prm, 'wav_calc_dist', wav_calc_dist, .false. )
+        call readini( io_prm, 'st_format',     st_format,  'xy'    )
         call readini( io_prm, 'fn_stloc',  fn_stloc,  ''      )
 
         if(.not. ( sw_wav_v .or. sw_wav_u .or. sw_wav_stress .or. sw_wav_strain)) then
@@ -224,7 +225,7 @@ contains
                     wav_stress(itw,1,n) = real(Sxx(k, i)) * M0 * UC * 1e6
                     wav_stress(itw,2,n) = real(Szz(k, i)) * M0 * UC * 1e6
                     wav_stress(itw,3,n) = real( Sxz(k,   i) + Sxz(k,   i-1)  &
-                                          + Sxz(k-1, i) + Sxz(k-1, i-1)) / 4.0 * M0 * UC * 1e6
+                                               + Sxz(k-1, i) + Sxz(k-1, i-1)) / 4.0 * M0 * UC * 1e6
                 end do
                 !$omp end parallel do
       
