@@ -79,7 +79,7 @@ contains
   !>
   !! Set up Green's function mode
   !!
-  !! it must be called after output__setup
+  !! it must be called after snap__setup
   !<
   !! --
   subroutine green__setup(io_prm)

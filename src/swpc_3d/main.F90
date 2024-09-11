@@ -89,7 +89,7 @@ program swpc_3d
   call kernel__setup( )
   call source__setup( io_prm )
   call absorb__setup( io_prm )
-  call output__setup( io_prm )
+  call snap__setup( io_prm )
   call wav__setup(io_prm)
   call green__setup( io_prm )
   call report__setup( io_prm )
@@ -104,7 +104,7 @@ program swpc_3d
 
     call green__store( it )
     call wav__store ( it )
-    call output__write_snap( it )
+    call snap__write( it )
 
     call kernel__update_stress()
     call absorb__update_stress()
@@ -124,7 +124,7 @@ program swpc_3d
 
   call green__export()
   call wav__write()
-  call output__closefiles()
+  call snap__closefiles()
 
   !! ending message
   call report__terminate()

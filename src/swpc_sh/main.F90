@@ -94,7 +94,7 @@ program SWPC_SH
   call kernel__setup( )
   call source__setup( io_prm )
   call absorb__setup( io_prm )
-  call output__setup( io_prm )
+  call snap__setup( io_prm )
   call wav__setup(io_prm)
   call report__setup( io_prm )
 
@@ -106,7 +106,7 @@ program SWPC_SH
 
     call report__progress(it)
 
-    call output__write_snap( it )
+    call snap__write( it )
     call wav__store( it )
 
     call kernel__update_stress()
@@ -126,7 +126,7 @@ program SWPC_SH
   end do
 
   call wav__write()
-  call output__closefiles()
+  call snap__closefiles()
 
   !! ending message
   call report__terminate()

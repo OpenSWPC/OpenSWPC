@@ -28,9 +28,9 @@ module m_output
   private
   save
 
-  public :: output__setup
-  public :: output__write_snap
-  public :: output__closefiles
+  public :: snap__setup
+  public :: snap__write
+  public :: snap__closefiles
 
   !! -- Internal Parameters
   character(8), parameter :: BINARY_TYPE= "STREAMIO"
@@ -101,7 +101,7 @@ module m_output
 
 contains
 
-  subroutine output__setup(io_prm)
+  subroutine snap__setup(io_prm)
 
     integer, intent(in) :: io_prm
     !! --
@@ -110,7 +110,7 @@ contains
     integer :: idum
     !! ----
 
-    call pwatch__on( "output__setup" )
+    call pwatch__on( "snap__setup" )
 
     call readini( io_prm, 'xy_ps%sw',   xy_ps%sw,   .false. )
     call readini( io_prm, 'yz_ps%sw',   yz_ps%sw,   .false. )
@@ -338,9 +338,9 @@ contains
     
     call mpi_barrier( mpi_comm_world, err )
 
-    call pwatch__off( "output__setup" )
+    call pwatch__off( "snap__setup" )
 
-  end subroutine output__setup
+  end subroutine snap__setup
 
    !! Open new file and write header information, and medium parameters for YZ-cross section
   subroutine newfile_yz ( fname, hdr )
@@ -1034,12 +1034,12 @@ contains
   !! write snapshot
   !<
   !! ----
-  subroutine output__write_snap( it )
+  subroutine snap__write( it )
 
     integer, intent(in) :: it
 
 
-    call pwatch__on( "output__write_snap" )
+    call pwatch__on( "snap__write" )
 
 
     !! 個別処理
@@ -1063,9 +1063,9 @@ contains
     if( ob_u%sw ) call wbuf_ob_u(it)
 
 
-    call pwatch__off( "output__write_snap" )
+    call pwatch__off( "snap__write" )
 
-  end subroutine output__write_snap
+  end subroutine snap__write
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 
@@ -2043,12 +2043,12 @@ end if
 
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine output__closefiles
+  subroutine snap__closefiles
 
     integer :: vid
     !! --
 
-    call pwatch__on('output__closefiles')
+    call pwatch__on('snap__closefiles')
 
     if( snp_format == 'native' ) then
       if( yz_ps%sw .and. myid == yz_ps%ionode ) close( yz_ps%io )
@@ -2127,9 +2127,9 @@ end if
       
     end if
 
-    call pwatch__off('output__closefiles')
+    call pwatch__off('snap__closefiles')
 
-  end subroutine output__closefiles
+  end subroutine snap__closefiles
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!

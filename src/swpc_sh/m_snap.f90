@@ -27,9 +27,9 @@ module m_output
   private
   save
 
-  public :: output__setup
-  public :: output__write_snap
-  public :: output__closefiles
+  public :: snap__setup
+  public :: snap__write
+  public :: snap__closefiles
 
   !! -- Internal Parameters
   character(8), parameter :: BINARY_TYPE= "STREAMIO"
@@ -95,13 +95,13 @@ contains
   !! #2012-41 #2013-00440
   !<
   !! ----
-  subroutine output__setup( io_prm )
+  subroutine snap__setup( io_prm )
 
     integer, intent(in) :: io_prm
     integer :: i, k, ii, kk
     !! ----
 
-    call pwatch__on( "output__setup" )
+    call pwatch__on( "snap__setup" )
 
     !!
     !! read parameter
@@ -163,9 +163,9 @@ contains
     allocate(buf_u(nxs,nzs))
     buf_u(:,:) = 0.0
 
-    call pwatch__off( "output__setup" )
+    call pwatch__off( "snap__setup" )
 
-  end subroutine output__setup
+  end subroutine snap__setup
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
@@ -460,19 +460,19 @@ contains
   !! write snapshot
   !<
   !! ----
-  subroutine output__write_snap( it )
+  subroutine snap__write( it )
 
     integer, intent(in) :: it
 
 
-    call pwatch__on( "output__write_snap" )
+    call pwatch__on( "snap__write" )
 
     if( xz_v%sw ) call wbuf_xz_v(it)
     if( xz_u%sw ) call wbuf_xz_u(it)
 
-    call pwatch__off( "output__write_snap" )
+    call pwatch__off( "snap__write" )
 
-  end subroutine output__write_snap
+  end subroutine snap__write
 
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -601,9 +601,9 @@ contains
 
   end subroutine wbuf_nc  
 
-  subroutine output__closefiles
+  subroutine snap__closefiles
 
-    call pwatch__on('output__closefiles')
+    call pwatch__on('snap__closefiles')
 
     if( snp_format == 'native' ) then
       if( xz_v%sw .and. myid == xz_v%ionode ) close( xz_v%io )
@@ -618,9 +618,9 @@ contains
 #endif
     end if
 
-    call pwatch__off('output__closefiles')
+    call pwatch__off('snap__closefiles')
 
-  end subroutine output__closefiles
+  end subroutine snap__closefiles
 
   subroutine close_nc( hdr )
     type(snp), intent(in) :: hdr

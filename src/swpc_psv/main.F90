@@ -94,7 +94,7 @@ program SWPC_PSV
   call kernel__setup( )
   call source__setup( io_prm )
   call absorb__setup( io_prm )
-  call output__setup( io_prm )
+  call snap__setup( io_prm )
   call wav__setup(io_prm)
   call report__setup( io_prm )
 
@@ -105,7 +105,7 @@ program SWPC_PSV
 
     call report__progress(it)
 
-    call output__write_snap( it )
+    call snap__write( it )
     call wav__store ( it )
 
     call kernel__update_stress()
@@ -121,7 +121,7 @@ program SWPC_PSV
     call global__comm_vel()
 
   end do
-  call output__closefiles()
+  call snap__closefiles()
   call wav__write()
 
   !! ending message
