@@ -19,9 +19,9 @@ module m_output
   use m_readini
   use m_geomap
   use mpi
-!#ifdef _NETCDF
+#ifdef _NETCDF
   use netcdf
-!#endif
+#endif
 
   !! -- Declarations
   implicit none
@@ -528,7 +528,7 @@ contains
 
     if( idx /= idx_yz )  return
 
-!#ifdef _NETCDF
+#ifdef _NETCDF
 
 
     if( myid == hdr%ionode ) then
@@ -589,7 +589,7 @@ contains
 
     deallocate( sbuf, rbuf1, rbuf2, rbuf3, buf )
 
-!#endif
+#endif
 
   end subroutine newfile_yz_nc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -610,7 +610,7 @@ contains
 
     if( idy /= idy_xz ) return
 
-! #ifdef _NETCDF
+#ifdef _NETCDF
 
     if( myid == hdr%ionode ) then
 
@@ -674,7 +674,7 @@ contains
 
     deallocate( sbuf, rbuf1, rbuf2, rbuf3, buf )
 
-!#endif
+#endif
 
   end subroutine newfile_xz_nc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -691,7 +691,7 @@ contains
     real(SP), intent(in) :: xs1(ns1), xs2(ns2)
     integer :: i
     !! --
-!#ifdef _NETCDF
+#ifdef _NETCDF
     if( hdr % coordinate == 'yz' ) then
       call nc_chk( nf90_def_dim( hdr%io, 'y', nys, hdr%did_x1 ) )
       call nc_chk( nf90_def_dim( hdr%io, 'z', nzs, hdr%did_x2 ) )
@@ -1149,7 +1149,7 @@ contains
     integer :: stt(3), cnt(3)
     integer :: vid
     !! ----
-
+#ifdef _NETCDF
     ns = nx1 * nx2
     cnt = (/ nx1, nx2, 1/)
     stt = (/ 1, 1, it0 / ntdec_s + 1 /)
@@ -1165,7 +1165,7 @@ contains
         call nc_chk(nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)))
         call nc_chk(nf90_enddef( hdr%io ))
     end do
-
+#endif
 end subroutine wbuf_nc
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!

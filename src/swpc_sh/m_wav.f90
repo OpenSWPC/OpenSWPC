@@ -163,7 +163,7 @@ module m_wav
  
          if (sw_wav_strain) then
 
-            !$omp parallel do private(n, i, k, dxVx, dzVz, dxVz, dzVx)
+            !$omp parallel do private(n, i, k, dxVy, dzVy)
             do n=1, nst
                 i = ist(n); k = kst(n)
       
@@ -430,7 +430,6 @@ module m_wav
 
             if (sw_wav_u) then
                 call initialize_sac_header(sh_disp(i), stnm(i), stlo(i), stla(i), xst(i), zst(i), mag)
-                end do
                 sh_disp(i)%kcmpnm = "Uy"; sh_disp(i)%cmpinc = 90.0; sh_disp(i)%cmpaz = 90.0 + phi
 
                 sh_disp(i)%idep = 6 
