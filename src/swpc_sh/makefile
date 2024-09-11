@@ -37,7 +37,7 @@ s_global  = m_global.F90
 s_kernel  = m_kernel.F90
 s_source  = m_source.F90
 s_fdtool  = m_fdtool.F90
-s_snap  = m_snap.F90
+s_snap  = m_snap.f90
 s_wav  = m_wav.f90
 s_report  = m_report.F90
 s_medium  = m_medium.F90
@@ -94,7 +94,7 @@ o_global  = $(s_global:.F90=.o)
 o_kernel  = $(s_kernel:.F90=.o)
 o_source  = $(s_source:.F90=.o)
 o_fdtool  = $(s_fdtool:.F90=.o)
-o_snap  = $(s_snap:.F90=.o)
+o_snap  = $(s_snap:.f90=.o)
 o_wav = $(s_wav:.f90=.o)
 o_report  = $(s_report:.F90=.o)
 o_medium  = $(s_medium:.F90=.o)

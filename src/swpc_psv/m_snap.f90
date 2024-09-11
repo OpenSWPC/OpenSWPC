@@ -223,7 +223,7 @@ contains
     integer :: i, k, ierr, ii, kk
     !! ----
 
-! #ifdef _NETCDF
+#ifdef _NETCDF
 
     if( myid == hdr%ionode ) then
 
@@ -281,7 +281,7 @@ contains
 
     deallocate( sbuf, rbuf1, rbuf2, rbuf3, buf )
 
-! #endif
+#endif
   end subroutine newfile_xz_nc
 
   !! write snapshot header in fixed format
@@ -697,7 +697,7 @@ contains
     type(snp), intent(in) :: hdr
     integer :: vid
 
-! #ifdef _NETCDF
+#ifdef _NETCDF
 
     call nc_chk( nf90_redef( hdr%io ) )
     do vid = 1, hdr%nsnp
@@ -706,7 +706,7 @@ contains
     call nc_chk( nf90_enddef( hdr%io ) )
     call nc_chk( nf90_sync( hdr%io ))
     call nc_chk( nf90_close( hdr%io ) )
-! #endif
+#endif
 
   end subroutine close_nc
 

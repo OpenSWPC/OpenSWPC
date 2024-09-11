@@ -18,7 +18,7 @@ module m_ckprst
   use m_absorb
   use m_report
   use m_source
-  use m_output
+!  use m_output
   use m_pwatch
   use m_readini
   implicit none

@@ -18,9 +18,9 @@ module m_output
   use m_daytim
   use m_readini
   use m_geomap
-#ifdef _NETCDF
+!#ifdef _NETCDF
   use netcdf
-#endif
+!#endif
 
   !! -- Declarations
   implicit none
@@ -368,7 +368,7 @@ contains
     integer :: i, k, ierr, ii, kk
     !! ---
 
-#ifdef _NETCDF
+!#ifdef _NETCDF
 
     if( myid == hdr%ionode ) then
 
@@ -424,7 +424,7 @@ contains
 
     deallocate( sbuf, rbuf1, rbuf2, rbuf3, buf )
 
-#endif
+!#endif
   end subroutine newfile_xz_nc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -483,7 +483,12 @@ contains
     integer :: it
     integer :: i, k
     integer :: ii, kk
-    real(SP), allocatable :: buf(:,:)
+    real(SP), allocatable :: buf(:,:), sbuf(:), rbuf(:)
+    integer, save :: req
+    integer, save :: it0
+    integer :: stat(mpi_status_size)
+    integer :: err
+    !! ----
 
     if( mod( it-1, ntdec_s ) /= 0 ) return
 
@@ -505,7 +510,17 @@ contains
     if( snp_format == 'native' ) then
       call write_reduce_array2d_r( nxs, nzs, xz_v%ionode, xz_v%io, buf )
     else
-      call write_reduce_array2d_r_nc( it, 1, nxs, nzs, xz_v, buf )
+        if (.not. allocated(sbuf)) then
+            allocate(sbuf(nxs*nzs), rbuf(nxs*nzs))
+        else
+            call mpi_wait(req, stat, err)
+            if( myid == xz_v%ionode ) call wbuf_nc(xz_v, 1, nxs, nzs, it0, rbuf)
+        end if
+        if( it <= nt ) then ! except for the last call
+            sbuf = reshape(buf(:,:), (/nxs * nzs/))
+            call mpi_ireduce(sbuf, rbuf, nxs * nzs , mpi_real, mpi_sum, xz_v%ionode, mpi_comm_world, req, err)
+            it0 = it ! remember
+        end if    
     end if
 
   end subroutine wbuf_xz_v
@@ -516,6 +531,12 @@ contains
     integer :: it
     integer :: i, k
     integer :: ii, kk
+    real, allocatable, save :: sbuf(:), rbuf(:)
+    integer, save :: req
+    integer, save :: it0
+    integer :: stat(mpi_status_size)
+    integer :: err       
+    !! ----
 
     if( .not. allocated(buf_u) ) then
 
@@ -527,7 +548,7 @@ contains
         k = kk * kdec - kdec/2
         i = ii * idec - idec/2
 
-        buf_u(ii,kk) = buf_u(ii,kk) +  Vy(k,i) * UC * M0 * dt
+        buf_u(ii,kk) = buf_u(ii,kk) +  real(Vy(k,i) * UC * M0 * dt)
 
       end do
     end do
@@ -537,57 +558,54 @@ contains
       if( snp_format == 'native' ) then
         call write_reduce_array2d_r( nxs, nzs, xz_u%ionode, xz_u%io, buf_u )
       else
-        call write_reduce_array2d_r_nc( it, 1, nxs, nzs, xz_u, buf_u )
-      end if
+        if (.not. allocated(sbuf)) then
+            allocate(sbuf(nxs*nzs), rbuf(nxs*nzs))
+        else
+            call mpi_wait(req, stat, err)
+            if( myid == xz_u%ionode ) call wbuf_nc(xz_u, 1, nxs, nzs, it0, rbuf)
+        end if
+        if( it <= nt ) then ! except for the last call
+            sbuf = reshape(buf_u(:,:), (/nxs * nzs/))
+            call mpi_ireduce(sbuf, rbuf, nxs * nzs, mpi_real, mpi_sum, xz_u%ionode, mpi_comm_world, req, err)
+            it0 = it ! remember
+        end if
+
+    end if
 
     end if
 
   end subroutine wbuf_xz_u
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! write 2d array with MPI
-  !<
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine write_reduce_array2d_r_nc( it, vid, nx1, nx2, hdr, array )
-
-    integer,   intent(in) :: it
-    integer,   intent(in) :: vid
-    integer,   intent(in) :: nx1, nx2
+  subroutine wbuf_nc(hdr, nvar, nx1, nx2, it0, rbuf)
     type(snp), intent(inout) :: hdr
-    real(SP),  intent(in) :: array(nx1,nx2)
+    integer,   intent(in) :: nvar
+    integer,   intent(in) :: nx1, nx2
+    integer,   intent(in) :: it0
+    real,      intent(in) :: rbuf(:)
 
-    real(SP) :: sbuf(nx1*nx2)
-    real(SP) :: rbuf(nx1*nx2)
-    integer  :: ierr
-    integer :: count(3)
-    integer :: start(3)
+    integer :: ns, ib, ie
+    integer :: stt(3), cnt(3)
+    integer :: vid
     !! ----
-    
-#ifdef _NETCDF
-    !! prepare send buffer
-    sbuf = reshape( array, shape(sbuf) )
 
-    !! gather to io_node
-    call mpi_reduce( sbuf, rbuf, nx1*nx2, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr )
+    ns = nx1 * nx2
+    cnt = (/ nx1, nx2, 1/)
+    stt = (/ 1, 1, it0 / ntdec_s + 1 /)
+    do vid=1, nvar
+        ib = (vid-1)*ns + 1
+        ie = ib + ns - 1
 
-    !! write
-    if( myid == hdr%ionode ) then
-      count = (/ nxs, nzs, 1/)
-      start = (/ 1, 1, it/ntdec_s+1 /)
-      call nc_chk( nf90_put_var( hdr%io, hdr%varid(vid), reshape(rbuf,shape(array)), start, count ))
-      call nc_chk( nf90_put_var( hdr%io, hdr%vid_t, it*dt, start=(/ it/ntdec_s+1 /) ) )
-      hdr%vmax(vid) = max( hdr%vmax(vid), maxval(rbuf) )
-      hdr%vmin(vid) = min( hdr%vmin(vid), minval(rbuf) )
-    end if
-#endif
+        call nc_chk(nf90_put_var(hdr%io, hdr%varid(vid), reshape(rbuf(ib:ie), (/nx1, nx2/)), stt, cnt))
+        call nc_chk( nf90_put_var( hdr%io, hdr%vid_t, it0*dt, start=(/ it0/ntdec_s+1 /) ) )
+        hdr%vmax(vid) = max(hdr%vmax(vid), maxval(rbuf(ib:ie)))
+        hdr%vmin(vid) = min(hdr%vmin(vid), minval(rbuf(ib:ie)))
+        call nc_chk(nf90_redef( hdr%io ))
+        call nc_chk(nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)))
+        call nc_chk(nf90_enddef( hdr%io ))
+    end do
 
-  end subroutine write_reduce_array2d_r_nc
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+  end subroutine wbuf_nc  
 
-
-  
   subroutine output__closefiles
 
     call pwatch__on('output__closefiles')
@@ -597,28 +615,34 @@ contains
       if( xz_u%sw .and. myid == xz_u%ionode ) close( xz_u%io )
     else
 #ifdef _NETCDF
-      if( xz_v%sw .and. myid == xz_v%ionode ) then
-        ! set max & min for each vars
-        call nc_chk( nf90_redef( xz_v%io ) )
-        call nc_chk( nf90_put_att( xz_v%io, xz_v%varid(1), 'actual_range', (/xz_v%vmin(1), xz_v%vmax(1)/) ) )
-        call nc_chk( nf90_close( xz_v%io ) )
+    if( xz_v%sw   ) call wbuf_xz_v(nt+1)
+    if( xz_u%sw   ) call wbuf_xz_u(nt+1)
 
-      end if
-
-      if( xz_u%sw  .and. myid == xz_u%ionode  ) then
-
-        ! set max & min for each vars
-        call nc_chk( nf90_redef( xz_u%io ) )
-        call nc_chk( nf90_put_att( xz_u%io, xz_u%varid(1), 'actual_range', (/xz_u%vmin(1), xz_u%vmax(1)/) ) )
-        call nc_chk( nf90_close( xz_u%io ) )
-
-      end if
+    if( xz_v%sw .and. myid == xz_v%ionode ) call close_nc(xz_v)
+    if( xz_u%sw .and. myid == xz_u%ionode ) call close_nc(xz_u)
 #endif
     end if
 
     call pwatch__off('output__closefiles')
 
   end subroutine output__closefiles
+
+  subroutine close_nc( hdr )
+    type(snp), intent(in) :: hdr
+    integer :: vid
+
+#ifdef _NETCDF
+
+    call nc_chk( nf90_redef( hdr%io ) )
+    do vid = 1, hdr%nsnp
+      call nc_chk( nf90_put_att( hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)) )
+    end do
+    call nc_chk( nf90_enddef( hdr%io ) )
+    call nc_chk( nf90_sync( hdr%io ))
+    call nc_chk( nf90_close( hdr%io ) )
+#endif
+
+  end subroutine close_nc  
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
