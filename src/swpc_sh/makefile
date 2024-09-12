@@ -17,7 +17,7 @@ all: ../../bin/swpc_sh.x
 ##
 VPATH = ../shared/:../../bin/       # file search path
 .SUFFIXES:                          # neglect .mod files
-.SUFFIXES: .f90 .f90 .o                  # only uses .f90 and .o file in makefile
+.SUFFIXES: .f90 .o                  # only uses .f90 and .o file in makefile
 
 
 ##

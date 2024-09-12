@@ -1,215 +1,184 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! terminal/logfile report
-!!
-!! @copyright
-!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
 #include "../shared/m_debug.h"
 module m_report
 
-  !! -- Dependency
-  use m_std
-  use m_debug
-  use m_global
-  use m_pwatch
-  use m_kernel
-  use m_readini
-  use m_version
+    !! Terminal/logfile report
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
-  !! -- Declarations
-  implicit none
-  private
-  save
+    use iso_fortran_env, only: error_unit
+    use m_std
+    use m_debug
+    use m_global
+    use m_pwatch
+    use m_kernel
+    use m_readini
+    use m_version
 
-  !! -- procedures
-  public :: report__setup
-  public :: report__progress
-  public :: report__terminate
+    implicit none
+    private
+    save
 
-  integer :: ntdec_r
+    public :: report__setup
+    public :: report__progress
+    public :: report__terminate
 
-  !! -- internal parameter
-  integer, parameter :: terminal_output_node = 0
+    integer :: ntdec_r
 
-  !<< Lapse Time Measurement >>
-  integer  :: timcount, timcount0, timprev
-  real(SP) :: ttotal
+    integer, parameter :: terminal_output_node = 0
+
+    !<< Lapse Time Measurement >>
+    integer  :: timcount, timcount0, timprev
+    real(SP) :: ttotal
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Initialization, welcome message to terminal, open logfile
-  !<
-  !! ----
-  subroutine report__setup( io_prm )
+    subroutine report__setup(io_prm)
 
-    integer, intent(in) :: io_prm
+        !! Initialization, welcome message to terminal, open logfile
 
-    !! --
-    integer :: crate
-    real(SP) :: mem_all, mem_node
-    real(SP) :: c, r
-    character(256) :: ver, codename
-    !! ----
+        integer, intent(in) :: io_prm
 
-    call readini( io_prm, 'ntdec_r', ntdec_r, 10 )
+        integer :: crate
+        real(SP) :: mem_all, mem_node
+        real(SP) :: c, r
+        character(256) :: ver, codename
 
+        call readini(io_prm, 'ntdec_r', ntdec_r, 10)
 
-    if( myid == terminal_output_node ) then
+        if (myid == terminal_output_node) then
 
-      call version__get(ver)
-      codename ="  SWPC_SH version " // trim(ver)
-      if( benchmark_mode ) then; codename = trim(codename) // ' (benchmark mode)   '
-      else if ( pw_mode )  then; codename = trim(codename) // ' (plane wave mode)  '
-      else if ( bf_mode )  then; codename = trim(codename) // ' (body force mode)  '
-      end if
+            call version__get(ver)
+            codename = "  SWPC_SH version "//trim(ver)
+            if (benchmark_mode) then; codename = trim(codename)//' (benchmark mode)   '
+            else if (pw_mode) then; codename = trim(codename)//' (plane wave mode)  '
+            else if (bf_mode) then; codename = trim(codename)//' (body force mode)  '
+            end if
 
-      write(STDERR,'(A)')
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-      write(STDERR,'(A)') trim(codename)
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-      write(STDERR,'(A)')
+            write (error_unit, '(A)')
+            write (error_unit, '(A)') " ------------------------------------------------------------------------------"
+            write (error_unit, '(A)') trim(codename)
+            write (error_unit, '(A)') " ------------------------------------------------------------------------------"
+            write (error_unit, '(A)')
 
-    end if
+        end if
 
+        call memory_size_sh(nproc_x, nx, nz, nm, na, mem_all, mem_node)
+        call fdm_cond_stability(real(dx), 1e10, real(dz), vmax, dt, c)
+        call fdm_cond_wavelength(real(dx), -1.0, real(dz), vmin, fmax, r)
 
-    call memory_size_sh( nproc_x, nx, nz, nm, na, mem_all, mem_node )
-    call fdm_cond_stability ( real(dx),  1e10, real(dz), vmax, dt,   c )
-    call fdm_cond_wavelength( real(dx),  -1.0, real(dz), vmin, fmax, r )
+        if (myid == terminal_output_node) then
 
+            write (error_unit, *)
+            write (error_unit, '(A,I8,A,I6)') "  Grid Size               : ", nx, " x ", nz
+            write (error_unit, '(A,I15    )') "  MPI Partitioning        : ", nproc_x
+            write (error_unit, '(A,F15.3,A)') "  Total Memory Size       : ", mem_all, "  [GiB]"
+            write (error_unit, '(A,F15.3,A)') "  Node Memory Size        : ", mem_node, "  [GiB]"
+            write (error_unit, '(A,F15.3,A)') "  Stability  Condition c  : ", c, "  (c<1)"
+            write (error_unit, '(A,F15.3,A)') "  Wavelength Condition r  : ", r, "  (r>5-10)"
+            write (error_unit, '(A,F15.3,A)') "  Minimum velocity        : ", vmin, "  [km/s]"
+            write (error_unit, '(A,F15.3,A)') "  Maximum velocity        : ", vmax, "  [km/s]"
+            write (error_unit, '(A,F15.3,A)') "  Maximum frequency       : ", fmax, "  [Hz]"
+            write (error_unit, *)
+            write (error_unit, '(A)') " ------------------------------------------------------------------------------"
+            write (error_unit, *)
 
-    if( myid == terminal_output_node ) then
+            if (r < 5) then
+                call info('wavelength condition is violated! ')
+                call info('use smaller grid and/or decrease maximum frequency')
+            end if
 
-      write(STDERR,*)
-      write(STDERR,'(A,I8,A,I6)') "  Grid Size               : ", nx, " x ", nz
-      write(STDERR,'(A,I15    )') "  MPI Partitioning        : ", nproc_x
-      write(STDERR,'(A,F15.3,A)') "  Total Memory Size       : ", mem_all,  "  [GiB]"
-      write(STDERR,'(A,F15.3,A)') "  Node Memory Size        : ", mem_node, "  [GiB]"
-      write(STDERR,'(A,F15.3,A)') "  Stability  Condition c  : ", c,        "  (c<1)"
-      write(STDERR,'(A,F15.3,A)') "  Wavelength Condition r  : ", r       , "  (r>5-10)"
-      write(STDERR,'(A,F15.3,A)') "  Minimum velocity        : ", vmin,     "  [km/s]"
-      write(STDERR,'(A,F15.3,A)') "  Maximum velocity        : ", vmax,     "  [km/s]"
-      write(STDERR,'(A,F15.3,A)') "  Maximum frequency       : ", fmax,     "  [Hz]"
-      write(STDERR,*)
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-      write(STDERR,*)
+            if (c < 0.5) then
+                call info('time step is too small!')
+                call info('consider increase time step up to twice')
+            end if
 
-      if( r < 5   ) then
-        call info( 'wavelength condition is violated! ' )
-        call info( 'use smaller grid and/or decrease maximum frequency' )
-      end if
+            if (c > 1.0) then
+                call info('stability condition is violated!')
+                call info('use smaller time step and/or decrease max velocity')
+                call assert(c <= 1.0)
+            end if
 
-      if( c < 0.5 ) then
-        call info( 'time step is too small!' )
-        call info( 'consider increase time step up to twice' )
-      end if
+        end if
 
-      if( c > 1.0 ) then
-        call info( 'stability condition is violated!' )
-        call info( 'use smaller time step and/or decrease max velocity' )
-        call assert( c <= 1.0 )
-      end if
+        !! Initialize elapsed time counter
+        if (myid == terminal_output_node) then
 
-    end if
+            call system_clock(timcount, crate)
+            timcount0 = timcount
+            timprev = timcount
+            ttotal = 0
 
+        end if
 
-    !! Initialize elapsed time counter
-    if( myid == terminal_output_node ) then
+    end subroutine report__setup
 
-      call system_clock( timcount, crate )
-      timcount0 = timcount
-      timprev   = timcount
-      ttotal = 0
+    subroutine report__progress(it)
 
-    end if
+        !! Show progres to the terminal
 
+        integer, intent(in) :: it
+        real(SP) :: vym
+        real(SP) :: vya
+        integer  :: ierr
+        real(SP) :: etas
+        integer  :: etah, etam, etasi
+        real(SP) :: tstep
+        integer  :: crate, cmax
 
-  end subroutine report__setup
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+        if (mod(it, ntdec_r) /= 0) return
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Show progres to the terminal
-  !<
-  !! ----
-  subroutine report__progress( it )
+        call pwatch__on("report__progress")
 
-    integer, intent(in) :: it
-    real(SP) :: vym
-    real(SP) :: vya
-    integer  :: ierr
-    real(SP) :: etas
-    integer  :: etah, etam, etasi
-    real(SP) :: tstep
-    integer  :: crate, cmax
-    !! ----
+        call kernel__vmax(vym)
 
-    if( mod(it,ntdec_r) /= 0 ) return
+        call mpi_reduce(vym, vya, 1, MPI_REAL, MPI_MAX, terminal_output_node, mpi_comm_world, ierr)
 
-    call pwatch__on("report__progress")
+        if (myid == terminal_output_node) then
 
-    call kernel__vmax( vym )
+              !! to SI unit [m/s]
+            vya = vya * UC * M0
 
-    call mpi_reduce( vym, vya, 1, MPI_REAL, MPI_MAX, terminal_output_node, mpi_comm_world, ierr )
+            !! eta count
+            call system_clock(timcount, crate, cmax)
+            if (timcount >= timprev) then
+                tstep = real(timcount - timprev) / real(crate)
+            else
+                tstep = real(cmax + timcount - timprev) / real(crate)
+            end if
 
-    if( myid == terminal_output_node ) then
+            ttotal = ttotal + tstep
 
-      !! to SI unit [m/s]
-      vya = vya * UC * M0
+            etas = real(nt - it) / real(it) * ttotal
 
-      !!
-      !! eta count
-      !!
-      call system_clock( timcount, crate, cmax )
-      if( timcount >= timprev ) then
-        tstep = real( timcount - timprev ) / real( crate )
-      else
-        tstep = real( cmax + timcount - timprev ) / real( crate )
-      end if
+            etah = int(etas / (60 * 60)); etas = etas - etah * 60 * 60
+            etam = int(etas / (60)); etas = etas - etam * 60
+            etasi = int(etas)
+            timprev = timcount
 
-      ttotal = ttotal + tstep
+            write (error_unit, '(A,I7.7,  A,F6.3,A,   A,I3.3,A,I2.2,A,I2.2,A,ES9.2,A)') &
+                "  it=", it, ",", &
+                ttotal / it, " s/loop,", &
+                " eta ", etah, ":", etam, ":", etasi, ", (", vya, " )"
 
-      etas   = real(nt-it)/ real(it) * ttotal
+        end if
 
-      etah = int( etas/(   60*60) ); etas = etas - etah   *60*60
-      etam = int( etas/(      60) ); etas = etas - etam      *60
-      etasi = int(etas)
-      timprev = timcount
+        call pwatch__off("report__progress")
 
-      write(STDERR,'(A,I7.7,  A,F6.3,A,   A,I3.3,A,I2.2,A,I2.2,A,ES9.2,A)') &
-          "  it=", it, ",", &
-          ttotal/it, " s/loop,", &
-          " eta ", etah,":",etam,":",etasi ,", (", vya, " )"
+    end subroutine report__progress
 
-    end if
+    subroutine report__terminate
 
-    call pwatch__off("report__progress")
+        if (myid == terminal_output_node) then
 
-  end subroutine report__progress
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+            write (error_unit, *)
+            write (error_unit, '(A)') " ------------------------------------------------------------------------------"
+            write (error_unit, *) ""
+            write (error_unit, '(A,F15.3,A)') "  Total time             : ", ttotal, " s"
+            write (error_unit, *)
+            write (error_unit, '(A)') " ------------------------------------------------------------------------------"
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine report__terminate
+        end if
 
-    !! ----
-
-    if( myid == terminal_output_node ) then
-
-
-      write(STDERR,*)
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-      write(STDERR,*) ""
-      write(STDERR,'(A,F15.3,A)')    "  Total time             : ", ttotal, " s"
-      write(STDERR,*)
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-
-    end if
-
-  end subroutine report__terminate
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+    end subroutine report__terminate
 
 end module m_report
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

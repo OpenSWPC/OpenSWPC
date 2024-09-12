@@ -1,10 +1,10 @@
 module m_sac
 
-    !! SAC-formatted seismograms
+    !! SAC-formatted file I/O
     !!
-    !! author: Takuto Maeda
-    !! license: MIT
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
+    use iso_fortran_env, only: error_unit, input_unit
     use m_std
     implicit none
     private
@@ -19,8 +19,6 @@ module m_sac
     type sac__hdr
 
         !! Sac Header Type Definition
-
-        !                var name        description                   record#
         real(dp)      :: delta           !! sampling interval             (001)
         real(dp)      :: depmin          !! minimum value                 (002)
         real(dp)      :: depmax          !! maximum value                 (003)
@@ -159,7 +157,7 @@ module m_sac
     end type sac__hdr
 
     interface sac__write
-        module procedure sac_d, sac_s
+        module procedure wsac_d, wsac_s
     end interface sac__write
 
     interface sac__read
@@ -173,15 +171,14 @@ module m_sac
 contains
 
     subroutine rsac_d(fn_sac, ss, dat)
-    
-        !! Read SAC file
+
+        !! Read SAC file (in double precision)
 
         character(*), intent(in)    :: fn_sac  !! sac filename
         type(sac__hdr), intent(out)   :: ss      !! header info
         real(dp), allocatable, intent(inout) :: dat(:)  !! waveform data
-        !--
+
         real(sp), allocatable                :: fdat(:)
-        !----
 
         call rsac_s(fn_sac, ss, fdat)
 
@@ -191,27 +188,25 @@ contains
 
     end subroutine rsac_d
 
-
     subroutine rsac_s(fn_sac, ss, dat)
-    
-        !! Read SAC file
+
+        !! Read SAC file (in single precision)
 
         character(*), intent(in)                       :: fn_sac  !! sac filename
         type(sac__hdr), intent(out)                    :: ss      !! header info
         real(sp), allocatable, optional, intent(inout) :: dat(:)  !! waveform data
-        !--
+
         integer :: io
         integer :: i
         integer :: nmax
         logical :: same_endian
         integer :: ierr
-        !----
-        call std__getio(io)
-        open (io, file=fn_sac, &
+
+        open (newunit=io, file=fn_sac, &
               action='read', access='stream', form='unformatted', status='old', iostat=ierr)
 
         if (ierr /= 0) then
-            write (stderr, *) '[sac__read]: file '//trim(fn_sac)//' not opened. '
+            write (error_unit, *) '[sac__read]: file '//trim(fn_sac)//' not opened. '
             return
         end if
 
@@ -227,7 +222,7 @@ contains
             end if
 
             if (ss%npts > nmax) then
-                write (stderr, *) '[sac__read]: data array does not have enough size'
+                write (error_unit, *) '[sac__read]: data array does not have enough size'
             end if
 
             read (io) dat
@@ -243,89 +238,83 @@ contains
 
     end subroutine rsac_s
 
+    subroutine wsac_d(fn_sac, ss, dat, overwrite)
 
-    subroutine sac_d(fn_sac, ss, dat, overwrite)
-
-        !! Write SAC file [fn_sac] with header [ss] and data [dat]
+        !! Write SAC file [fn_sac] with header [ss] and data [dat] (double precision)
 
         character(*), intent(in)           :: fn_sac         !! SAC filename
         type(sac__hdr), intent(in)           :: ss             !! SAC header
         real(DP), intent(in)           :: dat(1:ss%npts) !! SAC data
         logical, intent(in), optional :: overwrite      !! .true. for overwrite
-        !----
 
         if (present(overwrite)) then
-            call sac_s(fn_sac, ss, real(dat), overwrite)
+            call wsac_s(fn_sac, ss, real(dat), overwrite)
         else
-            call sac_s(fn_sac, ss, real(dat))
+            call wsac_s(fn_sac, ss, real(dat))
         end if
 
-    end subroutine sac_d
+    end subroutine wsac_d
 
+    subroutine wsac_s(fn_sac, ss, dat, overwrite)
 
-    subroutine sac_s(fn_sac, ss, dat, overwrite)
-
-        !! Write SAC file
+        !! Write SAC file [fn_sac] with header [ss] and data [dat] (single precision)
 
         character(*), intent(in)           :: fn_sac         !! SAC filename
         type(sac__hdr), intent(in)           :: ss             !! SAC header
         real(SP), intent(in)           :: dat(1:ss%npts) !! SAC data
         logical, intent(in), optional :: overwrite      !! .true. for overwrite
-        !--
+
         logical        :: isexist
         integer        :: io
         character(1)   :: yn
-        !----
 
         !! overwrite check
         inquire (file=fn_sac, exist=isexist)
         if (isexist) then
             if (present(overwrite)) then
                 if (.not. overwrite) then
-                    write (STDERR, *) 'sac: file '//trim(fn_sac)//' exists.'
-                    write (STDERR, *) 'sac: could not overwrite the file.'
-                    write (STDERR, *) 'sac: return without success'
-                    write (STDERR, *)
+                    write (error_unit, *) 'sac: file '//trim(fn_sac)//' exists.'
+                    write (error_unit, *) 'sac: could not overwrite the file.'
+                    write (error_unit, *) 'sac: return without success'
+                    write (error_unit, *)
                     return
                 end if
             else
-                write (STDERR, *) 'sac: file '//trim(fn_sac)//' exists.'
-                write (STDERR, *) 'sac: Overwrite ? (y/n)'
-                read (STDIN, '(A)') yn
+                write (error_unit, *) 'sac: file '//trim(fn_sac)//' exists.'
+                write (error_unit, *) 'sac: Overwrite ? (y/n)'
+                read (input_unit, '(A)') yn
                 if (yn /= 'y' .and. yn /= 'Y') then
-                    write (STDERR, *) 'sac: could not overwrite the file.'
-                    write (STDERR, *) 'sac: return without success'
-                    write (STDERR, *)
+                    write (error_unit, *) 'sac: could not overwrite the file.'
+                    write (error_unit, *) 'sac: return without success'
+                    write (error_unit, *)
                     return
                 end if
             end if
         end if
 
-        call std__getio(io)
-        open (io, file=trim(fn_sac), action='write', access='stream', form='unformatted', status='replace')
+        open (newunit=io, file=trim(fn_sac), action='write', access='stream', form='unformatted', status='replace')
 
         call sac__whdr(io, ss)
 
         write (io) dat(1:ss%npts)
         close (io)
 
-    end subroutine sac_s
+    end subroutine wsac_s
 
-    
     subroutine sac__whdr(io, ss)
 
         !! Write SAC data header from pre-opened file io
+        !!
         !! No endian conversion will be made. Always write in machine-endian.
 
         integer, intent(in) :: io
         type(sac__hdr), intent(in) :: ss
-        !--
+
         real(SP)       :: fheader(70)
         integer        :: iheader(71:105)
         logical        :: lheader(106:110)
         character(4)   :: aheader(111:158)
         integer        :: i
-        !----
 
         !! initialize header
         fheader(1:70) = -12345.0
@@ -449,17 +438,15 @@ contains
 
     end subroutine sac__whdr
 
-
     subroutine sac__init(ss)
 
         !! Initialize SAC header
 
         type(sac__hdr), intent(inout) :: ss
-        !--
+
         real(SP)     :: ferr = -12345.0_SP
         integer      :: ierr = -12345
         character(6) :: cerr = '-12345'
-        !----
 
         ss%delta = ferr
         ss%depmin = ferr
@@ -563,7 +550,6 @@ contains
 
     end subroutine sac__init
 
-
     subroutine wcsf_d(fn_csf, ntrace, npts, sh, dat, overwrite)
 
         !! Write csf format
@@ -574,7 +560,6 @@ contains
         type(sac__hdr), intent(in) :: sh(ntrace)
         real(DP), intent(in) :: dat(npts, ntrace)
         logical, optional, intent(in) :: overwrite
-        !----
 
         if (present(overwrite)) then
             call wcsf_s(fn_csf, ntrace, npts, sh, real(dat), overwrite)
@@ -584,7 +569,6 @@ contains
 
     end subroutine wcsf_d
 
-    
     subroutine wcsf_s(fn_csf, ntrace, npts, sh, dat, overwrite)
 
         !! Write csf format
@@ -595,33 +579,32 @@ contains
         type(sac__hdr), intent(in) :: sh(ntrace)
         real(SP), intent(in) :: dat(npts, ntrace)
         logical, optional, intent(in) :: overwrite
-        !--
+
         logical :: isexist
         integer :: io
         integer :: i
         character(1) :: yn
         integer, parameter :: NVHDR = 1
-        !----
 
         !! overwrite
         inquire (file=fn_csf, exist=isexist)
         if (isexist) then
             if (present(overwrite)) then
                 if (.not. overwrite) then
-                    write (STDERR, *) 'wcsf: file '//trim(fn_csf)//' exists.'
-                    write (STDERR, *) 'wcsf: could not overwrite the file.'
-                    write (STDERR, *) 'wcsf: return without success'
-                    write (STDERR, *)
+                    write (error_unit, *) 'wcsf: file '//trim(fn_csf)//' exists.'
+                    write (error_unit, *) 'wcsf: could not overwrite the file.'
+                    write (error_unit, *) 'wcsf: return without success'
+                    write (error_unit, *)
                     return
                 end if
             else
-                write (STDERR, *) 'wcsf: file '//trim(fn_csf)//' exists.'
-                write (STDERR, *) 'wcsf: Overwrite ? (y/n)'
-                read (STDIN, '(A)') yn
+                write (error_unit, *) 'wcsf: file '//trim(fn_csf)//' exists.'
+                write (error_unit, *) 'wcsf: Overwrite ? (y/n)'
+                read (input_unit, '(A)') yn
                 if (yn /= 'y' .and. yn /= 'Y') then
-                    write (STDERR, *) 'wcsf: could not overwrite the file.'
-                    write (STDERR, *) 'wcsf: return without success'
-                    write (STDERR, *)
+                    write (error_unit, *) 'wcsf: could not overwrite the file.'
+                    write (error_unit, *) 'wcsf: return without success'
+                    write (error_unit, *)
                     return
                 end if
             end if
@@ -630,14 +613,13 @@ contains
         !! file check
         do i = 1, ntrace
             if (sh(i)%npts /= npts) then
-                write (STDERR, *) "wcdf: npts mismatch"
-                write (STDERR, *) "wcdf: return without success"
+                write (error_unit, *) "wcdf: npts mismatch"
+                write (error_unit, *) "wcdf: return without success"
                 return
             end if
         end do
 
-        call std__getio(io)
-        open (io, file=trim(fn_csf), action='write', access='stream', form='unformatted', status='unknown')
+        open (newunit=io, file=trim(fn_csf), action='write', access='stream', form='unformatted', status='unknown')
 
         write (io) 'CSFD'
         write (io) ntrace
@@ -652,7 +634,6 @@ contains
 
     end subroutine wcsf_s
 
-
     subroutine sac__rhdr(io, ss, same_endian)
 
         !! Read SAC data header from pre-opened file io
@@ -660,7 +641,7 @@ contains
         integer, intent(in) :: io
         type(sac__hdr), intent(out) :: ss
         logical, intent(out), optional :: same_endian
-        !--
+
         integer :: i
         real(sp)     :: fheader(1:70)
         integer      :: iheader(71:105)
@@ -668,7 +649,6 @@ contains
         integer      :: nvhdr
         character(4) :: aheader(111:158)
         logical      :: same_endian0
-        !----
 
         read (io) fheader
         read (io) iheader
@@ -814,15 +794,15 @@ contains
 
     end subroutine sac__rhdr
 
-
     subroutine byteswap(nbyte, foo)
+
+        !! Byte swap for nbyte bytes
 
         integer, intent(in)    :: nbyte ! must be even
         character(nbyte), intent(inout) :: foo
-        !--
+
         integer  :: i, j
         character(1) :: wk
-        !----
 
         do i = 1, nbyte / 2
             j = nbyte - i + 1
@@ -833,8 +813,9 @@ contains
 
     end subroutine byteswap
 
-
     subroutine change_endian_r(var)
+
+        !! exchange endian of var (real)
 
         real, intent(inout) :: var
         character(4) :: c
@@ -845,8 +826,9 @@ contains
 
     end subroutine change_endian_r
 
-
     subroutine change_endian_i(var)
+
+        !! exchange endian of var (integer)
 
         integer, intent(inout) :: var
         character(4) :: c
@@ -857,8 +839,9 @@ contains
 
     end subroutine change_endian_i
 
-
     subroutine change_endian_l(var)
+
+        !! exchange endian of var (logical)
 
         logical, intent(inout) :: var
         character(4) :: c
@@ -869,14 +852,13 @@ contains
 
     end subroutine change_endian_l
 
-    
     subroutine char_zeropad(ch)
+
         !! Substitute blanks in character ch by padding '0'
 
         character(*), intent(inout) :: ch
-        !--
+
         integer :: i
-        !----
 
         do i = 1, len(ch)
             if (ichar(ch(i:i)) == 0) then
