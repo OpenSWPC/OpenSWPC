@@ -327,21 +327,15 @@ contains
 
     !! MPI coordinate
 
-    allocate( itbl(-1:nproc_x, -1:nproc_y) )
-    allocate( sbuf_ip(5 * nyp * nz), sbuf_im(5 * nyp * nz) )
-    allocate( rbuf_ip(5 * nyp * nz), rbuf_im(5 * nyp * nz) )
-    allocate( sbuf_jp(5 * nxp * nz), sbuf_jm(5 * nxp * nz) )
-    allocate( rbuf_jp(5 * nxp * nz), rbuf_jm(5 * nxp * nz) )
-
-    !! initialize buffer
-    sbuf_ip(:) = 0.0_MP
-    sbuf_im(:) = 0.0_MP
-    rbuf_ip(:) = 0.0_MP
-    rbuf_im(:) = 0.0_MP
-    sbuf_jp(:) = 0.0_MP
-    sbuf_jm(:) = 0.0_MP
-    rbuf_jp(:) = 0.0_MP
-    rbuf_jm(:) = 0.0_MP
+    allocate(itbl(-1:nproc_x, -1:nproc_y) )
+    allocate(sbuf_ip(5 * nyp * nz), source = 0.0_MP)  
+    allocate(sbuf_im(5 * nyp * nz), source = 0.0_MP) 
+    allocate(rbuf_ip(5 * nyp * nz), source = 0.0_MP) 
+    allocate(rbuf_im(5 * nyp * nz), source = 0.0_MP)
+    allocate(sbuf_jp(5 * nxp * nz), source = 0.0_MP) 
+    allocate(sbuf_jm(5 * nxp * nz), source = 0.0_MP)
+    allocate(rbuf_jp(5 * nxp * nz), source = 0.0_MP) 
+    allocate(rbuf_jm(5 * nxp * nz), source = 0.0_MP) 
 
     !! MPI communication table
     call set_mpi_table

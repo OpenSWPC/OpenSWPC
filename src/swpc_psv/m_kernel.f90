@@ -71,19 +71,8 @@ contains
 
     call memory_allocate()
 
-    !!
-    !! initialize
-    !!
-    Vx  (       kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0_MP
-    Vz  (       kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0_MP
-    Sxx (       kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0_MP
-    Szz (       kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0_MP
-    Sxz (       kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0_MP
     if( nm > 0 ) then
-      Rxx ( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
-      Rzz ( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
-      Rxz ( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
-
+        
       do m=1, nm
         c1(m) = ( 2 * ts(m) - dt ) / ( 2 * ts(m) + dt )
         c2(m) = ( 2              ) / ( 2 * ts(m) + dt ) / nm
@@ -427,18 +416,17 @@ contains
     !!
     !! memory allocation
     !!
-    allocate(  Vx(       kbeg_m:kend_m, ibeg_m:iend_m ) )
-    allocate(  Vz(       kbeg_m:kend_m, ibeg_m:iend_m ) )
-
-    allocate( Sxx(       kbeg_m:kend_m, ibeg_m:iend_m ) )
-    allocate( Szz(       kbeg_m:kend_m, ibeg_m:iend_m ) )
-    allocate( Sxz(       kbeg_m:kend_m, ibeg_m:iend_m ) )
+    allocate( Vx(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
+    allocate( Vz(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
+    allocate(Sxx(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
+    allocate(Szz(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
+    allocate(Sxz(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
 
     if( nm > 0 ) then
-      allocate( Rxx( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) )
-      allocate( Rzz( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) )
-      allocate( Rxz( 1:nm, kbeg_m:kend_m, ibeg_m:iend_m ) )
-      allocate( c1(1:nm), c2(1:nm) )
+      allocate(Rxx(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
+      allocate(Rzz(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
+      allocate(Rxz(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
+      allocate(c1(1:nm), c2(1:nm))
     end if
 
 

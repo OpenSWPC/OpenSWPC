@@ -318,22 +318,17 @@ contains
     r20z = 1.0_MP / dz
 
     !! displacement snapshot buffers
-    allocate( buf_yz_u(nys,nzs,3), buf_xz_u(nxs,nzs,3), buf_xy_u(nxs,nys,3), buf_fs_u(nxs,nys,3), buf_ob_u(nxs,nys,3) )
-    buf_yz_u = 0.0
-    buf_xz_u = 0.0
-    buf_xy_u = 0.0
-    buf_fs_u = 0.0
-    buf_ob_u = 0.0
+    allocate(buf_yz_u(nys,nzs,3), source=0.0)
+    allocate(buf_xz_u(nxs,nzs,3), source=0.0)
+    allocate(buf_xy_u(nxs,nys,3), source=0.0)
+    allocate(buf_fs_u(nxs,nys,3), source=0.0)
+    allocate(buf_ob_u(nxs,nys,3), source=0.0)
 
     !! maximum amplitude buffers
-    allocate( max_ob_v(nxs,nys,3) )
-    allocate( max_ob_u(nxs,nys,3) )
-    allocate( max_fs_v(nxs,nys,3) )
-    allocate( max_fs_u(nxs,nys,3) )
-    max_ob_v(:,:,:) = 0.0
-    max_ob_u(:,:,:) = 0.0
-    max_fs_v(:,:,:) = 0.0
-    max_fs_u(:,:,:) = 0.0
+    allocate(max_ob_v(nxs,nys,3), source=0.0)
+    allocate(max_ob_u(nxs,nys,3), source=0.0)
+    allocate(max_fs_v(nxs,nys,3), source=0.0)
+    allocate(max_fs_u(nxs,nys,3), source=0.0)
     
     call mpi_barrier( mpi_comm_world, err )
 

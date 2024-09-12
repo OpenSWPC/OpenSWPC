@@ -58,21 +58,9 @@ contains
     !!
     call memory_allocate()
 
-    rho ( kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
-    lam ( kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
-    mu  ( kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
-    taup( kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
-    taus( kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0
 
-
-    !!
-    !!
-    !!
     if( benchmark_mode ) then
 
-      !!
-      !! benchmark mode: fixed medium parameter
-      !!
       fq_min = 0.05
       fq_max = 5.0
       fq_ref = 1.0
@@ -343,18 +331,18 @@ contains
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine memory_allocate()
     !!
-    allocate( rho ( kbeg_m:kend_m, ibeg_m:iend_m ) )
-    allocate( lam ( kbeg_m:kend_m, ibeg_m:iend_m ) )
-    allocate( mu  ( kbeg_m:kend_m, ibeg_m:iend_m ) )
-    allocate( taup( kbeg_m:kend_m, ibeg_m:iend_m ) )
-    allocate( taus( kbeg_m:kend_m, ibeg_m:iend_m ) )
-    allocate( kfs    ( ibeg_m:iend_m ) )
-    allocate( kob    ( ibeg_m:iend_m ) )
-    allocate( kfs_top( ibeg_m:iend_m ) )
-    allocate( kfs_bot( ibeg_m:iend_m ) )
-    allocate( kob_top( ibeg_m:iend_m ) )
-    allocate( kob_bot( ibeg_m:iend_m ) )
-    allocate( bddep  ( ibeg_m:iend_m, 0:NBD ) )
+    allocate(rho (kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
+    allocate(lam (kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
+    allocate(mu  (kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
+    allocate(taup(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
+    allocate(taus(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
+    allocate(kfs    (ibeg_m:iend_m))
+    allocate(kob    (ibeg_m:iend_m))
+    allocate(kfs_top(ibeg_m:iend_m))
+    allocate(kfs_bot(ibeg_m:iend_m))
+    allocate(kob_top(ibeg_m:iend_m))
+    allocate(kob_bot(ibeg_m:iend_m))
+    allocate(bddep  (ibeg_m:iend_m, 0:NBD))
     if( nm > 0 ) allocate( ts(  1:nm ) )
 
   end subroutine memory_allocate

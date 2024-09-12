@@ -51,28 +51,9 @@ contains
 
     call pwatch__on("medium__setup")
 
-    !!
-    !! allocate memory and initialize
-    !!
     call memory_allocate()
 
-
-    rho ( kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0
-    bx  ( kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0
-    by  ( kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0
-    bz  ( kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0
-    lam ( kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0
-    mu  ( kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0
-    muyz( kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0
-    muxz( kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0
-    muxy( kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0
-    taup( kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0
-    taus( kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0
-
-
-    !!
     !! benchmark mode: fixed medium parameter
-    !!
     if( benchmark_mode ) then
 
       fq_min = 0.05
@@ -542,24 +523,25 @@ contains
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine memory_allocate()
     !!
-    allocate( rho    (  kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( bx     (  kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( by     (  kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( bz     (  kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( lam    (  kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( mu     (  kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( muyz   (  kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( muxz   (  kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( muxy   (  kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( taup   (  kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( taus   (  kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( kfs    (                 ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( kob    (                 ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( kfs_top(                 ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( kfs_bot(                 ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( kob_top(                 ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( kob_bot(                 ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( bddep  (                 ibeg_m:iend_m, jbeg_m:jend_m, 0:NBD ) ) !! 0: topo, 1-2: discontinuity
+    allocate(rho    (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+    allocate(bx     (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+    allocate(by     (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+    allocate(bz     (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+    allocate(lam    (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+    allocate(mu     (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+    allocate(muyz   (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+    allocate(muxz   (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+    allocate(muxy   (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+    allocate(taup   (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+    allocate(taus   (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+    allocate(kfs    (               ibeg_m:iend_m, jbeg_m:jend_m))
+    allocate(kob    (               ibeg_m:iend_m, jbeg_m:jend_m))
+    allocate(kfs_top(               ibeg_m:iend_m, jbeg_m:jend_m))
+    allocate(kfs_bot(               ibeg_m:iend_m, jbeg_m:jend_m))
+    allocate(kob_top(               ibeg_m:iend_m, jbeg_m:jend_m))
+    allocate(kob_bot(               ibeg_m:iend_m, jbeg_m:jend_m))
+    allocate(bddep  (               ibeg_m:iend_m, jbeg_m:jend_m, 0:NBD)) !! 0: topo, 1-2: discontinuity
+
     if( nm > 0 ) allocate( ts(  1:nm ) )
 
   end subroutine memory_allocate

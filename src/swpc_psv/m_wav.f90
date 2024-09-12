@@ -92,27 +92,23 @@ contains
         call system__call('mkdir -p '//trim(odir)//'/wav > /dev/null 2>&1' )
 
         if (sw_wav_v) then
-            allocate(wav_vel(ntw,2,nst))
+            allocate(wav_vel(ntw,2,nst), source=0.0)
             allocate(sh_vel(2,nst))
-            wav_vel(:,:,:) = 0.0
         end if
           
         if (sw_wav_u ) then
-            allocate(wav_disp(ntw,2,nst))
+            allocate(wav_disp(ntw,2,nst), source=0.0)
             allocate(sh_disp(2,nst))
-            wav_disp(:,:,:) = 0.0
         end if
           
         if (sw_wav_stress) then
-            allocate(wav_stress(ntw,3,nst))
+            allocate(wav_stress(ntw,3,nst), source=0.0)
             allocate(sh_stress(3,nst))
-            wav_stress(:,:,:) = 0.0
         end if
       
         if (sw_wav_strain) then
-            allocate(wav_strain(ntw,3,nst))
+            allocate(wav_strain(ntw,3,nst), source=0.0)
             allocate(sh_strain(3,nst))
-            wav_strain(:,:,:) = 0.0
         end if        
 
         call set_sac_header()

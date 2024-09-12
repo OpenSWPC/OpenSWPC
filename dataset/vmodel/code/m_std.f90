@@ -75,7 +75,7 @@ contains
     real(DP), intent(inout), allocatable :: array(:)
     real(DP), intent(in) :: val
     !! --
-    integer, allocatable :: tmp(:)
+    real(DP), allocatable :: tmp(:)
     integer :: n
 
     n = size(array)
@@ -128,7 +128,6 @@ contains
     deallocate(tmp)
 
   end subroutine extend_array_c
-
 
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!

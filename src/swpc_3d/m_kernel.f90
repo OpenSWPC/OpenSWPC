@@ -71,27 +71,7 @@ contains
 
     call memory_allocate()
 
-    !!
-    !! initialize
-    !!
-    Vx  (       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0_MP
-    Vy  (       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0_MP
-    Vz  (       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0_MP
-    Sxx (       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0_MP
-    Syy (       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0_MP
-    Szz (       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0_MP
-    Syz (       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0_MP
-    Sxz (       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0_MP
-    Sxy (       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) = 0.0_MP
-
     if( nm > 0 ) then
-      Rxx ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
-      Ryy ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
-      Rzz ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
-      Ryz ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
-      Rxz ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
-      Rxy ( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) = 0.0
-
       do m=1, nm
         c1(m) = ( 2 * ts(m) - dt ) / ( 2 * ts(m) + dt )
         c2(m) = ( 2              ) / ( 2 * ts(m) + dt ) / nm
@@ -100,7 +80,6 @@ contains
       do m=1, nm
         d1(m) = 2 * ts(m) / ( 2*ts(m) - dt )
       end do
-
     end if
 
     call pwatch__off("kernel__setup")
@@ -454,25 +433,24 @@ contains
     !!
     !! memory allocation
     !!
-    allocate(  Vx(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate(  Vy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate(  Vz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    
-    allocate( Sxx(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( Syy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( Szz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( Syz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( Sxz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    allocate( Sxy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
+    allocate( Vx(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
+    allocate( Vy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
+    allocate( Vz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
+    allocate(Sxx(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
+    allocate(Syy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
+    allocate(Szz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
+    allocate(Syz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
+    allocate(Sxz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
+    allocate(Sxy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
     
     if( nm > 0 ) then
-      allocate( c1(nm), c2(nm), d1(nm) )
-      allocate( Rxx( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-      allocate( Ryy( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-      allocate( Rzz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-      allocate( Ryz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-      allocate( Rxz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
-      allocate( Rxy( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
+      allocate(c1(nm), c2(nm), d1(nm))
+      allocate(Rxx(kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm), source=0.0)
+      allocate(Ryy(kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm), source=0.0)
+      allocate(Rzz(kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm), source=0.0)
+      allocate(Ryz(kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm), source=0.0)
+      allocate(Rxz(kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm), source=0.0)
+      allocate(Rxy(kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm), source=0.0)
     end if
     
   end subroutine memory_allocate

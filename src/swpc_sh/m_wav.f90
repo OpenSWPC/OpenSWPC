@@ -91,27 +91,23 @@ module m_wav
         call system__call('mkdir -p '//trim(odir)//'/wav > /dev/null 2>&1' )
 
         if (sw_wav_v) then
-            allocate(wav_vel(ntw,nst))
+            allocate(wav_vel(ntw,nst), source=0.0)
             allocate(sh_vel(nst))
-            wav_vel(:,:) = 0.0
         end if
         
         if (sw_wav_u ) then
-            allocate(wav_disp(ntw,nst))
+            allocate(wav_disp(ntw,nst), source=0.0)
             allocate(sh_disp(nst))
-            wav_disp(:,:) = 0.0
         end if
         
         if (sw_wav_stress) then
-            allocate(wav_stress(ntw,2,nst))
+            allocate(wav_stress(ntw,2,nst), source=0.0)
             allocate(sh_stress(2,nst))
-            wav_stress(:,:,:) = 0.0
         end if
     
         if (sw_wav_strain) then
-            allocate(wav_strain(ntw,2,nst))
+            allocate(wav_strain(ntw,2,nst), source=0.0)
             allocate(sh_strain(2,nst))
-            wav_strain(:,:,:) = 0.0
         end if        
 
         call set_sac_header()

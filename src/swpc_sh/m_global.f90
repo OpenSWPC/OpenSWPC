@@ -285,29 +285,18 @@ contains
     end if    
 
 
-    !!
     !! MPI coordinate
-    !!
-
     allocate( itbl(-1:nproc_x) )
-    allocate( sbuf_ip(2 * nz), sbuf_im(2 * nz) )
-    allocate( rbuf_ip(2 * nz), rbuf_im(2 * nz) )
 
-    !! initialize buffer
-    sbuf_ip(:) = 0.0_MP
-    sbuf_im(:) = 0.0_MP
-    rbuf_ip(:) = 0.0_MP
-    rbuf_im(:) = 0.0_MP
+    allocate(sbuf_ip(2 * nz), source=0.0_MP)
+    allocate(sbuf_im(2 * nz), source=0.0_MP)
+    allocate(rbuf_ip(2 * nz), source=0.0_MP)
+    allocate(rbuf_im(2 * nz), source=0.0_MP)
 
-    !!
     !! MPI communication table
-    !!
     call set_mpi_table
 
-
-    !!
     !! computation region in this node (#244)
-    !!
     if ( proc_x <= nproc_x -mx - 1 ) then
       ibeg =  proc_x      * (nx - mx) / nproc_x + 1
       iend = (proc_x + 1) * (nx - mx) / nproc_x

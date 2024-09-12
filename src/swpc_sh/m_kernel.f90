@@ -72,17 +72,9 @@ contains
 
     call memory_allocate()
 
-    !!
-    !! initialize
-    !!
-    Vy  (       kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0_MP
-    Syz (       kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0_MP
-    Sxy (       kbeg_m:kend_m, ibeg_m:iend_m ) = 0.0_MP
     if( nm > 0 ) then
-      Ryz ( 1:nm, kbeg_k:kend_k, ibeg_k:iend_k ) = 0.0
-      Rxy ( 1:nm, kbeg_k:kend_k, ibeg_k:iend_k ) = 0.0
 
-      do m=1, nm
+        do m=1, nm
         c1(m) = ( 2 * ts(m) - dt ) / ( 2 * ts(m) + dt )
         c2(m) = ( 2              ) / ( 2 * ts(m) + dt ) / nm
       end do
@@ -303,15 +295,14 @@ contains
     !!
     !! memory allocation
     !!
-    allocate(  Vy(       kbeg_m:kend_m, ibeg_m:iend_m ) )
-
-    allocate( Syz(       kbeg_m:kend_m, ibeg_m:iend_m ) )
-    allocate( Sxy(       kbeg_m:kend_m, ibeg_m:iend_m ) )
+    allocate( Vy(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
+    allocate(Syz(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
+    allocate(Sxy(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
 
     if( nm > 0 ) then
-      allocate( Ryz( 1:nm, kbeg_k:kend_k, ibeg_k:iend_k ) )
-      allocate( Rxy( 1:nm, kbeg_k:kend_k, ibeg_k:iend_k ) )
-      allocate( c1(1:nm), c2(1:nm) )
+      allocate(Ryz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k), source=0.0)
+      allocate(Rxy(1:nm, kbeg_k:kend_k, ibeg_k:iend_k), source=0.0)
+      allocate(c1(1:nm), c2(1:nm))
     end if
 
   end subroutine memory_allocate

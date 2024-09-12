@@ -311,9 +311,8 @@ contains
       cmp(1:6) = (/ 'mxx', 'myy', 'mzz', 'myz', 'mxz', 'mxy' /)
     end if
 
-    allocate(gf(ntw,ncmp*ng))
+    allocate(gf(ntw,ncmp*ng), source=0.0)
     allocate(fn(ncmp*ng))
-    gf(:,:) = 0.0
 
     call system__call( 'mkdir -p '//trim(odir) // '/green/' // trim(green_stnm) )
 
@@ -425,24 +424,20 @@ contains
 
 
     if( it == 1 ) then
-      allocate( dxux(ng), dxuy(ng), dxuz(ng), dyux(ng), dyuy(ng),dyuz(ng),dzux(ng),dzuy(ng),dzuz(ng) )
-
-      dxUx(:) = 0.0
-      dxUy(:) = 0.0
-      dxUz(:) = 0.0
-      dyUx(:) = 0.0
-      dyUy(:) = 0.0
-      dyUz(:) = 0.0
-      dzUx(:) = 0.0
-      dzUy(:) = 0.0
-      dzUz(:) = 0.0
-
+      allocate(dxUx(ng), source = 0.0)
+      allocate(dxUy(ng), source = 0.0)
+      allocate(dxUz(ng), source = 0.0)
+      allocate(dyUx(ng), source = 0.0)
+      allocate(dyUy(ng), source = 0.0)
+      allocate(dyUz(ng), source = 0.0)
+      allocate(dzUx(ng), source = 0.0)
+      allocate(dzUy(ng), source = 0.0)
+      allocate(dzUz(ng), source = 0.0)
 
       if( green_bforce ) then
-        allocate( ux(ng), uy(ng), uz(ng) )
-        ux(:)   = 0.0
-        uy(:)   = 0.0
-        uz(:)   = 0.0
+        allocate(Ux(ng), source=0.0)
+        allocate(Uy(ng), source=0.0)
+        allocate(Uz(ng), source=0.0)
       end if
 
       if( green_cmp == 'z' ) then
