@@ -1,6 +1,9 @@
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
 !>
 !! Linux/Mac system routines, for processig command line argument, environment variables, and system call
+!!
+!! @copyright
+!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 module m_system
@@ -26,12 +29,12 @@ module m_system
   !<
   !! --
   interface system__getarg
-     
-     module procedure getarg_a, getarg_i, getarg_f, getarg_d
-     
-  end interface
+
+    module procedure getarg_a, getarg_i, getarg_f, getarg_d
+
+  end interface system__getarg
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
+
 contains
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -46,24 +49,24 @@ contains
 
     character(*), intent(in) :: cmd
     !! ----
-    
+
     call system( cmd )
-    
+
   end subroutine system__call
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
+
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
   !! Returns a number of arguments. Fortran2003 wrapper function
   !<
   !! --
   integer function system__iargc()
-    
+
     system__iargc  = command_argument_count()
-    
+
   end function system__iargc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
+
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   !>
   !! Obtain environmental variable "name".
@@ -76,9 +79,9 @@ contains
     character(*), intent(out) :: value
 
     !! ----
-    
+
     call get_environment_variable( name, value )
-    
+
   end subroutine system__getenv
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -91,13 +94,13 @@ contains
 
     !! -- Arguments
     integer,      intent(in)  :: i   ! order of the arguments
-    character(*), intent(out) :: arg ! argument    
-    
+    character(*), intent(out) :: arg ! argument
+
     call get_command_argument( i, arg )
-    
+
   end subroutine getarg_a
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
+
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine getarg_i (i, arg)
 
@@ -110,25 +113,25 @@ contains
 
     call getarg_a( i, carg )
     read(carg,*) arg
-    
+
   end subroutine getarg_i
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
+
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine getarg_f (i, arg)
     !! -- Arguments
     integer,  intent(in) :: i
     real, intent(out) :: arg
-    
+
     character(256) :: carg
     !! ----
 
     call getarg_a( i, carg )
     read(carg,*) arg
-    
+
   end subroutine getarg_f
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
+
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine getarg_d (i, arg)
 
@@ -138,10 +141,10 @@ contains
 
     character(256) :: carg
     !! ----
-    
+
     call getarg_a( i, carg )
     read(carg,*) arg
-    
+
   end subroutine getarg_d
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -159,24 +162,24 @@ contains
 
     iptr = 1
     str2 = ''
-    do 
-       ikey1 = scan( str(iptr:), "${" ) + iptr - 1 
-       if( ikey1==iptr-1 ) exit
+    do
+      ikey1 = scan( str(iptr:), "${" ) + iptr - 1
+      if( ikey1==iptr-1 ) exit
 
-       ikey2 = scan( str(iptr:), "}" ) + iptr -1 
-       str2=trim(str2) // str(iptr:ikey1-1)
-       call system__getenv( str(ikey1+2:ikey2-1), str3 )
-       str2 = trim(str2) // trim(str3)
-       iptr = ikey2+1
-       
+      ikey2 = scan( str(iptr:), "}" ) + iptr -1
+      str2=trim(str2) // str(iptr:ikey1-1)
+      call system__getenv( str(ikey1+2:ikey2-1), str3 )
+      str2 = trim(str2) // trim(str3)
+      iptr = ikey2+1
+
     end do
     str2 = trim(str2) // trim(str(iptr:))
 
     str = trim(str2)
-    
+
   end subroutine system__expenv
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
-    
+
+
 end module m_system
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
