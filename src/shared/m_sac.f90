@@ -1,9 +1,7 @@
 module m_sac
 
-    !! SAC-formatted seismograms
-    !!
-    !! author: Takuto Maeda
-    !! license: MIT
+    !! SAC-formatted file I/O
+    !  Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit, input_unit
     use m_std
@@ -160,7 +158,7 @@ module m_sac
     end type sac__hdr
 
     interface sac__write
-        module procedure sac_d, sac_s
+        module procedure wsac_d, wsac_s
     end interface sac__write
 
     interface sac__read
@@ -174,8 +172,8 @@ module m_sac
 contains
 
     subroutine rsac_d(fn_sac, ss, dat)
-    
-        !! Read SAC file
+
+        !! Read SAC file (in double precision)
 
         character(*), intent(in)    :: fn_sac  !! sac filename
         type(sac__hdr), intent(out)   :: ss      !! header info
@@ -192,10 +190,9 @@ contains
 
     end subroutine rsac_d
 
-
     subroutine rsac_s(fn_sac, ss, dat)
-    
-        !! Read SAC file
+
+        !! Read SAC file (in single precision)
 
         character(*), intent(in)                       :: fn_sac  !! sac filename
         type(sac__hdr), intent(out)                    :: ss      !! header info
@@ -244,10 +241,9 @@ contains
 
     end subroutine rsac_s
 
+    subroutine wsac_d(fn_sac, ss, dat, overwrite)
 
-    subroutine sac_d(fn_sac, ss, dat, overwrite)
-
-        !! Write SAC file [fn_sac] with header [ss] and data [dat]
+        !! Write SAC file [fn_sac] with header [ss] and data [dat] (double precision)
 
         character(*), intent(in)           :: fn_sac         !! SAC filename
         type(sac__hdr), intent(in)           :: ss             !! SAC header
@@ -256,17 +252,16 @@ contains
         !----
 
         if (present(overwrite)) then
-            call sac_s(fn_sac, ss, real(dat), overwrite)
+            call wsac_s(fn_sac, ss, real(dat), overwrite)
         else
-            call sac_s(fn_sac, ss, real(dat))
+            call wsac_s(fn_sac, ss, real(dat))
         end if
 
-    end subroutine sac_d
+    end subroutine wsac_d
 
+    subroutine wsac_s(fn_sac, ss, dat, overwrite)
 
-    subroutine sac_s(fn_sac, ss, dat, overwrite)
-
-        !! Write SAC file
+        !! Write SAC file [fn_sac] with header [ss] and data [dat] (single precision)
 
         character(*), intent(in)           :: fn_sac         !! SAC filename
         type(sac__hdr), intent(in)           :: ss             !! SAC header
@@ -309,12 +304,12 @@ contains
         write (io) dat(1:ss%npts)
         close (io)
 
-    end subroutine sac_s
+    end subroutine wsac_s
 
-    
     subroutine sac__whdr(io, ss)
 
         !! Write SAC data header from pre-opened file io
+        !!
         !! No endian conversion will be made. Always write in machine-endian.
 
         integer, intent(in) :: io
@@ -449,7 +444,6 @@ contains
 
     end subroutine sac__whdr
 
-
     subroutine sac__init(ss)
 
         !! Initialize SAC header
@@ -563,7 +557,6 @@ contains
 
     end subroutine sac__init
 
-
     subroutine wcsf_d(fn_csf, ntrace, npts, sh, dat, overwrite)
 
         !! Write csf format
@@ -584,7 +577,6 @@ contains
 
     end subroutine wcsf_d
 
-    
     subroutine wcsf_s(fn_csf, ntrace, npts, sh, dat, overwrite)
 
         !! Write csf format
@@ -650,7 +642,6 @@ contains
         close (io)
 
     end subroutine wcsf_s
-
 
     subroutine sac__rhdr(io, ss, same_endian)
 
@@ -813,8 +804,9 @@ contains
 
     end subroutine sac__rhdr
 
-
     subroutine byteswap(nbyte, foo)
+
+        !! Byte swap for nbyte bytes
 
         integer, intent(in)    :: nbyte ! must be even
         character(nbyte), intent(inout) :: foo
@@ -832,8 +824,9 @@ contains
 
     end subroutine byteswap
 
-
     subroutine change_endian_r(var)
+
+        !! exchange endian of var (real)
 
         real, intent(inout) :: var
         character(4) :: c
@@ -844,8 +837,9 @@ contains
 
     end subroutine change_endian_r
 
-
     subroutine change_endian_i(var)
+
+        !! exchange endian of var (integer)
 
         integer, intent(inout) :: var
         character(4) :: c
@@ -856,8 +850,9 @@ contains
 
     end subroutine change_endian_i
 
-
     subroutine change_endian_l(var)
+
+        !! exchange endian of var (logical)
 
         logical, intent(inout) :: var
         character(4) :: c
@@ -868,8 +863,8 @@ contains
 
     end subroutine change_endian_l
 
-    
     subroutine char_zeropad(ch)
+
         !! Substitute blanks in character ch by padding '0'
 
         character(*), intent(inout) :: ch

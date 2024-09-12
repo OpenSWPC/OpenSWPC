@@ -62,7 +62,7 @@ ifeq ($(arch),mac-m1)
 
   ifeq ($(debug),true)
     FFLAGS  = -Wall -pedantic -fbounds-check -O -Wuninitialized \
-              -Wno-conversion \
+              -Wno-conversion -ffixed-line-length-132 \
 	          -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 \
 	          -D_INFO -D_DEBUG -cpp
   endif
