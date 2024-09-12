@@ -8,7 +8,7 @@
 !! ----
 module m_fdsnap
 
-  !! -- Dependency
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_daytim
   use netcdf
@@ -118,8 +118,8 @@ contains
       open(io, file=trim(fname), form='unformatted', action='read')
 
     case default
-      write(STDERR,'(A)') 'ERROR [fdsnap__open]: unknown binary type '// bintype
-      write(STDERR,'(A)') 'ERROR [fdsnap__open]: file is closed'
+      write(error_unit,'(A)') 'ERROR [fdsnap__open]: unknown binary type '// bintype
+      write(error_unit,'(A)') 'ERROR [fdsnap__open]: file is closed'
       close(io)
 
     end select
@@ -304,8 +304,9 @@ contains
       if(0 <= hdrver .and. hdrver <= 140101) then
         ! ok
       else
-        write(STDERR,'(A,I5,A)') "ERROR [fdsnap__read]: the file " // trim(fname) // " (",io,") is generated in different endian."
-        write(STDERR,'(A)'   ) "ERROR [fdsnap__read]: stop reading. close file."
+        write(error_unit,'(A,I5,A)') "ERROR [fdsnap__read]: the file " // trim(fname) // &
+                                     " (",io,") is generated in different endian."
+        write(error_unit,'(A)'   ) "ERROR [fdsnap__read]: stop reading. close file."
         close(io)
         return
       end if
@@ -324,7 +325,7 @@ contains
     integer, intent(in) :: ierr
     !! ----
 
-    if( ierr /= NF90_NOERR )  write(STDERR,*) NF90_STRERROR( ierr )
+    if( ierr /= NF90_NOERR )  write(error_unit,*) NF90_STRERROR( ierr )
 
   end subroutine nc_chk
   !! ------------------------------------------------------------------------ !!

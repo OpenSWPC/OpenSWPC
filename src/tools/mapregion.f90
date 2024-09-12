@@ -8,6 +8,7 @@
 !! ----------------------------------------------------------------------------------------------------------------------------- !!
 program mapregion
 
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_getopt
   use m_readini
@@ -51,9 +52,9 @@ program mapregion
 
   call getopt( 'i', is_given, fn_prm )
   if( .not. is_given ) then
-    write(STDERR,*)
-    write(STDERR,'(A)') ' mapregion.x [-i input_prm] [-o output (default=stdout)] '
-    write(STDERR,*)
+    write(error_unit,*)
+    write(error_unit,'(A)') ' mapregion.x [-i input_prm] [-o output (default=output_unit)] '
+    write(error_unit,*)
     stop
   end if
 
@@ -61,7 +62,7 @@ program mapregion
 
   open( newunit=io_prm, file=trim(fn_prm), action='read', status='old', iostat=ierr )
   if( ierr /= 0 ) then
-    write(STDERR,*) 'ERROR [mapregion]: Could not open file ' // trim( fn_prm )
+    write(error_unit,*) 'ERROR [mapregion]: Could not open file ' // trim( fn_prm )
     stop
   end if
 
@@ -82,9 +83,9 @@ program mapregion
   call readini( io_prm, 'phi',     phi,     0.0      )
 
   call memory_size( nproc_x, nproc_y, nx, ny, nz, nm, na, mem_a, mem_n )
-  write(STDERR,*) "grid size ", nx, ny, nz
-  write(STDERR,*) "kernel memory size ( whole ) ", mem_a, " [GB]"
-  write(STDERR,*) "kernel memory size ( node  ) ", mem_n, " [GB]"
+  write(error_unit,*) "grid size ", nx, ny, nz
+  write(error_unit,*) "kernel memory size ( whole ) ", mem_a, " [GB]"
+  write(error_unit,*) "kernel memory size ( node  ) ", mem_n, " [GB]"
 
   nn = 2*(nx-1)+2*(ny-1) + 1
   allocate( lon(nn), lat(nn) )

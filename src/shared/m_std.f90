@@ -9,18 +9,14 @@
 module m_std
 
   !! -- Declarations
+  use iso_fortran_env, only: real64, real32
   implicit none
   private
 
 
   !! -- Precision Constant
-  integer,     parameter, public :: DP = selected_real_kind(13) !< Double Precision
-  integer,     parameter, public :: SP = selected_real_kind(5)  !< Single Precision
-
-  !! -- In/Out
-  integer,     parameter, public :: STDERR  = 0 !< Standard Error
-  integer,     parameter, public :: STDOUT  = 6 !< Standard Output
-  integer,     parameter, public :: STDIN   = 5 !< Standard Input
+  integer,     parameter, public :: DP = real64  !< Double Precision
+  integer,     parameter, public :: SP = real32  !< Single Precision
 
   !! -- Physics/Math Constants
   real(DP),    parameter, public :: PI      = 3.141592653589793238462643383_DP
@@ -51,10 +47,6 @@ module m_std
     module procedure extend_array_c, extend_array_d, extend_array_f, extend_array_i
   end interface
 
-  !! -- Private variables
-  integer, parameter, private :: io0        = 10     !< initial number for file I/O
-  integer, parameter, private :: IOBIG0     = 900    !< Binary data with io >= IOBIG0 are assumed in BIG_ENDIAN data
-
   !----
 
 
@@ -78,6 +70,7 @@ contains
       deallocate(tmp)
 
     end subroutine extend_array_f
+    
   subroutine extend_array_d(array, val)
     real(DP), intent(inout), allocatable :: array(:)
     real(DP), intent(in) :: val

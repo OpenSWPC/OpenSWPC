@@ -10,6 +10,7 @@
 module m_green
 
   !! -- Declarations
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_debug
   use m_global
@@ -168,7 +169,7 @@ contains
     case( 'y' );   fx1 = 0.0; fy1 = 1.0; fz1 = 0.0
     case( 'z' );   fx1 = 0.0; fy1 = 0.0; fz1 = 1.0  !! positive upward to fit nature of observation
     case default
-      write(STDERR,*) "no matching green_cmp"
+      write(error_unit,*) "no matching green_cmp"
       stop
     end select
 

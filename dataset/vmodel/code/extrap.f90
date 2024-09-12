@@ -37,7 +37,7 @@ program extrap
 
   n_ns = floor( ( lat_end - lat_beg ) / dlat + 0.5 ) + 1
   n_ew = floor( ( lon_end - lon_beg ) / dlon + 0.5 ) + 1
-!  write(STDERR,*) n_ns, n_ew
+!  write(error_unit,*) n_ns, n_ew
   allocate(lon(n_ns,n_ew), lat(n_ns,n_ew), dep(n_ns,n_ew), dep2(n_ns,n_ew))
   allocate(isdat(n_ns,n_ew))
   open(10,file=fn_in,access='stream')
@@ -56,8 +56,8 @@ program extrap
         end if
      end do
   end do
-!  write(STDERR,*) dep(N_NS/2, N_EW/2 )
-!  write(STDERR,*) maxval(dep), minval(dep)
+!  write(error_unit,*) dep(N_NS/2, N_EW/2 )
+!  write(error_unit,*) maxval(dep), minval(dep)
   close(10)
 
   !! detection of edges of NaN-region A
@@ -78,7 +78,7 @@ program extrap
   A_W = 2
   isdat( A_S:A_N,A_W:A_E ) = .false.
 
-  write(STDERR,*) A_S, A_N, A_E, A_W
+  write(error_unit,*) A_S, A_N, A_E, A_W
   !! same for NaN-region B
   do i=N_EW, 1, -1
      if( abs( dep(10,i) -  NOT_A_NUMBER ) > epsilon(1.0) ) then
@@ -96,7 +96,7 @@ program extrap
   B_S = 2
   isdat( B_S:B_N,B_W:B_E ) = .false.
 
-  write(STDERR,*) B_S, B_N, B_E, B_W
+  write(error_unit,*) B_S, B_N, B_E, B_W
 
 
 

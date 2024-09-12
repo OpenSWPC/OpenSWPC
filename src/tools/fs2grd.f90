@@ -12,6 +12,7 @@
 !! --
 program fs2grd
 
+  use iso_fortran_env, only: error_unit
   use m_std  
   use m_getopt
   use m_bicubic
@@ -194,37 +195,37 @@ contains
 
     call getopt('i', is_opt, fn_in, ''  )
     if( .not. is_opt ) then 
-      write(stderr,*) "no input file given [-i]"
+      write(error_unit,*) "no input file given [-i]"
       stop
     end if
         
     call getopt('R', is_opt, cregion, '')
     if( .not. is_opt ) then
-      write(stderr,*)  "no region is specified [-R]"
+      write(error_unit,*)  "no region is specified [-R]"
       stop
     end if
     call split(cregion, '/', nr, reg)
 
     call getopt('dlon', is_opt, dlon, 0.0)
     if( .not. is_opt ) then
-      write(stderr,*)  "[-dlon] must be specified"
+      write(error_unit,*)  "[-dlon] must be specified"
       stop
     end if
     
     call getopt('dlat', is_opt, dlat, 0.0)
     if( .not. is_opt ) then
-      write(stderr,*)  "[-dlat] must be specified"
+      write(error_unit,*)  "[-dlat] must be specified"
       stop
     end if
 
     call getopt('v', is_opt, varname, '')
     if( .not. is_opt ) then
-      write(stderr,*) "[-v] must be specified"
+      write(error_unit,*) "[-v] must be specified"
       stop
     end if
 
     if( nr /= 4 ) then
-      write(stderr,*) "invalid region specification"
+      write(error_unit,*) "invalid region specification"
       stop
     end if
     read(reg(1),*) lon_beg
@@ -294,7 +295,7 @@ contains
 
     integer, intent(in) :: ierr
 
-    if( ierr /= nf90_noerr )  write(stderr,*) nf90_strerror( ierr )
+    if( ierr /= nf90_noerr )  write(error_unit,*) nf90_strerror( ierr )
 
   end subroutine nc_chk  
 

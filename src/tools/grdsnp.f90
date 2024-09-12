@@ -9,6 +9,7 @@
 #include "../shared/m_debug.h"
 program grdsnp
 
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_getopt
   use m_bicubic
@@ -119,9 +120,9 @@ program grdsnp
       if( kgrd == 1 ) then
         kgrd = kgrd + 1
       end if
-      write(STDOUT,'(2I6,4F12.4,ES12.4,I12)') i, j, xc(i), yc(j), glon(i,j), glat(i,j), zgrd, kgrd
+      write(output_unit,'(2I6,4F12.4,ES12.4,I12)') i, j, xc(i), yc(j), glon(i,j), glat(i,j), zgrd, kgrd
     end do
-    write(STDOUT,*)
+    write(output_unit,*)
   end do
 
   call bicubic__terminate(bcd)
@@ -129,7 +130,7 @@ program grdsnp
 contains
 
   subroutine usage_exit
-    write(STDERR,*) 'grdsnp.x -i input.inf  -g grd_file'
+    write(error_unit,*) 'grdsnp.x -i input.inf  -g grd_file'
     stop
   end subroutine usage_exit
 end program grdsnp

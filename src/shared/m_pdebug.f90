@@ -7,7 +7,7 @@
 !! @par usage
 !! - call debug(var):     show variable var.
 !! - call assert( cond ): abort if cond = .false. . cond must be logical value or condition.
-!! - call info( msg ):    write message msg to STDERR.
+!! - call info( msg ):    write message msg to error_unit.
 !!
 !! @copyright
 !!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
@@ -15,6 +15,7 @@
 !! --
 module m_debug
 
+  use iso_fortran_env, only: error_unit
   use m_std
   use mpi
   implicit none
@@ -60,7 +61,7 @@ contains
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
   !>
-  !! Debug output to STDERR.
+  !! Debug output to error_unit.
   !<
   !! --
   subroutine debug_c( var, fname, nline )
@@ -75,14 +76,14 @@ contains
     if( .not. initialized ) call debug_init
     write(cline,'(I5)') nline
 
-    write(STDERR,'(A,I0,A)') '[debug{', myid ,'}] '//fname//' ('//trim(adjustl(cline))//'):  '//trim(adjustl(var))
+    write(error_unit,'(A,I0,A)') '[debug{', myid ,'}] '//fname//' ('//trim(adjustl(cline))//'):  '//trim(adjustl(var))
 
   end subroutine debug_c
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
   !>
-  !! Debug output to STDERR.
+  !! Debug output to error_unit.
   !<
   !! --
   subroutine debug_c0( var )
@@ -91,14 +92,14 @@ contains
     !! ----
 
     if( .not. initialized ) call debug_init
-    write(STDERR,'(A,I0,A)') '[debug{',myid,'}] '//trim(adjustl(var))
+    write(error_unit,'(A,I0,A)') '[debug{',myid,'}] '//trim(adjustl(var))
 
   end subroutine debug_c0
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
   !>
-  !! Debug output to STDERR.
+  !! Debug output to error_unit.
   !<
   !! --
   subroutine debug_i( var, fname, nline )
@@ -118,7 +119,7 @@ contains
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
   !>
-  !! Debug output to STDERR.
+  !! Debug output to error_unit.
   !<
   !! --
   subroutine debug_i0( var )
@@ -136,7 +137,7 @@ contains
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
   !>
-  !! Debug output to STDERR.
+  !! Debug output to error_unit.
   !<
   !! --
   subroutine debug_r( var, fname, nline )
@@ -160,7 +161,7 @@ contains
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
   !>
-  !! Debug output to STDERR.
+  !! Debug output to error_unit.
   !<
   !! --
   subroutine debug_r0( var )
@@ -182,7 +183,7 @@ contains
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
   !>
-  !! Debug output to STDERR.
+  !! Debug output to error_unit.
   !<
   !! --
   subroutine debug_d( var, fname, nline )
@@ -206,7 +207,7 @@ contains
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
   !>
-  !! Debug output to STDERR.
+  !! Debug output to error_unit.
   !<
   !! --
   subroutine debug_d0( var )
@@ -228,7 +229,7 @@ contains
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
   !>
-  !! Debug output to STDERR.
+  !! Debug output to error_unit.
   !<
   !! --
   subroutine debug_l( var, fname, nline )
@@ -251,7 +252,7 @@ contains
 
   !! ---------------------------------------------------------------------------------------------------------------------------- !!
   !>
-  !! Debug output to STDERR.
+  !! Debug output to error_unit.
   !<
   !! --
   subroutine debug_l0( var )
@@ -284,7 +285,7 @@ contains
 
     if( .not. initialized ) call debug_init
     if( .not. cond ) then
-      write(STDERR,'(A,I0,A)') '[assert{', myid, '}] failed'
+      write(error_unit,'(A,I0,A)') '[assert{', myid, '}] failed'
       call mpi_abort( mpi_comm_world, errcode, ierr )
     end if
 
@@ -310,7 +311,7 @@ contains
     if( .not. cond ) then
       write(cl,'(I5)') nline
 
-      write(STDERR,'(A,I0,A)') '[assert{', myid, '}] failed at ' // trim(adjustl(fname)) //'('//trim(adjustl(cl))//')'
+      write(error_unit,'(A,I0,A)') '[assert{', myid, '}] failed at ' // trim(adjustl(fname)) //'('//trim(adjustl(cl))//')'
       call mpi_abort( mpi_comm_world, errcode, ierr )
     end if
 
@@ -324,7 +325,7 @@ contains
     character(*), intent(in) :: msg
 
     if( .not. initialized ) call debug_init
-    write(STDERR,'(A,I0,A)') '[info{', myid, '}] ' // trim(adjustl(msg))
+    write(error_unit,'(A,I0,A)') '[info{', myid, '}] ' // trim(adjustl(msg))
 
   end subroutine info
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -342,7 +343,7 @@ contains
     !! ----
 
     if( .not. initialized ) call debug_init
-    write(STDERR,'(A,I0,A,I0,A)') '[info{', myid,'}] '// trim(adjustl(fname)) // '(', nline, '): ' // trim(adjustl(msg))
+    write(error_unit,'(A,I0,A,I0,A)') '[info{', myid,'}] '// trim(adjustl(fname)) // '(', nline, '): ' // trim(adjustl(msg))
 
   end subroutine info__macro
   !! --------------------------------------------------------------------------------------------------------------------------- !!

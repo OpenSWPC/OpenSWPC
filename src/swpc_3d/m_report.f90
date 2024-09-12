@@ -10,6 +10,7 @@
 module m_report
 
   !! -- Dependency
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_debug
   use m_global
@@ -73,10 +74,10 @@ contains
         codename = trim(codename) // " (Green's function mode) "
       end if
 
-      write(STDERR,*)
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-      write(STDERR,'(A)') trim(codename)
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
+      write(error_unit,*)
+      write(error_unit,'(A)') " ------------------------------------------------------------------------------"
+      write(error_unit,'(A)') trim(codename)
+      write(error_unit,'(A)') " ------------------------------------------------------------------------------"
 
     end if
 
@@ -86,19 +87,19 @@ contains
     call fdm_cond_wavelength( real(dx), real(dy), real(dz), vmin, fmax, r )
 
     if( myid == terminal_output_node ) then
-      write(STDERR,*)
-      write(STDERR,'(A,I8,A,I6,A,I6)') "  Grid Size               : ", nx, " x ", ny ," x ", nz
-      write(STDERR,'(A,I8,A,I4)'     ) "  MPI Partitioning        : ", nproc_x, " x ", nproc_y
-      write(STDERR,'(A,F15.3,A)'     ) "  Total Memory Size       : ", mem_all,  "  [GiB]"
-      write(STDERR,'(A,F15.3,A)'     ) "  Node Memory Size        : ", mem_node, "  [GiB]"
-      write(STDERR,'(A,F15.3,A)'     ) "  Stability  Condition c  : ", c,        "  (c<1)"
-      write(STDERR,'(A,F15.3,A)'     ) "  Wavelength Condition r  : ", r       , "  (r>5-10)"
-      write(STDERR,'(A,F15.3,A)'     ) "  Minimum velocity        : ", vmin,     "  [km/s]"
-      write(STDERR,'(A,F15.3,A)'     ) "  Maximum velocity        : ", vmax,     "  [km/s]"
-      write(STDERR,'(A,F15.3,A)'     ) "  Maximum frequency       : ", fmax,     "  [Hz]"
-      write(STDERR,*)
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-      write(STDERR,*)
+      write(error_unit,*)
+      write(error_unit,'(A,I8,A,I6,A,I6)') "  Grid Size               : ", nx, " x ", ny ," x ", nz
+      write(error_unit,'(A,I8,A,I4)'     ) "  MPI Partitioning        : ", nproc_x, " x ", nproc_y
+      write(error_unit,'(A,F15.3,A)'     ) "  Total Memory Size       : ", mem_all,  "  [GiB]"
+      write(error_unit,'(A,F15.3,A)'     ) "  Node Memory Size        : ", mem_node, "  [GiB]"
+      write(error_unit,'(A,F15.3,A)'     ) "  Stability  Condition c  : ", c,        "  (c<1)"
+      write(error_unit,'(A,F15.3,A)'     ) "  Wavelength Condition r  : ", r       , "  (r>5-10)"
+      write(error_unit,'(A,F15.3,A)'     ) "  Minimum velocity        : ", vmin,     "  [km/s]"
+      write(error_unit,'(A,F15.3,A)'     ) "  Maximum velocity        : ", vmax,     "  [km/s]"
+      write(error_unit,'(A,F15.3,A)'     ) "  Maximum frequency       : ", fmax,     "  [Hz]"
+      write(error_unit,*)
+      write(error_unit,'(A)') " ------------------------------------------------------------------------------"
+      write(error_unit,*)
 
       if( r < 5   ) then
         call info( 'wavelength condition is violated! ' )
@@ -164,8 +165,8 @@ contains
     !! check numerical divergence
     if( max( vxa, vya, vza ) * UC > TOL ) then
       if( myid == terminal_output_node ) then
-        write(STDERR,'(A)') 'numerical divergence detected with max amp =  ', max( vxa, vya, vza ) * UC, '[(m/s)/moment]'
-        write(STDERR,'(A)') 'aborting ... '
+        write(error_unit,'(A)') 'numerical divergence detected with max amp =  ', max( vxa, vya, vza ) * UC, '[(m/s)/moment]'
+        write(error_unit,'(A)') 'aborting ... '
       end if
 
       call mpi_finalize( ierr )
@@ -199,7 +200,7 @@ contains
       etasi = int(etas)
       timprev = timcount
 
-      write(STDERR,'(A,I7.7,  A,F6.3,A,   A,I3.3,A,I2.2,A,I2.2,A, 3(ES9.2,A))') &
+      write(error_unit,'(A,I7.7,  A,F6.3,A,   A,I3.3,A,I2.2,A,I2.2,A, 3(ES9.2,A))') &
           "  it=", it, ",", &
           ttotal/it, " s/loop,", &
           " eta ", etah,":",etam,":",etasi ,", (", vxa, " ",vya," ", vza," )"
@@ -216,12 +217,12 @@ contains
 
     if( myid == terminal_output_node ) then
 
-      write(STDERR,*)
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-      write(STDERR,*) ""
-      write(STDERR,'(A,F15.3,A)')        "  Total time             : ", ttotal, " s"
-      write(STDERR,*)
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
+      write(error_unit,*)
+      write(error_unit,'(A)') " ------------------------------------------------------------------------------"
+      write(error_unit,*) ""
+      write(error_unit,'(A,F15.3,A)')        "  Total time             : ", ttotal, " s"
+      write(error_unit,*)
+      write(error_unit,'(A)') " ------------------------------------------------------------------------------"
 
     end if
 

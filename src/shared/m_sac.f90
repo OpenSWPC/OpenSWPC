@@ -5,6 +5,7 @@ module m_sac
     !! author: Takuto Maeda
     !! license: MIT
 
+    use iso_fortran_env, only: error_unit, input_unit
     use m_std
     implicit none
     private
@@ -211,7 +212,7 @@ contains
               action='read', access='stream', form='unformatted', status='old', iostat=ierr)
 
         if (ierr /= 0) then
-            write (stderr, *) '[sac__read]: file '//trim(fn_sac)//' not opened. '
+            write (error_unit, *) '[sac__read]: file '//trim(fn_sac)//' not opened. '
             return
         end if
 
@@ -227,7 +228,7 @@ contains
             end if
 
             if (ss%npts > nmax) then
-                write (stderr, *) '[sac__read]: data array does not have enough size'
+                write (error_unit, *) '[sac__read]: data array does not have enough size'
             end if
 
             read (io) dat
@@ -282,20 +283,20 @@ contains
         if (isexist) then
             if (present(overwrite)) then
                 if (.not. overwrite) then
-                    write (STDERR, *) 'sac: file '//trim(fn_sac)//' exists.'
-                    write (STDERR, *) 'sac: could not overwrite the file.'
-                    write (STDERR, *) 'sac: return without success'
-                    write (STDERR, *)
+                    write (error_unit, *) 'sac: file '//trim(fn_sac)//' exists.'
+                    write (error_unit, *) 'sac: could not overwrite the file.'
+                    write (error_unit, *) 'sac: return without success'
+                    write (error_unit, *)
                     return
                 end if
             else
-                write (STDERR, *) 'sac: file '//trim(fn_sac)//' exists.'
-                write (STDERR, *) 'sac: Overwrite ? (y/n)'
-                read (STDIN, '(A)') yn
+                write (error_unit, *) 'sac: file '//trim(fn_sac)//' exists.'
+                write (error_unit, *) 'sac: Overwrite ? (y/n)'
+                read (input_unit, '(A)') yn
                 if (yn /= 'y' .and. yn /= 'Y') then
-                    write (STDERR, *) 'sac: could not overwrite the file.'
-                    write (STDERR, *) 'sac: return without success'
-                    write (STDERR, *)
+                    write (error_unit, *) 'sac: could not overwrite the file.'
+                    write (error_unit, *) 'sac: return without success'
+                    write (error_unit, *)
                     return
                 end if
             end if
@@ -607,20 +608,20 @@ contains
         if (isexist) then
             if (present(overwrite)) then
                 if (.not. overwrite) then
-                    write (STDERR, *) 'wcsf: file '//trim(fn_csf)//' exists.'
-                    write (STDERR, *) 'wcsf: could not overwrite the file.'
-                    write (STDERR, *) 'wcsf: return without success'
-                    write (STDERR, *)
+                    write (error_unit, *) 'wcsf: file '//trim(fn_csf)//' exists.'
+                    write (error_unit, *) 'wcsf: could not overwrite the file.'
+                    write (error_unit, *) 'wcsf: return without success'
+                    write (error_unit, *)
                     return
                 end if
             else
-                write (STDERR, *) 'wcsf: file '//trim(fn_csf)//' exists.'
-                write (STDERR, *) 'wcsf: Overwrite ? (y/n)'
-                read (STDIN, '(A)') yn
+                write (error_unit, *) 'wcsf: file '//trim(fn_csf)//' exists.'
+                write (error_unit, *) 'wcsf: Overwrite ? (y/n)'
+                read (input_unit, '(A)') yn
                 if (yn /= 'y' .and. yn /= 'Y') then
-                    write (STDERR, *) 'wcsf: could not overwrite the file.'
-                    write (STDERR, *) 'wcsf: return without success'
-                    write (STDERR, *)
+                    write (error_unit, *) 'wcsf: could not overwrite the file.'
+                    write (error_unit, *) 'wcsf: return without success'
+                    write (error_unit, *)
                     return
                 end if
             end if
@@ -629,8 +630,8 @@ contains
         !! file check
         do i = 1, ntrace
             if (sh(i)%npts /= npts) then
-                write (STDERR, *) "wcdf: npts mismatch"
-                write (STDERR, *) "wcdf: return without success"
+                write (error_unit, *) "wcdf: npts mismatch"
+                write (error_unit, *) "wcdf: return without success"
                 return
             end if
         end do

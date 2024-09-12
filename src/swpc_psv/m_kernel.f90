@@ -10,6 +10,7 @@
 module m_kernel
 
   !! -- Dependency
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_debug
   use m_global
@@ -57,7 +58,7 @@ contains
     call pwatch__on("kernel__setup")
 
     if( .not. medium__initialized() ) then
-      write(STDERR,'(A)') 'ERROR [kernel__setup]: call medium__setup() before kernel__setup()'
+      write(error_unit,'(A)') 'ERROR [kernel__setup]: call medium__setup() before kernel__setup()'
       stop
     end if
 

@@ -9,6 +9,7 @@
 module m_stamp
 
   !! Declarations
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_system
   use m_pnm
@@ -69,13 +70,13 @@ contains
     end if
 
     if( j0 + H0 > hei .or. i0 + len_trim(char) * W1 > wid ) then
-      write(STDERR,*) "size exceeds"
+      write(error_unit,*) "size exceeds"
     end if
 
     do i=1, len_trim(char)
       ic = ichar( char(i:i) )
       if( ic < 32 .or. ic > 126 ) then
-        write(STDERR,*) "character out of range"
+        write(error_unit,*) "character out of range"
         exit
       end if
 

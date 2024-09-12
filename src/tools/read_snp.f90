@@ -10,6 +10,7 @@
 program read_snp
 
   !! -- Dependency
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_system
   use m_getopt
@@ -59,16 +60,16 @@ program read_snp
 
   call getopt( 'i', is_exist, fn_snp )
   if( .not. is_exist ) then
-    write(STDERR,'(A)') "ERROR [read_snp]: no input file given"
-    write(STDERR,*)
+    write(error_unit,'(A)') "ERROR [read_snp]: no input file given"
+    write(error_unit,*)
     call usage_exit
   end if
 
   !! existence check
   call fdsnap__open( fn_snp, io_snp, is_exist, snp_type)
   if( .not. is_exist ) then
-    write(STDERR,'(A)') "ERROR [read_snp]: file "//trim(fn_snp)//" does not exist"
-    write(STDERR,*)
+    write(error_unit,'(A)') "ERROR [read_snp]: file "//trim(fn_snp)//" does not exist"
+    write(error_unit,*)
     call usage_exit
   end if
 
@@ -91,7 +92,7 @@ program read_snp
   !! header output mode
   !!
   call getopt('h', is_exist )
-  if( is_exist ) call fdsnap__checkhdr( STDERR, hdr )
+  if( is_exist ) call fdsnap__checkhdr( error_unit, hdr )
 
 
   !!
@@ -127,22 +128,22 @@ contains
   !! --
   subroutine usage_exit
 
-    write(STDERR,*)
-    write(STDERR,'(A)') ' read_snp.x -i snapfile [-h] [-ppm|-bmp] [-pall] [-mul var | -mul1 var -mul2 var ...] '
-    write(STDERR,'(A)') '                             [-abs] [-bin] [-asc] [-skip n]'
-    write(STDERR,*)
-    write(STDERR,'(A)') '  -h: display header information to terminal output'
-    write(STDERR,'(A)') '  -bmp: output bmp-formatted snapshot figure'
-    write(STDERR,'(A)') '  -ppm: output ppm-formatted snapshot figure'
-    write(STDERR,'(A)') '  -pall: plot including absorbing boundary area (clipped in default)'
-    write(STDERR,'(A)') '  -mul var: scale amplitude by var by visualization'
-    write(STDERR,'(A)') '  -mul1 var, -mul2 var ... : gives scaling factor by each component; default=1000'
-    write(STDERR,'(A)') '  -abs: plot absolute value (only for velocity snapshot)'
-    write(STDERR,'(A)') '  -bin: export single-precision xyz binary data'
-    write(STDERR,'(A)') '  -asc: export xyz ascii data'
-    write(STDERR,'(A)') '  -skip n: skip first n snapshots for export'
-    write(STDERR,'(A)') '  -notim: do not plot elapsed time on the snapshort figures'
-    write(STDERR,*)
+    write(error_unit,*)
+    write(error_unit,'(A)') ' read_snp.x -i snapfile [-h] [-ppm|-bmp] [-pall] [-mul var | -mul1 var -mul2 var ...] '
+    write(error_unit,'(A)') '                             [-abs] [-bin] [-asc] [-skip n]'
+    write(error_unit,*)
+    write(error_unit,'(A)') '  -h: display header information to terminal output'
+    write(error_unit,'(A)') '  -bmp: output bmp-formatted snapshot figure'
+    write(error_unit,'(A)') '  -ppm: output ppm-formatted snapshot figure'
+    write(error_unit,'(A)') '  -pall: plot including absorbing boundary area (clipped in default)'
+    write(error_unit,'(A)') '  -mul var: scale amplitude by var by visualization'
+    write(error_unit,'(A)') '  -mul1 var, -mul2 var ... : gives scaling factor by each component; default=1000'
+    write(error_unit,'(A)') '  -abs: plot absolute value (only for velocity snapshot)'
+    write(error_unit,'(A)') '  -bin: export single-precision xyz binary data'
+    write(error_unit,'(A)') '  -asc: export xyz ascii data'
+    write(error_unit,'(A)') '  -skip n: skip first n snapshots for export'
+    write(error_unit,'(A)') '  -notim: do not plot elapsed time on the snapshort figures'
+    write(error_unit,*)
 
     stop
 
@@ -200,7 +201,7 @@ contains
     else if ( typ == 'bin' ) then
       ext = typ
     else
-      write(STDERR,*) 'unknown type'
+      write(error_unit,*) 'unknown type'
       stop
     end if
 
@@ -239,7 +240,7 @@ contains
 
 
     fn_dat = trim(odir)//'/'//trim(hdr%title)// '.'//trim(hdr%coordinate)//'.'//trim(hdr%datatype)//'.vps.'//ext
-    write(STDERR,*) trim(fn_dat)
+    write(error_unit,*) trim(fn_dat)
 
     if( typ=='asc') then
       open( newunit=io, file=fn_dat, action='write' )
@@ -286,7 +287,7 @@ contains
         do i=1, hdr%nsnp
           read( io_snp, iostat = ierr ) amp(i,:,:)
           if( ierr /= 0 ) then
-            write(STDERR,*) "EOF detected"
+            write(error_unit,*) "EOF detected"
             is_eof = .true.
             exit
           end if
@@ -310,7 +311,7 @@ contains
         write(cit,'(I6.6)') it
 
         fn_dat = trim(odir)//'/'//trim(hdr%title)// '.'//trim(hdr%coordinate)//'.'//trim(hdr%datatype)//'.'//cit//'.'//ext
-        write(STDERR,*) trim(fn_dat)
+        write(error_unit,*) trim(fn_dat)
 
         if( typ=='asc') then
           open( newunit=io, file=fn_dat, action='write' )
@@ -612,7 +613,7 @@ contains
         do i=1, hdr%nsnp
           read( io_snp, iostat = ierr ) amp(i,:,:)
           if( ierr /= 0 ) then
-            write(STDERR,*) "EOF detected"
+            write(error_unit,*) "EOF detected"
             is_eof = .true.
             exit
           end if
@@ -647,7 +648,7 @@ contains
       write(cit,'(I6.6)') it
 
       fn_snp = trim(odir)//'/'//trim(hdr%title)// '.'//trim(hdr%coordinate)//'.'//trim(hdr%datatype)//'.'//cit//'.'//typ
-      write(STDERR,*) trim(fn_snp)
+      write(error_unit,*) trim(fn_snp)
 
       do i=1, hdr%nsnp
         amp(i,:,:) = mul(i) * abs(amp(i,:,:))
@@ -869,7 +870,7 @@ contains
     integer, intent(in) :: ierr
     !! ----
 
-    if( ierr /= NF90_NOERR )  write(STDERR,*) NF90_STRERROR( ierr )
+    if( ierr /= NF90_NOERR )  write(error_unit,*) NF90_STRERROR( ierr )
 
   end subroutine nc_chk
   !! ------------------------------------------------------------------------ !!

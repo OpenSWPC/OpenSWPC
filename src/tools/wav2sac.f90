@@ -8,6 +8,7 @@
 !! ----
 program wav2sac
 
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_sac
   use m_system
@@ -44,7 +45,7 @@ program wav2sac
     open( newunit=io, file=trim(fn_wav), access='stream', action='read', status='old', iostat=ierr )
     if( ierr /= 0 ) cycle
 
-    write(STDERR,*) "FILE: ", trim(fn_wav)
+    write(error_unit,*) "FILE: ", trim(fn_wav)
 
     do
       read( io, iostat=ierr ) nch, npts, title
@@ -65,7 +66,7 @@ program wav2sac
           fn_sac = trim(title) // '__' // trim(sh(j)%kevnm) // '__' // &
               trim( sh(j)%kstnm ) // '__' // trim(sh(j)%kcmpnm) // '__.sac'
         end if
-        write(STDERR,*) "    . ",  trim(fn_sac)
+        write(error_unit,*) "    . ",  trim(fn_sac)
         call sac__write( fn_sac, sh(j), wav(:,j), .true. )
       end do
       deallocate( sh, wav )

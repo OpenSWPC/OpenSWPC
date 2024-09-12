@@ -8,7 +8,8 @@
 !! ----
 #include "../shared/m_debug.h"
 module m_vmodel_lhm
-
+  
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_debug
   use m_readini
@@ -63,7 +64,7 @@ contains
 
     inquire( file=fn_lhm, exist=is_exist )
     if( .not. is_exist ) then
-      write(STDERR,*) "ERROR [m_vmodel_lhm]: velocity file "//trim(fn_lhm)//" does not exist"
+      write(error_unit,*) "ERROR [m_vmodel_lhm]: velocity file "//trim(fn_lhm)//" does not exist"
       call mpi_finalize(ierr)
       stop
     end if

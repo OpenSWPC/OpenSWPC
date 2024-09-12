@@ -10,6 +10,7 @@
 module m_readini
 
   !! -- Dependency
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_debug
   use m_system
@@ -70,7 +71,7 @@ contains
 
     if( .not. isopen ) then
 
-      write(STDERR,'(A)') 'ERROR [readini]: file not open.'
+      write(error_unit,'(A)') 'ERROR [readini]: file not open.'
       var = trim(def)
       return
 

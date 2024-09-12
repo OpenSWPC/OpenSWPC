@@ -10,6 +10,7 @@ module m_daytim
 
   !! -- Dependency
   use m_std
+  use iso_fortran_env, only: error_unit
 
   !! -- Declarations
   implicit none
@@ -122,12 +123,12 @@ contains
 
     ! error handling
     if( day > dom(month) ) then
-      write(STDERR,*) 'ymd2jul: input day excees the last day of the month'
+      write(error_unit,*) 'ymd2jul: input day excees the last day of the month'
       julday = 0
       return
     end if
     if( month > 12 ) then
-      write(STDERR,*) 'ymd2jul: month excees 12 !'
+      write(error_unit,*) 'ymd2jul: month excees 12 !'
       julday = 0
       return
     end if
@@ -171,13 +172,13 @@ contains
     end if
 
     if( is_leap .and. julday > 366 ) then
-      write(STDERR,*) 'jul2md: day of year excees Dec. 31'
+      write(error_unit,*) 'jul2md: day of year excees Dec. 31'
       month = 0
       day   = 0
       return
     else if ( .not. is_leap ) then
       if( julday > 365 ) then
-        write(STDERR,*) 'jul2md: day of year excees Dec. 31'
+        write(error_unit,*) 'jul2md: day of year excees Dec. 31'
         month = 0
         day   = 0
         return
@@ -214,7 +215,7 @@ contains
     integer :: y, m, d
     !! ----
     if( month<=0 .or. month>=14 ) then
-      write(STDERR,'(A)') 'subroutine dayweek: invalied argument'
+      write(error_unit,'(A)') 'subroutine dayweek: invalied argument'
       dw = -1
       return
     end if

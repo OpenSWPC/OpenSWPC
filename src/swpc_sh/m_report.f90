@@ -10,7 +10,8 @@
 module m_report
 
   !! -- Dependency
-  use m_std
+  use iso_fortran_env, only: error_unit
+    use m_std
   use m_debug
   use m_global
   use m_pwatch
@@ -67,11 +68,11 @@ contains
       else if ( bf_mode )  then; codename = trim(codename) // ' (body force mode)  '
       end if
 
-      write(STDERR,'(A)')
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-      write(STDERR,'(A)') trim(codename)
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-      write(STDERR,'(A)')
+      write(error_unit,'(A)')
+      write(error_unit,'(A)') " ------------------------------------------------------------------------------"
+      write(error_unit,'(A)') trim(codename)
+      write(error_unit,'(A)') " ------------------------------------------------------------------------------"
+      write(error_unit,'(A)')
 
     end if
 
@@ -83,19 +84,19 @@ contains
 
     if( myid == terminal_output_node ) then
 
-      write(STDERR,*)
-      write(STDERR,'(A,I8,A,I6)') "  Grid Size               : ", nx, " x ", nz
-      write(STDERR,'(A,I15    )') "  MPI Partitioning        : ", nproc_x
-      write(STDERR,'(A,F15.3,A)') "  Total Memory Size       : ", mem_all,  "  [GiB]"
-      write(STDERR,'(A,F15.3,A)') "  Node Memory Size        : ", mem_node, "  [GiB]"
-      write(STDERR,'(A,F15.3,A)') "  Stability  Condition c  : ", c,        "  (c<1)"
-      write(STDERR,'(A,F15.3,A)') "  Wavelength Condition r  : ", r       , "  (r>5-10)"
-      write(STDERR,'(A,F15.3,A)') "  Minimum velocity        : ", vmin,     "  [km/s]"
-      write(STDERR,'(A,F15.3,A)') "  Maximum velocity        : ", vmax,     "  [km/s]"
-      write(STDERR,'(A,F15.3,A)') "  Maximum frequency       : ", fmax,     "  [Hz]"
-      write(STDERR,*)
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-      write(STDERR,*)
+      write(error_unit,*)
+      write(error_unit,'(A,I8,A,I6)') "  Grid Size               : ", nx, " x ", nz
+      write(error_unit,'(A,I15    )') "  MPI Partitioning        : ", nproc_x
+      write(error_unit,'(A,F15.3,A)') "  Total Memory Size       : ", mem_all,  "  [GiB]"
+      write(error_unit,'(A,F15.3,A)') "  Node Memory Size        : ", mem_node, "  [GiB]"
+      write(error_unit,'(A,F15.3,A)') "  Stability  Condition c  : ", c,        "  (c<1)"
+      write(error_unit,'(A,F15.3,A)') "  Wavelength Condition r  : ", r       , "  (r>5-10)"
+      write(error_unit,'(A,F15.3,A)') "  Minimum velocity        : ", vmin,     "  [km/s]"
+      write(error_unit,'(A,F15.3,A)') "  Maximum velocity        : ", vmax,     "  [km/s]"
+      write(error_unit,'(A,F15.3,A)') "  Maximum frequency       : ", fmax,     "  [Hz]"
+      write(error_unit,*)
+      write(error_unit,'(A)') " ------------------------------------------------------------------------------"
+      write(error_unit,*)
 
       if( r < 5   ) then
         call info( 'wavelength condition is violated! ' )
@@ -179,7 +180,7 @@ contains
       etasi = int(etas)
       timprev = timcount
 
-      write(STDERR,'(A,I7.7,  A,F6.3,A,   A,I3.3,A,I2.2,A,I2.2,A,ES9.2,A)') &
+      write(error_unit,'(A,I7.7,  A,F6.3,A,   A,I3.3,A,I2.2,A,I2.2,A,ES9.2,A)') &
           "  it=", it, ",", &
           ttotal/it, " s/loop,", &
           " eta ", etah,":",etam,":",etasi ,", (", vya, " )"
@@ -199,12 +200,12 @@ contains
     if( myid == terminal_output_node ) then
 
 
-      write(STDERR,*)
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
-      write(STDERR,*) ""
-      write(STDERR,'(A,F15.3,A)')    "  Total time             : ", ttotal, " s"
-      write(STDERR,*)
-      write(STDERR,'(A)') " ------------------------------------------------------------------------------"
+      write(error_unit,*)
+      write(error_unit,'(A)') " ------------------------------------------------------------------------------"
+      write(error_unit,*) ""
+      write(error_unit,'(A,F15.3,A)')    "  Total time             : ", ttotal, " s"
+      write(error_unit,*)
+      write(error_unit,'(A)') " ------------------------------------------------------------------------------"
 
     end if
 

@@ -8,6 +8,7 @@
 !! --
 program qmodel_tau
 
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_getopt
   use m_fdtool
@@ -50,7 +51,7 @@ program qmodel_tau
 
   open( newunit=io, file=trim(fn_prm), action='read', iostat=ierr );
   if( ierr /= 0 ) then
-    write(STDERR,*) 'input file open error'
+    write(error_unit,*) 'input file open error'
     call usage_exit
   end if
 
@@ -84,7 +85,7 @@ program qmodel_tau
     qinv = tau * i1 / i2
     chi = visco_chi( nm, ts, tau, f )
 
-    write(STDOUT,"("//trim(fmt)//")") f, qinv, qinv2(:), chi / chi_R
+    write(output_unit,"("//trim(fmt)//")") f, qinv, qinv2(:), chi / chi_R
   end do
 
 
@@ -92,11 +93,11 @@ contains
 
   subroutine usage_exit()
 
-    write(STDERR,*) 'qmodel_tau -nm [nm] -i [prm file] -f0 [min freq (0.001)] -f1 [max freq (10)] -nf [number of grid (1000)] '
-    write(STDERR,*) ' [input parameter file (inf format)'
-    write(STDERR,*) '   required field : fq_min (minimum freq for constant Q band) (0.05)'
-    write(STDERR,*) '                    fq_max (maximum freq for constant Q band) (5.00)'
-    write(STDERR,*) '                    fq_ref (reference frequency) (1.00)'
+    write(error_unit,*) 'qmodel_tau -nm [nm] -i [prm file] -f0 [min freq (0.001)] -f1 [max freq (10)] -nf [number of grid (1000)] '
+    write(error_unit,*) ' [input parameter file (inf format)'
+    write(error_unit,*) '   required field : fq_min (minimum freq for constant Q band) (0.05)'
+    write(error_unit,*) '                    fq_max (maximum freq for constant Q band) (5.00)'
+    write(error_unit,*) '                    fq_ref (reference frequency) (1.00)'
 
     stop
   end subroutine usage_exit

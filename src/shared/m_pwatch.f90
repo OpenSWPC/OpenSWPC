@@ -9,6 +9,7 @@
 module m_pwatch
 
   !! -- Dependency
+  use iso_fortran_env, only: error_unit
   use m_std
   use mpi
 
@@ -90,7 +91,7 @@ contains
     integer :: cc, ib
 
     !! ----
-    !!if( myid==0 ) write(STDERR,*) "ON  ", trim(name)
+    !!if( myid==0 ) write(error_unit,*) "ON  ", trim(name)
 
     if( .not. measure_time) return
 
@@ -150,7 +151,7 @@ contains
     integer :: cc
     integer :: ib
     !! ----
-    !!if(myid ==0 ) write(STDERR,*) "OFF ", trim(name)
+    !!if(myid ==0 ) write(error_unit,*) "OFF ", trim(name)
 
     if( .not. measure_time) return
 
@@ -176,7 +177,8 @@ contains
         irank = irank-1
       end if
     else
-      write(STDERR,'(A)') 'ERROR [pwatch__off]: name ' // trim(name) // ' does not match with '//trim(block_name(iblock(irank)))
+      write(error_unit,'(A)') 'ERROR [pwatch__off]: name ' // trim(name) &
+      // ' does not match with '//trim(block_name(iblock(irank)))
     end if
 
   end subroutine pwatch__off

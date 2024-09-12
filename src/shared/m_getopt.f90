@@ -9,6 +9,7 @@
 module m_getopt
 
   !! -- Dependency
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_system
 
@@ -37,7 +38,6 @@ module m_getopt
 
   end interface getopt
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-
 
 contains
 
@@ -87,7 +87,7 @@ contains
       if( trim(optkey) == trim(argv(i)) ) then
 
         if( isExist ) then
-          write(STDERR,*) 'getopt: ', &
+          write(error_unit,*) 'getopt: ', &
               'option '//trim(optkey)//' is multiplly defined. '
         end if
 

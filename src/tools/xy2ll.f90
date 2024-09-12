@@ -8,7 +8,7 @@
 !!     x y : local coordinate (in km)
 !!     lon0, lat0: coordinate center (in degrees)
 !!     phi (optional): coordinate rotaiton angle. Default is phi=0
-!!   Calculated longitude and latitude (in degrees) will be printed in STDOUT
+!!   Calculated longitude and latitude (in degrees) will be printed in output_unit
 !!
 !! @copyright
 !!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
@@ -17,6 +17,7 @@
 #include "../shared/m_debug.h"
 program xy2ll
 
+  use iso_fortran_env, only: error_unit, output_unit
   use m_std
   use m_geomap
   use m_system
@@ -51,18 +52,18 @@ program xy2ll
   call assert( -90.  <= lat0 .and. lat0 <= 90  )
 
   call geomap__c2g( x, y, lon0, lat0, phi, lon, lat )
-  write(STDOUT,'(2ES20.10)' ) lon, lat
+  write(output_unit,'(2ES20.10)' ) lon, lat
 
 contains
 
   subroutine usage_abort
 
-    write(STDERR,'(A)') ' USAGE: xy2ll.x <x> <y> <lon0> <lat0> [phi]'
-    write(STDERR,'(A)') '        <x>    : x-coordinate [km]'
-    write(STDERR,'(A)') '        <y>    : y-coordinate [km]'
-    write(STDERR,'(A)') '        <lon0> : origin loniitude [deg.]'
-    write(STDERR,'(A)') '        <lat0> : origin latitude [deg.]'
-    write(STDERR,'(A)') '        [phi]  : rotation angle [deg.] (optional)'
+    write(error_unit,'(A)') ' USAGE: xy2ll.x <x> <y> <lon0> <lat0> [phi]'
+    write(error_unit,'(A)') '        <x>    : x-coordinate [km]'
+    write(error_unit,'(A)') '        <y>    : y-coordinate [km]'
+    write(error_unit,'(A)') '        <lon0> : origin loniitude [deg.]'
+    write(error_unit,'(A)') '        <lat0> : origin latitude [deg.]'
+    write(error_unit,'(A)') '        [phi]  : rotation angle [deg.] (optional)'
     stop
 
   end subroutine usage_abort

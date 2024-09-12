@@ -9,6 +9,7 @@
 #include "../shared/m_debug.h"
 program gen_rmed2d
 
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_getopt
   use m_daytim
@@ -53,7 +54,7 @@ program gen_rmed2d
 
   kappa = 0
   if(ptype < 1 .or. ptype > 3) then
-    write(STDERR,'(A)') 'random media type error. ptype must be 1, 2, or 3. '
+    write(error_unit,'(A)') 'random media type error. ptype must be 1, 2, or 3. '
     stop
   end if
   if(ptype == 3) then
@@ -139,9 +140,9 @@ contains
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine usage_exit()
 
-    write(STDERR,'(A)') 'gen_rmed2d.x [-nx nx] [-nz nz] [-dx dx] [-dz dz] [-o outfile]'
-    write(STDERR,'(A)') '             [-ax ax] [-az az] [-epsil epsilon] [-kappa kappa]'
-    write(STDERR,'(A)') '             [-ptype ptype] (1=Gaussian, 2=Exponential, 3=von Karman]) {-seed seed_number}'
+    write(error_unit,'(A)') 'gen_rmed2d.x [-nx nx] [-nz nz] [-dx dx] [-dz dz] [-o outfile]'
+    write(error_unit,'(A)') '             [-ax ax] [-az az] [-epsil epsilon] [-kappa kappa]'
+    write(error_unit,'(A)') '             [-ptype ptype] (1=Gaussian, 2=Exponential, 3=von Karman]) {-seed seed_number}'
     stop
   end subroutine usage_exit
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -152,7 +153,7 @@ contains
     integer, intent(in) :: ierr
 
     if(ierr /= NF90_NOERR) then
-      write(STDERR,*) NF90_STRERROR(ierr)
+      write(error_unit,*) NF90_STRERROR(ierr)
       stop
     end if
 

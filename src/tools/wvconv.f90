@@ -13,7 +13,8 @@
 !<
 !! --
 program wvconv
-
+ 
+    use iso_fortran_env, only: error_unit
     use m_std
     use m_sac
     use m_rfft
@@ -42,7 +43,7 @@ program wvconv
     if( is_opt1 .or. is_opt2 ) call version__display('wvconv')
 
     if( command_argument_count() == 0 ) then
-      write(STDERR,*) 'wvconv.x in.sac out.sac (V0)'
+      write(error_unit,*) 'wvconv.x in.sac out.sac (V0)'
       stop
     end if
     

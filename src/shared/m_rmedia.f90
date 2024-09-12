@@ -9,6 +9,7 @@
 module m_rmedia
 
   !! -- Dependency
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_fk
   use m_gammaf
@@ -139,7 +140,7 @@ contains
           case ( ptype_vonKarman )
             call rmedia__psdf_ani_vonkarman3d ( kx(i), ky(j), kz(k), ax, ay, az, epsil, kappa, psdf )
           case default
-            write(STDERR,'(A)') 'WARNING [rmedia__3dgen]: no such psdf type; assume von Karman'
+            write(error_unit,'(A)') 'WARNING [rmedia__3dgen]: no such psdf type; assume von Karman'
             call rmedia__psdf_ani_vonkarman3d ( kx(i), ky(j), kz(k), ax, ay, az, epsil, kappa, psdf )
           end select
 
@@ -277,7 +278,7 @@ contains
           case ( ptype_vonKarman )
             call rmedia__psdf_vonkarman3d ( m, a, epsil, kappa, psdf )
           case default
-            write(STDERR,'(A)') 'WARNING [rmedia__3dgen]: no such psdf type; assume von Karman'
+            write(error_unit,'(A)') 'WARNING [rmedia__3dgen]: no such psdf type; assume von Karman'
             call rmedia__psdf_vonkarman3d ( m, a, epsil, kappa, psdf )
           end select
 

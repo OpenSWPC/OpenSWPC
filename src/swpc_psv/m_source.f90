@@ -10,6 +10,7 @@
 module m_source
 
   !! dependency
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_debug
   use m_global
@@ -508,7 +509,7 @@ contains
         mxz(i) = mxz(i) / M0tmp
 
       case default
-        write(STDERR,*) "ERROR [source__setup]: Invalid source type: "//trim(stf_format)
+        write(error_unit,*) "ERROR [source__setup]: Invalid source type: "//trim(stf_format)
 
       end select
 
@@ -605,7 +606,7 @@ contains
         call geomap__g2c( lon, lat, clon, clat, phi, sx(i), rdum )
 
       case default
-        write(STDERR,*) "ERROR [source__setup]: Invalid source type: "//trim(stf_format)
+        write(error_unit,*) "ERROR [source__setup]: Invalid source type: "//trim(stf_format)
 
       end select
 

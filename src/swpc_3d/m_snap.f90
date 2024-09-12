@@ -10,6 +10,7 @@
 module m_output
 
   !! -- Dependency
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_debug
   use m_global
@@ -2176,7 +2177,7 @@ end subroutine close_nc
     integer, intent(in) :: err
     !! ----
 
-    if( err /= NF90_NOERR )  write(STDERR,*) NF90_STRERROR( err )
+    if( err /= NF90_NOERR )  write(error_unit,*) NF90_STRERROR( err )
 
   end subroutine nc_chk
   !! --------------------------------------------------------------------------------------------------------------------------- !!

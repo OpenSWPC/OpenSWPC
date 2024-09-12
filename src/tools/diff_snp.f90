@@ -10,6 +10,7 @@
 program diff_snp
 
   !! -- Dependency
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_system
   use m_fdsnap
@@ -57,8 +58,8 @@ program diff_snp
   !!
   !! Check size consistency
   !!
-  call fdsnap__checkhdr(STDERR, hdr_in1)
-  call fdsnap__checkhdr(STDERR, hdr_in2)
+  call fdsnap__checkhdr(error_unit, hdr_in1)
+  call fdsnap__checkhdr(error_unit, hdr_in2)
 
   call assert(hdr_in1%ns1==hdr_in2%ns1 .and. hdr_in1%ns2==hdr_in2%ns2)
   nx = hdr_in1%ns1
@@ -86,7 +87,7 @@ program diff_snp
     end do
 
     do it=1, nt
-      write(STDERR,*) it
+      write(error_unit,*) it
       ct = (/nx, ny, 1/)
       st = (/1, 1, it/)
       do i=1, hdr_in1%nsnp
@@ -112,7 +113,7 @@ program diff_snp
       read( io_in1 ) amp1
       read( io_in2 ) amp2
       write( io_out ) amp1
-      write(STDERR,*) maxval(amp1), minval(amp1)
+      write(error_unit,*) maxval(amp1), minval(amp1)
     end do
 
     it = 0
@@ -121,7 +122,7 @@ program diff_snp
       do i=1, hdr_in1%nsnp
         read( io_in1, iostat=ierr ) amp1; if( ierr /= 0 ) call close_exit()
         read( io_in2, iostat=ierr ) amp2; if( ierr /= 0 ) call close_exit()
-        write(STDERR,*) it, maxval(amp1-amp2), minval(amp1-amp2)
+        write(error_unit,*) it, maxval(amp1-amp2), minval(amp1-amp2)
         write( io_out ) amp1 - amp2
       end do
     end do
@@ -149,7 +150,7 @@ contains
     integer, intent(in) :: ierr
     !! --
 
-    if(ierr /= NF90_NOERR)  write(STDERR,*) NF90_STRERROR(ierr)
+    if(ierr /= NF90_NOERR)  write(error_unit,*) NF90_STRERROR(ierr)
     
   end subroutine nc_chk
   !! ----------------------------------------------------------------------- !!

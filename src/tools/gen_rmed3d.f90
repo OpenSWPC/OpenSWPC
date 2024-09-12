@@ -9,6 +9,7 @@
 #include "../shared/m_debug.h"
 program gen_rmed3d
 
+  use iso_fortran_env, only: error_unit
   use m_std
   use m_getopt
   use m_rmedia
@@ -152,9 +153,9 @@ contains
 
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine usage_exit()
-    write(STDERR,'(A)') 'gen_rmed3d.x  [-o outfile] [-nx nx] [-ny ny] [-nz nz] [-epsil epsilon] [-kappa kappa] '
-    write(STDERR,'(A)') '              [-dx dx] [-dy dy] [-dz dz] [-ax ax] [-ay ay] [-az az]'
-    write(STDERR,'(A)') '              [-ptype ptype] (1=Gaussian, 2=Exponential, 3=von Karman]) {-seed seed_number}'
+    write(error_unit,'(A)') 'gen_rmed3d.x  [-o outfile] [-nx nx] [-ny ny] [-nz nz] [-epsil epsilon] [-kappa kappa] '
+    write(error_unit,'(A)') '              [-dx dx] [-dy dy] [-dz dz] [-ax ax] [-ay ay] [-az az]'
+    write(error_unit,'(A)') '              [-ptype ptype] (1=Gaussian, 2=Exponential, 3=von Karman]) {-seed seed_number}'
     stop
   end subroutine usage_exit
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -165,7 +166,7 @@ contains
     integer, intent(in) :: ierr
 
     if(ierr /= NF90_NOERR) then
-      write(STDERR,*) NF90_STRERROR(ierr)
+      write(error_unit,*) NF90_STRERROR(ierr)
       stop
     end if
 
