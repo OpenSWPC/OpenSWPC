@@ -17,6 +17,7 @@ module m_sac
     public :: csf__write   ! write concatenated sac format file
 
     type sac__hdr
+
         !! Sac Header Type Definition
 
         !                var name        description                   record#
@@ -195,8 +196,8 @@ contains
     
         !! Read SAC file
 
-        character(*), intent(in)    :: fn_sac  !! sac filename
-        type(sac__hdr), intent(out)   :: ss      !! header info
+        character(*), intent(in)                       :: fn_sac  !! sac filename
+        type(sac__hdr), intent(out)                    :: ss      !! header info
         real(sp), allocatable, optional, intent(inout) :: dat(:)  !! waveform data
         !--
         integer :: io
