@@ -26,7 +26,7 @@ module m_source
 
   !! public routines
   public :: source__setup
-  public :: source__stressdrop
+  public :: source__stressglut
   public :: source__bodyforce
 
   !! local variables
@@ -633,7 +633,7 @@ contains
   !! apply stress drop for source grids
   !<
   !!
-  subroutine source__stressdrop( it )
+  subroutine source__stressglut( it )
 
     integer, intent(in) :: it !< time grid number
 
@@ -650,7 +650,7 @@ contains
 
     if( bf_mode ) return
 
-    call pwatch__on("source__stressdrop")
+    call pwatch__on("source__stressglut")
 
     t = n2t( it, tbeg, dt )
 
@@ -672,9 +672,9 @@ contains
 
     end do
 
-    call pwatch__off("source__stressdrop")
+    call pwatch__off("source__stressglut")
 
-  end subroutine source__stressdrop
+  end subroutine source__stressglut
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 

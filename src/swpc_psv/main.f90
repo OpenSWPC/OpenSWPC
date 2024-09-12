@@ -109,7 +109,7 @@ program SWPC_PSV
     call kernel__update_stress()
 
     call absorb__update_stress()
-    call source__stressdrop(it)
+    call source__stressglut(it)
 
     call global__comm_stress()
 
