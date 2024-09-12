@@ -1,14 +1,11 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Generate differential snapfile from two inputs
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
+
 #include "../shared/m_debug.h"
 program diff_snp
 
-  !! -- Dependency
+    !! Generate differential snapfile from two inputs
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+
     use iso_fortran_env, only: error_unit
     use m_std
     use m_system
@@ -18,7 +15,6 @@ program diff_snp
     use m_version
     use netcdf
 
-  !! -- Declarations
     implicit none
 
     character(256)        :: fn_in1, fn_in2, fn_out
@@ -32,11 +28,8 @@ program diff_snp
     logical               :: is_exist
     integer, allocatable :: vid(:)
     real(SP), allocatable :: amp1(:, :), amp2(:, :)
-    !--
 
-  !!
-  !! Open input files
-  !!
+    !! Open input files
     call system__getarg(1, fn_in1)
     if (trim(fn_in1) == '-v' .or. trim(fn_in1) == '--version') call version__display('diff_snp')
     call system__getarg(2, fn_in2)
@@ -47,15 +40,11 @@ program diff_snp
     call fdsnap__open(fn_in2, io_in2, is_exist, snp_type)
     if (.not. is_exist) stop
 
-  !!
-  !! Read Header Part
-  !!
+    !! Read Header Part
     call fdsnap__readhdr(fn_in1, io_in1, snp_type, hdr_in1)
     call fdsnap__readhdr(fn_in2, io_in2, snp_type, hdr_in2)
 
-  !!
-  !! Check size consistency
-  !!
+    !! Check size consistency
     call fdsnap__checkhdr(error_unit, hdr_in1)
     call fdsnap__checkhdr(error_unit, hdr_in2)
 
@@ -65,16 +54,14 @@ program diff_snp
 
     allocate (amp1(nx, ny), amp2(nx, ny))
 
-  !!
-  !! diff file
-  !!
+    !! diff file
     if (snp_type == 'netcdf') then
 
-    !! file generation by a simple copy, then modify in what follows
+        !! file generation by a simple copy, then modify in what follows
         call system__call('/bin/cp '//trim(fn_in1)//' '//trim(fn_out))
         call nc_chk(nf90_open(fn_out, NF90_WRITE, io_out))
 
-    !! date & time
+        !! date & time
         call nc_chk(nf90_put_att(io_out, NF90_GLOBAL, 'exedate', hdr_out%exedate))
         call nc_chk(nf90_inquire_dimension(io_in1, 3, vname, nt))
 
@@ -106,7 +93,7 @@ program diff_snp
         call daytim__getdate(hdr_out%exedate)
         call fdsnap__writehdr(io_out, hdr_out)
 
-    !! medium info
+        !! medium info
         do i = 1, hdr_in1%nmed
             read (io_in1) amp1
             read (io_in2) amp2
@@ -129,29 +116,19 @@ program diff_snp
 
 contains
 
-  !! ----------------------------------------------------------------------- !!
     subroutine close_exit()
         close (io_in1)
         close (io_in2)
         close (io_out)
         stop
     end subroutine close_exit
-  !! ----------------------------------------------------------------------- !!
 
-  !! ----------------------------------------------------------------------- !!
-    !>
-  !! An internal subroutine to check error in netcdf function calls
-    !<
-  !! --
     subroutine nc_chk(ierr)
 
         integer, intent(in) :: ierr
-    !! --
 
         if (ierr /= NF90_NOERR) write (error_unit, *) NF90_STRERROR(ierr)
 
     end subroutine nc_chk
-  !! ----------------------------------------------------------------------- !!
 
 end program diff_snp
-!! ------------------------------------------------------------------------- !!

@@ -1,10 +1,9 @@
-!!
-!! waveform output
-!!
-!!   Copyright 2024 Takuto Maeda. All rights reseaved. This project is released under the MIT license.
-!!
 #include "../shared/m_debug.h"
 module m_wav
+
+    !! waveform output
+    !!
+    !! Copyright 2024 Takuto Maeda. All rights reseaved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -52,10 +51,8 @@ contains
     subroutine wav__setup(io_prm)
 
         integer, intent(in) :: io_prm
-        !! --
         character(245) :: fn_stloc
         character(2) :: st_format
-        !! ----
 
         call pwatch__on('wav__setup')
 
@@ -125,11 +122,9 @@ contains
     subroutine wav__store(it)
 
         integer, intent(in) :: it
-        !! --
         integer :: n, itw
         real(MP) :: dxVy, dzVy
         integer :: i, k
-        !! ----
 
         call pwatch__on("wav__store")
         if (nst == 0) then
@@ -237,7 +232,6 @@ contains
 
         integer :: i, j
         character(6) :: cid
-        !! ----
 
         call pwatch__on("wav__write")
 
@@ -291,7 +285,6 @@ contains
 
         character(*), intent(in) :: fn_stloc
         character(*), intent(in) :: st_format
-        !! --
         integer :: io_stlst
         integer :: err
         integer :: nst_g
@@ -301,7 +294,6 @@ contains
         character(3) :: zsw_g
         character(8) :: stnm_g
         real(SP) :: rdum
-        !! ----
 
         open (newunit=io_stlst, file=trim(fn_stloc), action='read', status='old', iostat=err)
 
@@ -417,7 +409,6 @@ contains
 
         integer :: i, j
         real :: mag
-        !! ----
 
         mag = moment_magnitude(M0)
 
@@ -470,7 +461,6 @@ contains
         real, intent(in) :: stlo0, stla0, xst0, zst0, mag0
         logical, save :: first_call = .true.
         type(sac__hdr), save :: sh0
-        !! ----
 
         if (first_call) then
             call sac__init(sh0)
@@ -523,10 +513,8 @@ contains
     subroutine export_wav__sac(sh, dat)
 
         type(sac__hdr), intent(in) :: sh
-        !! --
         real(SP), intent(in) :: dat(:)
         character(256) :: fn
-        !! ----
 
         fn = trim(odir)//'/wav/'//trim(title)//'.'//trim(sh%kstnm)//'.'//trim(sh%kcmpnm)//'.sac'
         call sac__write(fn, sh, dat, .true.)
@@ -538,10 +526,8 @@ contains
         integer, intent(in) :: nst1, ncmp
         type(sac__hdr), intent(in) :: sh(ncmp, nst1)
         real(SP), intent(in) :: dat(ntw, ncmp, nst1)
-        !! --
         character(5) :: cid
         character(256) :: fn
-        !! ----
 
         write (cid, '(I5.5)') myid
         fn = trim(odir)//'/wav/'//trim(title)//'__'//cid//'__.csf'

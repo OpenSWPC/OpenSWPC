@@ -1,5 +1,5 @@
 #include "../shared/m_debug.h"
-module m_output
+module m_snap
 
     !! Snapshot output
     !!
@@ -2028,5 +2028,5 @@ contains
 
     end subroutine nc_chk
 
-end module m_output
+end module m_snap
 

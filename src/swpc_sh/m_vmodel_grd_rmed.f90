@@ -1,12 +1,9 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! User-routines for defining velocity/attenuation structure: Layered medium input
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
 #include "../shared/m_debug.h"
 module m_vmodel_grd_rmed
+
+    !! grid data + random media
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -26,14 +23,10 @@ module m_vmodel_grd_rmed
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Define meidum velocity, density and attenuation
-    !<
-  !! ----
     subroutine vmodel_grd_rmed(io_prm, i0, i1, k0, k1, xc, zc, vcut, rho, lam, mu, Qp, Qs, bd)
 
-    !! -- Arguments
+        !! Define meidum velocity, density and attenuation
+
         integer, intent(in)  :: io_prm
         integer, intent(in)  :: i0, i1                  !< i-region
         integer, intent(in)  :: k0, k1                  !< k-region
@@ -46,7 +39,6 @@ contains
         real(SP), intent(out) :: qp(k0:k1, i0:i1)    !< P-wave attenuation
         real(SP), intent(out) :: qs(k0:k1, i0:i1)    !< S-wave attenuation
         real(SP), intent(out) :: bd(i0:i1, 0:NBD)    !< Boundary depths
-    !! --
 
         character(256) :: fn_grdlst, dir_grd
         logical :: is_ocean
@@ -80,7 +72,6 @@ contains
         character(80) :: xname, yname, zname
         logical :: earth_flattening
         real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening
-    !! ----
 
         call readini(io_prm, 'fn_grdlst_rmed', fn_grdlst, '')
         call readini(io_prm, 'is_ocean', is_ocean, .true.)
@@ -110,11 +101,10 @@ contains
         is_vmin_under = .false.
         is_rhomin_under = .false.
 
-    !! first initialize with air/ocean
-    !!
+        !! first initialize with air/ocean
         do i = i0, i1
 
-      !! filled by air
+            !! filled by air
             do k = k0, k1
 
                 vp0 = 0.0
@@ -131,7 +121,7 @@ contains
 
             end do
 
-      !! filled by ocean, if required
+            !! filled by ocean, if required
             if (is_ocean) then
                 do k = k0, k1
 
@@ -154,16 +144,12 @@ contains
 
         end do
 
-    !!
-    !! Grid locations in geographic coordinate
-    !!
+        !! Grid locations in geographic coordinate
         do i = i0, i1
             call geomap__c2g(xc(i), 0.0, clon, clat, phi, glon(i), glat(i))
         end do
 
-    !!
-    !! layer list file
-    !!
+        !! layer list file
         open (newunit=iolst, file=trim(fn_grdlst), action='read', status='old')
         call std__countline(iolst, ngrd, '#')
         allocate (fn_grd(ngrd))
@@ -175,9 +161,7 @@ contains
             call assert(0 <= reflyr(n) .and. reflyr(n) <= ngrd)
         end do
 
-    !!
-    !! random media
-    !!
+        !! random media
         allocate (tbl_rmed(ngrd), fn_rmed2(ngrd))
         call independent_list(ngrd, fn_rmed, n_rmed, tbl_rmed, fn_rmed2)
 
@@ -191,7 +175,7 @@ contains
             end if
         end do
 
-    !! cut-off velocity: filled by medium velocity of the deeper layer
+        !! cut-off velocity: filled by medium velocity of the deeper layer
         do n = ngrd - 1, 1, -1
             if ((vp1(n) < vcut .or. vs1(n) < vcut) .and. (vp1(n) > 0 .and. vs1(n) > 0)) then
                 vp1(n) = vp1(n + 1)
@@ -202,31 +186,30 @@ contains
             end if
         end do
 
-    !! bicubic data
+        !! bicubic data
         allocate (bcd(ngrd))
 
         allocate (kgrd(0:ngrd, i0:i1))
         kgrd(0, i0:i1) = k0 - 1
 
         ktopo = z2k(0.0 - real(dz) / 2, zbeg, real(dz))
-    !!
-    !! read file and interpolate
-    !!
+
+        !! read file and interpolate
         do n = 1, ngrd
 
-      !! netcdf file
+            !! netcdf file
             call assert(nf90_open(trim(fn_grd(n)), NF90_NOWRITE, ncid) == NF90_NOERR)
             call assert(nf90_inquire(ncid, ndim, nvar) == NF90_NOERR)
             call assert(ndim == 2)  !! assume 2D netcdf file
             nvar = nvar - 2 !! first two variables should be x(lon) and y(lat)
 
-      !! size
+            !! size
             call assert(nf90_inquire_dimension(ncid, 1, len=nlon) == NF90_NOERR)
             call assert(nf90_inquire_dimension(ncid, 2, len=nlat) == NF90_NOERR)
             allocate (lon(nlon), lat(nlat))
             allocate (grddep(nlon, nlat))
 
-      !! read
+            !! read
             call assert(nf90_inquire_variable(ncid, 1, xname) == NF90_NOERR)
             call assert(nf90_inquire_variable(ncid, 2, yname) == NF90_NOERR)
             call assert(nf90_inquire_variable(ncid, 3, zname) == NF90_NOERR)
@@ -257,8 +240,8 @@ contains
 
                 kgrd(n, i) = max(z2k(zgrd - real(dz) / 2, zbeg, real(dz)), kgrd(n - 1, i))
 
-        !! seafloor correction: (sea column thickness)>=2
-        !! the following condition is always false for is_flatten=.true.
+                !! seafloor correction: (sea column thickness)>=2
+                !! the following condition is always false for is_flatten=.true.
                 if (n == 1 .and. zgrd > 0) kgrd(n, i) = max(ktopo + 2, kgrd(n, i))
 
                 ! memorize specified discontinuity depth (such as plate boundary)
@@ -271,16 +254,14 @@ contains
             deallocate (lon, lat, grddep)
         end do
 
-    !!
-    !! set medium
-    !!
+        !! set medium
         do i = i0, i1
             do n = 1, ngrd
 
                 do k = kgrd(n, i) + 1, k1
 
                     kk = k - kgrd(reflyr(n), i) + 1 !< relative depth index
-          !! cyclic condition
+                    !! cyclic condition
                     if (kk < k0) kk = kk + nz
                     if (kk > k1) kk = kk - k1
 
@@ -289,7 +270,8 @@ contains
                     rho2 = Cv(k)**(-5) * rho1(n) * (1.0 + 0.8 * xi(kk, i, tbl_rmed(n)))
 
                     if (vp1(n) > 0 .and. vs1(n) > 0) then
-               call vcheck(vp2, vs2, rho2, xi(kk, i, tbl_rmed(n)), vmin, vmax, rhomin, is_vmin_under, is_vmax_over, is_rhomin_under)
+                        call vcheck(vp2, vs2, rho2, xi(kk, i, tbl_rmed(n)), vmin, vmax, &
+                                    rhomin, is_vmin_under, is_vmax_over, is_rhomin_under)
                     end if
 
                     rho(k, i) = rho2
@@ -302,14 +284,12 @@ contains
             end do
         end do
 
-    !! notification for velocity torelance
+        !! notification for velocity torelance
         if (is_vmax_over) call info('Too high velocity due to random media was corrected. ')
         if (is_vmin_under) call info('Too low  velocity due to random media was corrected. ')
         if (is_rhomin_under) call info('Too low  density due to random media was corrected. ')
 
-    !!
-    !! terminate
-    !!
+        !! terminate
         deallocate (fn_grd)
         deallocate (rho1, vp1, vs1, qp1, qs1)
         deallocate (pid)

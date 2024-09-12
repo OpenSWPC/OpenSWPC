@@ -1,17 +1,16 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Convert waveforms of 2D simulation output into pseudo-3D
-!!
-!! Usage:
-!!   wvconv.x in.sac out.sac (V0)
-!!     in.sac: input SAC file (must be 2D simulation output)
-!!     out.sac: output SAC filename
-!!     V0 (optional): assumed average velocity in m/s unit. Default is 4000 m/s
-!!
-!! Copyright 2021-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! --
 program wvconv
+
+    !! Convert waveforms of 2D simulation output into pseudo-3D
+    !!
+    !! #### Usage
+    !! ```Fortran
+    !!   wvconv.x in.sac out.sac (V0)
+    !! ```
+    !! -  in.sac: input SAC file (must be 2D simulation output)
+    !! -  out.sac: output SAC filename
+    !! -  V0 (optional): assumed average velocity in m/s unit. Default is 4000 m/s
+    !!
+    !! Copyright 2021-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -35,7 +34,6 @@ program wvconv
     integer :: p
     character(10) :: adum
     logical :: is_opt1, is_opt2
-    !! ----
 
     call getopt('v', is_opt1)
     call getopt('-version', is_opt2)
@@ -80,4 +78,3 @@ program wvconv
     call sac__write(fn_out, sh, dat_sac, .true.)
 
 end program wvconv
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

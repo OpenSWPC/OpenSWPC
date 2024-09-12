@@ -1,12 +1,10 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Generate random velocity flucuation model in 2D space
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! --
+
 #include "../shared/m_debug.h"
 program gen_rmed2d
+
+    !! Generate random velocity flucuation model in 2D space
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -32,15 +30,12 @@ program gen_rmed2d
     logical :: is_seed
     character(256) :: fn_out
     logical :: is_opt1, is_opt2
-  !! ----
 
     call getopt('v', is_opt1)
     call getopt('-version', is_opt2)
     if (is_opt1 .or. is_opt2) call version__display('gen_rmed2d')
 
-  !! ---
-
-  !! option processing
+    !! option processing
     call getopt('nx', is_opt, nx); if (.not. is_opt) call usage_exit
     call getopt('nz', is_opt, nz); if (.not. is_opt) call usage_exit
     call getopt('dx', is_opt, dx); if (.not. is_opt) call usage_exit
@@ -69,23 +64,20 @@ program gen_rmed2d
 
     allocate (med(1:nnx, 1:nnz), xx(nnx), zz(nnz))
 
-  !! generate random media (x<->z exchanged)
+    !! generate random media (x<->z exchanged)
     if (is_seed) then
         call rmedia__2dgen_ani(ptype, nnx, nnz, dx, dz, ax, az, epsil, kappa, xx, zz, med, seed)
     else
         call rmedia__2dgen_ani(ptype, nnx, nnz, dx, dz, ax, az, epsil, kappa, xx, zz, med)
     end if
 
-  !!
-  !! data export
-  !!
+    !! data export
     call export_netcdf()
 
     deallocate (xx, zz, med)
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine export_netcdf()
 
         integer :: ncid
@@ -132,9 +124,7 @@ contains
         call nc_chk(nf90_close(ncid))
 
     end subroutine export_netcdf
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine usage_exit()
 
         write (error_unit, '(A)') 'gen_rmed2d.x [-nx nx] [-nz nz] [-dx dx] [-dz dz] [-o outfile]'
@@ -142,9 +132,7 @@ contains
         write (error_unit, '(A)') '             [-ptype ptype] (1=Gaussian, 2=Exponential, 3=von Karman]) {-seed seed_number}'
         stop
     end subroutine usage_exit
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine nc_chk(ierr)
 
         integer, intent(in) :: ierr
@@ -155,7 +143,5 @@ contains
         end if
 
     end subroutine nc_chk
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end program gen_rmed2d
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

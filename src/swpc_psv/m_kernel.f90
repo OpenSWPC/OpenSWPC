@@ -1,37 +1,29 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Computation kernel for FDM numerical simulation
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
 #include "../shared/m_debug.h"
 module m_kernel
 
-  !! -- Dependency
+    !! Computation kernel for FDM numerical simulation
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+
     use iso_fortran_env, only: error_unit
     use m_std
     use m_debug
     use m_global
     use m_pwatch
     use m_medium
-  !! -- Declarations
     implicit none
     private
     save
 
-  !! -- Public procedures
     public :: kernel__setup
     public :: kernel__update_vel
     public :: kernel__update_stress
     public :: kernel__vmax
 
-  !! -- Parameters
     real(MP), parameter   :: C20 = 1.0_MP
     real(MP), parameter   :: C40 = 9.0_MP / 8.0_MP
     real(MP), parameter   :: C41 = 1.0_MP / 24.0_MP
 
-  !! --
     real(MP)              :: r40x, r40z
     real(MP)              :: r41x, r41z
     real(MP)              :: r20x, r20z
@@ -39,20 +31,14 @@ module m_kernel
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Setup
-  !!
-  !! @detail
-  !! this routine MUST BE CALLED AFTER medium__setup since it uses viscoelastic function
-  !! use ts(:) array, dx, dy, dz from global module
-    !<
-  !! ----
     subroutine kernel__setup()
 
-        integer :: m
+        !! Setup
+        !!
+        !! this routine MUST BE CALLED AFTER medium__setup since it uses viscoelastic function
+        !! use ts(:) array, dx, dy, dz from global module
 
-    !! ----
+        integer :: m
 
         call pwatch__on("kernel__setup")
 
@@ -82,19 +68,14 @@ contains
         call pwatch__off("kernel__setup")
 
     end subroutine kernel__setup
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Update vel for one time step
-    !<
-  !! ----
     subroutine kernel__update_vel()
+
+        !! Update vel for one time step
 
         integer :: i, k
         real(SP) :: bx, bz ! buoyancy
         real(MP) :: dxSxx(kbeg:kend), dxSxz(kbeg:kend), dzSxz(kbeg:kend), dzSzz(kbeg:kend)
-    !! ----
 
         call pwatch__on("kernel__update_vel")
 
@@ -106,7 +87,7 @@ contains
         !$omp schedule(static,1)
         do i = ibeg_k, iend_k
 
-      !! derivateives
+            !! derivateives
             do k = kbeg_k, kend_k
                 dxSxx(k) = (Sxx(k, i + 1) - Sxx(k, i)) * r40x - (Sxx(k, i + 2) - Sxx(k, i - 1)) * r41x
                 dzSzz(k) = (Szz(k + 1, i) - Szz(k, i)) * r40z - (Szz(k + 2, i) - Szz(k - 1, i)) * r41z
@@ -114,7 +95,7 @@ contains
                 dzSxz(k) = (Sxz(k, i) - Sxz(k - 1, i)) * r40z - (Sxz(k + 1, i) - Sxz(k - 2, i)) * r41z
             end do
 
-      !! surfaces
+            !! surfaces
             do k = kfs_top(i), kfs_bot(i)
                 dxSxx(k) = (Sxx(k, i + 1) - Sxx(k, i)) * r20x
                 dzSzz(k) = (Szz(k + 1, i) - Szz(k, i)) * r20z
@@ -129,17 +110,17 @@ contains
                 dzSxz(k) = (Sxz(k, i) - Sxz(k - 1, i)) * r20z
             end do
 
-      !! top
+            !! top
             dzSzz(1) = (Szz(2, i) - Szz(1, i)) * r20z
             dzSxz(1) = (Sxz(1, i) - 0.0) * r20z
             dzSxz(2) = (Sxz(2, i) - Sxz(1, i)) * r20z
 
-      !! bottom
+            !! bottom
             dzSzz(nz - 1) = (Szz(nz, i) - Szz(nz - 1, i)) * r20z
             dzSzz(nz) = (0.0 - Szz(nz, i)) * r20z
             dzSxz(nz) = (Sxz(nz, i) - Sxz(nz - 1, i)) * r20z
 
-      !! i-boundary
+            !! i-boundary
             if (i == 1) then
                 do k = kbeg_k, kend_k
                     dxSxx(k) = (Sxx(k, 2) - Sxx(k, 1)) * r20x
@@ -160,21 +141,14 @@ contains
                 end do
             end if
 
-      !!
-      !! update velocity
-      !!
+            !! update velocity
             do k = kbeg_k, kend_k
 
-        !!
-        !! effective buoyancy
-        !!
-
+                !! effective buoyancy
                 bx = 2.0 / (rho(k, i) + rho(k, i + 1))
                 bz = 2.0 / (rho(k, i) + rho(k + 1, i))
 
-        !!
-        !! update velocity
-        !!
+                !! update velocity
                 Vx(k, i) = Vx(k, i) + bx * (dxSxx(k) + dzSxz(k)) * dt
                 Vz(k, i) = Vz(k, i) + bz * (dxSxz(k) + dzSzz(k)) * dt
 
@@ -188,16 +162,10 @@ contains
         call pwatch__off("kernel__update_vel")
 
     end subroutine kernel__update_vel
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Update stress for one time step
-  !!
-    !<
-  !! ----
 
     subroutine kernel__update_stress()
+
+        !! Update stress for one time step
 
         integer :: i, k, m
         real(SP) :: mu2, lam2mu
@@ -210,7 +178,6 @@ contains
         real(SP) :: f_Rxx, f_Rzz, f_Rxz
         real(SP) :: epsl = epsilon(1.0)
         real(MP) :: dxVx(kbeg:kend), dxVz(kbeg:kend), dzVx(kbeg:kend), dzVz(kbeg:kend)
-    !! ----
 
         call pwatch__on("kernel__update_stress")
 
@@ -226,9 +193,7 @@ contains
         !$omp schedule(static,1)
         do i = ibeg_k, iend_k
 
-      !!
-      !! Derivatives
-      !!
+            !! Derivatives
             do k = kbeg_k, kend_k
 
                 dxVx(k) = (Vx(k, i) - Vx(k, i - 1)) * r40x - (Vx(k, i + 1) - Vx(k, i - 2)) * r41x
@@ -238,7 +203,7 @@ contains
 
             end do
 
-      !! free surface
+            !! free surface
             do k = kfs_top(i), kfs_bot(i)
 
                 dxVx(k) = (Vx(k, i) - Vx(k, i - 1)) * r20x
@@ -248,7 +213,7 @@ contains
 
             end do
 
-      !! seafloor
+            !! seafloor
             do k = kob_top(i), kob_bot(i)
 
                 dxVx(k) = (Vx(k, i) - Vx(k, i - 1)) * r20x
@@ -258,23 +223,19 @@ contains
 
             end do
 
-      !!
-      !! vertical edge
-      !!
+            !! vertical edge
 
-      !! top
+            !! top
             dzVx(1) = (Vx(2, i) - Vx(1, i)) * r20z
             dzVz(1) = (Vz(1, i) - 0.0) * r20z
             dzVz(2) = (Vz(2, i) - Vz(1, i)) * r20z
 
-      !! bottom
+            !! bottom
             dzVx(nz - 1) = (Vx(nz, i) - Vx(nz - 1, i)) * r20z
             dzVx(nz) = (0.0 - Vx(nz, i)) * r20z
             dzVz(nz) = (Vz(nz, i) - Vz(nz - 1, i)) * r20z
 
-      !!
-      !! i-edge
-      !!
+            !! i-edge
             if (i == 1) then
                 do k = kbeg_k, kend_k
                     dxVx(k) = (Vx(k, i) - 0.0) * r20x
@@ -297,18 +258,11 @@ contains
 
             do k = kbeg_k, kend_k
 
-        !!
-        !! medium copy
-        !!
                 mu2 = 2 * mu(k, i)
                 lam2mu = lam(k, i) + mu2
 
                 taup1 = taup(k, i)
                 taus1 = taus(k, i)
-
-        !!
-        !! effective rigidity for shear stress components
-        !!
 
                 nnn = mu(k, i)
                 pnn = mu(k + 1, i)
@@ -316,11 +270,6 @@ contains
                 ppn = mu(k + 1, i + 1)
                 mu_xz = 4 * nnn * pnn * npn * ppn / (nnn * pnn * npn + nnn * pnn * ppn + nnn * npn * ppn + pnn * npn * ppn + epsl)
 
-        !!
-        !! update memory variables
-        !!
-
-        !! working variables for combinations of velocity derivatives
                 d2v2 = dxVx(k) + dzVz(k)
                 dxVx_dzVz = dxVx(k) + dzVz(k)
                 dxVz_dzVx = dxVz(k) + dzVx(k)
@@ -335,28 +284,27 @@ contains
                 Rxx_n = 0.0
                 Rzz_n = 0.0
                 Rxz_n = 0.0
+
                 if (nm > 0) then
-          !! previous memory variables
+                    !! previous memory variables
                     Rxx_o = sum(Rxx(1:nm, k, i))
                     Rzz_o = sum(Rzz(1:nm, k, i))
                     Rxz_o = sum(Rxz(1:nm, k, i))
 
-          !! Crank-Nicolson Method for avoiding stiff solution
+                    !! Crank-Nicolson Method for avoiding stiff solution
                     do m = 1, nm
                         Rxx(m, k, i) = c1(m) * Rxx(m, k, i) - c2(m) * f_Rxx * dt
                         Rzz(m, k, i) = c1(m) * Rzz(m, k, i) - c2(m) * f_Rzz * dt
                         Rxz(m, k, i) = c1(m) * Rxz(m, k, i) - c2(m) * f_Rxz * dt
                     end do
 
-          !! new memory variables
+                    !! new memory variables
                     Rxx_n = sum(Rxx(1:nm, k, i))
                     Rzz_n = sum(Rzz(1:nm, k, i))
                     Rxz_n = sum(Rxz(1:nm, k, i))
                 end if
 
-        !!
-        !! update stress components
-        !!
+                !! update stress components
                 taup_plus1 = 1 + taup1
                 taus_plus1 = 1 + taus1
 
@@ -373,14 +321,10 @@ contains
         call pwatch__off("kernel__update_stress")
 
     end subroutine kernel__update_stress
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! maximum value for terminal output
-    !<
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine kernel__vmax(xmax, zmax)
+
+        !! maximum value for terminal output
         real(SP), intent(out) :: xmax, zmax
         integer :: i
 
@@ -392,13 +336,11 @@ contains
         end do
 
     end subroutine kernel__vmax
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine memory_allocate
-    !!
-    !! memory allocation
-    !!
+
+        !! memory allocation
+
         allocate (Vx(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
         allocate (Vz(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
         allocate (Sxx(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
@@ -413,7 +355,5 @@ contains
         end if
 
     end subroutine memory_allocate
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_kernel
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

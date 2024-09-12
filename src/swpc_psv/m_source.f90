@@ -1,14 +1,10 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! seismic source radiation
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! --
 #include "../shared/m_debug.h"
 module m_source
 
-  !! dependency
+    !! Seismic source radiation
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+
     use iso_fortran_env, only: error_unit
     use m_std
     use m_debug
@@ -19,23 +15,20 @@ module m_source
     use m_geomap
     use mpi
 
-  !! declarations
     implicit none
     private
     save
 
-  !! public routines
     public :: source__setup
     public :: source__stressglut
     public :: source__bodyforce
 
-  !! local variables
     character(16)         :: stftype                          !< type of source time function: used in u_source
     integer               :: nsrc                             !< source grid number inside the node
     integer               :: n_stfprm                         !< number of parameters for moment-rate function
-    real(SP), allocatable :: srcprm(:, :)                      !< control paramater for moment-rate function at grids
+    real(SP), allocatable :: srcprm(:, :)                     !< control paramater for moment-rate function at grids
     real(SP), allocatable :: sx(:), sz(:)                     !< source location in distance scale
-    integer, allocatable :: isrc(:), ksrc(:)                 !< source grid location voxel
+    integer, allocatable :: isrc(:), ksrc(:)                  !< source grid location voxel
     real(MP), allocatable :: mxx(:), mzz(:), mxz(:)           !< moment rate
     real(MP), allocatable :: fx(:), fz(:)
     real(MP), allocatable :: mo(:)                            !< moment at grids
@@ -45,19 +38,14 @@ module m_source
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! set up module
-  !!
-  !! @detail
-  !! read source grid from user-module u_source, and allocates memory for source grid and time-related parameters
-  !! also pre-calculate common variables for stress drop source
-  !!
-    !<
     subroutine source__setup(io_prm)
 
+        !! set up module
+        !!
+        !! read source grid from user-module u_source, and allocates memory for source grid and time-related parameters
+        !! also pre-calculate common variables for stress glut source
+
         integer, intent(in) :: io_prm
-    !! ----
 
         integer :: nn, i, k
         integer :: nsrc_g
@@ -72,13 +60,10 @@ contains
         integer :: io
         character(3) :: sdep0
         character :: sdep1
-    !! ----
 
         call pwatch__on("source__setup")
 
-    !!
-    !! plane wave mode
-    !!
+        !! plane wave mode
         call readini(io_prm, 'pw_mode', pw_mode, .false.)
         if (pw_mode) then
             if (.not. benchmark_mode) then !! neglect pw_mode for benchmark
@@ -90,12 +75,10 @@ contains
             end if
         end if
 
-    !! body-force mode?
+        !! body-force mode?
         call readini(io_prm, 'bf_mode', bf_mode, .false.)
 
-    !!
-    !! obtain number of source grid points and number of parameters for specifying soruce time functions
-    !!
+        !! obtain number of source grid points and number of parameters for specifying soruce time functions
         call readini(io_prm, 'fn_stf', fn_stf, '')
         call readini(io_prm, 'stftype', stftype, 'kupper')
         call readini(io_prm, 'stf_format', stf_format, 'xym0ij')
@@ -105,7 +88,7 @@ contains
 
         if (trim(adjustl(stftype)) == 'scosine') stftype = 'cosine'  !! backward compatibility
 
-    !! n_stfprm may be changed for future extension.
+        !! n_stfprm may be changed for future extension.
         select case (trim(stftype))
         case ('boxcar'); n_stfprm = 2
         case ('triangle'); n_stfprm = 2
@@ -115,7 +98,7 @@ contains
         case ('texp'); n_stfprm = 2
         end select
 
-    !! fixed source parameter for benchmarking: no source grid file used
+        !! fixed source parameter for benchmarking: no source grid file used
         if (benchmark_mode) then
             nsrc_g = 1
             stftype = 'kupper'
@@ -123,15 +106,13 @@ contains
             bf_mode = .false.
         else
 
-      !! count source-grid file
+            !! count source-grid file
             open (newunit=io, file=trim(fn_stf), action='read', status='old')
             call std__countline(io, nsrc_g, "#")  ! exclude comment line which start by "#"
             close (io)
         end if
 
-    !!
-    !! temporal memory allocation
-    !!
+        !! temporal memory allocation
         allocate (is_g(nsrc_g), ks_g(nsrc_g))
         allocate (srcprm_g(n_stfprm, nsrc_g))
         allocate (sx_g(nsrc_g), sz_g(nsrc_g))
@@ -144,7 +125,8 @@ contains
         else
 
             allocate (mo_g(nsrc_g), mxx_g(nsrc_g), mzz_g(nsrc_g), mxz_g(nsrc_g))
-      !! fixed source parameter for benchmarking
+
+            !! fixed source parameter for benchmarking
             if (benchmark_mode) then
                 sx_g(1) = 0.0
                 sz_g(1) = 5.0
@@ -157,9 +139,7 @@ contains
 
             else
 
-        !!
-        !! request all source grid information ( from user-defined routine )
-        !!
+                !! request all source grid information ( from user-defined routine )
                 call source__grid_moment(fn_stf, stf_format, nsrc_g, n_stfprm, &
                                          sx_g, sz_g, mo_g, mxx_g, mzz_g, mxz_g, srcprm_g)
 
@@ -176,30 +156,29 @@ contains
         ! count up all moment / body force
         if (bf_mode) then
             M0 = sqrt(sum(fx_g(1:nsrc_g)**2 + fz_g(1:nsrc_g)**2))
-      !! unit conversion for body wave source
+            !! unit conversion for body wave source
             UC = UC * 10**3
         else
             M0 = sum(mo_g(1:nsrc_g))
         end if
 
-    !! check cut-off frequency
-    !! currently assumes srcprm(2,:) indicates rise time
+        !! check cut-off frequency
+        !! currently assumes srcprm(2,:) indicates rise time
         fcut = 0.
         do i = 1, nsrc_g
             fcut = max(fcut, 1 / srcprm_g(2, i))
         end do
         fmax = 2 * fcut
 
-    !!
-    !! check if the soruce grid is located inside the node
-    !!
+        !! check if the soruce grid is located inside the node
         nsrc = 0
         do i = 1, nsrc_g
 
             is_g(i) = x2i(sx_g(i), xbeg, real(dx))
             ks_g(i) = z2k(sz_g(i), zbeg, real(dz))
 
-      !! Count-up source grid *including sleeve area* so that it works even if the source grid is near MPI node boundary
+            !! Count-up source grid *including sleeve area*
+            !! so that it works even if the source grid is near MPI node boundary
             if (ibeg - 2 <= is_g(i) .and. is_g(i) <= iend + 3 .and. &
                 kbeg - 2 <= ks_g(i) .and. ks_g(i) <= kend + 3) then
 
@@ -210,9 +189,7 @@ contains
             end if
         end do
 
-    !!
-    !! memory allocation for source grids inside the node
-    !!
+        !! memory allocation for source grids inside the node
         allocate (sx(nsrc), sz(nsrc))
         allocate (isrc(nsrc), ksrc(nsrc))
         allocate (srcprm(n_stfprm, nsrc))
@@ -223,9 +200,7 @@ contains
             allocate (mo(nsrc), mxx(nsrc), mzz(nsrc), mxz(nsrc))
         end if
 
-    !!
-    !! copy source grid information for the current node
-    !!
+        !! copy source grid information for the current node
         nn = 0
         do i = 1, nsrc_g
             if (inside(i)) then
@@ -249,8 +224,7 @@ contains
 
                 srcprm(:, nn) = srcprm_g(:, i)
 
-        !! depth fitting
-
+                !! depth fitting
                 do k = 0, NBD
                     write (sdep1, '(I1.1)') k
                     sdep0 = 'bd'//sdep1
@@ -264,17 +238,13 @@ contains
             end if
         end do
 
-    !!
-    !! Confirm that FDM model space contains the srouce grid location
-    !!
+        !! Confirm that FDM model space contains the srouce grid location
         do i = 1, nsrc
             call assert(xbeg <= sx(i) .and. sx(i) <= xend)
             call assert(zbeg <= sz(i) .and. sz(i) <= zend)
         end do
 
-    !!
-    !! release memroy
-    !!
+        !! release memroy
         deallocate (sx_g, sz_g)
         deallocate (is_g, ks_g)
         deallocate (inside)
@@ -285,10 +255,8 @@ contains
             deallocate (mo_g)
         end if
 
-    !!
-    !! Normalization for numerical stability
-    !! Total moment M0 will again be multiplied when export the result
-    !!
+        !! Normalization for numerical stability
+        !! Total moment M0 will again be multiplied when export the result
         if (bf_mode) then
             fx(1:nsrc) = fx(1:nsrc) / M0
             fz(1:nsrc) = fz(1:nsrc) / M0
@@ -296,30 +264,24 @@ contains
             mo(1:nsrc) = mo(1:nsrc) / M0
         end if
 
-    !! common grid-related value for stress drip calculation
+        !! common grid-related value for stress drip calculation
         dt_dxz = dt / (dx * dz)
 
         call pwatch__off("source__setup")
 
     end subroutine source__setup
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! returns source grid location, moment and mechanism
-  !!
-  !! @detail
-  !! The source__grid subroutine should return
-  !!   - number of source grid ns
-  !!   - number of source control parameters ( e.g., rupture start time, rise time ... ) nprm
-  !!   - source location sx(ns), sy(ns), sz(ns) in the Cartesian coordinate
-  !!   - moment release at source grids mo(ns)
-  !!   - moment tensors mij(ns) (six components)
-  !!   - source control parameters sprm (nprm,ns)
-  !!
-    !<
-  !! ----
     subroutine source__grid_moment(fn_stf, stf_format, ns, nprm, sx, sz, mo, mxx, mzz, mxz, sprm)
+
+        !! returns source grid location, moment and mechanism
+        !!
+        !! The source__grid subroutine should return
+        !!   - number of source grid ns
+        !!   - number of source control parameters ( e.g., rupture start time, rise time ... ) nprm
+        !!   - source location sx(ns), sy(ns), sz(ns) in the Cartesian coordinate
+        !!   - moment release at source grids mo(ns)
+        !!   - moment tensors mij(ns) (six components)
+        !!   - source control parameters sprm (nprm,ns)
 
         character(*), intent(in) :: fn_stf
         character(*), intent(in) :: stf_format
@@ -359,7 +321,8 @@ contains
             select case (stf_format)
 
             case ('xym0ij')
-         read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1, i), sprm(2, i), mo(i), mxx(i), rdum1, mzz(i), rdum1, mxz(i), rdum2
+                read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1, i), sprm(2, i), &
+                    mo(i), mxx(i), rdum1, mzz(i), rdum1, mxz(i), rdum2
                 call assert(ierr == 0)
 
             case ('xym0dc')
@@ -372,7 +335,8 @@ contains
                 call sdr2moment(strike - phi, dip, rake, mxx(i), rdum1, mzz(i), rdum2, mxz(i), rdum3)
 
             case ('llm0ij')
-             read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1, i), sprm(2, i), mo(i), mxx(i), rdum1, mzz(i), rdum1, mxz(i), rdum2
+                read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1, i), sprm(2, i), &
+                    mo(i), mxx(i), rdum1, mzz(i), rdum1, mxz(i), rdum2
                 call assert(ierr == 0)
                 call assert(-360. <= lon .and. lon <= 360)
                 call assert(-90. <= lat .and. lat <= 90)
@@ -387,7 +351,8 @@ contains
                 call geomap__g2c(lon, lat, clon, clat, phi, sx(i), sy(i))
 
             case ('xymwij')
-            read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1, i), sprm(2, i), mw, mxx(i), rdum1, mzz(i), rdum2, mxz(i), rdum3
+                read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1, i), sprm(2, i), &
+                    mw, mxx(i), rdum1, mzz(i), rdum2, mxz(i), rdum3
                 call assert(ierr == 0)
                 call assert(mw <= 11.) !! magnitude
                 mo(i) = seismic_moment(mw)
@@ -499,7 +464,7 @@ contains
 
             end select
 
-      !! remember first record as hypocenter
+            !! remember first record as hypocenter
             if (i == 1) then
                 call geomap__c2g(sx(i), sy(i), clon, clat, phi, evlo, evla)
                 sx0 = sx(i)
@@ -526,24 +491,18 @@ contains
         end if
 
     end subroutine source__grid_moment
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! returns source grid location, moment and mechanism
-  !!
-  !! @detail
-  !! The source__grid subroutine should return
-  !!   - number of source grid ns
-  !!   - number of source control parameters ( e.g., rupture start time, rise time ... ) nprm
-  !!   - source location sx(ns), sy(ns), sz(ns) in the Cartesian coordinate
-  !!   - moment release at source grids mo(ns)
-  !!   - moment tensors mij(ns) (six components)
-  !!   - source control parameters sprm (nprm,ns)
-  !!
-    !<
-  !! ----
     subroutine source__grid_bodyforce(fn_stf, stf_format, ns, nprm, sx, sz, fx, fz, sprm)
+
+        !! returns source grid location, moment and mechanism
+        !!
+        !! The source__grid subroutine should return
+        !!   - number of source grid ns
+        !!   - number of source control parameters ( e.g., rupture start time, rise time ... ) nprm
+        !!   - source location sx(ns), sy(ns), sz(ns) in the Cartesian coordinate
+        !!   - moment release at source grids mo(ns)
+        !!   - moment tensors mij(ns) (six components)
+        !!   - source control parameters sprm (nprm,ns)
 
         character(*), intent(in) :: fn_stf
         character(*), intent(in) :: stf_format
@@ -559,7 +518,6 @@ contains
         integer :: ierr
         real(SP) :: rdum
         character(2) :: stf_coord
-    !! --
 
         open (newunit=io, file=trim(fn_stf), action='read', status='old')
         i = 0
@@ -593,7 +551,7 @@ contains
 
             end select
 
-      !! remember first record as hypocenter
+            !! remember first record as hypocenter
             if (i == 1) then
                 call geomap__c2g(sx(i), 0.0, clon, clat, phi, evlo, evla)
                 evdp = sz(i)
@@ -608,26 +566,18 @@ contains
         close (io)
 
     end subroutine source__grid_bodyforce
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! apply stress drop for source grids
-    !<
-  !!
     subroutine source__stressglut(it)
 
-        integer, intent(in) :: it !< time grid number
+        !! apply stress glut for source grids
 
-    !! ----
+        integer, intent(in) :: it !< time grid number
 
         real(SP) :: t
         integer  :: ii, kk
         real(MP) :: sdrop
         integer  :: i
         real(MP) :: stime
-
-    !! ----
 
         if (bf_mode) return
 
@@ -656,25 +606,17 @@ contains
         call pwatch__off("source__stressglut")
 
     end subroutine source__stressglut
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! apply body force for source grids
-    !<
-  !!
     subroutine source__bodyforce(it)
 
-        integer, intent(in) :: it !< time grid number
+        !! apply body force for source grids
 
-    !! ----
+        integer, intent(in) :: it !< time grid number
 
         real(SP) :: t
         integer  :: ii, kk
         integer  :: i
         real(MP) :: stime
-
-    !! ----
 
         if (.not. bf_mode) return
 
@@ -699,30 +641,18 @@ contains
         call pwatch__off("source__bodyforce")
 
     end subroutine source__bodyforce
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !!
-  !! user defined
-  !!
-
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! returns number of source grids
-    !<
-  !! ----
     real(SP) function source__momentrate(t, stftype, nprm, srcprm)
+
+        !! returns number of source grids
 
         real(SP), intent(in) :: t
         character(*), intent(in) :: stftype
         integer, intent(in) :: nprm
         real(SP), intent(in) :: srcprm(1:nprm)
 
-    !! ----
-
         real(SP) :: tbeg
         real(SP) :: trise
-
-    !! ----
 
         tbeg = srcprm(1)
         trise = srcprm(2)
@@ -738,9 +668,7 @@ contains
         end select
 
     end function source__momentrate
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine pw_setup(io_prm)
 
         integer, intent(in) :: io_prm
@@ -754,11 +682,8 @@ contains
         real(SP)  :: x0, z0, x1, z1, la0, mu0
         real(SP)  :: stf_ii, stf_vx, stf_vz, stf_xz
         integer   :: ierr
-    !! ----
 
-    !!
-    !! parameter input
-    !!
+        !! parameter input
         call readini(io_prm, 'pw_ztop', pw_ztop, 1e30)
         call assert(pw_ztop < zend)
 
@@ -800,7 +725,7 @@ contains
                     x1 = x0 + dx / 2.
                     z1 = z0 + dz / 2.
 
-          !! source time function evaluated along rotated zeta value at staggered grid points
+                    !! source time function evaluated along rotated zeta value at staggered grid points
                     stf_ii = source__momentrate(sd * sf * x0 + cd * z0, stftype, 2, (/0., pw_zlen/))
                     stf_vx = source__momentrate(sd * sf * x1 + cd * z0 + dt / 2.*vp, stftype, 2, (/0., pw_zlen/))
                     stf_vz = source__momentrate(sd * sf * x0 + cd * z1 + dt / 2.*vp, stftype, 2, (/0., pw_zlen/))
@@ -834,7 +759,7 @@ contains
                     la0 = lam(k, i)
                     mu0 = mu(k, i)
 
-          !! source time function evaluated along rotated zeta value at staggered grid points
+                    !! source time function evaluated along rotated zeta value at staggered grid points
                     stf_ii = source__momentrate(sd * sf * x0 + cd * z0, stftype, 2, (/0., pw_zlen/))
                     stf_vx = source__momentrate(sd * sf * x1 + cd * z0 + dt / 2.*vs, stftype, 2, (/0., pw_zlen/))
                     stf_vz = source__momentrate(sd * sf * x0 + cd * z1 + dt / 2.*vs, stftype, 2, (/0., pw_zlen/))
@@ -853,7 +778,7 @@ contains
             call assert(.false.)
         end if
 
-    !! wavelength condition
+        !! wavelength condition
         i = x2i((xbeg + xend) / 2, xbeg, real(dx))
         k = z2k(pw_ztop, zbeg, real(dz))
         fcut = 0
@@ -874,7 +799,5 @@ contains
         fmax = fcut * 2.0
 
     end subroutine pw_setup
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_source
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

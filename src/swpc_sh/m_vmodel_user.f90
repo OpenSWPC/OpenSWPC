@@ -1,11 +1,8 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! User-routine for defining velocity/attenuation structure
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
 module m_vmodel_user
+
+    !! User-routine for defining velocity/attenuation structure
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_global
@@ -20,36 +17,33 @@ module m_vmodel_user
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Define meidum velocity, density and attenuation
-  !!
-  !! This is a user-specific routine to define original veloicty model.
-  !!
-  !! Input:
-  !!    io_prm                          :: I/O number of parameter file (file has been opened already)
-  !!    i0,i1, j0,j1, k0,k1             :: model area by indices in i-,j-,and k- directions
-  !!    xc(i0:i1), yc(j0:j1), zc(k0:k1) :: Cartesian coordinate location
-  !!    vcut                            :: cut-off velocity specified by input parameter
-  !!
-  !! Output:
-  !!    rho(k0:k1, i0:i1, j0:j1)        :: mass density (usually in g/cm^3)
-  !!    lam(k0:k1, i0:i1, j0:j1)        :: Lame's parameter (usually in (g/cm^3) * (km/s)^2)
-  !!    mu (k0:k1, i0:i1, j0:j1)        :: Lame's parameter (usually in (g/cm^3) * (km/s)^2)
-  !!    qp (k0:k1, i0:i1, j0:j1)        :: Attenuation QP
-  !!    qs (k0:k1, i0:i1, j0:j1)        :: Attenuation QS
-  !!    bd (i0:i1, j0:j1, 0:NBD)        :: Boundary depths
-  !!
-  !! Note:
-  !! bd(:,:,0) are treated as topography shape for output.
-  !!    this is only for output and visualization. topography in the simulation will be automatically detected by medium params.
-  !! bd(:,:,1:NBD) may contain internal boundary depths. The boundary number can be specified as source depth or station depth.
-  !!
-    !<
-  !! ----
     subroutine vmodel_user(io_prm, i0, i1, k0, k1, xc, zc, vcut, rho, lam, mu, Qp, Qs, bd)
 
-    !! -- Arguments
+        !! Define meidum velocity, density and attenuation
+        !!
+        !! This is a user-specific routine to define original veloicty model.
+        !!
+        !! #### Input
+        !!   - io_prm                          :: I/O number of parameter file (file has been opened already)
+        !!   - i0,i1, k0,k1                    :: model area by indices in i-,j-,and k- directions
+        !!   - xc(i0:i1), zc(k0:k1)            :: Cartesian coordinate location
+        !!   - vcut                            :: cut-off velocity specified by input parameter
+        !!
+        !! #### Output
+        !!   - rho(k0:k1, i0:i1)        :: mass density (usually in g/cm^3)
+        !!   - lam(k0:k1, i0:i1)        :: Lame's parameter (usually in (g/cm^3) * (km/s)^2)
+        !!   - mu (k0:k1, i0:i1)        :: Lame's parameter (usually in (g/cm^3) * (km/s)^2)
+        !!   - qp (k0:k1, i0:i1)        :: Attenuation QP
+        !!   - qs (k0:k1, i0:i1)        :: Attenuation QS
+        !!   - bd (i0:i1, 0:NBD)        :: Boundary depths
+        !!
+        !! #### Note
+        !! - bd(:,:,0) are treated as topography shape for output.
+        !!    this is only for output and visualization.
+        !!    Topography in the simulation will be automatically detected by medium params.
+        !! - bd(:,:,1:NBD) may contain internal boundary depths.
+        !!    The boundary number can be specified as source depth or station depth.
+
         integer, intent(in)  :: io_prm
         integer, intent(in)  :: i0, i1                         !< i-region
         integer, intent(in)  :: k0, k1                         !< k-region
@@ -62,7 +56,6 @@ contains
         real(SP), intent(out) :: qp(k0:k1, i0:i1)    !< P-wave attenuation
         real(SP), intent(out) :: qs(k0:k1, i0:i1)    !< S-wave attenuation
         real(SP), intent(out) :: bd(i0:i1, 0:NBD)    !< Boundary depths
-    !! --
 
         integer  :: i, k
         real(SP) :: vp0, vs0, rho0, qp0, qs0, topo0
@@ -71,26 +64,22 @@ contains
         logical  :: earth_flattening
         real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
         real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening
-    !! ----
 
-    !!
-    !! The following dummy code is an example how to discribe the routine.
-    !!
+        !! The following dummy code is an example how to discribe the routine.
 
-    !!
-    !! subroutine readini() can access parameters defined in the input file.
-    !! Any original parameters can be added in the input file.
-    !!
+        !! subroutine readini() can access parameters defined in the input file.
+        !! Any original parameters can be added in the input file.
         call readini(io_prm, 'vp0', vp0, 5.0)
         call readini(io_prm, 'vs0', vs0, vp0 / sqrt(3.0))
         call readini(io_prm, 'rho0', rho0, 2.7)
         call readini(io_prm, 'qp0', qp0, 1000000.0)
         call readini(io_prm, 'qs0', qs0, 1000000.0)
         call readini(io_prm, 'topo0', topo0, 0.0)
-    !! earth-flattening tranformation
-    !! if this option is true, zs(:) array is nonlinearly mapped from evenly-spaced
-    !! zc(:). Use zs(:) to set velocity models. Please note that P and S wave velocities
-    !! should be multiplied Cv(k) which depends on depth.
+
+        !! earth-flattening tranformation
+        !! if this option is true, zs(:) array is nonlinearly mapped from evenly-spaced
+        !! zc(:). Use zs(:) to set velocity models. Please note that P and S wave velocities
+        !! should be multiplied Cv(k) which depends on depth.
         call readini(io_prm, 'earth_flattening', earth_flattening, .false.)
         if (earth_flattening) then
             do k = k0, k1
@@ -102,20 +91,18 @@ contains
             Cv(:) = 1.0
         end if
 
-    !!
-    !! The medium parameter must be set from given region (i0:i1, k0:k1)
-    !! Note that the order of indices is k->i, for improving performance
-    !!
+        !! The medium parameter must be set from given region (i0:i1, k0:k1)
+        !! Note that the order of indices is k->i, for improving performance
         do i = i0, i1
 
-      !! define topography shape here
+            !! define topography shape here
             bd(i, 0) = topo0
 
             do k = k0, k1
 
                 if (zs(k) > bd(i, 0)) then
 
-          !! elastic medium
+                    !! elastic medium
                     vp1 = Cv(k) * vp0
                     vs1 = Cv(k) * vs0
                     rho1 = Cv(k)**(-5) * rho0
@@ -127,11 +114,8 @@ contains
 
                 else if (zs(k) > 0.0) then
 
-          !!
-          !! ocean column
-          !!
-          !! The code treat the uppermost layer as ocean column if P-wave velocity is finite and S-wave velocity is zero
-          !!
+                    !! ocean column
+                    !! The code treat the uppermost layer as ocean column if P-wave velocity is finite and S-wave velocity is zero
                     vp1 = Cv(k) * 1.5
                     vs1 = 0.0
 
@@ -143,13 +127,12 @@ contains
 
                 else
 
-          !!
-          !! air column
-          !!
-          !! The air column must have zero P- & S-wave velocity (i.e., mu=lam=0)
-          !! Please use non-zero but very small density (e.g., 0.001) for avoiding zero division with satisfying boundary cond.
-          !! Since waves do not penetrate to the air column, qp and qs does not affect. Just set dummy.
-          !!
+                    !! air column
+                    !!
+                    !! The air column must have zero P- & S-wave velocity (i.e., mu=lam=0)
+                    !! Please use non-zero but very small density (e.g., 0.001)
+                    !! for avoiding zero division with satisfying boundary cond.
+                    !! Since waves do not penetrate to the air column, qp and qs does not affect. Just set dummy.
                     vp1 = 0.0
                     vs1 = 0.0
 
@@ -163,7 +146,7 @@ contains
             end do
         end do
 
-    !! dummy value
+        !! dummy value
         bd(:, 1:NBD) = -9999
 
         ! substitute to a dummy variable for avoiding compiler warnings
@@ -172,7 +155,5 @@ contains
         dum = vcut
 
     end subroutine vmodel_user
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_vmodel_user
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

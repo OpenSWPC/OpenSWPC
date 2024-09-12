@@ -1,13 +1,9 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! User-routines for defining velocity/attenuation structure
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
-
 #include "../shared/m_debug.h"
 module m_vmodel_uni_rmed
+
+    !! Homogeneous random media
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -22,14 +18,8 @@ module m_vmodel_uni_rmed
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Define meidum velocity, density and attenuation
-    !<
-  !! ----
     subroutine vmodel_uni_rmed(io_prm, i0, i1, k0, k1, xc, zc, vcut, rho, lam, mu, Qp, Qs, bd)
 
-    !! -- Arguments
         integer, intent(in)  :: io_prm
         integer, intent(in)  :: i0, i1                  !< i-region
         integer, intent(in)  :: k0, k1                  !< k-region
@@ -42,7 +32,6 @@ contains
         real(SP), intent(out) :: qp(k0:k1, i0:i1)    !< P-wave attenuation
         real(SP), intent(out) :: qs(k0:k1, i0:i1)    !< S-wave attenuation
         real(SP), intent(out) :: bd(i0:i1, 0:NBD)    !< Boundary depths
-    !! --
 
         integer  :: i, k
         real(SP) :: vp0, vs0, rho0, qp0, qs0, topo0
@@ -58,7 +47,6 @@ contains
         logical :: earth_flattening
         real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
         real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening
-    !! ----
 
         call readini(io_prm, 'vp0', vp0, 5.0)
         call readini(io_prm, 'vs0', vs0, vp0 / sqrt(3.0))
@@ -68,7 +56,7 @@ contains
         call readini(io_prm, 'topo0', topo0, 0.0)
         call readini(io_prm, 'rhomin', rhomin, 1.0)
 
-    !! earth-flattening transformation
+        !! earth-flattening transformation
         call readini(io_prm, 'earth_flattening', earth_flattening, .false.)
         if (earth_flattening) then
             do k = k0, k1
@@ -110,7 +98,7 @@ contains
 
                 if (zs(k) > bd(i, 0)) then
 
-          !! elastic medium
+                  !! elastic medium
                     rho2 = (1 + 0.8 * xi(k, i)) * Cv(k)**(-5) * rho0
                     vp2 = (1 + xi(k, i)) * Cv(k) * vp0
                     vs2 = (1 + xi(k, i)) * Cv(k) * vs0
@@ -125,7 +113,7 @@ contains
 
                 else if (zs(k) > 0.0) then
 
-          !! ocean column
+                  !! ocean column
 
                     vp1 = Cv(k) * 1.5
                     vs1 = 0.0
@@ -138,7 +126,7 @@ contains
 
                 else
 
-          !! air column
+                  !! air column
 
                     vp1 = 0.0
                     vs1 = 0.0
@@ -153,7 +141,7 @@ contains
             end do
         end do
 
-    !! notification for velocity torelance
+        !! notification for velocity torelance
         if (is_vmax_over) call info('Too high velocity due to random media was corrected. ')
         if (is_vmin_under) call info('Too low  velocity due to random media was corrected. ')
         if (is_rhomin_under) call info('Too low  density due to random media was corrected. ')
@@ -165,7 +153,5 @@ contains
         dum = vcut
 
     end subroutine vmodel_uni_rmed
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_vmodel_uni_rmed
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

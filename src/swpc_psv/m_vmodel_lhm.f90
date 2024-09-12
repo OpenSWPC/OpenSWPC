@@ -1,12 +1,9 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! 1D velocity structure
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
 #include "../shared/m_debug.h"
 module m_vmodel_lhm
+
+    !! 1D layered velocity structure
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -22,14 +19,8 @@ module m_vmodel_lhm
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Define meidum velocity, density and attenuation
-    !<
-  !! ----
     subroutine vmodel_lhm(io_prm, i0, i1, k0, k1, xc, zc, vcut, rho, lam, mu, Qp, Qs, bd)
 
-    !! -- Arguments
         integer, intent(in)  :: io_prm
         integer, intent(in)  :: i0, i1                  !< i-region
         integer, intent(in)  :: k0, k1                  !< k-region
@@ -42,7 +33,6 @@ contains
         real(SP), intent(out) :: qp(k0:k1, i0:i1)    !< P-wave attenuation
         real(SP), intent(out) :: qs(k0:k1, i0:i1)    !< S-wave attenuation
         real(SP), intent(out) :: bd(i0:i1, 0:NBD)    !< Boundary depths
-    !! --
         character(256) :: fn_lhm
         integer  :: k, l
         real(SP), allocatable, dimension(:) :: vp0, vs0, rho0, qp0, qs0, depth
@@ -57,7 +47,6 @@ contains
         logical :: earth_flattening
         real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
         real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening
-    !! ----
 
         call readini(io_prm, 'fn_lhm', fn_lhm, '')
 
@@ -68,7 +57,7 @@ contains
             stop
         end if
 
-    !! seawater
+        !! seawater
         call readini(io_prm, 'munk_profile', use_munk, .false.)
         call seawater__init(use_munk)
 
@@ -99,7 +88,7 @@ contains
         end do
         close (io_vel)
 
-    !! velocity cut-off
+        !! velocity cut-off
         do l = nlayer - 1, 1, -1
             if ((vp0(l) < vcut .or. vs0(l) < vcut) .and. (vp0(l) > 0 .and. vs0(l) > 0)) then
                 vp0(l) = vp0(l + 1)
@@ -110,12 +99,12 @@ contains
             end if
         end do
 
-    !! defne topography shape here
+        !! defne topography shape here
         bd(i0:i1, 0) = depth(1)
 
         do k = k0, k1
 
-      !! air/ocean column
+            !! air/ocean column
             if (zs(k) < depth(1)) then
 
                 if (zs(k) < 0.0) then
@@ -147,7 +136,7 @@ contains
                 cycle
             end if
 
-      !! chose layer
+            !! chose layer
             do l = 1, nlayer
                 if (zs(k) >= depth(l)) then
                     rho1 = rho0(l)
@@ -158,7 +147,7 @@ contains
                 end if
             end do
 
-      !! set medium parameters
+            !! set medium parameters
             rho(k, i0:i1) = rho1
             mu(k, i0:i1) = rho1 * vs1 * vs1
             lam(k, i0:i1) = rho1 * (vp1 * vp1 - 2 * vs1 * vs1)
@@ -176,7 +165,5 @@ contains
         deallocate (depth, rho0, vp0, vs0, qp0, qs0)
 
     end subroutine vmodel_lhm
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_vmodel_lhm
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

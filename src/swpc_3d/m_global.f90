@@ -288,7 +288,7 @@ contains
         kend = nz
 
     !! memory requirements including margin for MPI/boundary conditions
-    !! stress drop also requires sleeve area
+    !! stress glut also requires sleeve area
         ibeg_m = ibeg - 3
         iend_m = iend + 3 + ipad
         jbeg_m = jbeg - 3

@@ -1,54 +1,48 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Absorbing Boundary Condition: ADE-CFS PML based on Zhang and Shen
-!!
-!! @par PML region definition
-!!  +-----+--------------------------+-----+
-!!  |     |                          |     |
-!!  |     |                          |     |
-!!  |     |                          |     |
-!!  |     |                          |     |
-!!  |     |  interior region         |     |
-!!  |     |  eveluated by m_kernel   |     |
-!!  |     |                          |     |
-!!  |     |                          |     |
-!!  |     |                          |     |
-!!  |     +--------------------------+     |
-!!  |         exterior region              |
-!!  |         evaluated by m_absorb        |
-!!  +-----+--------------------------+-----+
-!!  1      na                        nx-na+1  nx
-!!  <- na ->
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
 #include "../shared/m_debug.h"
 module m_absorb_p
 
-  !! -- Dependency
+    !! Absorbing Boundary Condition: ADE-CFS PML based on Zhang and Shen
+    !!
+    !! #### PML region definition
+    !!
+    !! ```text
+    !!  +-----+--------------------------+-----+
+    !!  |     |                          |     |
+    !!  |     |                          |     |
+    !!  |     |                          |     |
+    !!  |     |                          |     |
+    !!  |     |  interior region         |     |
+    !!  |     |  eveluated by m_kernel   |     |
+    !!  |     |                          |     |
+    !!  |     |                          |     |
+    !!  |     |                          |     |
+    !!  |     +--------------------------+     |
+    !!  |         exterior region              |
+    !!  |         evaluated by m_absorb        |
+    !!  +-----+--------------------------+-----+
+    !!  1      na                        nx-na+1  nx
+    !!  <- na ->
+    !! ```
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+
     use m_std
     use m_debug
     use m_global
     use m_fdtool
     use m_readini
 
-  !! -- Declarations
     implicit none
     private
     save
 
-  !! -- Public Procedures
     public :: absorb_p__setup
     public :: absorb_p__update_stress
     public :: absorb_p__update_vel
-  !! --
 
-  !! Damping profiles
     real(SP), allocatable :: gxc(:, :), gxe(:, :) !< damping profile along x at center/edge of voxel
     real(SP), allocatable :: gzc(:, :), gze(:, :) !< damping profile along z at center/edge of voxel
 
-  !! ADE variables
     real(SP), allocatable :: axVx(:, :), azVx(:, :)
     real(SP), allocatable :: axVz(:, :), azVz(:, :)
     real(SP), allocatable :: axSxx(:, :), azSxz(:, :)
@@ -59,30 +53,20 @@ module m_absorb_p
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Setup
-  !! set PML sponge
-    !<
-  !! ----
     subroutine absorb_p__setup(io_prm)
 
+        !! set PML sponge
+
         integer, intent(in) :: io_prm
-    !! --
         integer  :: i, k
         real(SP) :: hx, hz
         integer  :: idum
-    !! ----
 
-    !!
-    !! derivative coefficient
-    !!
+        !! derivative coefficient
         r20x = real(1.0 / dx)
         r20z = real(1.0 / dz)
 
-    !!
-    !! damping profile
-    !!
+        !! damping profile
         allocate (gxc(4, ibeg:iend), gxe(4, ibeg:iend))
         allocate (gzc(4, kbeg:kend), gze(4, kbeg:kend))
 
@@ -99,53 +83,33 @@ contains
             call damping_profile(zc(k) + real(dz) / 2.0, hz, zbeg, zend, gze(:, k))
         end do
 
-    !!
-    !! PML region definition
-    !!
-
+        !! PML region definition
         kbeg_min = minval(kbeg_a(:))
 !    if( fullspace_mode ) kbeg_min = kbeg
 
-    !! memory allocation
-        allocate (axVx(kbeg_min:kend, ibeg:iend))
-        allocate (azVx(kbeg_min:kend, ibeg:iend))
-        allocate (axVz(kbeg_min:kend, ibeg:iend))
-        allocate (azVz(kbeg_min:kend, ibeg:iend))
-        allocate (axSxx(kbeg_min:kend, ibeg:iend))
-        allocate (azSxz(kbeg_min:kend, ibeg:iend))
-        allocate (axSxz(kbeg_min:kend, ibeg:iend))
-        allocate (azSzz(kbeg_min:kend, ibeg:iend))
-
-        axVx(kbeg_min:kend, ibeg:iend) = 0.0
-        azVx(kbeg_min:kend, ibeg:iend) = 0.0
-        axVz(kbeg_min:kend, ibeg:iend) = 0.0
-        azVz(kbeg_min:kend, ibeg:iend) = 0.0
-        axSxx(kbeg_min:kend, ibeg:iend) = 0.0
-        azSxz(kbeg_min:kend, ibeg:iend) = 0.0
-        axSxz(kbeg_min:kend, ibeg:iend) = 0.0
-        azSzz(kbeg_min:kend, ibeg:iend) = 0.0
-
+        !! memory allocation
+        allocate (axVx(kbeg_min:kend, ibeg:iend), source=0.0)
+        allocate (azVx(kbeg_min:kend, ibeg:iend), source=0.0)
+        allocate (axVz(kbeg_min:kend, ibeg:iend), source=0.0)
+        allocate (azVz(kbeg_min:kend, ibeg:iend), source=0.0)
+        allocate (axSxx(kbeg_min:kend, ibeg:iend), source=0.0)
+        allocate (azSxz(kbeg_min:kend, ibeg:iend), source=0.0)
+        allocate (axSxz(kbeg_min:kend, ibeg:iend), source=0.0)
+        allocate (azSzz(kbeg_min:kend, ibeg:iend), source=0.0)
         idum = io_prm
 
     end subroutine absorb_p__setup
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Update velocity component in PML layer
-    !<
-  !! ----
     subroutine absorb_p__update_vel
+
+        !! Update velocity component in PML layer
 
         integer :: i, k
         real(SP) :: gxc0(4), gxe0(4), gzc0(4), gze0(4)
         real(SP) :: bx, bz
         real(MP) :: dxSxx(kbeg_min:kend), dzSxz(kbeg_min:kend), dxSxz(kbeg_min:kend), dzSzz(kbeg_min:kend)
-    !! ----
 
-    !!
-    !! Horizontal zero-derivative boundary (for plane wave mode)
-    !!
+        !! Horizontal zero-derivative boundary (for plane wave mode)
         if (pw_mode) then
             if (idx == 0) then
                 !$omp parallel private(k)
@@ -172,9 +136,7 @@ contains
             end if
         end if
 
-    !!
-    !! time-marching
-    !!
+        !! time-marching
         !$omp parallel &
         !$omp private( dxSxx, dzSzz, dxSxz, dzSxz ) &
         !$omp private( gxc0, gxe0, gzc0, gze0 ) &
@@ -186,9 +148,7 @@ contains
             gxc0(1:4) = gxc(1:4, i)
             gxe0(1:4) = gxe(1:4, i)
 
-      !!
-      !! Derivatives
-      !!
+            !! Derivatives
             do k = kbeg_a(i), kend
 
                 dxSxx(k) = (Sxx(k, i + 1) - Sxx(k, i)) * r20x
@@ -198,9 +158,7 @@ contains
 
             end do
 
-      !!
-      !! update velocity
-      !!
+            !! update velocity
             do k = kbeg_a(i), kend
 
                 gzc0(1:4) = gzc(1:4, k)
@@ -209,9 +167,7 @@ contains
                 bx = 2.0 / (rho(k, i) + rho(k, i + 1))
                 bz = 2.0 / (rho(k, i) + rho(k + 1, i))
 
-        !!
-        !! Velocity Updates
-        !!
+                !! Velocity Updates
                 Vx(k, i) = Vx(k, i) &
                            + bx * (gxe0(1) * dxSxx(k) + gzc0(1) * dzSxz(k) &
                                    + gxe0(2) * axSxx(k, i) + gzc0(2) * azSxz(k, i)) * dt
@@ -220,10 +176,7 @@ contains
                            + bz * (gxc0(1) * dxSxz(k) + gze0(1) * dzSzz(k) &
                                    + gxc0(2) * axSxz(k, i) + gze0(2) * azSzz(k, i)) * dt
 
-        !!
-        !! ADE updates
-        !!
-
+                !! ADE updates
                 axSxx(k, i) = real(gxe0(3) * axSxx(k, i) + gxe0(4) * dxSxx(k) * dt)
                 azSxz(k, i) = real(gzc0(3) * azSxz(k, i) + gzc0(4) * dzSxz(k) * dt)
                 axSxz(k, i) = real(gxc0(3) * axSxz(k, i) + gxc0(4) * dxSxz(k) * dt)
@@ -298,9 +251,7 @@ contains
         ! end if
 
     end subroutine absorb_p__update_vel
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine absorb_p__update_stress
 
         integer :: i, k
@@ -312,11 +263,7 @@ contains
         real(SP) :: epsl = epsilon(1.0)
         real(MP) :: dxVx(kbeg_min:kend), dzVx(kbeg_min:kend), dxVz(kbeg_min:kend), dzVz(kbeg_min:kend)
 
-    !! ----
-
-    !!
-    !! Horizontal zero-derivative boundary (for plane wave mode)
-    !!
+        !! Horizontal zero-derivative boundary (for plane wave mode)
         if (pw_mode) then
             if (idx == 0) then
                 !$omp parallel private(k)
@@ -341,9 +288,7 @@ contains
             end if
         end if
 
-    !!
-    !! Time-marching
-    !!
+        !! Time-marching
         !$omp parallel &
         !$omp private( gxc0, gxe0, gzc0, gze0 ) &
         !$omp private( dxVx, dxVz, dzVx, dzVz ) &
@@ -358,9 +303,7 @@ contains
             gxc0(1:4) = gxc(1:4, i)
             gxe0(1:4) = gxe(1:4, i)
 
-      !!
-      !! Derivatives
-      !!
+            !! Derivatives
             do k = kbeg_a(i), kend
 
                 dxVx(k) = (Vx(k, i) - Vx(k, i - 1)) * r20x
@@ -370,38 +313,26 @@ contains
 
             end do
 
-      !!
-      !! Update Normal Stress
-      !!
+            !! Update Normal Stress
             do k = kbeg_a(i), kend
 
                 gzc0(1:4) = gzc(1:4, k)
 
-        !!
-        !! update stress components
-        !!
                 lam2mu_R = (lam(k, i) + 2 * mu(k, i))
                 lam_R = lam2mu_R - 2 * mu(k, i)
 
-        !!
-        !! Normal Stress
-        !!
                 dxVx_ade = real(gxc0(1) * dxVx(k) + gxc0(2) * axVx(k, i))
                 dzVz_ade = real(gzc0(1) * dzVz(k) + gzc0(2) * azVz(k, i))
+
                 Sxx(k, i) = Sxx(k, i) + (lam2mu_R * dxVx_ade + lam_R * dzVz_ade) * dt
                 Szz(k, i) = Szz(k, i) + (lam2mu_R * dzVz_ade + lam_R * dxVx_ade) * dt
 
-        !!
-        !! ADE
-        !!
                 axVx(k, i) = real(gxc0(3) * axVx(k, i) + gxc0(4) * dxVx(k) * dt)
                 azVz(k, i) = real(gzc0(3) * azVz(k, i) + gzc0(4) * dzVz(k) * dt)
 
             end do
 
-      !!
-      !! Update Shear Stress
-      !!
+            !! Update Shear Stress
             do k = kbeg_a(i), kend
 
                 gze0(1:4) = gze(1:4, k)
@@ -508,16 +439,13 @@ contains
         ! end if
 
     end subroutine absorb_p__update_stress
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! ADE-CFS PML damping factor according to Zhao and Shen
-  !!
     subroutine damping_profile(x, H, xb, xe, g)
 
-        real(SP), intent(in) :: x   !< cartesian coordinate location
-        real(SP), intent(in) :: H   !< absorption layer thickness
+        !! ADE-CFS PML damping factor according to Zhao and Shen
+
+        real(SP), intent(in) :: x   !! cartesian coordinate location
+        real(SP), intent(in) :: H   !! absorption layer thickness
         real(SP), intent(in) :: xb
         real(SP), intent(in) :: xe
         real(SP), intent(out) :: g(4) !< damping prof
@@ -555,4 +483,3 @@ contains
     end subroutine damping_profile
 
 end module m_absorb_p
-!! ---------------------------------------------------------------------------------------------------------------------------- !!

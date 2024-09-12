@@ -1,27 +1,22 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!!  SWPC: Seismic Wave Propagation Code
-!!
-!! @detail
-!!   This software simulate seismic wave propagation, by solving equations of motion with constitutive equations of
-!!   elastic/visco-elastic medium by finite difference method (FDM).
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!!
-!! @see
-!!   - Noguchi et al.     (2016) GJI     doi:10.1093/gji/ggw074
-!!   - Maeda et al.       (2014) EPSL    doi:10.1016/j.epsl.2014.04.037
-!!   - Maeda et al.       (2013) BSSA    doi:10.1785/0120120118
-!!   - Maeda and Furumura (2013) PAGEOPH doi:10.1007/s00024-011-0430-z
-!!   - Noguchi et al.     (2013) PAGEOPH doi:10.1007/s00024-011-0412-1
-!!   - Furumura et al.    (2008) PAGEOPH doi:10.1007/s00024-008-0318-8
-!!   - Furumura ad Chen   (2005) PARCO   doi:10.1016/j.parco.2005.02.003
-!<
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
 #include "../shared/m_debug.h"
-program SWPC_PSV
+program swpc_psv
 
-  !! -- Dependency
+    !! SWPC: Seismic Wave Propagation Code
+    !!
+    !! This software simulate seismic wave propagation, by solving equations of motion with constitutive equations of
+    !! elastic/visco-elastic medium by finite difference method (FDM).
+    !!
+    !! Copyright 2013-2023 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !!
+    !! #### References
+    !!   - Noguchi et al.     (2016) GJI     doi:10.1093/gji/ggw074
+    !!   - Maeda et al.       (2014) EPSL    doi:10.1016/j.epsl.2014.04.037
+    !!   - Maeda et al.       (2013) BSSA    doi:10.1785/0120120118
+    !!   - Maeda and Furumura (2013) PAGEOPH doi:10.1007/s00024-011-0430-z
+    !!   - Noguchi et al.     (2013) PAGEOPH doi:10.1007/s00024-011-0412-1
+    !!   - Furumura et al.    (2008) PAGEOPH doi:10.1007/s00024-008-0318-8
+    !!   - Furumura ad Chen   (2005) PARCO   doi:10.1016/j.parco.2005.02.003
+
     use m_std
     use m_debug
     use m_global
@@ -38,9 +33,7 @@ program SWPC_PSV
     use m_version
     use mpi
 
-  !! -- Declarations
     implicit none
-  !! --
 
     character(256) :: fn_prm
     integer :: it
@@ -49,22 +42,14 @@ program SWPC_PSV
     logical :: stopwatch_mode
     integer :: io_prm, io_watch
     logical :: strict_mode
-  !! ----
 
-  !!
-  !! Version
-  !!
     call getopt('v', is_opt); if (is_opt) call version__display('swpc_psv')
     call getopt('-version', is_opt); if (is_opt) call version__display('swpc_psv')
 
-  !!
-  !! Launch MPI process
-  !!
+      !! Launch MPI process
     call mpi_init(ierr)
 
-  !!
-  !! option processing
-  !!
+    !! option processing
     call getopt('i', is_opt, fn_prm)
     open (newunit=io_prm, file=trim(fn_prm), action='read', status='old')
 
@@ -73,19 +58,13 @@ program SWPC_PSV
     call readini(io_prm, 'strict_mode', strict_mode, .false.)
     call readini__strict_mode(strict_mode)
 
-  !!
-  !! Read control parameters
-  !!
+    !! Read control parameters
     call global__setup(io_prm)
 
-  !!
-  !! stopwatch start
-  !!
+    !! stopwatch start
     call pwatch__setup(stopwatch_mode)
 
-  !!
-  !! set-up each module
-  !!
+    !! set-up each module
     call global__setup2()
     call medium__setup(io_prm)
     call mpi_barrier(mpi_comm_world, ierr)
@@ -98,7 +77,7 @@ program SWPC_PSV
 
     close (io_prm)
 
-  !! mainloop
+    !! mainloop
     do it = 1, nt
 
         call report__progress(it)
@@ -122,12 +101,10 @@ program SWPC_PSV
     call snap__closefiles()
     call wav__write()
 
-  !! ending message
+    !! ending message
     call report__terminate()
 
-  !!
-  !! stopwatch report from 0-th node
-  !!
+    !! stopwatch report from 0-th node
     if (stopwatch_mode) then
         if (myid == 0) then
             open (newunit=io_watch, file=trim(odir)//'/'//trim(title)//'.tim', action='write', status='unknown')
@@ -136,14 +113,9 @@ program SWPC_PSV
 
     end if
 
-  !!
-  !! Program termination
-  !!
+    !! Program termination
     call mpi_barrier(mpi_comm_world, ierr)
     call mpi_finalize(ierr)
 
-    stop
+end program swpc_psv
 
-end program SWPC_PSV
-
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

@@ -1,12 +1,10 @@
-!!
-!! Snapshot/waveform output
-!!
-!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!!
 #include "../shared/m_debug.h"
 module m_snap
 
-  !! -- Dependency
+    !! Snapshot/waveform output
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+
     use iso_fortran_env, only: error_unit
     use m_std
     use m_debug
@@ -18,7 +16,6 @@ module m_snap
     use m_geomap
     use netcdf
 
-  !! -- Declarations
     implicit none
     private
     save
@@ -27,19 +24,17 @@ module m_snap
     public :: snap__write
     public :: snap__closefiles
 
-  !! -- Internal Parameters
     character(8), parameter :: BINARY_TYPE = "STREAMIO"
     character(8), parameter :: CODE_TYPE = "SWPC_PSV"   !!< FIXED parameter for file header
     integer, parameter :: HEADER_VERSION = 6
-  !! header_version history
-  !! 110311 : original
-  !! 2      : added binary_type (character(8))
-  !! 3      : added Lz and zeta for curvilinear
-  !! 4      : added w for curvilinear
-  !! 5      : added coordinate rotation angle phi
-  !! 6      : seism -> swpc
+    ! header_version history
+    ! 110311 : original
+    ! 2      : added binary_type (character(8))
+    ! 3      : added Lz and zeta for curvilinear
+    ! 4      : added w for curvilinear
+    ! 5      : added coordinate rotation angle phi
+    ! 6      : seism -> swpc
 
-  !! -- Internal variables
     type snp
         logical :: sw     ! true for output
         integer :: io     ! file I/O number (or netcdf file id)
@@ -51,7 +46,7 @@ module m_snap
         integer :: na1, na2 ! absorbing layer
         real    :: ds1, ds2 ! spatial grid width
 
-    !! variables for netcdf mode
+        !! variables for netcdf mode
         integer :: did_x1, did_x2, did_t ! dimension id for independent vars
         integer :: vid_x1, vid_x2, vid_t ! variable  id for independent vars
         integer :: varid(10)           ! variable  id for dependent vars
@@ -63,22 +58,17 @@ module m_snap
 
     type(snp) :: xz_ps, xz_v, xz_u
 
-  !! switch
     integer   :: ntdec_s                               !< time step decimation factor: Snap and Waves
     integer   :: idec, kdec                                !< spatial decimation factor: x, y, z directions
 
     integer :: nxs, nzs !< snapshot grid size
     real(SP), allocatable :: xsnp(:), zsnp(:)
 
-  !! I/O area in the node
     integer :: is0, is1, ks0, ks1
 
-  !! derivative coefficient
     real(MP) :: r20x, r20z
 
     character(6) :: snp_format ! native or netcdf
-
-  !! displacement snapshot buffer
 
     real(SP), allocatable :: buf_u(:, :, :)
 
@@ -87,9 +77,7 @@ contains
     subroutine snap__setup(io_prm)
 
         integer, intent(in) :: io_prm
-    !! --
         integer :: i, k, ii, kk
-    !! ----
 
         call pwatch__on("snap__setup")
 
@@ -101,11 +89,11 @@ contains
         call readini(io_prm, 'ntdec_s', ntdec_s, 10)
         call readini(io_prm, 'snp_format', snp_format, 'native')
 
-    !! snapshot size #2013-0440
+        !! snapshot size #2013-0440
         nxs = (nx + (idec / 2)) / idec
         nzs = (nz + (kdec / 2)) / kdec
 
-    !! coordinate
+        !! coordinate
         allocate (xsnp(nxs), zsnp(nzs))
         do i = 1, nxs
             ii = i * idec - (idec / 2)
@@ -116,18 +104,18 @@ contains
             zsnp(k) = k2z(kk, zbeg, real(dz))
         end do
 
-    !! snapshot region covered by the MPI node
+        !! snapshot region covered by the MPI node
         is0 = ceiling((ibeg + idec / 2) / real(idec))
         is1 = floor((iend + idec / 2) / real(idec))
         ks0 = ceiling((kbeg + kdec / 2) / real(kdec))
         ks1 = floor((kend + kdec / 2) / real(kdec))
 
-    !! output node definition
+        !! output node definition
         xz_ps%ionode = mod(1, nproc_x)
         xz_v%ionode = mod(2, nproc_x)
         xz_u%ionode = mod(3, nproc_x)
 
-    !! number of snapshots per cycle
+        !! number of snapshots per cycle
         xz_ps%nsnp = 2
         xz_v%nsnp = 2
         xz_u%nsnp = 2
@@ -149,7 +137,7 @@ contains
         xz_u%vunit(1) = 'm'
         xz_u%vunit(2) = 'm'
 
-    !! output settings
+        !! output settings
         if (snp_format == 'native') then
             if (xz_ps%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.xz.ps.snp', xz_ps)
             if (xz_v%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.xz.v.snp', xz_v)
@@ -160,11 +148,11 @@ contains
             if (xz_u%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.xz.u.nc', xz_u)
         end if
 
-    !! for taking derivatives
+        !! for taking derivatives
         r20x = 1.0_MP / dx
         r20z = 1.0_MP / dz
 
-    !! always allocate displacement buffer
+        !! always allocate displacement buffer
         allocate (buf_u(nxs, nzs, 2))
         buf_u(:, :, :) = 0.0
 
@@ -172,15 +160,13 @@ contains
 
     end subroutine snap__setup
 
-  !! Open new file and write header information, and medium parameters for XZ-cross section
+    !! Open new file and write header information, and medium parameters for XZ-cross section
     subroutine newfile_xz(fname, hdr)
 
         character(*), intent(in)    :: fname
         type(snp), intent(inout) :: hdr
-    !! --
         integer :: i, k, kk, ii
         real(SP) :: buf(nxs, nzs, 3)
-    !! ----
 
         hdr%na1 = na / idec
         hdr%na2 = na / kdec
@@ -218,14 +204,12 @@ contains
 
         character(*), intent(in)    :: fname
         type(snp), intent(inout) :: hdr
-    !! --
         real, allocatable :: sbuf(:), rbuf1(:), rbuf2(:), rbuf3(:), buf(:, :, :)
         integer :: i, k, ierr, ii, kk
-    !! ----
 
         if (myid == hdr%ionode) then
 
-      !! initialize
+            !! initialize
             hdr%vmax = 0.0
             hdr%vmin = 0.0
             hdr%na1 = na / idec
@@ -252,7 +236,7 @@ contains
             end do
         end do
 
-    !! medium
+        !! medium
         allocate (sbuf(nxs * nzs), rbuf1(nxs * nzs), rbuf2(nxs * nzs), rbuf3(nxs * nzs))
         sbuf = reshape(buf(:, :, 1), shape(sbuf))
         call mpi_reduce(sbuf, rbuf1, nxs * nzs, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr)
@@ -281,14 +265,13 @@ contains
 
     end subroutine newfile_xz_nc
 
-  !! write snapshot header in fixed format
+    !! write snapshot header in fixed format
     subroutine write_snp_header(hdr, ns1, ns2, xs1, xs2)
 
         type(snp), intent(in) :: hdr
         integer, intent(in) :: ns1, ns2
         real(SP), intent(in) :: xs1(ns1), xs2(ns2) ! first and second axis
         real(SP) :: dum = 0
-    !! ----
 
         write (hdr%io) BINARY_TYPE
         write (hdr%io) CODE_TYPE
@@ -296,7 +279,7 @@ contains
         write (hdr%io) title
         write (hdr%io) exedate
 
-    !! space grid size
+        !! space grid size
         write (hdr%io) hdr%coordinate                ! coordinate
         write (hdr%io) hdr%snaptype                  ! data type
         write (hdr%io) ns1
@@ -306,18 +289,18 @@ contains
         write (hdr%io) xs1(2) - xs1(1)
         write (hdr%io) xs2(2) - xs2(1)
 
-    !! time
+        !! time
         write (hdr%io) dt * ntdec_s               ! dt
 
-        ! absorb layer
+        !! absorb layer
         write (hdr%io) hdr%na1
         write (hdr%io) hdr%na2
 
-    !! number of arrays
+        !! number of arrays
         write (hdr%io) hdr%nmed
         write (hdr%io) hdr%nsnp
 
-    !! coordinate
+        !! coordinate
         write (hdr%io) clon
         write (hdr%io) clat
         write (hdr%io) phi
@@ -328,14 +311,14 @@ contains
 
     end subroutine write_snp_header
 
-  !! write netcdf header
     subroutine write_nc_header(hdr, ns1, ns2, xs1, xs2)
+
+        !! write netcdf header
 
         type(snp), intent(inout) :: hdr
         integer, intent(in) :: ns1, ns2
         real(SP), intent(in) :: xs1(ns1), xs2(ns2)
         integer :: i
-    !! --
 
         call nc_chk(nf90_def_dim(hdr%io, 'x', nxs, hdr%did_x1))
         call nc_chk(nf90_def_dim(hdr%io, 'z', nzs, hdr%did_x2))
@@ -344,19 +327,19 @@ contains
         call nc_chk(nf90_def_var(hdr%io, 'z', NF90_REAL, hdr%did_x2, hdr%vid_x2))
         call nc_chk(nf90_def_var(hdr%io, 't', NF90_REAL, hdr%did_t, hdr%vid_t))
 
-    !! medium
+        !! medium
         call nc_chk(nf90_def_var(hdr%io, 'rho', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), hdr%medid(1)))
         call nc_chk(nf90_def_var(hdr%io, 'lambda', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), hdr%medid(2)))
         call nc_chk(nf90_def_var(hdr%io, 'mu', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), hdr%medid(3)))
 
-    !! variables
+        !! variables
         do i = 1, hdr%nsnp
             call nc_chk(nf90_def_var(hdr%io, trim(hdr%vname(i)), NF90_REAL, (/hdr%did_x1, hdr%did_x2, hdr%did_t/), hdr%varid(i)))
             call nc_chk(nf90_put_att(hdr%io, hdr%varid(i), 'long_name', trim(hdr%vname(i))))
             call nc_chk(nf90_put_att(hdr%io, hdr%varid(i), 'units', trim(hdr%vunit(i))))
         end do
 
-    !! global attribute
+        !! global attribute
         call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'generated_by', 'SWPC'))
         call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'title', trim(title)))
         call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'exedate', exedate))
@@ -382,7 +365,7 @@ contains
         call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'evx', sx0))
         call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'evy', sy0))
 
-    !! variable attributes
+        !! variable attributes
         call nc_chk(nf90_put_att(hdr%io, hdr%vid_x1, 'long_name', 'x'))
         call nc_chk(nf90_put_att(hdr%io, hdr%vid_x2, 'long_name', 'z'))
         call nc_chk(nf90_put_att(hdr%io, hdr%vid_t, 'long_name', 't'))
@@ -406,8 +389,9 @@ contains
 
     end subroutine write_nc_header
 
-  !! write 2d array with MPI
     subroutine write_reduce_array2d_r(nx1, nx2, ionode, io, array)
+
+        !! write 2d array with MPI
 
         integer, intent(in) :: nx1, nx2
         integer, intent(in) :: ionode
@@ -418,23 +402,23 @@ contains
         real(SP) :: rbuf(nx1 * nx2)
         integer  :: ierr
 
-    !! prepare send buffer
+        !! prepare send buffer
         sbuf = reshape(array, shape(sbuf))
 
-    !! gather to io_node
+        !! gather to io_node
         call mpi_reduce(sbuf, rbuf, nx1 * nx2, MPI_REAL, MPI_SUM, ionode, mpi_comm_world, ierr)
 
-    !! write
+        !! write
         if (myid == ionode) write (io) rbuf
 
     end subroutine write_reduce_array2d_r
 
-  !! Calculate divergence and abs(rotation) of velocity vector at given location (k,i,j) by 2nd order FDM
     subroutine divrot(k, i, div, rot)
-    !! --
+
+        !! Calculate divergence and abs(rotation) of velocity vector at given location (k,i,j) by 2nd order FDM
+
         integer, intent(in)  :: k, i
         real(SP), intent(out) :: div, rot
-    !!
 
         real(SP) :: rot_y
         real(SP) :: dxVx, dxVz, dzVx, dzVz
@@ -448,7 +432,7 @@ contains
         div = (dxVx + dzVz)
         rot_y = (dzVx - dxVz)
 
-    !! masking
+        !! masking
         nnn = mu(k, i)
         pnn = mu(k + 1, i)
         npn = mu(k, i + 1)
@@ -461,8 +445,9 @@ contains
 
     end subroutine divrot
 
-  !! write snapshot
     subroutine snap__write(it)
+
+        !! write snapshot
 
         integer, intent(in) :: it
 
@@ -479,7 +464,6 @@ contains
     subroutine wbuf_xz_ps(it)
 
         integer, intent(in) :: it
-    !! --
         integer :: i, k
         integer :: ii, kk
         real(SP) :: div, rot
@@ -488,7 +472,6 @@ contains
         integer, save :: it0
         integer :: stat(mpi_status_size)
         integer :: err
-    !! ----
         call pwatch__on("wbuf_xz_ps")
 
         if (.not. allocated(buf)) allocate (buf(nxs, nzs, 2), source=0.0)
@@ -509,7 +492,7 @@ contains
             end do
             !$omp end parallel do
 
-        !! dx, dz have km unit. correction for 1e3 factor.
+            !! dx, dz have km unit. correction for 1e3 factor.
             buf = buf * UC * M0 * 1e-3
 
             if (snp_format == 'native') then
@@ -536,7 +519,6 @@ contains
     subroutine wbuf_xz_v(it)
 
         integer, intent(in) :: it
-    !! --
         integer :: i, k
         integer :: ii, kk
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
@@ -544,7 +526,6 @@ contains
         integer, save :: it0
         integer :: stat(mpi_status_size)
         integer :: err
-    !! ----
         call pwatch__on("wbuf_xz_v")
 
         if (.not. allocated(buf)) allocate (buf(nxs, nzs, 2), source=0.0)
@@ -594,7 +575,6 @@ contains
         integer, save :: it0
         integer :: stat(mpi_status_size)
         integer :: err
-    !! --
 
         call pwatch__on("wbuf_xz_u")
 
@@ -646,7 +626,6 @@ contains
         integer :: ns, ib, ie
         integer :: stt(3), cnt(3)
         integer :: vid
-    !! ----
         call pwatch__on("wbuf_nc")
 
         ns = nx1 * nx2
@@ -712,7 +691,6 @@ contains
     subroutine nc_chk(err)
 
         integer, intent(in) :: err
-    !! ----
 
         if (err /= NF90_NOERR) write (error_unit, *) NF90_STRERROR(err)
 

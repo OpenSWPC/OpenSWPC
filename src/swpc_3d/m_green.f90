@@ -139,7 +139,7 @@ contains
 
         if (trim(adjustl(stftype)) == 'scosine') stftype = 'cosine'  !! backward compatibility
 
-        !! Set up pseudo source, information is obtained from m_output
+        !! Set up pseudo source, information is obtained from m_snap
         select case (green_cmp)
         case ('x'); fx1 = 1.0; fy1 = 0.0; fz1 = 0.0
         case ('y'); fx1 = 0.0; fy1 = 1.0; fz1 = 0.0

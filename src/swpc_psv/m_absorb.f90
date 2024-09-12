@@ -1,14 +1,10 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Absorbing Boundary Condition
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
 #include "../shared/m_debug.h"
 module m_absorb
 
-  !! -- Dependency
+    !! Absorbing Boundary Condition
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+
     use m_std
     use m_debug
     use m_global
@@ -26,7 +22,6 @@ module m_absorb
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine absorb__setup(io_prm)
 
         integer, intent(in) :: io_prm
@@ -44,9 +39,7 @@ contains
         call pwatch__off("absorb__setup")
 
     end subroutine absorb__setup
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine absorb__update_vel()
 
         call pwatch__on("absorb__update_vel")
@@ -63,9 +56,7 @@ contains
         call pwatch__off("absorb__update_vel")
 
     end subroutine absorb__update_vel
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine absorb__update_stress()
 
         call pwatch__on("absorb__update_stress")
@@ -82,7 +73,5 @@ contains
         call pwatch__off("absorb__update_stress")
 
     end subroutine absorb__update_stress
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_absorb
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

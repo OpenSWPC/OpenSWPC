@@ -1,14 +1,10 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Read snap files from output of swpc, and export to figure
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
 #include "../shared/m_debug.h"
 program read_snp
 
-  !! -- Dependency
+    !! Read snap files from output of swpc, and export to figure
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+
     use iso_fortran_env, only: error_unit
     use m_std
     use m_system
@@ -22,10 +18,8 @@ program read_snp
     use m_version
     use netcdf
 
-  !! -- Declarations
     implicit none
 
-  !! -- Parameters
     character(20), parameter :: D_ODIR = "./snap"
 
     character(256) :: fn_snp
@@ -43,7 +37,6 @@ program read_snp
     character(100) :: vname
     integer :: i
     logical :: is_opt1, is_opt2
-  !! ----
 
     call getopt('v', is_opt1)
     call getopt('-version', is_opt2)
@@ -63,7 +56,7 @@ program read_snp
         call usage_exit
     end if
 
-  !! existence check
+    !! existence check
     call fdsnap__open(fn_snp, io_snp, is_exist, snp_type)
     if (.not. is_exist) then
         write (error_unit, '(A)') "ERROR [read_snp]: file "//trim(fn_snp)//" does not exist"
@@ -71,9 +64,7 @@ program read_snp
         call usage_exit
     end if
 
-  !!
-  !! Read Header Part
-  !!
+    !! Read Header Part
     call fdsnap__readhdr(fn_snp, io_snp, snp_type, hdr)
     nx = hdr%ns1
     ny = hdr%ns2
@@ -86,15 +77,11 @@ program read_snp
         end do
     end if
 
-  !!
-  !! header output mode
-  !!
+    !! header output mode
     call getopt('h', is_exist)
     if (is_exist) call fdsnap__checkhdr(error_unit, hdr)
 
-  !!
-  !! snap output to ppm file opotion
-  !!
+    !! snap output to ppm file opotion
     call getopt('skip', is_exist, iskip, 0)
 
     call getopt('ppm', is_exist)
@@ -117,11 +104,6 @@ program read_snp
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! usage
-    !<
-  !! --
     subroutine usage_exit
 
         write (error_unit, *)
@@ -144,20 +126,15 @@ contains
         stop
 
     end subroutine usage_exit
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! data file output
-  !!
     subroutine dat_output(typ)
+
+        !! data file output
 
         implicit none
 
         character(3) :: typ ! asc or bin
-    !! default values
         character(80), parameter :: D_ODIR = './dat'
-    !! velocity structure
         real(SP), allocatable :: den(:, :), rig(:, :), lam(:, :)
         real(SP), allocatable :: vp(:, :), vs(:, :)
         real(SP), allocatable :: amp(:, :, :)
@@ -179,16 +156,9 @@ contains
         integer :: start(3), count(3)
         !--
 
-    !!------------------------------------------------------------------------!!
-    !!                  handling of command line arguments                    !!
-    !!------------------------------------------------------------------------!!
-
         allocate (den(nx, ny), rig(nx, ny), lam(nx, ny))
         allocate (vp(nx, ny), vs(nx, ny))
 
-    !!
-    !! output directory
-    !!
         call system__call('/bin/mkdir '//trim(odir)//' > /dev/null 2>&1 ')
 
         if (typ == 'asc') then
@@ -200,13 +170,7 @@ contains
             stop
         end if
 
-    !!------------------------------------------------------------------------!!
-    !!                            background medium                           !!
-    !!------------------------------------------------------------------------!!
-
-    !!
-    !! Medium structure
-    !!
+        !! Medium structure
         if (snp_type == 'native') then
             read (io_snp) den, lam, rig
         else
@@ -258,15 +222,9 @@ contains
             close (io)
         end if
 
-    !!------------------------------------------------------------------------!!
-    !!                         Snapshot read/output                           !!
-    !!------------------------------------------------------------------------!!
-
         allocate (amp(hdr%nsnp, nx, ny))
 
-    !!
-    !! Shapshot Read/Data
-    !!
+        !! Shapshot Read/Data
         is_eof = .false.
         it = -iskip
         do
@@ -333,12 +291,7 @@ contains
         deallocate (amp)
 
     end subroutine dat_output
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Setup
-  !!
     subroutine img_output(typ)
 
         use m_pnm
@@ -348,10 +301,8 @@ contains
 
         character(3), intent(in) :: typ ! bmp or ppm
 
-    !! default values
         real, parameter :: D_MUL = 1000.
 
-    !! velocity structure
         real(SP), allocatable :: den(:, :), rig(:, :), lam(:, :)
         real(SP), allocatable :: vp(:, :), vs(:, :), topo(:, :)
         integer, allocatable :: cmed(:, :, :)
@@ -389,53 +340,39 @@ contains
         logical :: no_timemark
         !--
 
-    !!------------------------------------------------------------------------!!
-    !!                  handling of command line arguments                    !!
-    !!------------------------------------------------------------------------!!
-
-    !! Memory allocation
+        !! Memory allocation
         allocate (den(nx, ny), rig(nx, ny), lam(nx, ny))
         allocate (vp(nx, ny), vs(nx, ny), topo(nx, ny))
         allocate (cmed(3, nx, ny))
         allocate (medium_bound(nx, ny))
 
-    !!
-    !! output directory
-    !!
+        !! output directory
         call getopt('dir', is_exist, odir, typ)
 
         call system__call('/bin/mkdir '//trim(odir)//' > /dev/null 2>&1 ')
 
-    !!
-    !! lowpass
-    !!
+        !! lowpass
         call getopt('lpf', is_lpf, mingrid, 2.0)
         kmax = 2 * PI / (mingrid * sqrt(hdr%ds1 * hdr%ds2))
 
-    !!
-    !! amplitude scale
-    !!
+        !! amplitude scale
 
-    !! independent amplitude weight
+        !! independent amplitude weight
         call getopt('mul1', is_exist, mul(1), D_MUL)
         call getopt('mul2', is_exist, mul(2), D_MUL)
         call getopt('mul3', is_exist, mul(3), D_MUL)
         call getopt('mul4', is_exist, mul(4), D_MUL)
 
-    !! ... or equall weight
+        !! ... or equall weight
         call getopt('mul', is_exist, mula)
         if (is_exist) mul(:) = mula
 
         call getopt('abs', is_abs) ! absolute value
 
-    !!
-    !! Time mark (default is ON)
-    !!
+        !! Time mark (default is ON)
         call getopt('notim', no_timemark)
 
-    !!
-    !! graph size ( if includes absorbing boundary layer )
-    !!
+        !! graph size ( if includes absorbing boundary layer )
         call getopt('pall', is_exist)
         if (is_exist) then
             nxs = nx
@@ -461,13 +398,7 @@ contains
             is_transpose = .false.
         end if
 
-    !!------------------------------------------------------------------------!!
-    !!                            background medium                           !!
-    !!------------------------------------------------------------------------!!
-
-    !!
-    !! Medium structure
-    !!
+        !! Medium structure
         if (snp_type == 'native') then
             read (io_snp) den, lam, rig
         else
@@ -485,7 +416,7 @@ contains
                 vp(i, j) = sqrt((lam(i, j) + 2 * rig(i, j)) / den(i, j))
             end do
         end do
-    !! horizontal case: read topography
+        !! horizontal case: read topography
         if (hdr%coordinate == 'fs' .or. hdr%coordinate == 'ob' .or. hdr%coordinate == 'xy') then
             if (snp_type == 'native') then
                 read (io_snp) topo
@@ -495,9 +426,7 @@ contains
             end if
         end if
 
-    !!
-    !! Background Coloring
-    !!
+        !! Background Coloring
         medium_bound(:, :) = 1
         amin = minval(vp(:, :))
         amax = maxval(vp(:, :)) + 0.01
@@ -506,7 +435,7 @@ contains
 
         if (hdr%coordinate == 'fs' .or. hdr%coordinate == 'ob') then
 
-      !! surface map: use topography data for background color
+            !! surface map: use topography data for background color
 
             call color__set('mytopo', cp)
 
@@ -518,7 +447,7 @@ contains
 
         else
 
-      !! other cases: coloring by density with discontinuous structure detection
+            !! other cases: coloring by density with discontinuous structure detection
             do j = 1, ny
                 do i = 1, nx
                     wk = 1.2 - 0.1 * exp(1.2 * ((vp(i, j) - amin) / (amax - amin)))
@@ -536,7 +465,7 @@ contains
                 end do
             end do
 
-      !! edge detection (Sobel's edge detection operator)
+            !! edge detection (Sobel's edge detection operator)
             do i = 2, nx - 1
                 do j = 2, ny - 1
 
@@ -558,13 +487,6 @@ contains
 
         end if
 
-    !!------------------------------------------------------------------------!!
-    !!                         Snapshot read/output                           !!
-    !!------------------------------------------------------------------------!!
-
-    !!
-    !! Snap Type
-    !!
         allocate (amp(hdr%nsnp, nx, ny))
         if (is_transpose) then
             allocate (img(3, nys, nxs))
@@ -574,16 +496,10 @@ contains
 
         it = -iskip
 
-    !!
-    !! Initialize
-    !!
         img(1, :, :) = 100
         img(2, :, :) = 100
         img(3, :, :) = 100
 
-    !!
-    !! Shapshot Read/PPM output
-    !!
         is_eof = .false.
         do
             t = (it + iskip) * hdr%dt
@@ -632,9 +548,7 @@ contains
                 amp(i, :, :) = mul(i) * abs(amp(i, :, :))
             end do
 
-      !!
-      !! coloring
-      !!
+            !! coloring
             do j = js + 1, ny - js
                 do i = is + 1, nx - is
 
@@ -661,10 +575,10 @@ contains
 
                         if (is_abs) then
 
-              !! absolute value plot by hot color palette
+                            !! absolute value plot by hot color palette
                             call color__interpolate(cp_hot, dble(sqrt(sum(amp(:, i, j)**2))), ctmp(:))
 
-              !! reducing color
+                            !! reducing color
                             img(1, ii, jj) = cmed(1, i, j) - (255 - ctmp(1))
                             img(2, ii, jj) = cmed(2, i, j) - (255 - ctmp(2))
                             img(3, ii, jj) = cmed(3, i, j) - (255 - ctmp(3))
@@ -684,10 +598,10 @@ contains
 
                         if (is_abs) then
 
-              !! absolute value plot by hot color palette
+                            !! absolute value plot by hot color palette
                             call color__interpolate(cp_hot, dble(sqrt(sum(amp(:, i, j)**2))), ctmp(:))
 
-              !! reducing color
+                            !! reducing color
                             img(1, ii, jj) = cmed(1, i, j) - (255 - ctmp(1))
                             img(2, ii, jj) = cmed(2, i, j) - (255 - ctmp(2))
                             img(3, ii, jj) = cmed(3, i, j) - (255 - ctmp(3))
@@ -728,18 +642,18 @@ contains
             end do
 
             if (is_transpose) then
-        !! surrounding line
+                !! surrounding line
                 img(:, 1:nys, 1:2) = 0
                 img(:, 1:nys, nxs - 1:nxs) = 0
                 img(:, 1:2, 1:nxs) = 0
                 img(:, nys - 1:nys, 1:nxs) = 0
 
-        !! timemark
+                !! timemark
                 if (.not. no_timemark) then
                     call stamp__char("t = "//trim(ct)//' s', 20, nxs - 40, nys, nxs, img, .false.)
                 end if
 
-        !! export
+                !! export
                 if (typ == 'ppm') then
                     call ppm__write(trim(fn_snp), nys, nxs, img)
                 else if (typ == 'bmp') then
@@ -748,18 +662,18 @@ contains
 
             else
 
-        !! surrounding line
+                !! surrounding line
                 img(:, 1:nxs, 1:2) = 0
                 img(:, 1:nxs, nys - 1:nys) = 0
                 img(:, 1:2, 1:nys) = 0
                 img(:, nxs - 1:nxs, 1:nys) = 0
 
-        !! timemark
+                !! timemark
                 if (.not. no_timemark) then
                     call stamp__char("t = "//trim(ct)//'s', 20, nys - 40, nxs, nys, img, .false.)
                 end if
 
-        !! export
+                !! export
                 if (typ == 'ppm') then
                     call ppm__write(trim(fn_snp), nxs, nys, img)
                 else if (typ == 'bmp') then
@@ -775,20 +689,13 @@ contains
 
     end subroutine img_output
 
-  !! ------------------------------------------------------------------------ !!
-    !>
-  !! An internal subroutine to check error in netcdf function calls
-    !<
-  !! --
     subroutine nc_chk(ierr)
 
         integer, intent(in) :: ierr
-    !! ----
 
         if (ierr /= NF90_NOERR) write (error_unit, *) NF90_STRERROR(ierr)
 
     end subroutine nc_chk
-  !! ------------------------------------------------------------------------ !!
 
 end program read_snp
 !------------------------------------------------------------------------------!

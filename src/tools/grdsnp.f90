@@ -1,12 +1,9 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Extract x-y-z data of velocity discontinuity from a specified grd dat
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! --
 #include "../shared/m_debug.h"
 program grdsnp
+
+    !! Extract x-y-z data of velocity discontinuity from a specified grd dat
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -34,7 +31,6 @@ program grdsnp
     character(256) :: fn_prm, fn_grd
     integer :: ncid, ndim, nvar, xid, yid, zid
     character(80) :: xname, yname, zname
-  !! ----
     logical :: is_opt1, is_opt2
 
     call getopt('v', is_opt1)
@@ -57,9 +53,7 @@ program grdsnp
     call readini(io, 'ybeg', ybeg, -ny / 2 * real(dy))
     call readini(io, 'zbeg', zbeg, -ny / 2 * real(dy))
 
-  !!
-  !! Grid locations in geographic coordinate
-  !!
+    !! Grid locations in geographic coordinate
     allocate (xc(nx), yc(ny))
     allocate (glon(nx, ny), glat(nx, ny))
     do i = 1, nx
@@ -75,19 +69,19 @@ program grdsnp
         end do
     end do
 
-  !! read netcdf data
+    !! read netcdf data
     call assert(nf90_open(trim(fn_grd), NF90_NOWRITE, ncid) == NF90_NOERR)
     call assert(nf90_inquire(ncid, ndim, nvar) == NF90_NOERR)
     call assert(ndim == 2)  !! assume 2D netcdf file
     nvar = nvar - 2 !! first two variables should be x(lon) and y(lat)
 
-  !! size
+    !! size
     call assert(nf90_inquire_dimension(ncid, 1, len=nlon) == NF90_NOERR)
     call assert(nf90_inquire_dimension(ncid, 2, len=nlat) == NF90_NOERR)
     allocate (lon(nlon), lat(nlat))
     allocate (grddep(nlon, nlat))
 
-  !! read
+    !! read
     call assert(nf90_inquire_variable(ncid, 1, xname) == NF90_NOERR)
     call assert(nf90_inquire_variable(ncid, 2, yname) == NF90_NOERR)
     call assert(nf90_inquire_variable(ncid, 3, zname) == NF90_NOERR)

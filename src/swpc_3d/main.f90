@@ -26,7 +26,7 @@ program swpc_3d
     use m_medium
     use m_report
     use m_pwatch
-    use m_output
+    use m_snap
     use m_absorb
     use m_green
     use m_readini

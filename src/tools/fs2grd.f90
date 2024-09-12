@@ -1,16 +1,11 @@
-
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Convert free surface/ocean bottom snapshot data from OpenSWPC to GMT-compatible lon-lat-var grid dataset
-!!
-!! @Usage
-!! fs2grd.x -i swpc-snapshot.nc -R lon0/lon1/lat0/lat1 -dlon delta_lon -dlat delta_lat -v varname
-!!
-!! @copyright
-!! Copyright 2020-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! --
 program fs2grd
+
+    !! Convert free surface/ocean bottom snapshot data from OpenSWPC to GMT-compatible lon-lat-var grid dataset
+    !!
+    !! #### Usage
+    !! fs2grd.x -i swpc-snapshot.nc -R lon0/lon1/lat0/lat1 -dlon delta_lon -dlat delta_lat -v varname
+    !!
+    !! Copyright 2020-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -156,7 +151,7 @@ contains
         call nc_chk(nf90_get_var(ncid_in, lonid, lon_in))
         call nc_chk(nf90_get_var(ncid_in, latid, lat_in))
 
-    !! grid locations in the cartesian coordinate
+        !! grid locations in the cartesian coordinate
         allocate (xg(nlon, nlat), yg(nlon, nlat))
 
         do j = 1, nlat

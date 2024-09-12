@@ -2,11 +2,8 @@
 
 # Visualize Parallel MPI computation balance: absolute time version
 # usage: timvis_abs.gmt [timfile]
+# Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
-## @copyright
-##   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-
-# --------------------------------------------------------------------------- #
 
 #
 # gmt option

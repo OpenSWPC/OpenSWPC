@@ -1,14 +1,10 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! terminal/logfile report
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
 #include "../shared/m_debug.h"
 module m_report
 
-  !! -- Dependency
+    !! Terminal/logfile report
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+
     use iso_fortran_env, only: error_unit
     use m_std
     use m_debug
@@ -18,19 +14,16 @@ module m_report
     use m_readini
     use m_version
 
-  !! -- Declarations
     implicit none
     private
     save
 
-  !! -- procedures
     public :: report__setup
     public :: report__progress
     public :: report__terminate
 
     integer :: ntdec_r
 
-  !! -- internal parameter
     integer, parameter :: terminal_output_node = 0
 
     !<< Lapse Time Measurement >>
@@ -39,20 +32,15 @@ module m_report
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Initialization, welcome message to terminal, open logfile
-    !<
-  !! ----
     subroutine report__setup(io_prm)
+
+        !! Initialization, welcome message to terminal, open logfile
 
         integer, intent(in) :: io_prm
 
-    !! --
         integer :: crate
         real(SP) :: mem_all, mem_node, r, c
         character(256) :: codename, ver
-    !! ----
 
         call readini(io_prm, 'ntdec_r', ntdec_r, 10)
 
@@ -111,7 +99,7 @@ contains
 
         end if
 
-    !! Initialize elapsed time counter
+        !! Initialize elapsed time counter
         if (myid == terminal_output_node) then
 
             call system_clock(timcount, crate)
@@ -122,14 +110,10 @@ contains
         end if
 
     end subroutine report__setup
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Show progres to the terminal
-    !<
-  !! ----
     subroutine report__progress(it)
+
+        !! Show progres to the terminal
 
         integer, intent(in) :: it
         real(SP) :: vxm, vzm
@@ -139,7 +123,6 @@ contains
         integer  :: etah, etam, etasi
         real(SP) :: tstep
         integer  :: crate, cmax
-    !! ----
 
         if (mod(it, ntdec_r) /= 0) return
 
@@ -152,13 +135,11 @@ contains
 
         if (myid == terminal_output_node) then
 
-      !! to SI unit
+            !! to SI unit
             vxa = vxa * UC * M0
             vza = vza * UC * M0
 
-      !!
-      !! eta count
-      !!
+            !! eta count
             call system_clock(timcount, crate, cmax)
             if (timcount >= timprev) then
                 tstep = real(timcount - timprev) / real(crate)
@@ -185,12 +166,8 @@ contains
         call pwatch__off("report__progress")
 
     end subroutine report__progress
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine report__terminate
-
-    !!--
 
         if (myid == terminal_output_node) then
 
@@ -204,7 +181,5 @@ contains
         end if
 
     end subroutine report__terminate
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_report
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

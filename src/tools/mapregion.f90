@@ -1,11 +1,8 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Obtains projected area for FDM simulation from input parameter file
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
 program mapregion
+
+    !! Obtains projected area for FDM simulation from input parameter file
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -27,9 +24,7 @@ program mapregion
     real(SP)              :: ybeg                               !<  global coordinate: y start / end
     real(SP)              :: zbeg                               !<  global coordinate: z start / end
 
-  !!
-  !! MPI domain
-  !!
+    !! MPI domain
     integer               :: nproc_x                                  !<  process numbers for x/i - direction
     integer               :: nproc_y                                  !<  process numbers for y/j - direction
     logical :: is_given
@@ -43,7 +38,6 @@ program mapregion
     integer :: nm = 3
     real(SP) :: mem_n, mem_a
     logical :: is_opt1, is_opt2
-  !! ----
 
     call getopt('v', is_opt1)
     call getopt('-version', is_opt2)

@@ -1,26 +1,20 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Boundary absorber module: Cerjan's Sponge
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
 #include "../shared/m_debug.h"
 module m_absorb_c
 
-  !! -- Dependency
+    !! Boundary absorber module: Cerjan's Sponge
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+
     use m_std
     use m_debug
     use m_global
     use m_pwatch
     use m_fdtool
 
-  !! -- Declarations
     implicit none
     private
     save
 
-  !! -- Public Procedures
     public :: absorb_c__setup
     public :: absorb_c__update_stress
     public :: absorb_c__update_vel
@@ -30,31 +24,20 @@ module m_absorb_c
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Setup
-  !!
-  !! @detail
-  !! set Cerjan's sponge function for x(i), y(j) and z(k) directions
-  !! as
-  !!
-  !! @see
-  !! note: 2013-00446
-    !<
-  !! ----
     subroutine absorb_c__setup(io_prm)
+
+        !! Setup
+        !!
+        !! set Cerjan's sponge function for x(i), y(j) and z(k) directions
+        !! (note: 2013-00446)
 
         integer, intent(in) :: io_prm
         real(SP), parameter :: alpha = 0.09
         real(SP) :: Lx, Lz
         integer :: i, k
         integer :: io0
-    !! ----
 
-    !!
-    !! memory allocation and initialize
-    !!
-
+        !! memory allocation and initialize
         allocate (gx_c(ibeg_m:iend_m), gx_b(ibeg_m:iend_m))
         allocate (gz_c(kbeg_m:kend_m), gz_b(kbeg_m:kend_m))
         gx_c(ibeg_m:iend_m) = 1.0
@@ -65,9 +48,7 @@ contains
         Lx = na * dx
         Lz = na * dz
 
-    !!
-    !! Calculate attenuator based on distance
-    !!
+        !! Calculate attenuator based on distance
         !$omp parallel do private(i)
         do i = ibeg, iend
             if (i <= na) then
@@ -103,13 +84,11 @@ contains
         end do
         !$omp end parallel do
 
-    !! do nothing with io_prm
+        !! do nothing with io_prm
         io0 = io_prm
 
     end subroutine absorb_c__setup
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine absorb_c__update_stress
 
         integer :: i, k
@@ -130,9 +109,7 @@ contains
         !$omp end parallel
 
     end subroutine absorb_c__update_stress
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine absorb_c__update_vel
 
         integer :: i, k
@@ -149,7 +126,5 @@ contains
         !$omp end parallel
 
     end subroutine absorb_c__update_vel
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_absorb_c
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

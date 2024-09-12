@@ -1,13 +1,9 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Set-up medium velocity/attenuation structure
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
-
 #include "../shared/m_debug.h"
 module m_medium
+
+    !! Set-up medium velocity/attenuation structure
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -33,12 +29,9 @@ module m_medium
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Obtain elastic/anelastic medium structure
-    !<
-  !!
     subroutine medium__setup(io_prm)
+
+        !! Obtain elastic/anelastic medium structure
 
         integer, intent(in) :: io_prm
 
@@ -52,9 +45,7 @@ contains
 
         call pwatch__on("medium__setup")
 
-    !!
-    !! allocate memory and initialize
-    !!
+        !! allocate memory and initialize
         call memory_allocate()
 
         if (benchmark_mode) then
@@ -73,16 +64,14 @@ contains
                     lam(k, :) = 2.7 * 3.5 * 3.5 ! poison solid: lambda = mu
                 end if
 
-        !! very large Q value (no attenuation) for benchmark
+                !! very large Q value (no attenuation) for benchmark
                 taup(k, :) = 1e10
                 taus(k, :) = 1e10
             end do
 
         else
 
-      !!
-      !! read parameters
-      !!
+            !! read parameters
             call readini(io_prm, 'fq_min', fq_min, 0.05)
             call readini(io_prm, 'fq_max', fq_max, 5.00)
             call readini(io_prm, 'fq_ref', fq_ref, 1.00)
@@ -94,35 +83,28 @@ contains
 
             case ('user')
 
-                call vmodel_user(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, &
-                                 rho, lam, mu, taup, taus, bddep)
+                call vmodel_user(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, rho, lam, mu, taup, taus, bddep)
             case ('uni')
 
-                call vmodel_uni(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, &
-                                rho, lam, mu, taup, taus, bddep)
+                call vmodel_uni(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, rho, lam, mu, taup, taus, bddep)
 
             case ('grd')
-                call vmodel_grd(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, &
-                                rho, lam, mu, taup, taus, bddep)
+                call vmodel_grd(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, rho, lam, mu, taup, taus, bddep)
 
             case ('lhm')
-                call vmodel_lhm(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, &
-                                rho, lam, mu, taup, taus, bddep)
+                call vmodel_lhm(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, rho, lam, mu, taup, taus, bddep)
 
             case ('uni_rmed')
 
-                call vmodel_uni_rmed(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, &
-                                     rho, lam, mu, taup, taus, bddep)
+                call vmodel_uni_rmed(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, rho, lam, mu, taup, taus, bddep)
 
             case ('grd_rmed')
 
-                call vmodel_grd_rmed(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, &
-                                     rho, lam, mu, taup, taus, bddep)
+                call vmodel_grd_rmed(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, rho, lam, mu, taup, taus, bddep)
 
             case ('lhm_rmed')
 
-                call vmodel_lhm_rmed(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, &
-                                     rho, lam, mu, taup, taus, bddep)
+                call vmodel_lhm_rmed(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, rho, lam, mu, taup, taus, bddep)
 
             case default
                 if (myid == 0) then
@@ -132,9 +114,7 @@ contains
 
         end if
 
-    !!
-    !! homogenize absorber region
-    !!
+        !! homogenize absorber region
         do i = ibeg_m, na
             do k = kbeg_m, kend_m
                 rho(k, i) = rho(k, na + 1)
@@ -163,15 +143,13 @@ contains
             end do
         end do
 
-    !!
-    !! Define visco-elastic medium by tau-method
-    !!
+        !! Define visco-elastic medium by tau-method
         call visco_set_relaxtime(nm, ts, fq_min, fq_max)
         zeta = visco_constq_zeta(nm, fq_min, fq_max, ts)
 
         if (benchmark_mode) zeta = 0.0 !! no attenuation for benchmark mode
 
-    !! Re-define taup and taus as relaxation times of P- and S-waves, based on tau-method
+        !! Re-define taup and taus as relaxation times of P- and S-waves, based on tau-method
         do i = ibeg_m, iend_m
             do k = kbeg_m, kend_m
                 taup(k, i) = nm * zeta / taup(k, i)
@@ -188,23 +166,20 @@ contains
             call stabilize_absorber()
         end if
 
-    !! initialized flag
+        !! initialized flag
         init = .true.
 
         call pwatch__off("medium__setup")
 
     contains
 
-    !! ------------------------------------------------------------------------------------------------------------------------ !!
-    !! scale medium velocity using reference frequency
-    !!
+        !! scale medium velocity using reference frequency
         subroutine relaxed_medium()
 
             integer :: i, k
             real(SP) :: rho_beta2, rho_alpha2
 
-      !! mu, lam must be re-defined including sleeve area for medium smoothing
-
+            !! mu, lam must be re-defined including sleeve area for medium smoothing
             if (nm == 0) return
 
             do i = ibeg_m, iend_m
@@ -213,7 +188,7 @@ contains
                     rho_beta2 = mu(k, i)
                     rho_alpha2 = lam(k, i) + 2 * mu(k, i)
 
-          !! re-definie mu and lambda as unrelaxed moduli of viscoelastic medium
+                    !! re-definie mu and lambda as unrelaxed moduli of viscoelastic medium
                     mu(k, i) = rho_beta2 / visco_chi(nm, ts, taus(k, i), fq_ref)**2
                     lam(k, i) = rho_alpha2 / visco_chi(nm, ts, taup(k, i), fq_ref)**2 - 2 * mu(k, i)
 
@@ -221,32 +196,30 @@ contains
             end do
 
         end subroutine relaxed_medium
-    !! ------------------------------------------------------------------------------------------------------------------------ !!
 
-    !! ------------------------------------------------------------------------------------------------------------------------ !!
-    !! free surface & ocean bottom boundaries
-    !!
         subroutine surface_detection
+
+            !! free surface & ocean bottom boundaries
 
             real(SP) :: epsl
             integer :: i, k
 
             epsl = epsilon(1.0)
 
-      !! initial value. This initial settings do not apply 2nd order condition interior the medium
+            !! initial value. This initial settings do not apply 2nd order condition interior the medium
             kfs(:) = kbeg - 1
             kob(:) = kbeg - 1
 
-      !! kfs, kob must be defined one-grid outside of (beg, end) for detecting kfs_top & kfs_bot
+            !! kfs, kob must be defined one-grid outside of (beg, end) for detecting kfs_top & kfs_bot
             do i = ibeg - 1, iend + 2
                 do k = kbeg, kend - 1
 
-          !! air(ocean)-to-solid boundary
+                    !! air(ocean)-to-solid boundary
                     if (abs(mu(k, i)) < epsl .and. abs(mu(k + 1, i)) > epsl) then
                         kob(i) = k
                     end if
 
-          !! air-to-solid(ocean) boundary
+                    !! air-to-solid(ocean) boundary
                     if (abs(lam(k, i)) < epsl .and. abs(lam(k + 1, i)) > epsl) then
                         kfs(i) = k
                     end if
@@ -254,10 +227,8 @@ contains
                 end do
             end do
 
-      !!
-      !! define 2nd-order derivative area #2013-00419
-      !! -> udpated to stable version: 2023-08-06
-      !!
+            !! define 2nd-order derivative area #2013-00419
+            !! -> udpated to stable version: 2023-08-06
             do i = ibeg, iend
 
                 kfs_top(i) = max(minval(kfs(i - 2:i + 3)) - 2, kbeg)
@@ -274,12 +245,11 @@ contains
             ! end if
 
         end subroutine surface_detection
-    !! ------------------------------------------------------------------------------------------------------------------------ !!
 
-    !! ------------------------------------------------------------------------------------------------------------------------ !!
-    !! maximum & minimum velocities
-    !!
         subroutine velocity_minmax()
+
+            !! maximum & minimum velocities
+
             real(SP) :: vmin1, vmax1
             integer  :: i, k
             real(SP) :: vp, vs
@@ -300,26 +270,19 @@ contains
             call mpi_allreduce(vmin1, vmin, 1, MPI_REAL, MPI_MIN, mpi_comm_world, ierr)
 
         end subroutine velocity_minmax
-    !! ------------------------------------------------------------------------------------------------------------------------ !!
 
     end subroutine medium__setup
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Check if medium__setup has already been called
-    !<
-  !!
     logical function medium__initialized()
+
+        !! Check if medium__setup has already been called
 
         medium__initialized = init
 
     end function medium__initialized
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine memory_allocate()
-    !!
+
         allocate (rho(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
         allocate (lam(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
         allocate (mu(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
@@ -335,14 +298,10 @@ contains
         if (nm > 0) allocate (ts(1:nm))
 
     end subroutine memory_allocate
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Avoid low-velocity layer for stabilize PML absorber
-    !<
-  !! --
     subroutine stabilize_absorber()
+
+        !! Avoid low-velocity layer for stabilize PML absorber
 
         integer :: i, k, k2
         real :: vp, vs, gamma
@@ -357,7 +316,7 @@ contains
             do while (k <= kend)
                 if (lam(k, i) < lam(k - 1, i) .or. mu(k, i) < mu(k - 1, i)) then
 
-          !! detection the bottom of the low-velocity layer
+                    !! detection the bottom of the low-velocity layer
                     do k2 = k + 1, kend
                         if (lam(k2, i) > lam(k2 - 1, i) .or. mu(k2, i) > mu(k2 - 1, i)) exit
                     end do
@@ -398,7 +357,5 @@ contains
         end do
 
     end subroutine stabilize_absorber
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_medium
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

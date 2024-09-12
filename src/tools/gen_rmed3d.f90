@@ -1,12 +1,9 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Generate random velocity flucuation model in 3D space
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! --
 #include "../shared/m_debug.h"
 program gen_rmed3d
+
+    !! Generate random velocity flucuation model in 3D space
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -31,13 +28,12 @@ program gen_rmed3d
     logical               :: is_seed
     character(256)        :: fn_out
     logical :: is_opt1, is_opt2
-  !! ----
 
     call getopt('v', is_opt1)
     call getopt('-version', is_opt2)
     if (is_opt1 .or. is_opt2) call version__display('gen_rmed3d')
 
-  !! option processing
+    !! option processing
     call getopt('nx', is_opt, nx); if (.not. is_opt) call usage_exit
     call getopt('ny', is_opt, ny); if (.not. is_opt) call usage_exit
     call getopt('nz', is_opt, nz); if (.not. is_opt) call usage_exit
@@ -72,18 +68,17 @@ program gen_rmed3d
 
     allocate (med(1:nnx, 1:nny, 1:nnz), xx(nnx), yy(nny), zz(nnz))
 
-  !! generate random media (x<->z exchanged for SWPC's array configuration)
+    !! generate random media (x<->z exchanged for SWPC's array configuration)
     if (is_seed) then
         call rmedia__3dgen_ani(ptype, nnx, nny, nnz, dx, dy, dz, ax, ay, az, epsil, kappa, xx, yy, zz, med, seed)
     else
         call rmedia__3dgen_ani(ptype, nnx, nny, nnz, dx, dy, dz, ax, ay, az, epsil, kappa, xx, yy, zz, med)
     end if
 
-  !! data export
+    !! data export
     call export_netcdf()
 
     deallocate (xx, yy, zz, med)
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 contains
 
@@ -141,18 +136,14 @@ contains
         call nc_chk(nf90_close(ncid))
 
     end subroutine export_netcdf
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine usage_exit()
         write (error_unit, '(A)') 'gen_rmed3d.x  [-o outfile] [-nx nx] [-ny ny] [-nz nz] [-epsil epsilon] [-kappa kappa] '
         write (error_unit, '(A)') '              [-dx dx] [-dy dy] [-dz dz] [-ax ax] [-ay ay] [-az az]'
         write (error_unit, '(A)') '              [-ptype ptype] (1=Gaussian, 2=Exponential, 3=von Karman]) {-seed seed_number}'
         stop
     end subroutine usage_exit
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine nc_chk(ierr)
 
         integer, intent(in) :: ierr
@@ -163,7 +154,5 @@ contains
         end if
 
     end subroutine nc_chk
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end program gen_rmed3d
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

@@ -1,11 +1,8 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Calculate frequency dependense of Q^(-1) model
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! --
 program qmodel_tau
+
+    !! Calculate frequency dependense of Q^(-1) model
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -34,7 +31,6 @@ program qmodel_tau
     character(20) :: fmt
     real(SP) :: chi, chi_R
     logical :: is_opt1, is_opt2
-  !! ----
 
     call getopt('v', is_opt1)
     call getopt('-version', is_opt2)
@@ -90,7 +86,8 @@ contains
 
     subroutine usage_exit()
 
-   write (error_unit, *) 'qmodel_tau -nm [nm] -i [prm file] -f0 [min freq (0.001)] -f1 [max freq (10)] -nf [number of grid (1000)] '
+        write (error_unit, *) &
+            'qmodel_tau -nm [nm] -i [prm file] -f0 [min freq (0.001)] -f1 [max freq (10)] -nf [number of grid (1000)] '
         write (error_unit, *) ' [input parameter file (inf format)'
         write (error_unit, *) '   required field : fq_min (minimum freq for constant Q band) (0.05)'
         write (error_unit, *) '                    fq_max (maximum freq for constant Q band) (5.00)'

@@ -1,14 +1,10 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Snapshot output
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
 #include "../shared/m_debug.h"
-module m_output
+module m_snap
 
-  !! -- Dependency
+    !! Snapshot output
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+
     use iso_fortran_env, only: error_unit
     use m_std
     use m_debug
@@ -20,7 +16,6 @@ module m_output
     use m_geomap
     use netcdf
 
-  !! -- Declarations
     implicit none
     private
     save
@@ -29,20 +24,17 @@ module m_output
     public :: snap__write
     public :: snap__closefiles
 
-  !! -- Internal Parameters
     character(8), parameter :: BINARY_TYPE = "STREAMIO"
-  !! character(8), parameter :: BINARY_TYPE= "UNFORMAT" ! for architectures that does not support fortran2003
     character(8), parameter :: CODE_TYPE = "SWPC_SH "   !!< FIXED parameter for file header
     integer, parameter :: HEADER_VERSION = 6
-  !! header_version history
-  !! 110311 : original
-  !! 2      : added binary_type (character(8))
-  !! 3      : added Lz and zeta for curvilinear
-  !! 4      : added w for curvilinear
-  !! 5      : added coordinate rotation angle phi
-  !! 6      : seism -> swpc
+    ! header_version history
+    ! 110311 : original
+    ! 2      : added binary_type (character(8))
+    ! 3      : added Lz and zeta for curvilinear
+    ! 4      : added w for curvilinear
+    ! 5      : added coordinate rotation angle phi
+    ! 6      : seism -> swpc
 
-  !! -- Internal variables
     type snp
         logical :: sw
         integer :: io
@@ -53,7 +45,6 @@ module m_output
         integer :: nmed = 3
         integer :: na1, na2 ! absorbing layer
 
-    !! variables for netcdf mode
         integer :: did_x1, did_x2, did_t ! dimension id for independent vars
         integer :: vid_x1, vid_x2, vid_t ! variable  id for independent vars
         integer :: varid(10)           ! variable  id for dependent vars
@@ -65,14 +56,12 @@ module m_output
 
     type(snp) :: xz_v, xz_u
 
-  !! switch
     integer   :: ntdec_s                                !< time step decimation factor: Snap
     integer   :: idec, kdec                                !< spatial decimation factor: x, y, z
 
     integer :: nxs, nzs !< snapshot grid size
     real(SP), allocatable :: xsnp(:), zsnp(:)
 
-  !! I/O area in the node
     integer :: is0, is1, ks0, ks1
     character(6) :: snp_format ! native or netcdf
 
@@ -80,26 +69,16 @@ module m_output
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Setup
-  !!
-  !! @see
-  !! #2012-41 #2013-00440
-    !<
-  !! ----
     subroutine snap__setup(io_prm)
+
+        !! Setup (#2012-41 #2013-00440)
 
         integer, intent(in) :: io_prm
         integer :: i, k, ii, kk
-    !! ----
 
         call pwatch__on("snap__setup")
 
-    !!
-    !! read parameter
-    !!
-
+        !! read parameter
         call readini(io_prm, 'xz_v%sw', xz_v%sw, .false.)
         call readini(io_prm, 'xz_u%sw', xz_u%sw, .false.)
         call readini(io_prm, 'idec', idec, 1)
@@ -107,11 +86,11 @@ contains
         call readini(io_prm, 'ntdec_s', ntdec_s, 10)
         call readini(io_prm, 'snp_format', snp_format, 'native')
 
-    !! snapshot size #2013-0440
+        !! snapshot size #2013-0440
         nxs = (nx + (idec / 2)) / idec
         nzs = (nz + (kdec / 2)) / kdec
 
-    !! coordinate
+        !! coordinate
         allocate (xsnp(nxs), zsnp(nzs))
         do i = 1, nxs
             ii = i * idec - (idec / 2)
@@ -122,13 +101,13 @@ contains
             zsnp(k) = k2z(kk, zbeg, real(dz))
         end do
 
-    !! snapshot region covered by the MPI node
+        !! snapshot region covered by the MPI node
         is0 = ceiling((ibeg + idec / 2) / real(idec))
         is1 = floor((iend + idec / 2) / real(idec))
         ks0 = ceiling((kbeg + kdec / 2) / real(kdec))
         ks1 = floor((kend + kdec / 2) / real(kdec))
 
-    !! number of snapshots per cycle
+        !! number of snapshots per cycle
         xz_v%nsnp = 1
         xz_u%nsnp = 1
 
@@ -140,11 +119,11 @@ contains
         xz_u%vname(1) = 'Uy'
         xz_u%vunit(1) = 'm'
 
-    !! output node definition: cyclic
+        !! output node definition: cyclic
         xz_v%ionode = mod(1, nproc_x)
         xz_u%ionode = mod(2, nproc_x)
 
-    !! output settings
+        !! output settings
         if (snp_format == 'native') then
             if (xz_v%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.xz.v.snp', xz_v)
             if (xz_u%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.xz.u.snp', xz_u)
@@ -160,21 +139,15 @@ contains
 
     end subroutine snap__setup
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Open new file and write header information, and medium parameters for XY-cross section
-    !<
-  !! ----
     subroutine newfile_xz(fname, hdr)
+
+        !! Open new file and write header information, and medium parameters for XY-cross section
 
         character(*), intent(in)    :: fname
         type(snp), intent(inout) :: hdr
-    !! ----
 
         integer :: i, k, kk, ii
         real :: buf(nxs, nzs, 3)
-
-    !! --
 
         hdr%na1 = na / idec
         hdr%na2 = na / kdec
@@ -206,20 +179,15 @@ contains
         call write_reduce_array2d_r(nxs, nzs, hdr%ionode, hdr%io, buf(:, :, 3))
 
     end subroutine newfile_xz
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! write snapshot header in fixed format
-    !<
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine write_snp_header(hdr, ns1, ns2, xs1, xs2)
+
+        !! write snapshot header in fixed format
 
         type(snp), intent(in) :: hdr
         integer, intent(in) :: ns1, ns2
         real(SP), intent(in) :: xs1(ns1), xs2(ns2) ! first and second axis
         real(SP) :: dum
-    !! ----
 
         write (hdr%io) BINARY_TYPE
         write (hdr%io) CODE_TYPE
@@ -227,7 +195,7 @@ contains
         write (hdr%io) title
         write (hdr%io) exedate
 
-    !! space grid size
+        !! space grid size
         write (hdr%io) hdr%coordinate                ! coordinate
         write (hdr%io) hdr%snaptype                  ! data type
         write (hdr%io) ns1
@@ -237,18 +205,18 @@ contains
         write (hdr%io) xs1(2) - xs1(1)
         write (hdr%io) xs2(2) - xs2(1)
 
-    !! time
+        !! time
         write (hdr%io) dt * ntdec_s                   ! dt
 
         ! absorb layer
         write (hdr%io) hdr%na1
         write (hdr%io) hdr%na2
 
-    !! number of arrays
+        !! number of arrays
         write (hdr%io) hdr%nmed
         write (hdr%io) hdr%nsnp
 
-    !! coordinate
+        !! coordinate
         dum = -12345.0
         write (hdr%io) clon
         write (hdr%io) clat
@@ -259,20 +227,15 @@ contains
         write (hdr%io) dum !< dummy
 
     end subroutine write_snp_header
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! write netcdf header
-    !<
-  !! ---
     subroutine write_nc_header(hdr, ns1, ns2, xs1, xs2)
+
+        !! write netcdf header
 
         type(snp), intent(inout) :: hdr
         integer, intent(in) :: ns1, ns2
         real(SP), intent(in) :: xs1(ns1), xs2(ns2)
         integer :: i
-    !! --
 
         call nc_chk(nf90_def_dim(hdr%io, 'x', nxs, hdr%did_x1))
         call nc_chk(nf90_def_dim(hdr%io, 'z', nzs, hdr%did_x2))
@@ -281,19 +244,19 @@ contains
         call nc_chk(nf90_def_var(hdr%io, 'z', NF90_REAL, hdr%did_x2, hdr%vid_x2))
         call nc_chk(nf90_def_var(hdr%io, 't', NF90_REAL, hdr%did_t, hdr%vid_t))
 
-    !! medium
+        !! medium
         call nc_chk(nf90_def_var(hdr%io, 'rho', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), hdr%medid(1)))
         call nc_chk(nf90_def_var(hdr%io, 'lambda', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), hdr%medid(2)))
         call nc_chk(nf90_def_var(hdr%io, 'mu', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), hdr%medid(3)))
 
-    !! variables
+        !! variables
         do i = 1, hdr%nsnp
             call nc_chk(nf90_def_var(hdr%io, trim(hdr%vname(i)), NF90_REAL, (/hdr%did_x1, hdr%did_x2, hdr%did_t/), hdr%varid(i)))
             call nc_chk(nf90_put_att(hdr%io, hdr%varid(i), 'long_name', trim(hdr%vname(i))))
             call nc_chk(nf90_put_att(hdr%io, hdr%varid(i), 'units', trim(hdr%vunit(i))))
         end do
 
-    !! global attribute
+        !! global attribute
         call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'generated_by', 'SWPC'))
         call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'title', trim(title)))
         call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'exedate', exedate))
@@ -319,7 +282,7 @@ contains
         call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'evx', sx0))
         call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'evy', sy0))
 
-    !! variable attributes
+        !! variable attributes
         call nc_chk(nf90_put_att(hdr%io, hdr%vid_x1, 'long_name', 'x'))
         call nc_chk(nf90_put_att(hdr%io, hdr%vid_x2, 'long_name', 'z'))
         call nc_chk(nf90_put_att(hdr%io, hdr%vid_t, 'long_name', 't'))
@@ -342,20 +305,18 @@ contains
         call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'phi', phi))
 
     end subroutine write_nc_header
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine newfile_xz_nc(fname, hdr)
+
         character(*), intent(in)    :: fname
         type(snp), intent(inout) :: hdr
-    !!
+
         real, allocatable :: sbuf(:), rbuf1(:), rbuf2(:), rbuf3(:), buf(:, :, :)
         integer :: i, k, ierr, ii, kk
-    !! ---
 
         if (myid == hdr%ionode) then
 
-      !! initialize
+           !! initialize
             hdr%vmax = 0.0
             hdr%vmin = 0.0
             hdr%na1 = na / idec
@@ -380,7 +341,7 @@ contains
             end do
         end do
 
-    !! medium
+        !! medium
         allocate (sbuf(nxs * nzs), rbuf1(nxs * nzs), rbuf2(nxs * nzs), rbuf3(nxs * nzs))
         sbuf = reshape(buf(:, :, 1), shape(sbuf))
         call mpi_reduce(sbuf, rbuf1, nxs * nzs, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, ierr)
@@ -408,14 +369,10 @@ contains
         deallocate (sbuf, rbuf1, rbuf2, rbuf3, buf)
 
     end subroutine newfile_xz_nc
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! write 2d array with MPI
-    !<
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine write_reduce_array2d_r(nx1, nx2, ionode, io, array)
+
+        !! write 2d array with MPI
 
         integer, intent(in) :: nx1, nx2
         integer, intent(in) :: ionode
@@ -426,24 +383,20 @@ contains
         real(SP) :: rbuf(nx1 * nx2)
         integer  :: ierr
 
-    !! prepare send buffer
+        !! prepare send buffer
         sbuf = reshape(array, shape(sbuf))
 
-    !! gather to io_node
+        !! gather to io_node
         call mpi_reduce(sbuf, rbuf, nx1 * nx2, MPI_REAL, MPI_SUM, ionode, mpi_comm_world, ierr)
 
-    !! write
+        !! write
         if (myid == ionode) write (io) rbuf
 
     end subroutine write_reduce_array2d_r
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! write snapshot
-    !<
-  !! ----
     subroutine snap__write(it)
+
+        !! write snapshot
 
         integer, intent(in) :: it
 
@@ -456,8 +409,8 @@ contains
 
     end subroutine snap__write
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine wbuf_xz_v(it)
+
         integer :: it
         integer :: i, k
         integer :: ii, kk
@@ -466,7 +419,6 @@ contains
         integer, save :: it0
         integer :: stat(mpi_status_size)
         integer :: err
-    !! ----
 
         if (.not. allocated(buf)) allocate (buf(nxs, nzs), source=0.0)
 
@@ -502,9 +454,7 @@ contains
         end if
 
     end subroutine wbuf_xz_v
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
     subroutine wbuf_xz_u(it)
         integer :: it
         integer :: i, k
@@ -514,7 +464,6 @@ contains
         integer, save :: it0
         integer :: stat(mpi_status_size)
         integer :: err
-    !! ----
 
         !$omp parallel do private(ii, kk, i, k)
         do ii = is0, is1
@@ -561,7 +510,6 @@ contains
         integer :: ns, ib, ie
         integer :: stt(3), cnt(3)
         integer :: vid
-    !! ----
 
         ns = nx1 * nx2
         cnt = (/nx1, nx2, 1/)
@@ -617,20 +565,14 @@ contains
 
     end subroutine close_nc
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! An internal subroutine to check error in netcdf function calls
-    !<
-  !! --
     subroutine nc_chk(ierr)
 
+        !! An internal subroutine to check error in netcdf function calls
+
         integer, intent(in) :: ierr
-    !! ----
 
         if (ierr /= NF90_NOERR) write (error_unit, *) NF90_STRERROR(ierr)
 
     end subroutine nc_chk
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-end module m_output
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
+end module m_snap

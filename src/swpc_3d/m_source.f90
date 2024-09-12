@@ -42,7 +42,7 @@ contains
         !! set up module
         !!
         !! read source grid and allocates memory for source grid and time-related parameters
-        !! also pre-calculate common variables for stress drop source
+        !! also pre-calculate common variables for stress glut source
 
         integer, intent(in) :: io_prm
 
@@ -765,7 +765,7 @@ contains
     end subroutine source__grid_bodyforce
 
     subroutine source__stressglut(it)
-        !! apply stress drop for source grids
+        !! apply stress glut for source grids
 
         integer, intent(in) :: it !< time grid number
 

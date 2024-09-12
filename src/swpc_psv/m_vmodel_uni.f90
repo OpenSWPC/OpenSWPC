@@ -1,13 +1,9 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! User-routines for defining velocity/attenuation structure
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
-
 #include "../shared/m_debug.h"
 module m_vmodel_uni
+
+    !! Homogeneous medium
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -22,14 +18,8 @@ module m_vmodel_uni
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Define meidum velocity, density and attenuation
-    !<
-  !! ----
     subroutine vmodel_uni(io_prm, i0, i1, k0, k1, xc, zc, vcut, rho, lam, mu, Qp, Qs, bd)
 
-    !! -- Arguments
         integer, intent(in)  :: io_prm
         integer, intent(in)  :: i0, i1                  !< i-region
         integer, intent(in)  :: k0, k1                  !< k-region
@@ -42,7 +32,6 @@ contains
         real(SP), intent(out) :: qp(k0:k1, i0:i1)    !< P-wave attenuation
         real(SP), intent(out) :: qs(k0:k1, i0:i1)    !< S-wave attenuation
         real(SP), intent(out) :: bd(i0:i1, 0:NBD)    !< Boundary depths
-    !! --
 
         integer  :: i, k
         real(SP) :: vp0, vs0, rho0, qp0, qs0, topo0
@@ -52,7 +41,6 @@ contains
         logical :: earth_flattening
         real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
         real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening
-    !! ----
 
         call readini(io_prm, 'vp0', vp0, 5.0)
         call readini(io_prm, 'vs0', vs0, vp0 / sqrt(3.0))
@@ -60,7 +48,8 @@ contains
         call readini(io_prm, 'qp0', qp0, 1000000.0)
         call readini(io_prm, 'qs0', qs0, 1000000.0)
         call readini(io_prm, 'topo0', topo0, 0.0)
-    !! seawater
+
+        !! seawater
         call readini(io_prm, 'munk_profile', use_munk, .false.)
         call seawater__init(use_munk)
 
@@ -92,14 +81,14 @@ contains
         ! else
         do i = i0, i1
 
-        !! topography
+            !! topography
             bd(i, 0) = topo0
 
             do k = k0, k1
 
                 if (zs(k) > bd(i, 0)) then
 
-            !! elastic medium
+                    !! elastic medium
 
                     vp1 = Cv(k) * vp0
                     vs1 = Cv(k) * vs0
@@ -111,7 +100,7 @@ contains
 
                 else if (zc(k) > 0.0) then
 
-            !! ocean column
+                    !! ocean column
 
                     vp1 = Cv(k) * seawater__vel(zs(k))
                     vs1 = 0.0
@@ -124,7 +113,7 @@ contains
 
                 else
 
-            !! air column
+                    !! air column
 
                     vp1 = 0.0
                     vs1 = 0.0
@@ -147,7 +136,5 @@ contains
         dum = vcut
 
     end subroutine vmodel_uni
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_vmodel_uni
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

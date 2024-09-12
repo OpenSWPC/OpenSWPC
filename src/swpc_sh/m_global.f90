@@ -1,14 +1,10 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! global control parameters, shared arrays and MPI communication
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
 #include "../shared/m_debug.h"
 module m_global
 
-  !! modules
+    !! global control parameters, shared arrays and MPI communication
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+
     use m_std
     use m_debug
     use m_fdtool
@@ -18,29 +14,20 @@ module m_global
     use m_readini
     use mpi
 
-  !! declarations
     implicit none
     public
     save
 
-  !!
-  !! public routine name
-  !!
     public :: global__setup
     public :: global__setup2
     public :: global__comm_vel
     public :: global__comm_stress
 
-  !!
-  !! fixed parameters
-  !!
-    real(SP)            :: UC = 10.0**(-12)                           !< Conventional -> SI unit for moment tensor
+    real(SP)           :: UC = 10.0**(-12)                           !< Conventional -> SI unit for moment tensor
     integer, parameter :: MP = DP                                    !< DP for mixed precision, SP for pure single precision
     integer, parameter :: NM = 3                                     !< Number of memory variables
     integer, parameter :: NBD = 9                                    !< Number of boundary depths to be memorized
-  !!
-  !! global arrays
-  !!
+
     real(MP), allocatable :: Vy(:, :)                                  !<  velocity components
     real(MP), allocatable :: Syz(:, :), Sxy(:, :)                     !<  shear  stress components
     real(SP), allocatable :: Ryz(:, :, :), Rxy(:, :, :)                   !<  memory variables: shear  components
@@ -48,15 +35,9 @@ module m_global
     real(SP), allocatable :: taup(:, :), taus(:, :)                    !<  creep/relax time ratio based on tau-method for attenuation
     real(SP), allocatable :: ts(:)                                    !<  relaxation time of visco-elastic medium
 
-  !!
-  !! title, date
-  !!
     character(80)         :: title                                    !<  execution title, used in filename and headers
     integer               :: exedate                                  !<  date and time by seconds from 1970/1/1 0:0:0
 
-  !!
-  !! global control parameters
-  !!
     integer               :: nx, nz                                   !<  space grid number (global)
     integer               :: nt                                       !<  time grid number
     integer               :: na                                       !<  absorber thickness
@@ -66,17 +47,11 @@ module m_global
     real(SP)              :: zbeg, zend                               !<  global coordinate: z start / end
     real(SP)              :: tbeg, tend                               !<  beggining and ending elapsed time
 
-  !!
-  !! Medium Info
-  !!
     real(SP)              :: vmin                                     !<  minimum velocity
     real(SP)              :: vmax                                     !<  maximum velocity
     real(SP)              :: fmax                                     !<  maximum frequency by the source
     real(SP)              :: fcut                                     !<  cut-off frequency by the source
 
-  !!
-  !! MPI domain
-  !!
     integer               :: nproc_x                                  !<  total   numbers of process
     integer               :: nxp                                      !<  space grid number in the assigned node
     integer               :: myid                                     !<  MPI node number
@@ -91,34 +66,22 @@ module m_global
     integer, allocatable  :: kbeg_a(:)                                !<  absorbing boundary region
     integer               :: ipad, kpad                               !<  memory padding size for optimization
     character(16)         :: abc_type
-  !!
-  !! Source
-  !!
+
     real(SP)              :: M0                                       !<  total moment
 
-  !!
-  !! output directory
-  !!
     character(256) :: odir
 
-  !!
-  !! free surface / ocean bottom boundary
-  !!
     integer, allocatable :: kfs(:)                                   !<  free surface depth grid in the node
     integer, allocatable :: kob(:)                                   !<  ocean bottom depth grid in the node
     integer, allocatable :: kfs_top(:), kfs_bot(:)                   !<  region in which 2nd-order FDM is applied for free surface
     integer, allocatable :: kob_top(:), kob_bot(:)                   !<  region in which 2nd-order FDM is applied for ocean bottom
     real(SP), allocatable :: bddep(:, :)
 
-  !!
-  !! map coordinate: use dummy value for cartesian problem
-  !!
     real(SP) :: clon                                                  !< center longitude
     real(SP) :: clat                                                  !< center latitude
     real(SP) :: phi                                                   !< azimuth
     real(SP), allocatable :: xc(:), zc(:)
 
-  !! Source: remember first source grid location in lat/lon form
     real(SP) :: evlo
     real(SP) :: evla
     real(SP) :: evdp !< unit:km
@@ -127,32 +90,22 @@ module m_global
     real(SP) :: otim
     real(SP) :: sx0, sy0
 
-  !!
-  !! Benchmark
-  !!
     logical :: benchmark_mode
-
-  !! special modes
     logical :: pw_mode                                                !< plane wave mode
     logical :: bf_mode                                                !< body force mode
 
-  !!
-  !! private variables
-  !!
     real(MP), private, allocatable :: sbuf_ip(:), sbuf_im(:)          !<  mpi send buffer
     real(MP), private, allocatable :: rbuf_ip(:), rbuf_im(:)          !<  mpi recv buffer
-    integer :: mpi_precision
+    integer, private :: mpi_precision
 
   !! fullspace-mdoe
 !  logical :: fullspace_mode
 
-  !! ----
     private :: inside_node
     private :: set_mpi_table
 
 contains
 
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
     subroutine global__readprm(io_prm)
         integer, intent(in) :: io_prm
 
@@ -196,24 +149,17 @@ contains
         end if
 
     end subroutine global__readprm
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! read parameter file, memory allocation, MPI set-ups
-    !<
-  !!
     subroutine global__setup(io_prm)
+
+        !! read parameter file, memory allocation, MPI set-ups
 
         integer, intent(in) :: io_prm
         integer :: err
-    !! ----
 
         call pwatch__on("global__setup") !! measure from here
 
-    !!
-    !! MPI status check
-    !!
+        !! MPI status check
         call mpi_comm_rank(mpi_comm_world, myid, err)
         if (MP == DP) then
             mpi_precision = MPI_DOUBLE_PRECISION
@@ -221,20 +167,14 @@ contains
             mpi_precision = MPI_REAL
         end if
 
-    !!
-    !! read key parameters
-    !!
+        !! read key parameters
         call global__readprm(io_prm)
 
-    !!
-    !! obtain date by unixtime: seconds measured from 1970/1/1 0:0:0
-    !!
+        !! obtain date by unixtime: seconds measured from 1970/1/1 0:0:0
         if (myid == 0) call daytim__getdate(exedate)
         call mpi_bcast(exedate, 1, MPI_INTEGER, 0, mpi_comm_world, err)
 
-    !!
-    !! derived parameters
-    !!
+        !! derived parameters
         xend = xbeg + nx * real(dx)
         zend = zbeg + nz * real(dz)
         tend = tbeg + nt * dt
@@ -243,14 +183,9 @@ contains
 
     end subroutine global__setup
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Common parameter setup, needed only for starting
-    !<
-  !! --
     subroutine global__setup2
+
+        !! Common parameter setup, needed only for starting
 
         integer :: i, k
         integer :: err, nproc_exe
@@ -258,9 +193,7 @@ contains
 
         call pwatch__on("global__setup2") !! measure from here
 
-    !!
-    !! output directory create (if it does not exist)
-    !!
+        !! output directory create (if it does not exist)
         call system__call('mkdir -p '//trim(odir)//'> /dev/null 2>&1')
 
         call mpi_comm_size(mpi_comm_world, nproc_exe, err)
@@ -274,7 +207,7 @@ contains
             nxp = (nx - mx) / nproc_x + 1
         end if
 
-    !! MPI coordinate
+        !! MPI coordinate
         allocate (itbl(-1:nproc_x))
 
         allocate (sbuf_ip(2 * nz), source=0.0_MP)
@@ -282,10 +215,10 @@ contains
         allocate (rbuf_ip(2 * nz), source=0.0_MP)
         allocate (rbuf_im(2 * nz), source=0.0_MP)
 
-    !! MPI communication table
+        !! MPI communication table
         call set_mpi_table
 
-    !! computation region in this node (#244)
+        !! computation region in this node (#244)
         if (proc_x <= nproc_x - mx - 1) then
             ibeg = proc_x * (nx - mx) / nproc_x + 1
             iend = (proc_x + 1) * (nx - mx) / nproc_x
@@ -296,16 +229,14 @@ contains
         kbeg = 1
         kend = nz
 
-    !! memory requirements including margin for MPI/boundary conditions
-    !! stress drop also requires sleeve area
+        !! memory requirements including margin for MPI/boundary conditions
+        !! stress glut also requires sleeve area
         ibeg_m = ibeg - 3
         iend_m = iend + 3 + ipad
         kbeg_m = kbeg - 3
         kend_m = kend + 3 + kpad
 
-    !!
-    !! coordinate setting
-    !!
+        !! coordinate setting
         allocate (xc(ibeg_m:iend_m), zc(kbeg_m:kend_m))
 
         do i = ibeg_m, iend_m
@@ -315,9 +246,7 @@ contains
             zc(k) = k2z(k, zbeg, real(dz))
         end do
 
-    !!
-    !! Absorbing region definition
-    !!
+        !! Absorbing region definition
         allocate (kbeg_a(ibeg_m:iend_m))
         do i = ibeg_m, iend_m
             if (i <= na .or. nx - na + 1 <= i) then
@@ -350,22 +279,14 @@ contains
         call pwatch__off("global__setup2") !! measure from here
 
     end subroutine global__setup2
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Data buffring & communication for velocity vector
-  !!
-  !! @see
-  !! 2013-0420, 2013-0421
-    !<
-  !!
     subroutine global__comm_vel()
+
+        !! Data buffring & communication for velocity vector ( 2013-0420, 2013-0421)
 
         integer :: err
         integer :: istatus(mpi_status_size, 4)
         integer :: req(4)
-    !! ----
 
         if (myid >= nproc_x) return
 
@@ -387,19 +308,14 @@ contains
         call pwatch__off("global__comm_vel")
 
     end subroutine global__comm_vel
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! Data buffring & communication for stress tensor
-    !<
-  !!
     subroutine global__comm_stress()
+
+        !! Data buffring & communication for stress tensor
 
         integer :: err
         integer :: istatus(mpi_status_size, 4)
         integer :: req(4)
-    !! ----
 
         if (myid >= nproc_x) return
 
@@ -416,24 +332,19 @@ contains
 
         call mpi_waitall(4, req, istatus, err)
 
-    !! Resore the data
+        !! Resore the data
         Sxy(kbeg:kend, iend + 1:iend + 1) = reshape(rbuf_ip(1:nz), (/nz, 1/))
         Sxy(kbeg:kend, ibeg - 2:ibeg - 1) = reshape(rbuf_im(1:2 * nz), (/nz, 2/))
 
         call pwatch__off("global__comm_stress")
 
     end subroutine global__comm_stress
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
 
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-    !>
-  !! check if the voxcel location is inside the MPI node
-    !<
     logical function inside_node(i, k)
 
-        integer, intent(in) :: i, k
+        !! check if the voxcel location is inside the MPI node
 
-    !! ----
+        integer, intent(in) :: i, k
 
         if (ibeg <= i .and. i <= iend .and. &
             kbeg <= k .and. k <= kend) then
@@ -444,13 +355,12 @@ contains
 
     end function inside_node
 
-  !! ---------------------------------------------------------------------------------------------------------------------------- !!
-
     subroutine set_mpi_table
+
+        !! 2D communication table (2013-0439)
+
         integer :: i
         integer :: ii
-    !! 2D communication table
-        !> @see 2013-0439
 
         itbl(-1:nproc_x) = MPI_PROC_NULL
         do i = 0, nproc_x - 1
@@ -460,9 +370,8 @@ contains
 
         end do
 
-    !! location of this process
+        !! location of this process
         idx = mod(myid, nproc_x)
     end subroutine set_mpi_table
 
 end module m_global
-!! ------------------------------------------------------------------------------------------------------------------------------ !!
