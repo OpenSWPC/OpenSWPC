@@ -284,7 +284,7 @@ contains
 
     ymax = 0.0
     do i=ibeg_k, iend_k
-      ymax = max( ymax, abs( vy(kob(i)+1,i) ) )
+      ymax = max( ymax, abs( real(vy(kob(i)+1,i) ) ))
     end do
 
   end subroutine kernel__vmax

@@ -32,7 +32,6 @@ module m_source
 
   !! local variables
   character(16)         :: stftype                                        !< type of source time function: used in u_source
-  integer               :: stf_file_type                                  !< type of stf file format: used in u_source
   integer               :: nsrc                                           !< source grid number inside the node
   integer               :: n_stfprm                                       !< number of parameters for moment-rate function
   real(SP), allocatable :: srcprm(:,:)                                    !< control paramater for moment-rate function at grids
@@ -73,6 +72,7 @@ contains
     character(6)  :: stf_format
     integer :: io
     character(3) :: sdep0
+    character :: sdep1
     !! ----
 
     call pwatch__on("source__setup")
@@ -253,8 +253,8 @@ contains
         !! depth fitting
 
         do k=0, NBD
-          write(sdep0,'(I1.1)') k
-          sdep0 = 'bd' // sdep0
+          write(sdep1,'(I1.1)') k
+          sdep0 = 'bd' // sdep1
 
           if( trim(sdep_fit) == sdep0 ) then
             sz(nn) = bddep(isrc(nn),  k)
@@ -335,10 +335,10 @@ contains
     integer :: i
     character(256) :: adum
     integer :: ierr
-    real(SP) :: rdum
+    real(SP) :: rdum1, rdum2, rdum3, rdum4
     real(SP) :: mw
     real(SP) :: D, S
-    integer :: is0, js0, ks0
+    integer :: is0, ks0
     real(SP), allocatable :: r0(:)
     real(SP) :: sy(ns)
     integer :: iex
@@ -361,7 +361,7 @@ contains
       select case( stf_format )
 
       case( 'xym0ij' )
-        read( adum,*,iostat=ierr ) sx(i), sy(i), sz(i), sprm(1,i), sprm(2,i), mo(i), rdum, rdum, rdum, myz(i), rdum, mxy(i)
+        read( adum,*,iostat=ierr ) sx(i), sy(i), sz(i), sprm(1,i), sprm(2,i), mo(i), rdum1, rdum2, rdum3, myz(i), rdum4, mxy(i)
         call assert( ierr == 0 )
 
       case( 'xym0dc' )
@@ -371,10 +371,10 @@ contains
         call assert(  -90. <= dip    .and. dip    <= 90.  )
         call assert( -180. <= rake   .and. rake   <= 180. )
         ! use strike angle measured from map azimuth
-        call sdr2moment( strike-phi, dip, rake, rdum, rdum, rdum, myz(i), rdum, mxy(i) )
+        call sdr2moment( strike-phi, dip, rake, rdum1, rdum2, rdum3, myz(i), rdum4, mxy(i) )
 
       case( 'llm0ij' )
-        read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mo(i), rdum, rdum, rdum, myz(i), rdum, mxy(i)
+        read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mo(i), rdum1, rdum2, rdum3, myz(i), rdum4, mxy(i)
         call assert( ierr == 0 )
         call assert( -360. <= lon .and. lon <= 360 )
         call assert(  -90. <= lat .and. lat <=  90 )
@@ -385,11 +385,11 @@ contains
         call assert( ierr == 0 )
         call assert( -360. <= lon .and. lon <= 360 )
         call assert(  -90. <= lat .and. lat <=  90 )
-        call sdr2moment( strike-phi, dip, rake, rdum, rdum, rdum, myz(i), rdum, mxy(i) )
+        call sdr2moment( strike-phi, dip, rake, rdum1, rdum2, rdum3, myz(i), rdum4, mxy(i) )
         call geomap__g2c( lon, lat, clon, clat, phi, sx(i), sy(i) )
 
       case( 'xymwij' )
-        read( adum,*,iostat=ierr ) sx(i), sy(i), sz(i), sprm(1,i), sprm(2,i), mw, rdum, rdum, rdum, myz(i), rdum, mxy(i)
+        read( adum,*,iostat=ierr ) sx(i), sy(i), sz(i), sprm(1,i), sprm(2,i), mw, rdum1, rdum2, rdum3, myz(i), rdum4, mxy(i)
         call assert( ierr == 0 )
         call assert( mw <= 11. ) !! magnitude
         mo(i) = seismic_moment(mw)
@@ -402,10 +402,10 @@ contains
         call assert( mw <= 11. ) !! magnitude
         mo(i) = seismic_moment(mw)
         ! use strike angle measured from map azimuth
-        call sdr2moment( strike-phi, dip, rake, rdum, rdum, rdum, myz(i), rdum, mxy(i) )
+        call sdr2moment( strike-phi, dip, rake, rdum1, rdum2, rdum3, myz(i), rdum4, mxy(i) )
 
       case( 'llmwij' )
-        read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mw, rdum, rdum, rdum, myz(i), rdum, mxy(i)
+        read( adum,*,iostat=ierr ) lon, lat, sz(i), sprm(1,i), sprm(2,i), mw, rdum1, rdum2, rdum3, myz(i), rdum4, mxy(i)
         call assert( ierr == 0 )
         call assert( -360. <= lon .and. lon <= 360 )
         call assert(  -90. <= lat .and. lat <=  90 )
@@ -423,7 +423,7 @@ contains
         call assert( -180. <= rake   .and. rake   <= 180. )
         call assert( mw <= 11. ) !! magnitude
         mo(i) = seismic_moment(mw)
-        call sdr2moment( strike-phi, dip, rake, rdum, rdum, rdum, myz(i), rdum, mxy(i) )
+        call sdr2moment( strike-phi, dip, rake, rdum1, rdum2, rdum3, myz(i), rdum4, mxy(i) )
         call geomap__g2c( lon, lat, clon, clat, phi, sx(i), sy(i) )
 
       case( 'xydsdc' )
@@ -432,7 +432,7 @@ contains
         call assert( -360. <= strike .and. strike <= 360. )
         call assert(  -90. <= dip    .and. dip    <= 90.  )
         call assert( -180. <= rake   .and. rake   <= 180. )
-        call sdr2moment( strike-phi, dip, rake, rdum, rdum, rdum, myz(i), rdum, mxy(i) )
+        call sdr2moment( strike-phi, dip, rake, rdum1, rdum2, rdum3, myz(i), rdum4, mxy(i) )
         is0 = x2i( sx(i), xbeg, real(dx) )
         if( earth_flattening ) then
           ks0 = z2k( real( - R_EARTH * log( ( R_EARTH - sz(i) )/R_EARTH )), zbeg, real(dz) )
@@ -442,7 +442,7 @@ contains
 
         if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
             kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then
-          mo(i) = (1e9 * mu(ks0,js0)) * D * S
+          mo(i) = (1e9 * mu(ks0,is0)) * D * S
         else
           mo(i) = 0.
         end if
@@ -456,7 +456,7 @@ contains
         call assert(  -90. <= dip    .and. dip    <= 90.  )
         call assert( -180. <= rake   .and. rake   <= 180. )
 
-        call sdr2moment( strike-phi, dip, rake, rdum, rdum, rdum, myz(i), rdum, mxy(i) )
+        call sdr2moment( strike-phi, dip, rake, rdum1, rdum2, rdum3, myz(i), rdum4, mxy(i) )
         call geomap__g2c( lon, lat, clon, clat, phi, sx(i), sy(i) )
 
         is0 = x2i( sx(i), xbeg, real(dx) )
@@ -468,13 +468,13 @@ contains
 
         if( ibeg - 2 <= is0 .and. is0 <= iend + 3 .and. &
             kbeg - 2 <= ks0 .and. ks0 <= kend + 3      ) then
-          mo(i) = (1e9 * mu(ks0,js0)) * D * S
+          mo(i) = (1e9 * mu(ks0,is0)) * D * S
         else
           mo(i) = 0.
         end if    
 
       case( 'psmeca' )
-        read(adum,*,iostat=ierr) lon, lat, sz(i), rdum, rdum, rdum, rdum, myz(i), mxy(i), iex
+        read(adum,*,iostat=ierr) lon, lat, sz(i), rdum1, rdum2, rdum3, rdum4, myz(i), mxy(i), iex
         ! reverse sign
         myz(i) = -myz(i)
         mxy(i) = -mxy(i)
@@ -558,7 +558,6 @@ contains
     character(256) :: adum
     integer :: ierr
     real(SP) :: rdum
-    real(SP) :: mw
     character(2) :: stf_coord
     !! ----
 

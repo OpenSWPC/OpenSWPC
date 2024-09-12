@@ -75,10 +75,6 @@ module m_output
 
   !! I/O area in the node
   integer :: is0, is1, ks0, ks1
-
-  !! derivative coefficient
-  real(MP) :: r20x, r20z
-
   character(6) :: snp_format ! native or netcdf
 
   real(SP), allocatable :: buf_u(:,:) !! displacement buffer

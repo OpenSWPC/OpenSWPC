@@ -73,14 +73,13 @@ contains
     integer  :: i, k
     real(SP) :: hx, hz
     integer  :: idum
-    real :: coef
     !! ----
 
     !!
     !! derivative coefficient
     !!
-    r20x = 1.0 / dx
-    r20z = 1.0 / dz
+    r20x = real(1.0 / dx)
+    r20z = real(1.0 / dz)
 
     !!
     !! damping profile

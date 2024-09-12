@@ -160,7 +160,7 @@ contains
 
     character(3) :: typ ! asc or bin
     !! default values
-    character(256), parameter :: D_ODIR = './dat'
+    character(80), parameter :: D_ODIR = './dat'
     !! velocity structure
     real(SP), allocatable :: den(:,:), rig(:,:), lam(:,:)
     real(SP), allocatable :: vp(:,:),  vs(:,:)
@@ -179,7 +179,7 @@ contains
     logical :: is_eof
     character(80) :: fmt
     character(256) :: fn_dat
-    integer :: vid_rho, vid_lambda, vid_mu, vid_topo
+    integer :: vid_rho, vid_lambda, vid_mu
     integer :: start(3), count(3)
     !--
 
@@ -395,8 +395,7 @@ contains
     logical :: is_lpf
     real(SP) :: div, rot
     real(SP) :: sobel_edge, sobel_edge_x, sobel_edge_y
-    real :: ud, ew, ns, A, h, s, v, horiz
-    integer :: ir, ig, ib
+    real :: ud, horiz
     integer :: vid_rho, vid_mu, vid_lambda, vid_topo
     integer :: start(3), count(3)
     logical :: no_timemark
@@ -807,58 +806,6 @@ contains
     deallocate( amp, img )
 
   end subroutine img_output
-  !----------------------------------------------------------------------------!
-
-  subroutine hue( h, s, v, r, g, b )
-    real, intent(in) :: h
-    real, intent(in) :: s
-    real, intent(in) :: v
-    integer, intent(out) :: r, g, b
-    !+
-    real :: hh, ss, vv
-    real :: rr, gg, bb
-    integer :: i
-    real :: f
-    real :: p1, p2, p3
-    character(10) :: cr, cg, cb
-    !--
-    hh = h
-
-    ss = s
-    vv = v
-
-    if( hh > 1.0 ) hh = 1.0
-    if( ss > 1.0 ) ss = 1.0
-    if( vv > 1.0 ) vv = 1.0
-
-    if( hh < 0.0 ) hh = 0.0
-    if( ss < 0.0 ) ss = 0.0
-    if( vv < 0.0 ) vv = 0.0
-
-    i = int(6.0*hh)
-    f = h*6.0 - dble(i)
-
-    rr = 0.0
-    gg = 0.0
-    bb = 0.0
-
-    p1 = vv*( 1.0 - ss )
-    p2 = vv*( 1.0 - ss*f )
-    p3 = vv*( 1.0 - ss*(1.0 - f) )
-
-    if      ( i == 0 ) then;  rr = vv ; gg = p3 ; bb = p1 ;
-    else if ( i == 1 ) then;  rr = p2 ; gg = vv ; bb = p1 ;
-    else if ( i == 2 ) then;  rr = p1 ; gg = vv ; bb = p3 ;
-    else if ( i == 3 ) then;  rr = p1 ; gg = p2 ; bb = vv ;
-    else if ( i == 4 ) then;  rr = p3 ; gg = p1 ; bb = vv ;
-    else;                     rr = vv ; gg = p1 ; bb = p2 ;
-    end if
-
-    r = min( 255, max( int( rr * 255 + 0.5 ), 0 ) )
-    g = min( 255, max( int( gg * 255 + 0.5 ), 0 ) )
-    b = min( 255, max( int( bb * 255 + 0.5 ), 0 ) )
-
-  end subroutine hue
 
   !! ------------------------------------------------------------------------ !!
   !>

@@ -135,7 +135,6 @@ contains
     integer :: i, j
     real :: clon, clat, phi
     integer :: latid, lonid
-    real :: xx, yy
     !----
 
 

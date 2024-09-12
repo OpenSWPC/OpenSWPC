@@ -63,7 +63,6 @@ contains
     integer :: iolst
     integer :: i, k, n
     integer :: nlon, nlat
-    character(256) :: adum
     logical :: is_flatten
     type(bicubic__data), allocatable :: bcd(:)
     integer :: ktopo

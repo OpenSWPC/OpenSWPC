@@ -68,13 +68,11 @@ contains
     character(256), allocatable :: fn_grd(:)
     integer :: iolst
     integer :: i, j, k, n
-    character(256) :: adum
     integer :: nlon, nlat
     integer :: node_grd
     real(SP) :: x_AB, x_AE, y_AB, y_AE ! absorber boundary location
     real(SP) :: xx, yy
     logical :: is_flatten
-    integer :: idum
     integer :: ktopo
     integer, allocatable :: kgrd(:,:,:)
     integer :: ncid, ndim, nvar, xid, yid, zid

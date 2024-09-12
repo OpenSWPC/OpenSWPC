@@ -48,8 +48,8 @@ module m_absorb_p
 
   !! Damping profiles
   real(SP), allocatable :: gxc(:,:), gxe(:,:) !< damping profile along x at center/edge of voxel
-  real(SP), allocatable :: gyc(:,:), gye(:,:) !< damping profile along x at center/edge of voxel
-  real(SP), allocatable :: gzc(:,:), gze(:,:) !< damping profile along x at center/edge of voxel
+  real(SP), allocatable :: gyc(:,:), gye(:,:) !< damping profile along y at center/edge of voxel
+  real(SP), allocatable :: gzc(:,:), gze(:,:) !< damping profile along z at center/edge of voxel
 
   !! ADE variables
   real(SP), allocatable :: axVx(:,:,:), ayVx(:,:,:), azVx(:,:,:)

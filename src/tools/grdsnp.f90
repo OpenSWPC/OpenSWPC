@@ -32,7 +32,6 @@ program grdsnp
   integer :: kgrd
   integer :: io
   integer :: nlon, nlat
-  character(256) :: adum
   type(bicubic__data) :: bcd
   character(256) :: fn_prm, fn_grd
   integer :: ncid, ndim, nvar, xid, yid, zid

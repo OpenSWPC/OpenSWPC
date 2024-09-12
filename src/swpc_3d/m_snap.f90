@@ -2018,7 +2018,6 @@ end subroutine close_nc
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine snap__closefiles
 
-    integer :: vid
     !! --
 
     call pwatch__on('snap__closefiles')

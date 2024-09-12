@@ -31,8 +31,6 @@ program gen_rmed3d
   integer               :: seed
   logical               :: is_seed
   character(256)        :: fn_out
-  integer               :: ncid, vid
-  integer :: i, j, k
   logical :: is_opt1, is_opt2
   !! ----
 
@@ -96,7 +94,6 @@ contains
     integer :: ncid
     integer :: dimid_x, dimid_y, dimid_z
     integer :: varid_x, varid_y, varid_z, varid_r
-    integer :: dimids(2)
 
     call nc_chk(nf90_create(fn_out, NF90_CLOBBER, ncid))
     call nc_chk(nf90_def_dim(ncid, 'x', nx, dimid_x))

@@ -72,6 +72,7 @@ contains
     character(6) :: stf_format
     integer :: io
     character(3) :: sdep0
+    character :: sdep1
     !! ----
 
     call pwatch__on("source__setup")
@@ -294,8 +295,8 @@ contains
         srcprm(:,nn) = srcprm_g(:,i)
 
         do k=0, NBD
-          write(sdep0,'(I1.1)') k
-          sdep0 = 'bd' // sdep0
+          write(sdep1,'(I1.1)') k
+          sdep0 = 'bd' // sdep1
 
           if( trim(sdep_fit) == sdep0 ) then
             sz(nn) = bddep(isrc(nn), jsrc(nn), k)
@@ -359,7 +360,7 @@ contains
     real(SP)  :: pw_zlen
     character :: pw_ps
     real(SP)  :: pw_strike, pw_dip, pw_rake
-    real(SP)  :: xi1, xi2, vp, vs
+    real(SP)  :: vp, vs
     integer   :: i, j, k
     real(SP)  :: sd, cd, sf, cf, sl, cl, c2d, c2f
     real(SP)  :: x0, y0, z0, x1, y1, z1, la0, mu0
@@ -778,12 +779,11 @@ contains
     real(SP), intent(out)    :: sx(ns), sy(ns), sz(ns)
     real(SP), intent(out)    :: fx(ns), fy(ns), fz(ns)
     real(SP), intent(out)    :: sprm(1:nprm,1:ns)
-    real(SP) :: strike, dip, rake, lon, lat
+    real(SP) :: lon, lat
     integer :: io
     integer :: i
     character(256) :: adum
     integer :: ierr
-    real(SP) :: mw
     character(2) :: stf_coord
     !! ----
 

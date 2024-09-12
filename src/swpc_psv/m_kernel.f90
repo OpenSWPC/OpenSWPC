@@ -404,8 +404,8 @@ contains
     xmax = 0.0
     zmax = 0.0
     do i=ibeg_k, iend_k
-      xmax = max( xmax, abs( vx(kob(i)+1,i) ) )
-      zmax = max( zmax, abs( vz(kob(i)+1,i) ) )
+      xmax = max( xmax, abs( real(vx(kob(i)+1,i) )) )
+      zmax = max( zmax, abs( real(vz(kob(i)+1,i) )) )
     end do
 
   end subroutine kernel__vmax

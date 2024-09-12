@@ -681,8 +681,6 @@ contains
 
   subroutine snap__closefiles
 
-    integer :: vid
-
     call pwatch__on('snap__closefiles')
 
     if( snp_format == 'native' ) then

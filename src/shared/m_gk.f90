@@ -78,10 +78,10 @@ contains
     lam_c = cos( lam - lam0 )
     lam_s = sin( lam - lam0 )
 
-    tan_chi = sinh( atanh( sin(phi) ) - e2n * atanh( e2n * sin(phi) ) )
+    tan_chi = sinh( atanh0( sin(phi) ) - e2n * atanh( e2n * sin(phi) ) )
     cos_chi = sqrt( 1 + tan_chi**2 )
     xi      = atan( tan_chi / lam_c )
-    eta     = atanh( lam_s / cos_chi )
+    eta     = atanh0( lam_s / cos_chi )
 
     !! ----
 
@@ -259,12 +259,12 @@ contains
   !! Hyporbolic arc-tangent
   !<
   !! --
-  real(DP) function atanh( x )
+  real(DP) function atanh0( x )
     real(DP), intent(in) :: x
 
-    atanh = log( ( 1._DP + x ) / ( 1._DP - x ) ) / 2.0_DP
+    atanh0 = log( ( 1._DP + x ) / ( 1._DP - x ) ) / 2.0_DP
 
-  end function atanh
+  end function atanh0
   !!---------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_gk

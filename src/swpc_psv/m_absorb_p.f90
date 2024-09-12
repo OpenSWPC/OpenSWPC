@@ -47,16 +47,15 @@ module m_absorb_p
 
   !! Damping profiles
   real(SP), allocatable :: gxc(:,:), gxe(:,:) !< damping profile along x at center/edge of voxel
-  real(SP), allocatable :: gyc(:,:), gye(:,:) !< damping profile along x at center/edge of voxel
-  real(SP), allocatable :: gzc(:,:), gze(:,:) !< damping profile along x at center/edge of voxel
+  real(SP), allocatable :: gzc(:,:), gze(:,:) !< damping profile along z at center/edge of voxel
 
   !! ADE variables
-  real(SP), allocatable :: axVx(:,:), ayVx(:,:), azVx(:,:)
-  real(SP), allocatable :: axVz(:,:), ayVz(:,:), azVz(:,:)
+  real(SP), allocatable :: axVx(:,:), azVx(:,:)
+  real(SP), allocatable :: axVz(:,:), azVz(:,:)
   real(SP), allocatable :: axSxx(:,:), azSxz(:,:)
   real(SP), allocatable :: axSxz(:,:), azSzz(:,:)
 
-  real(SP) :: r20x, r20y, r20z
+  real(SP) :: r20x, r20z
   integer :: kbeg_min
 
 contains
@@ -73,14 +72,14 @@ contains
     !! --
     integer  :: i, k
     real(SP) :: hx,hz
-    integer  :: idum, ierr
+    integer  :: idum
     !! ----
 
     !!
     !! derivative coefficient
     !!
-    r20x = 1.0 / dx
-    r20z = 1.0 / dz
+    r20x = real(1.0 / dx)
+    r20z = real(1.0 / dz)
 
     !!
     !! damping profile
@@ -88,8 +87,8 @@ contains
     allocate( gxc(4,ibeg:iend), gxe(4,ibeg:iend) )
     allocate( gzc(4,kbeg:kend), gze(4,kbeg:kend) )
 
-    hx = na * dx
-    hz = na * dz
+    hx = real(na * dx)
+    hz = real(na * dz)
 
     do i=ibeg, iend
       call damping_profile( xc(i),              hx, xbeg, xend, gxc(:,i) )
@@ -230,10 +229,10 @@ contains
         !! ADE updates
         !!
 
-        axSxx(k,i) = gxe0(3) * axSxx(k,i) + gxe0(4) * dxSxx(k) * dt
-        azSxz(k,i) = gzc0(3) * azSxz(k,i) + gzc0(4) * dzSxz(k) * dt
-        axSxz(k,i) = gxc0(3) * axSxz(k,i) + gxc0(4) * dxSxz(k) * dt
-        azSzz(k,i) = gze0(3) * azSzz(k,i) + gze0(4) * dzSzz(k) * dt
+        axSxx(k,i) = real(gxe0(3) * axSxx(k,i) + gxe0(4) * dxSxx(k) * dt)
+        azSxz(k,i) = real(gzc0(3) * azSxz(k,i) + gzc0(4) * dzSxz(k) * dt)
+        axSxz(k,i) = real(gxc0(3) * axSxz(k,i) + gxc0(4) * dxSxz(k) * dt)
+        azSzz(k,i) = real(gze0(3) * azSzz(k,i) + gze0(4) * dzSzz(k) * dt)
 
       end do
     end do
@@ -397,8 +396,8 @@ contains
         !!
         !! Normal Stress
         !!
-        dxVx_ade = gxc0(1) * dxVx(k) + gxc0(2) * axVx(k,i)
-        dzVz_ade = gzc0(1) * dzVz(k) + gzc0(2) * azVz(k,i)
+        dxVx_ade = real(gxc0(1) * dxVx(k) + gxc0(2) * axVx(k,i))
+        dzVz_ade = real(gzc0(1) * dzVz(k) + gzc0(2) * azVz(k,i))
         Sxx(k,i) = Sxx(k,i) + ( lam2mu_R * dxVx_ade + lam_R * dzVz_ade ) * dt
         Szz(k,i) = Szz(k,i) + ( lam2mu_R * dzVz_ade + lam_R * dxVx_ade ) * dt
 
@@ -406,8 +405,8 @@ contains
         !!
         !! ADE
         !!
-        axVx(k,i) = gxc0(3) * axVx(k,i) + gxc0(4) * dxVx(k) * dt
-        azVz(k,i) = gzc0(3) * azVz(k,i) + gzc0(4) * dzVz(k) * dt
+        axVx(k,i) = real(gxc0(3) * axVx(k,i) + gxc0(4) * dxVx(k) * dt)
+        azVz(k,i) = real(gzc0(3) * azVz(k,i) + gzc0(4) * dzVz(k) * dt)
 
       end do
 
@@ -428,8 +427,8 @@ contains
         Sxz(k,i) = Sxz(k,i) + muxz * ( gxe0(1) * dxVz(k)     + gze0(1) * dzVx(k) &
             + gxe0(2) * axVz(k,i) + gze0(2) * azVx(k,i) ) * dt
 
-        azVx(k,i) = gze0(3) * azVx(k,i) + gze0(4) * dzVx(k) * dt
-        axVz(k,i) = gxe0(3) * axVz(k,i) + gxe0(4) * dxVz(k) * dt
+        azVx(k,i) = real( gze0(3) * azVx(k,i) + gze0(4) * dzVx(k) * dt )
+        axVz(k,i) = real( gxe0(3) * axVz(k,i) + gxe0(4) * dxVz(k) * dt )
 
       end do
     end do
@@ -533,12 +532,12 @@ contains
   !>
   !! ADE-CFS PML damping factor according to Zhao and Shen
   !!
-  subroutine damping_profile( x, H, xbeg, xend, g )
+  subroutine damping_profile( x, H, xb, xe, g )
 
     real(SP), intent(in) :: x   !< cartesian coordinate location
     real(SP), intent(in) :: H   !< absorption layer thickness
-    real(SP), intent(in) :: xbeg
-    real(SP), intent(in) :: xend
+    real(SP), intent(in) :: xb
+    real(SP), intent(in) :: xe
     real(SP), intent(out) :: g(4) !< damping prof
 
     real(SP) :: R0 !! reflection coefficient
@@ -553,12 +552,12 @@ contains
     R0 = 10**( - ( log10( real(na) ) - 1 ) / log10( 2.0 )  - 3.0 )
     d0 = - ( 1.0 / (2.0*H) ) * ( pd +1 ) * cp * log( R0 )
     b0 = 7.0
-    a0 = PI * fcut
+    a0 = real(PI * fcut)
 
-    if( x <= xbeg + H ) then
-      xx = ( xbeg + H ) - x
-    else if ( x >= xend - H ) then
-      xx = x - ( xend - H )
+    if( x <= xb + H ) then
+      xx = ( xb + H ) - x
+    else if ( x >= xe - H ) then
+      xx = x - ( xe - H )
     else
       xx = 0.0 !! no absorption
     end if
