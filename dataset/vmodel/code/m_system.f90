@@ -1,184 +1,129 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Linux/Mac system routines, for processig command line argument, environment variables, and system call
-!!
-!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! --
 module m_system
 
-  !! -- Dependency
-  use m_std
+    !! System routines, for processig command line argument, environment variables, and system call
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
-  !! -- Declarations
-  implicit none
-  private
+    use m_std
 
-  public :: system__getarg
-  public :: system__getenv
-  public :: system__call
-  public :: system__iargc
-  public :: system__expenv
+    implicit none
+    private
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Obtain command line arguments for character, integer, single and double precision data
-  !!
-  !! It uses Fortran2003 statement
-  !<
-  !! --
-  interface system__getarg
+    public :: system__getarg
+    public :: system__getenv
+    public :: system__call
+    public :: system__iargc
+    public :: system__expenv
 
-    module procedure getarg_a, getarg_i, getarg_f, getarg_d
-
-  end interface system__getarg
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+    interface system__getarg
+        module procedure getarg_a, getarg_i, getarg_f, getarg_d
+    end interface system__getarg
 
 contains
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Do system-call.
-  !!
-  !! @note It uses out-of-standard routines, but it works with most of modern fortran compilers.
-  !!
-  !<
-  !! --
-  subroutine system__call (cmd)
+    subroutine system__call(cmd)
 
-    character(*), intent(in) :: cmd
-    !! ----
+        !! Do system-call.
 
-    call system( cmd )
+        character(*), intent(in) :: cmd
 
-  end subroutine system__call
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+        call execute_command_line(cmd)
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Returns a number of arguments. Fortran2003 wrapper function
-  !<
-  !! --
-  integer function system__iargc()
+    end subroutine system__call
 
-    system__iargc  = command_argument_count()
+    integer function system__iargc()
 
-  end function system__iargc
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+        !! Returns a number of arguments. Fortran2003 wrapper function
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Obtain environmental variable "name".
-  !<
-  !! --
-  subroutine system__getenv( name, value )
+        system__iargc = command_argument_count()
 
-    !! -- Arguments
-    character(*), intent(in)  :: name
-    character(*), intent(out) :: value
+    end function system__iargc
 
-    !! ----
+    subroutine system__getenv(name, value)
 
-    call get_environment_variable( name, value )
+        !! Obtain environmental variable "name".
 
-  end subroutine system__getenv
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+        character(*), intent(in)  :: name
+        character(*), intent(out) :: value
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! get i-th command line argument, Fortran2003 wrapper subroutine
-  !<
-  !! --
-  subroutine getarg_a (i, arg)
+        call get_environment_variable(name, value)
 
-    !! -- Arguments
-    integer,      intent(in)  :: i   ! order of the arguments
-    character(*), intent(out) :: arg ! argument
+    end subroutine system__getenv
 
-    call get_command_argument( i, arg )
+    subroutine getarg_a(i, arg)
+        !! get i-th command line argument, Fortran2003 wrapper subroutine
 
-  end subroutine getarg_a
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+        integer, intent(in)  :: i   !! order of the arguments
+        character(*), intent(out) :: arg !! argument
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine getarg_i (i, arg)
+        call get_command_argument(i, arg)
 
-    !! -- Arguments
-    integer, intent(in) :: i
-    integer, intent(out) :: arg
+    end subroutine getarg_a
 
-    character(256) :: carg
-    !! ----
+    subroutine getarg_i(i, arg)
 
-    call getarg_a( i, carg )
-    read(carg,*) arg
+        integer, intent(in) :: i
+        integer, intent(out) :: arg
 
-  end subroutine getarg_i
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+        character(256) :: carg
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine getarg_f (i, arg)
-    !! -- Arguments
-    integer,  intent(in) :: i
-    real, intent(out) :: arg
+        call getarg_a(i, carg)
+        read (carg, *) arg
 
-    character(256) :: carg
-    !! ----
+    end subroutine getarg_i
 
-    call getarg_a( i, carg )
-    read(carg,*) arg
+    subroutine getarg_f(i, arg)
 
-  end subroutine getarg_f
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+        integer, intent(in) :: i
+        real, intent(out) :: arg
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine getarg_d (i, arg)
+        character(256) :: carg
 
-    !! -- Arguments
-    integer,  intent(in) :: i
-    real(DP), intent(out) :: arg
+        
+        call getarg_a(i, carg)
+        read (carg, *) arg
 
-    character(256) :: carg
-    !! ----
+    end subroutine getarg_f
 
-    call getarg_a( i, carg )
-    read(carg,*) arg
+    subroutine getarg_d(i, arg)
 
-  end subroutine getarg_d
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+        integer, intent(in) :: i
+        real(DP), intent(out) :: arg
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Expand shell environmental variables wrapped in ${...}
-  !<
-  !! --
-  subroutine system__expenv( str )
-    character(*), intent(inout) :: str
-    character(256) :: str2
-    integer :: ikey1, ikey2
-    integer :: iptr
-    character(256) :: str3
+        character(256) :: carg
 
-    iptr = 1
-    str2 = ''
-    do
-      ikey1 = scan( str(iptr:), "${" ) + iptr - 1
-      if( ikey1==iptr-1 ) exit
+        call getarg_a(i, carg)
+        read (carg, *) arg
 
-      ikey2 = scan( str(iptr:), "}" ) + iptr -1
-      str2=trim(str2) // str(iptr:ikey1-1)
-      call system__getenv( str(ikey1+2:ikey2-1), str3 )
-      str2 = trim(str2) // trim(str3)
-      iptr = ikey2+1
+    end subroutine getarg_d
 
-    end do
-    str2 = trim(str2) // trim(str(iptr:))
+    subroutine system__expenv(str)
 
-    str = trim(str2)
+        !! Expand shell environmental variables wrapped in ${...}
 
-  end subroutine system__expenv
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+        character(*), intent(inout) :: str
+        character(256) :: str2
+        integer :: ikey1, ikey2
+        integer :: iptr
+        character(256) :: str3
 
+        iptr = 1
+        str2 = ''
+        do
+            ikey1 = scan(str(iptr:), "${") + iptr - 1
+            if (ikey1 == iptr - 1) exit
+
+            ikey2 = scan(str(iptr:), "}") + iptr - 1
+            str2 = trim(str2)//str(iptr:ikey1 - 1)
+            call system__getenv(str(ikey1 + 2:ikey2 - 1), str3)
+            str2 = trim(str2)//trim(str3)
+            iptr = ikey2 + 1
+
+        end do
+        str2 = trim(str2)//trim(str(iptr:))
+
+        str = trim(str2)
+
+    end subroutine system__expenv
 
 end module m_system
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
