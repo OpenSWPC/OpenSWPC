@@ -1,7 +1,8 @@
 module m_sac
 
     !! SAC-formatted file I/O
-    !  Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit, input_unit
     use m_std
@@ -18,8 +19,6 @@ module m_sac
     type sac__hdr
 
         !! Sac Header Type Definition
-
-        !                var name        description                   record#
         real(dp)      :: delta           !! sampling interval             (001)
         real(dp)      :: depmin          !! minimum value                 (002)
         real(dp)      :: depmax          !! maximum value                 (003)
@@ -178,9 +177,8 @@ contains
         character(*), intent(in)    :: fn_sac  !! sac filename
         type(sac__hdr), intent(out)   :: ss      !! header info
         real(dp), allocatable, intent(inout) :: dat(:)  !! waveform data
-        !--
+
         real(sp), allocatable                :: fdat(:)
-        !----
 
         call rsac_s(fn_sac, ss, fdat)
 
@@ -197,13 +195,12 @@ contains
         character(*), intent(in)                       :: fn_sac  !! sac filename
         type(sac__hdr), intent(out)                    :: ss      !! header info
         real(sp), allocatable, optional, intent(inout) :: dat(:)  !! waveform data
-        !--
+
         integer :: io
         integer :: i
         integer :: nmax
         logical :: same_endian
         integer :: ierr
-        !----
 
         open (newunit=io, file=fn_sac, &
               action='read', access='stream', form='unformatted', status='old', iostat=ierr)
@@ -249,7 +246,6 @@ contains
         type(sac__hdr), intent(in)           :: ss             !! SAC header
         real(DP), intent(in)           :: dat(1:ss%npts) !! SAC data
         logical, intent(in), optional :: overwrite      !! .true. for overwrite
-        !----
 
         if (present(overwrite)) then
             call wsac_s(fn_sac, ss, real(dat), overwrite)
@@ -267,11 +263,10 @@ contains
         type(sac__hdr), intent(in)           :: ss             !! SAC header
         real(SP), intent(in)           :: dat(1:ss%npts) !! SAC data
         logical, intent(in), optional :: overwrite      !! .true. for overwrite
-        !--
+
         logical        :: isexist
         integer        :: io
         character(1)   :: yn
-        !----
 
         !! overwrite check
         inquire (file=fn_sac, exist=isexist)
@@ -314,13 +309,12 @@ contains
 
         integer, intent(in) :: io
         type(sac__hdr), intent(in) :: ss
-        !--
+
         real(SP)       :: fheader(70)
         integer        :: iheader(71:105)
         logical        :: lheader(106:110)
         character(4)   :: aheader(111:158)
         integer        :: i
-        !----
 
         !! initialize header
         fheader(1:70) = -12345.0
@@ -449,11 +443,10 @@ contains
         !! Initialize SAC header
 
         type(sac__hdr), intent(inout) :: ss
-        !--
+
         real(SP)     :: ferr = -12345.0_SP
         integer      :: ierr = -12345
         character(6) :: cerr = '-12345'
-        !----
 
         ss%delta = ferr
         ss%depmin = ferr
@@ -567,7 +560,6 @@ contains
         type(sac__hdr), intent(in) :: sh(ntrace)
         real(DP), intent(in) :: dat(npts, ntrace)
         logical, optional, intent(in) :: overwrite
-        !----
 
         if (present(overwrite)) then
             call wcsf_s(fn_csf, ntrace, npts, sh, real(dat), overwrite)
@@ -587,13 +579,12 @@ contains
         type(sac__hdr), intent(in) :: sh(ntrace)
         real(SP), intent(in) :: dat(npts, ntrace)
         logical, optional, intent(in) :: overwrite
-        !--
+
         logical :: isexist
         integer :: io
         integer :: i
         character(1) :: yn
         integer, parameter :: NVHDR = 1
-        !----
 
         !! overwrite
         inquire (file=fn_csf, exist=isexist)
@@ -650,7 +641,7 @@ contains
         integer, intent(in) :: io
         type(sac__hdr), intent(out) :: ss
         logical, intent(out), optional :: same_endian
-        !--
+
         integer :: i
         real(sp)     :: fheader(1:70)
         integer      :: iheader(71:105)
@@ -658,7 +649,6 @@ contains
         integer      :: nvhdr
         character(4) :: aheader(111:158)
         logical      :: same_endian0
-        !----
 
         read (io) fheader
         read (io) iheader
@@ -810,10 +800,9 @@ contains
 
         integer, intent(in)    :: nbyte ! must be even
         character(nbyte), intent(inout) :: foo
-        !--
+
         integer  :: i, j
         character(1) :: wk
-        !----
 
         do i = 1, nbyte / 2
             j = nbyte - i + 1
@@ -868,9 +857,8 @@ contains
         !! Substitute blanks in character ch by padding '0'
 
         character(*), intent(inout) :: ch
-        !--
+
         integer :: i
-        !----
 
         do i = 1, len(ch)
             if (ichar(ch(i:i)) == 0) then

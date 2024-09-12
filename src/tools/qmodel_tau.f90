@@ -2,8 +2,7 @@
 !>
 !! Calculate frequency dependense of Q^(-1) model
 !!
-!! @copyright
-!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! --
 program qmodel_tau

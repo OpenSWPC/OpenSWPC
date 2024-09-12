@@ -17,7 +17,7 @@ all: ../../bin/swpc_3d.x
 ##
 VPATH = ../shared/:../../bin/       # file search path
 .SUFFIXES:                          # neglect .mod files
-.SUFFIXES: .f90 .f90 .o                  # only uses .f90 and .o file in makefile
+.SUFFIXES: .f90 .o                  # only uses .f90 and .o file in makefile
 
 
 ##
@@ -158,9 +158,6 @@ $(o_wav): $(s_wav) $(o_std) $(o_global) $(o_pwatch) $(o_readini) $(o_geomap) $(o
 ##
 .f90.o:
 	$(FC) $(NCINC) $(FFLAGS) -o $@ 	-c $<
-.f90.o:
-	$(FC) $(NCINC) $(FFLAGS) -o $@ 	-c $<
-
 
 ##
 ## Targets

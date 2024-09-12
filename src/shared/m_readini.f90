@@ -1,214 +1,171 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Read ini-style parameter file
-!!
-!! @copyright
-!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! ----
 #include "../shared/m_debug.h"
 module m_readini
 
-  !! -- Dependency
-  use iso_fortran_env, only: error_unit
-  use m_std
-  use m_debug
-  use m_system
+    !! Read ini-style parameter file
+    !!
+    !!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
-  !! -- Declarations
-  implicit none
-  private
-  save
+    use iso_fortran_env, only: error_unit
+    use m_std
+    use m_debug
+    use m_system
 
-  !! -- Public Procedures
-  public :: readini
-  public :: readini__strict_mode
-  logical :: strict_mode = .false. 
+    implicit none
+    private
+    save
 
-  !--
+    public :: readini
+    public :: readini__strict_mode
+    logical :: strict_mode = .false.
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! find keyword 'key' from ini-style file, and returns var
-  !!
-  !!
-  !! @par Usage
-  !!   call readini( io, key, var, def )
-  !!     - io    (integer)   ! file io number
-  !!     - key   (character) ! keyword
-  !!     - var (any type)    ! output parameter
-  !!     - def (any type)    ! default value
-  !<
-  !! --
-  interface readini
+    interface readini
 
-    module procedure readini_d, readini_s, readini_i, readini_c, readini_l
+        module procedure readini_d, readini_s, readini_i, readini_c, readini_l
 
-  end interface readini
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+    end interface readini
 
 contains
 
+    subroutine readini_c(io, key, var, def)
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine readini_c( io, key, var, def )
+        integer, intent(in)  :: io
+        character(*), intent(in)  :: key
+        character(*), intent(in)  :: def
+        character(*), intent(out) :: var
 
-    !! -- Arguments
-    integer,       intent(in)  :: io
-    character(*),  intent(in)  :: key
-    character(*),  intent(in)  :: def
-    character(*),  intent(out) :: var
+        character(256) :: keyword
+        integer        :: ierr
+        character(256) :: cline
+        integer        :: keylen
+        logical        :: isopen
 
-    character(256) :: keyword
-    integer        :: ierr
-    character(256) :: cline
-    integer        :: keylen
-    logical        :: isopen
-    !! ----
+        !! file status
+        inquire (io, OPENED=isopen)
 
-    !! file status
-    inquire( io, OPENED=isopen )
+        if (.not. isopen) then
 
-    if( .not. isopen ) then
+            write (error_unit, '(A)') 'ERROR [readini]: file not open.'
+            var = trim(def)
+            return
 
-      write(error_unit,'(A)') 'ERROR [readini]: file not open.'
-      var = trim(def)
-      return
-
-    end if
-
-
-
-    !! initialize file I/O location
-    rewind(io)
-
-    keyword = trim(adjustl(key))
-    keylen  = len_trim(keyword)
-
-
-    do
-
-      !! get one line
-      read(io,'(A)', iostat=ierr) cline
-
-      !! reach to the last line
-      if( ierr /= 0 ) then
-        call info( 'key ' // trim(keyword) //' is not found.' )
-        if( .not. strict_mode ) then
-          call info( '    Use default value '//trim(def)//' instead.' )
-          var = trim(def)
-        else
-          call info( '    Program terminate ... ' )
-          stop
         end if
-        return
-      end if
 
-      cline = adjustl(cline)
+        !! initialize file I/O location
+        rewind (io)
 
+        keyword = trim(adjustl(key))
+        keylen = len_trim(keyword)
 
-      !! comment line
-      if( cline(1:1) == '#' .or. cline(1:1) == '!' ) cycle
+        do
 
+            !! get one line
+            read (io, '(A)', iostat=ierr) cline
 
-      !! find keyword
-      if( cline(1:keylen) == trim(keyword) ) then
+            !! reach to the last line
+            if (ierr /= 0) then
+                call info('key '//trim(keyword)//' is not found.')
+                if (.not. strict_mode) then
+                    call info('    Use default value '//trim(def)//' instead.')
+                    var = trim(def)
+                else
+                    call info('    Program terminate ... ')
+                    stop
+                end if
+                return
+            end if
 
-        cline = adjustl( cline( keylen+1: ) )
+            cline = adjustl(cline)
 
-        if( cline(1:1) == '=' ) then
-          cline = adjustl(cline(2:))
-          read(cline,*) var
-          exit
-        end if
-      end if
-    end do
+            !! comment line
+            if (cline(1:1) == '#' .or. cline(1:1) == '!') cycle
 
-    rewind(io)
+            !! find keyword
+            if (cline(1:keylen) == trim(keyword)) then
 
-    !! expand environmental variable
-    call system__expenv( var )
+                cline = adjustl(cline(keylen + 1:))
 
-  end subroutine readini_c
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+                if (cline(1:1) == '=') then
+                    cline = adjustl(cline(2:))
+                    read (cline, *) var
+                    exit
+                end if
+            end if
+        end do
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine readini_d( io, key, var, def )
+        rewind (io)
 
-    integer,      intent(in)  :: io
-    character(*), intent(in)  :: key
-    real(DP),     intent(in)  :: def
-    real(DP),     intent(out) :: var
-    !! --
-    character(256) :: avar
-    character(256) :: adef
-    !! ----
+        !! expand environmental variable
+        call system__expenv(var)
 
-    write(adef,*) def
-    call readini_c( io, key, avar, adef )
-    read( avar,* ) var
+    end subroutine readini_c
 
-  end subroutine readini_d
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+    subroutine readini_d(io, key, var, def)
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine readini_s( io, key, var, def )
+        integer, intent(in)  :: io
+        character(*), intent(in)  :: key
+        real(DP), intent(in)  :: def
+        real(DP), intent(out) :: var
 
-    integer,      intent(in)  :: io
-    character(*), intent(in)  :: key
-    real(SP),     intent(in)  :: def
-    real(SP),     intent(out) :: var
-    !! -
-    character(256) :: avar, adef
-    !! ----
-    write(adef,*) def
-    call readini_c( io, key, avar, adef )
-    read(avar,*) var
+        character(256) :: avar
+        character(256) :: adef
 
-  end subroutine readini_s
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+        
+        write (adef, *) def
+        call readini_c(io, key, avar, adef)
+        read (avar, *) var
 
+    end subroutine readini_d
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine readini_i( io, key, var, def )
-    integer,      intent(in)  :: io
-    character(*), intent(in)  :: key
-    integer,      intent(in)  :: def
-    integer,      intent(out) :: var
-    !! --
-    character(256) :: avar, adef
-    !! ----
-    write(adef,*) def
-    call readini_c( io, key, avar, adef )
-    read(avar,*) var
+    subroutine readini_s(io, key, var, def)
 
-  end subroutine readini_i
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+        integer, intent(in)  :: io
+        character(*), intent(in)  :: key
+        real(SP), intent(in)  :: def
+        real(SP), intent(out) :: var
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  subroutine readini_l( io, key, var, def )
+        character(256) :: avar, adef
 
-    integer,      intent(in)  :: io
-    character(*), intent(in)  :: key
-    logical,      intent(in)  :: def
-    logical,      intent(out) :: var
-    !! --
-    character(256) :: avar, adef
-    !! ----
+        write (adef, *) def
+        call readini_c(io, key, avar, adef)
+        read (avar, *) var
 
-    write(adef,*) def
-    call readini_c( io, key, avar, adef )
-    read(avar,*) var
+    end subroutine readini_s
 
-  end subroutine readini_l
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
+    subroutine readini_i(io, key, var, def)
 
-  subroutine readini__strict_mode( mode )
-    logical, intent(in) :: mode
+        integer, intent(in)  :: io
+        character(*), intent(in)  :: key
+        integer, intent(in)  :: def
+        integer, intent(out) :: var
 
-    strict_mode = mode
-    
-  end subroutine readini__strict_mode
+        character(256) :: avar, adef
+
+        write (adef, *) def
+        call readini_c(io, key, avar, adef)
+        read (avar, *) var
+
+    end subroutine readini_i
+
+    subroutine readini_l(io, key, var, def)
+
+        integer, intent(in)  :: io
+        character(*), intent(in)  :: key
+        logical, intent(in)  :: def
+        logical, intent(out) :: var
+
+        character(256) :: avar, adef
+        
+        write (adef, *) def
+        call readini_c(io, key, avar, adef)
+        read (avar, *) var
+
+    end subroutine readini_l
+
+    subroutine readini__strict_mode(mode)
+        logical, intent(in) :: mode
+
+        strict_mode = mode
+
+    end subroutine readini__strict_mode
 
 end module m_readini
-!! ----------------------------------------------------------------------------------------------------------------------------- !!

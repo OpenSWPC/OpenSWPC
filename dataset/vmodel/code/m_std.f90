@@ -1,14 +1,9 @@
-!! ----------------------------------------------------------------------------------------------------------------------------- !!
-!>
-!! Definition of standard constants, in/out io numbers, precision constants
-!!
-!! @copyright
-!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
-!<
-!! --
 module m_std
 
-  !! -- Declarations
+    !! Definition of standard constants, in/out io numbers, precision constants
+    !!
+    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+
   use iso_fortran_env, only: real64, real32
   implicit none
   private

@@ -6,8 +6,7 @@
 !!   This software simulate seismic wave propagation, by solving equations of motion with constitutive equations of
 !!   elastic/visco-elastic medium by finite difference method (FDM).
 !!
-!! @copyright
-!!   Copyright 2013-2023 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!! Copyright 2013-2023 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !!
 !! @see
 !!   - Noguchi et al.     (2016) GJI     doi:10.1093/gji/ggw074

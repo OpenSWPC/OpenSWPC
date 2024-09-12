@@ -2,8 +2,7 @@
 !>
 !! Boundary absorber module: Cerjan's Sponge
 !!
-!! @copyright
-!!   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+!! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 !<
 !! ----
 #include "../shared/m_debug.h"
