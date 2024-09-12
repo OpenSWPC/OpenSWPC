@@ -100,12 +100,11 @@ contains
     logical,      intent(out) :: is_exist
     character(8) :: bintype
 
-    call std__getio(io, is_big = .true.)
     inquire(file=trim(fname), exist=is_exist)
 
     if(.not. is_exist) return
 
-    open(io, file=trim(fname), access='stream', action='read', form='unformatted')
+    open(newunit=io, file=trim(fname), access='stream', action='read', form='unformatted')
     read(io) bintype
 
     select case (bintype)

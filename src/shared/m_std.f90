@@ -34,7 +34,6 @@ module m_std
   real(SP),    parameter, public :: R_EARTH_S = 6371.0
 
   !! -- Public Subroutines
-  public :: std__getio
   public :: std__genfname
   public :: std__countline
   public :: std__deg2rad
@@ -58,23 +57,6 @@ module m_std
 
   !----
 
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Return the unusedd unit number measured from io0 constant
-  !!
-  !! @par Example
-  !! - call std__getio( io )
-  !! - call std__getio( io, .true. ) !< Big-endian output
-  !! - call std__getio( io, 300 ) !< search io number from 300
-  !!
-  !<
-  !--
-  interface std__getio
-    module procedure getio_0, &  !< default/number specific
-        getio_big   !< big_endian
-
-  end interface std__getio
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 contains
 
@@ -201,8 +183,7 @@ contains
   !!
   !! @par Example
   !!   call std__genfname( 'foo','dat', fname )
-  !!   call std__getio( fp )
-  !!   open ( fp, file=fname ) ! fname = 'foo.0000.dat' if there's no file
+  !!   open ( bewunit=fp, file=fname ) ! fname = 'foo.0000.dat' if there's no file
   !<
   !! --
   subroutine std__genfname( base, ext, fname )
@@ -272,72 +253,6 @@ contains
   end subroutine std__countline
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !! Return the unused unit number measured from pre-defined io0 constant
-  !! If io00 is given, it seeks the unit number from io00
-  !<
-  !! --
-  subroutine getio_0( io, io00 )
-
-    !! -- Arguments
-    integer, intent(out) :: io               !< unit number
-    integer, intent(in), optional :: io00    !< start number (optional)
-    !+
-    logical :: isOpen
-    !--
-
-    if( present( io00 ) ) then
-      io = io00
-    else
-      io = io0
-    end if
-
-    isOpen = .true.
-
-    do
-      inquire( io, opened = isOpen )
-      if( .not. isOpen ) exit
-      io = io + 1
-    end do
-
-  end subroutine getio_0
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-
-
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
-  !>
-  !!  Return the unusedd unit number measured from io0 constant
-  !!
-  !! If is_big = .true., it searchs io number from IOBIG0. Use it together with appropriate compiler settings
-  !<
-  !! --
-  subroutine getio_big( io, is_big )
-
-    !! -- Arguments
-    integer, intent(out) :: io      ! unit number
-    logical, intent(in)  :: is_big  ! BIG_ENDIAN
-    !+
-    logical :: isOpen
-    !--
-
-    if( is_big) then
-      io = IOBIG0
-    else
-      io = io0
-    end if
-
-    isOpen = .true.
-
-    do
-      inquire( io, opened = isOpen )
-      if( .not. isOpen ) exit
-      io = io + 1
-    end do
-
-  end subroutine getio_big
-  !! --------------------------------------------------------------------------------------------------------------------------- !!
 
 end module m_std
 !! ----------------------------------------------------------------------------------------------------------------------------- !!

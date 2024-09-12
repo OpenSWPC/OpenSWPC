@@ -47,9 +47,8 @@ program qmodel_tau
   call getopt( 'f0', sw, f0, 0.001 )
   call getopt( 'f1', sw, f1, 10.0 )
   call getopt( 'nf', sw, nf, 1000 )
-  call std__getio( io )
 
-  open( io, file=trim(fn_prm), action='read', iostat=ierr );
+  open( newunit=io, file=trim(fn_prm), action='read', iostat=ierr );
   if( ierr /= 0 ) then
     write(STDERR,*) 'input file open error'
     call usage_exit

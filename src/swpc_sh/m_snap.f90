@@ -188,8 +188,7 @@ contains
 
     if( myid == hdr%ionode ) then
 
-      call std__getio( hdr%io, is_big=.true. )
-      open( hdr%io, file=trim(fname), access='stream', action='write', form='unformatted', status='replace' )
+      open( newunit=hdr%io, file=trim(fname), access='stream', action='write', form='unformatted', status='replace' )
       call write_snp_header( hdr, nxs, nzs, xsnp(1:nxs), zsnp(1:nzs) )
 
     end if

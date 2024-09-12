@@ -59,9 +59,7 @@ program mapregion
 
   call getopt( 'o', is_given, fn_out, '' )
 
-  call std__getio( io_prm )
-
-  open( io_prm, file=trim(fn_prm), action='read', status='old', iostat=ierr )
+  open( newunit=io_prm, file=trim(fn_prm), action='read', status='old', iostat=ierr )
   if( ierr /= 0 ) then
     write(STDERR,*) 'ERROR [mapregion]: Could not open file ' // trim( fn_prm )
     stop
@@ -121,8 +119,7 @@ program mapregion
   end do
 
   if( is_given ) then
-    call std__getio( io )
-    open( io, file=trim(fn_out), action='write', status='unknown' )
+    open( newunit=io, file=trim(fn_out), action='write', status='unknown' )
     do k=1, nn
       write(io,*) lon(k), lat(k)
     end do

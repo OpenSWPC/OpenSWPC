@@ -145,8 +145,7 @@ contains
     !!
     !! layer list file
     !!
-    call std__getio( iolst )
-    open( iolst, file=trim( fn_grdlst ), action='read', status='old' )
+    open( newunit=iolst, file=trim( fn_grdlst ), action='read', status='old' )
     call std__countline( iolst, ngrd, '#' )
     allocate( fn_grd(ngrd) )
     allocate( rho1(ngrd), vp1(ngrd), vs1(ngrd), qp1(ngrd), qs1(ngrd), pid(ngrd) )

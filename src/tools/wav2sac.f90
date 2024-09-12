@@ -41,8 +41,7 @@ program wav2sac
 
   do i=1, nfile
     call system__getarg(i, fn_wav)
-    call std__getio(io, is_big = .true. )
-    open( io, file=trim(fn_wav), access='stream', action='read', status='old', iostat=ierr )
+    open( newunit=io, file=trim(fn_wav), access='stream', action='read', status='old', iostat=ierr )
     if( ierr /= 0 ) cycle
 
     write(STDERR,*) "FILE: ", trim(fn_wav)

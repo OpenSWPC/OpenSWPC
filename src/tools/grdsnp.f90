@@ -46,8 +46,7 @@ program grdsnp
   call getopt( 'i', is_opt, fn_prm ); if( .not. is_opt ) call usage_exit
   call getopt( 'g', is_opt, fn_grd ); if( .not. is_opt ) call usage_exit
 
-  call std__getio(io)
-  open(io,file=trim(fn_prm),action='read', status='old')
+  open(newunit=io, file=trim(fn_prm), action='read', status='old')
   call readini( io, 'dx', dx, 0.5 )
   call readini( io, 'dy', dy, 0.5 )
   call readini( io, 'dz',      dz,      0.5        )

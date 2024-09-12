@@ -190,8 +190,7 @@ contains
     !!
     !! Read Green's function location table
     !!
-    call std__getio(io)
-    open(io,file=trim(fn_glst), action='read', status='old', iostat=ierr )
+    open(newunit=io,file=trim(fn_glst), action='read', status='old', iostat=ierr )
     call assert( ierr == 0 )
     call std__countline( io, ng0, '#' )
 
@@ -597,8 +596,7 @@ contains
             trim(title) //  '__' // trim(sh(1)%kstnm) // '__' // &
             trim(green_cmp) // '__' // trim(cmyid) // '__.wav'
 
-        call std__getio(io, is_big=.true.) 
-        open(io, file=trim(fn_wav), access='stream', form='unformatted', action='write', status='replace')
+        open(newunit=io, file=trim(fn_wav), access='stream', form='unformatted', action='write', status='replace')
         
         write(io) ng*ncmp, ntw, title
         write(io) sh(:)

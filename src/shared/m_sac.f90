@@ -206,8 +206,8 @@ contains
         logical :: same_endian
         integer :: ierr
         !----
-        call std__getio(io)
-        open (io, file=fn_sac, &
+
+        open (newunit=io, file=fn_sac, &
               action='read', access='stream', form='unformatted', status='old', iostat=ierr)
 
         if (ierr /= 0) then
@@ -301,8 +301,7 @@ contains
             end if
         end if
 
-        call std__getio(io)
-        open (io, file=trim(fn_sac), action='write', access='stream', form='unformatted', status='replace')
+        open (newunit=io, file=trim(fn_sac), action='write', access='stream', form='unformatted', status='replace')
 
         call sac__whdr(io, ss)
 
@@ -636,8 +635,7 @@ contains
             end if
         end do
 
-        call std__getio(io)
-        open (io, file=trim(fn_csf), action='write', access='stream', form='unformatted', status='unknown')
+        open (newunit=io, file=trim(fn_csf), action='write', access='stream', form='unformatted', status='unknown')
 
         write (io) 'CSFD'
         write (io) ntrace

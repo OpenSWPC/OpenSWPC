@@ -129,8 +129,7 @@ contains
     else
 
       !! count source-grid file
-      call std__getio(io)
-      open( io, file=trim(fn_stf), action='read', status='old')
+      open( newunit=io, file=trim(fn_stf), action='read', status='old')
       call std__countline( io, nsrc_g, "#" )  ! exclude comment line which start by "#"
       close( io )
     end if
@@ -357,8 +356,7 @@ contains
     integer :: iex
     !---
         
-    call std__getio( io )
-    open( io, file = trim(fn_stf), action='read', status='old' )
+    open( newunit=io, file = trim(fn_stf), action='read', status='old' )
     i = 0
 
     do
@@ -579,8 +577,7 @@ contains
     character(2) :: stf_coord
     !! --
 
-    call std__getio( io )
-    open( io, file = trim(fn_stf), action='read', status='old' )
+    open( newunit=io, file = trim(fn_stf), action='read', status='old' )
     i = 0
 
     stf_coord(1:2) = stf_format(1:2)

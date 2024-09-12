@@ -58,9 +58,8 @@ contains
       end do
     end do
 
-    call std__getio( io_ppm )
     !! Ascii output of header part, then close file once
-    open( io_ppm, file = fname, iostat=ierr  )
+    open( newunit=io_ppm, file = fname, iostat=ierr  )
     call assert( ierr==0 )
     write( io_ppm, '(A2)' ) 'P6'
     write( io_ppm, '(2I8)') width, height
@@ -97,10 +96,9 @@ contains
     integer       :: ierr
     !! ----
 
-    call std__getio( io_ppm )
 
     !! Header part: first read long bufffe, then look for line break
-    open( io_ppm, file=fname, access='stream', form='unformatted', iostat=ierr )
+    open( newunit=io_ppm, file=fname, access='stream', form='unformatted', iostat=ierr )
     call assert(ierr == 0)
     read(io_ppm) buf
     rewind(io_ppm)
@@ -160,9 +158,8 @@ contains
       end do
     end do
 
-    call std__getio( io_pgm )
     !! Output header part in formatted text
-    open( io_pgm, file = fname, iostat=ierr  )
+    open( newunit=io_pgm, file = fname, iostat=ierr  )
     call assert(ierr == 0)
     write( io_pgm, '(A2)' ) 'P5'
     write( io_pgm, '(2I8)') width, height
@@ -204,9 +201,8 @@ contains
     integer       :: ierr
     !! ----
 
-    call std__getio( io_pgm )
     !! Read header part: First read long array, then look for line-break
-    open( io_pgm, file=fname, access='stream', form='unformatted', iostat=ierr )
+    open( newunit=io_pgm, file=fname, access='stream', form='unformatted', iostat=ierr )
     call assert( ierr==0 )
 
     read(io_pgm) buf
@@ -259,8 +255,7 @@ contains
       end do
     end do
 
-    call std__getio( io_pgm )
-    open( io_pgm, file = fname, iostat=ierr )
+    open( newunit=io_pgm, file = fname, iostat=ierr )
     call assert( ierr==0 )
 
     write( io_pgm, '(A2)' ) 'P5'
@@ -298,8 +293,7 @@ contains
     integer       :: ierr
     !! ----
 
-    call std__getio( io_pgm )
-    open( io_pgm, file=fname, access='stream', form='unformatted', iostat=ierr )
+    open( newunit=io_pgm, file=fname, access='stream', form='unformatted', iostat=ierr )
     call assert( ierr==0 )
 
     read(io_pgm) buf

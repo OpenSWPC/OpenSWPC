@@ -61,8 +61,7 @@ contains
     allocate( aimg(imgwid,height) )
 
     !! bmp image file
-    call std__getio( io )
-    open(io, file=trim(fname), access='stream', action='write', iostat=ierr, status='unknown', form='unformatted')
+    open(newunit=io, file=trim(fname), access='stream', action='write', iostat=ierr, status='unknown', form='unformatted')
     call assert( ierr==0 )
 
     bfSize = 14 &           ! size of file header

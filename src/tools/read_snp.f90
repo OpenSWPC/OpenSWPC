@@ -242,8 +242,7 @@ contains
     write(STDERR,*) trim(fn_dat)
 
     if( typ=='asc') then
-      call std__getio(io)
-      open( io, file=fn_dat, action='write' )
+      open( newunit=io, file=fn_dat, action='write' )
 
       fmt = "(2F15.5,3ES15.5)"
 
@@ -256,8 +255,7 @@ contains
 
       close(io)
     else
-      call std__getio(io)
-      open( io, file=fn_dat, action='write', access='stream', form='unformatted' )
+      open( newunit=io, file=fn_dat, action='write', access='stream', form='unformatted' )
       do j=1, ny
         do i=1, nx
           write(io) xx(i), yy(j), vp(i,j), vs(i,j), den(i,j)
@@ -315,8 +313,7 @@ contains
         write(STDERR,*) trim(fn_dat)
 
         if( typ=='asc') then
-          call std__getio(io)
-          open( io, file=fn_dat, action='write' )
+          open( newunit=io, file=fn_dat, action='write' )
 
           write(ci,'(I1)') hdr%nsnp
           fmt = "(2F15.5,"//ci//"ES15.5)"
@@ -330,8 +327,7 @@ contains
 
           close(io)
         else
-          call std__getio(io)
-          open( io, file=fn_dat, action='write', access='stream', form='unformatted' )
+          open( newunit=io, file=fn_dat, action='write', access='stream', form='unformatted' )
           do j=1, ny
             do i=1, nx
               write(io) xx(i), yy(j), amp(:,i,j)

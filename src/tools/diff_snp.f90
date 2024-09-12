@@ -101,8 +101,7 @@ program diff_snp
     call nc_chk(nf90_close(io_out))
 
   else
-    call std__getio( io_out, is_big=.true. )
-    open( io_out, file = trim(fn_out), access='stream', form='unformatted' )
+    open( newunit=io_out, file = trim(fn_out), access='stream', form='unformatted' )
     hdr_out = hdr_in1
     hdr_out%title = "diff__"//trim( hdr_in1%title )//"__"//trim( hdr_in2%title )
     call daytim__getdate( hdr_out%exedate )

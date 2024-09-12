@@ -77,8 +77,7 @@ contains
       stop
     end if
 
-    call std__getio( io_vel )
-    open( io_vel, file=fn_lhm, status='old', action='read', iostat=ierr )
+    open( newunit=io_vel, file=fn_lhm, status='old', action='read', iostat=ierr )
     call std__countline( io_vel, nlayer, '#' )
     allocate( depth(nlayer), rho0(nlayer), vp0(nlayer), vs0(nlayer), qp0(nlayer), qs0(nlayer) )
 

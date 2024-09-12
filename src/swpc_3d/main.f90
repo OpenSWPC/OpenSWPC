@@ -68,8 +68,7 @@ program swpc_3d
   !! option processing
   !!
   call getopt('i', is_opt, fn_prm, './in/input.inf' )
-  call std__getio( io_prm )
-  open( io_prm, file=trim(fn_prm), action='read', status='old' )
+  open( newunit=io_prm, file=trim(fn_prm), action='read', status='old' )
   
   call readini( io_prm, 'stopwatch_mode', stopwatch_mode, .true.  )
 
@@ -134,8 +133,7 @@ program swpc_3d
   !!
   if( stopwatch_mode ) then
     if( myid == 0 ) then
-      call std__getio( io_watch )
-      open( io_watch, file=trim( odir ) // '/' // trim( title ) //  '.tim', action='write', status='unknown' )
+      open( newunit=io_watch, file=trim( odir ) // '/' // trim( title ) //  '.tim', action='write', status='unknown' )
     end if
     call pwatch__report( io_watch, 0 )
   end if
