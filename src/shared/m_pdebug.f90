@@ -137,7 +137,7 @@ contains
         integer, intent(in) :: nline
 
         character(15) :: cvar
-        \
+        
         if (abs(var) < 10000.) then
             write (cvar, '(F15.5)') var
         else

@@ -41,11 +41,11 @@ endif
 
 ## Wisteria/BDEC-01 Odyssey at the University of Tokyo
 ifeq ($(arch),bdec-o)
-  FC      = module purge; module load fj fjmpi netcdf netcdf-fortran; mpifrtpx
+  FC      = module purge; module load fj fjmpi netcdf netcdf-fortran hdf5; mpifrtpx
   FFLAGS  = -O3 -Keval -Kfp_contract -Kfp_relaxed -Kfz -Kilfunc -Kmfunc -Komitfp -Kopenmp -Kparallel -Ksimd=2 -Kocl -Kassume=memory_bandwidth -Koptmsg=guide -Nlst=t -D_FX -Cpp
   NCLIB = 
   NCINC = 
-  NETCDF  = -lnetcdff -lnetcdf
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
 endif
 
 
@@ -56,7 +56,7 @@ ifeq ($(arch),mac-m1)
   FFLAGS  = -O2 -ffast-math -fopenmp -cpp
   NCLIB   = -L/opt/homebrew/lib
   NCINC   = -I/opt/homebrew/include
-  NETCDF  = -lnetcdff -lnetcdf
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5 -lhdf5_hl -lz
 
   ifeq ($(debug),true)
     FFLAGS  = -Wall -pedantic -fbounds-check -O -Wuninitialized \
@@ -66,6 +66,16 @@ ifeq ($(arch),mac-m1)
   endif
 
 endif
+
+## EIC @ ERI,U-TOKYO (2020 System)
+ifeq ($(arch),eic)
+  FC      = module purge; module load intel mpt lib/NetCDF lib/HDF5; ifort
+  FFLAGS  = -xCORE-AVX512 -O3 -qopenmp -lmpi -fpp
+  NCLIB   = 
+  NCINC   = 
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
+endif
+
 
 ###
 ### Obsolete systems
@@ -130,16 +140,6 @@ ifeq ($(arch),mac-gfortran)
   endif
 
 endif
-
-## EIC @ ERI,U-TOKYO (2020 System)
-ifeq ($(arch),eic)
-  FC      = module purge; module load intel mpt lib/NetCDF; ifort
-  FFLAGS  = -xCORE-AVX512 -O3 -qopenmp -lmpi -fpp
-  NCLIB   = 
-  NCINC   = 
-  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
-endif
-
 
 ## Fujitsu FX10, FX100 (obsolete)
 ifeq ($(arch),fx)

@@ -80,9 +80,6 @@ m_version.o: m_version.f90
 ../../bin/xy2ll.x: xy2ll.f90 m_std.o m_geomap.o m_system.o m_gk.o m_debug.o m_version.o  m_getopt.o
 	$(FC) $(FFLAGS) -o $@ $^ 
 
-../../bin/wav2sac.x: wav2sac.f90 m_std.o m_system.o m_daytim.o m_sac.o m_version.o m_getopt.o
-	$(FC) $(FFLAGS) -o $@ $^ 
-
 ../../bin/fs2grd.x: fs2grd.f90 m_std.o m_system.o m_gk.o m_geomap.o m_getopt.o m_bicubic.o m_fdsnap.o m_daytim.o m_version.o
 	$(FC) $(NCLIB) $(NCINC) $(FFLAGS) -o $@ $^ $(NETCDF)
 

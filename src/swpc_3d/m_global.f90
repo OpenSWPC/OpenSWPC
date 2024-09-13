@@ -341,7 +341,7 @@ contains
         end do
 
     !! Interior Kernel region
-        \
+
     !! initial value
         ibeg_k = ibeg
         iend_k = iend
