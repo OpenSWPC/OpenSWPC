@@ -15,16 +15,6 @@
 ##
 ## ------------------------------------------------------------------------- ##
 
-## EIC @ ERI,U-TOKYO (2020 System)
-ifeq ($(arch),eic)
-  FC      = module purge; module load intel mpt lib/NetCDF; ifort
-  FFLAGS  = -xCORE-AVX512 -O3 -D_INFO -fpp
-  NCLIB   = 
-  NCINC   = 
-  NETCDF  = -lnetcdff -lnetcdf
-endif
-
-
 ## Ubuntu with gfortran
 ifeq ($(arch),ubuntu-gfortran)
 
@@ -68,6 +58,14 @@ ifeq ($(arch),mac-m1)
   endif
 endif
 
+## EIC @ ERI,U-TOKYO (2020 System)
+ifeq ($(arch),eic)
+  FC      = module purge; module load intel mpt lib/NetCDF lib/HDF5; ifort
+  FFLAGS  = -xCORE-AVX512 -O3 -D_INFO -fpp
+  NCLIB   = 
+  NCINC   = 
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5 -lhdf5_hl -lz
+endif
 
 ### 
 ### Obsolete systems
