@@ -8,7 +8,7 @@
 ## --
 
 all: read_snp.x diff_snp.x mapregion.x fdmcond.x qmodel_tau.x grdsnp.x \
-	gen_rmed2d.x gen_rmed3d.x ll2xy.x xy2ll.x wav2sac.x fs2grd.x wvconv.x
+	gen_rmed2d.x gen_rmed3d.x ll2xy.x xy2ll.x fs2grd.x wvconv.x
 
 ## file search path
 
