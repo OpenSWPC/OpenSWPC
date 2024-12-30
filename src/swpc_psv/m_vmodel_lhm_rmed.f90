@@ -88,7 +88,7 @@ contains
         allocate (depth(nlayer), rho0(nlayer), vp0(nlayer), vs0(nlayer), qp0(nlayer), qs0(nlayer), fn_rmed(nlayer))
 
         vmin = vcut
-        dh = sqrt(2.) / sqrt(1./dx**2 + 1./dz**2)
+        dh = 1./ sqrt(1./dx**2 + 1./dz**2)
         cc = 6./7. !! assume 4th order
         vmax = cc * dh / dt
 

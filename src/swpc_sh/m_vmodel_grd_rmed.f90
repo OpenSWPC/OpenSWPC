@@ -270,7 +270,7 @@ contains
                     rho2 = Cv(k)**(-5) * rho1(n) * (1.0 + 0.8 * xi(kk, i, tbl_rmed(n)))
 
                     if (vp1(n) > 0 .and. vs1(n) > 0) then
-                        call vcheck(vp2, vs2, rho2, xi(kk, i, tbl_rmed(n)), vmin, vmax, &
+                        call vcheck_sh(vs2, rho2, xi(kk, i, tbl_rmed(n)), vmin, vmax, &
                                     rhomin, is_vmin_under, is_vmax_over, is_rhomin_under)
                     end if
 

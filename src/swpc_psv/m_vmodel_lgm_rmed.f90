@@ -85,7 +85,7 @@ contains
 
         vmin = vcut
 
-        dh = sqrt(2.)/sqrt(1./dx**2 + 1./dz**2)
+        dh = 1. /sqrt(1./dx**2 + 1./dz**2)
         cc = 6./7. !! assume 4th order
         vmax = cc * dh / dt 
 
