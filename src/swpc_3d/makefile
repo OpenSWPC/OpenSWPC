@@ -35,9 +35,11 @@ s_vmodel0 = m_vmodel_user.f90 # user-defined velocity structure
 s_vmodel1 = m_vmodel_uni.f90 # homogeneous structure
 s_vmodel2 = m_vmodel_grd.f90 # requires netcdf
 s_vmodel3 = m_vmodel_lhm.f90 # laterally homogeneous medium
+s_vmodel4 = m_vmodel_lgm.f90 # linear gradient model
 s_vmodel1r = m_vmodel_uni_rmed.f90 # homogeneous structure
 s_vmodel2r = m_vmodel_grd_rmed.f90 # requires netcdf
 s_vmodel3r = m_vmodel_lhm_rmed.f90 # homogeneous structure
+s_vmodel4r = m_vmodel_lgm_rmed.f90 # linear gradient model
 
 ## kernel module
 s_global  = m_global.f90
@@ -107,9 +109,11 @@ o_vmodel0  = $(s_vmodel0:.f90=.o)
 o_vmodel1  = $(s_vmodel1:.f90=.o)
 o_vmodel2  = $(s_vmodel2:.f90=.o)
 o_vmodel3  = $(s_vmodel3:.f90=.o)
+o_vmodel4  = $(s_vmodel4:.f90=.o)
 o_vmodel1r  = $(s_vmodel1r:.f90=.o)
 o_vmodel2r  = $(s_vmodel2r:.f90=.o)
 o_vmodel3r  = $(s_vmodel3r:.f90=.o)
+o_vmodel4r  = $(s_vmodel4r:.f90=.o)
 
 o_green    = $(s_green:.f90=.o)
 o_wav      = $(s_wav:.f90=.o)
@@ -139,7 +143,7 @@ $(o_fdtool):   $(s_fdtool)   $(o_std) $(o_pdebug)
 $(o_source):   $(s_source)   $(o_std) $(o_global) $(o_fdtool) $(o_pwatch) $(o_readini) $(o_geomap) $(o_pdebug)
 $(o_kernel):   $(s_kernel)   $(o_std) $(o_global) $(o_pwatch) $(o_medium) $(o_readini) $(o_pdebug)
 $(o_report):   $(s_report)   $(o_std) $(o_global) $(o_kernel) $(o_pwatch) $(o_readini) $(o_pdebug) $(o_version)
-$(o_medium):   $(s_medium)   $(o_std) $(o_global) $(o_pwatch) $(o_readini) $(o_vmodel0) $(o_vmodel1) $(o_vmodel2) $(o_vmodel3) $(o_pdebug) $(o_vmodel1r) $(o_vmodel2r) $(o_vmodel3r)
+$(o_medium):   $(s_medium)   $(o_std) $(o_global) $(o_pwatch) $(o_readini) $(o_vmodel0) $(o_vmodel1) $(o_vmodel2) $(o_vmodel3) $(o_pdebug) $(o_vmodel1r) $(o_vmodel2r) $(o_vmodel3r) $(o_vmodel4) $(o_vmodel4r)
 $(o_absorb):   $(s_absorb)   $(o_std) $(o_global) $(o_absorb_p) $(o_absorb_c) $(o_pwatch) $(o_pdebug)
 $(o_absorb_c): $(s_absorb_c) $(o_std) $(o_fdtool) $(o_global) $(o_pdebug)
 $(o_absorb_p): $(s_absorb_p) $(o_std) $(o_fdtool) $(o_global) $(o_readini) $(o_pdebug)
@@ -147,9 +151,11 @@ $(o_vmodel0):  $(s_vmodel0)  $(o_std) $(o_system) $(o_readini) $(o_geomap) $(o_r
 $(o_vmodel1):  $(s_vmodel1)  $(o_std) $(o_global) $(o_readini)  $(o_pdebug) $(o_seawater)
 $(o_vmodel2):  $(s_vmodel2)  $(o_std) $(o_system) $(o_global) $(o_fdtool) $(o_bicubic) $(o_readini)   $(o_geomap) $(o_pdebug) $(o_seawater)
 $(o_vmodel3):  $(s_vmodel3)  $(o_std) $(o_global) $(o_readini)  $(o_pdebug) $(o_seawater)
+$(o_vmodel4):  $(s_vmodel4)  $(o_std) $(o_global) $(o_readini)  $(o_pdebug) $(o_seawater)
 $(o_vmodel1r):  $(s_vmodel1r)  $(o_std) $(o_global) $(o_readini)  $(o_pdebug) $(o_rdrmed) $(o_seawater)
 $(o_vmodel2r):  $(s_vmodel2)  $(o_std) $(o_system) $(o_global) $(o_fdtool) $(o_bicubic) $(o_readini)   $(o_geomap) $(o_pdebug)  $(o_rdrmed) $(o_fdtool) $(o_seawater)
 $(o_vmodel3r):  $(s_vmodel3)  $(o_std) $(o_global) $(o_readini)  $(o_pdebug)  $(o_rdrmed) $(o_fdtool) $(o_seawater)
+$(o_vmodel4r):  $(s_vmodel4)  $(o_std) $(o_global) $(o_readini)  $(o_pdebug)  $(o_rdrmed) $(o_fdtool) $(o_seawater)
 $(o_green):    $(s_green)     $(o_std) $(o_readini) $(o_global) $(o_sac) $(o_wav) $(o_geomap) $(o_pdebug) $(o_system) 
 $(o_wav): $(s_wav) $(o_std) $(o_global) $(o_pwatch) $(o_readini) $(o_geomap) $(o_pdebug) $(o_sac)
 
@@ -163,7 +169,7 @@ $(o_wav): $(s_wav) $(o_std) $(o_global) $(o_pwatch) $(o_readini) $(o_geomap) $(o
 ## Targets
 ##
 
-../../bin/swpc_3d.x: $(s_main) $(o_std) $(o_version) $(o_pdebug) $(o_system) $(o_fdtool) $(o_global) $(o_kernel) $(o_getopt) $(o_source) $(o_medium) $(o_report) $(o_pwatch) $(o_snap) $(o_absorb) $(o_absorb_p) $(o_absorb_c) $(o_vmodel1) $(o_vmodel2) $(o_vmodel3) $(o_gk) $(o_bicubic) $(o_daytim) $(o_sac)  $(o_readini)  $(o_geomap) $(o_green) $(o_rdrmed) $(o_vmodel1r)  $(o_vmodel2r) $(o_vmodel3r) $(o_vmodel0) $(o_seawater) $(o_wav)
+../../bin/swpc_3d.x: $(s_main) $(o_std) $(o_version) $(o_pdebug) $(o_system) $(o_fdtool) $(o_global) $(o_kernel) $(o_getopt) $(o_source) $(o_medium) $(o_report) $(o_pwatch) $(o_snap) $(o_absorb) $(o_absorb_p) $(o_absorb_c) $(o_vmodel1) $(o_vmodel2) $(o_vmodel3) $(o_gk) $(o_bicubic) $(o_daytim) $(o_sac)  $(o_readini)  $(o_geomap) $(o_green) $(o_rdrmed) $(o_vmodel1r)  $(o_vmodel2r) $(o_vmodel3r) $(o_vmodel0) $(o_vmodel4) $(o_vmodel4r) $(o_seawater) $(o_wav)
 	@echo $(o_version)
 	$(FC) $(NCINC) $(NCLIB) $(FFLAGS)  -o $@ $^  $(NETCDF)
 
