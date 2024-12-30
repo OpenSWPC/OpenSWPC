@@ -36,7 +36,6 @@ contains
         real(SP), intent(out) :: qp(k0:k1, i0:i1, j0:j1)    !< P-wave attenuation
         real(SP), intent(out) :: qs(k0:k1, i0:i1, j0:j1)    !< S-wave attenuation
         real(SP), intent(out) :: bd(i0:i1, j0:j1, 0:NBD)    !< Boundary depths
-        !---
 
         character(256) :: fn_lhm
         integer :: k, l
@@ -52,7 +51,7 @@ contains
         logical :: earth_flattening
         real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
         real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening
-        !----
+
 
         call readini(io_prm, 'fn_lhm', fn_lhm, '')
         inquire (file=fn_lhm, exist=is_exist)
@@ -130,7 +129,7 @@ contains
                 
             else ! in the medium
 
-                ! initialize by the values of lowermost layer
+                ! initialize by the values of the lowermost layer
                 rho1 = rho0(nlayer)
                 vp1 = Cv(k) * vp0(nlayer)
                 vs1 = Cv(k) * vs0(nlayer)

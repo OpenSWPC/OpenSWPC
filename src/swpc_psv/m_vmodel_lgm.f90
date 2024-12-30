@@ -1,7 +1,7 @@
 #include "../shared/m_debug.h"
-module m_vmodel_lhm
+module m_vmodel_lgm
 
-    !! 1D layered velocity structure
+    !! 1D layered velocity structure with gradient
     !!
     !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
@@ -15,20 +15,20 @@ module m_vmodel_lhm
     private
     save
 
-    public :: vmodel_lhm
+    public :: vmodel_lgm
 
 contains
 
-    subroutine vmodel_lhm(io_prm, i0, i1, k0, k1, xc, zc, vcut, rho, lam, mu, Qp, Qs, bd)
+    subroutine vmodel_lgm(io_prm, i0, i1, k0, k1, xc, zc, vcut, rho, lam, mu, Qp, Qs, bd)
 
-        integer, intent(in)  :: io_prm
-        integer, intent(in)  :: i0, i1                  !< i-region
-        integer, intent(in)  :: k0, k1                  !< k-region
+        integer,  intent(in)  :: io_prm
+        integer,  intent(in)  :: i0, i1              !< i-region
+        integer,  intent(in)  :: k0, k1              !< k-region
         real(SP), intent(in)  :: xc(i0:i1)           !< x-coordinate location
         real(SP), intent(in)  :: zc(k0:k1)           !< z-coordinate location
-        real(SP), intent(in)  :: vcut                    !< cut-off minimum velocity
-        real(SP), intent(out) :: rho(k0:k1, i0:i1)    !< mass density [g/cm^3]
-        real(SP), intent(out) :: lam(k0:k1, i0:i1)    !< Lame's parameter lambda [ (g/cm^3) * (km/s) ]
+        real(SP), intent(in)  :: vcut                !< cut-off minimum velocity
+        real(SP), intent(out) :: rho(k0:k1, i0:i1)   !< mass density [g/cm^3]
+        real(SP), intent(out) :: lam(k0:k1, i0:i1)   !< Lame's parameter lambda [ (g/cm^3) * (km/s) ]
         real(SP), intent(out) :: mu(k0:k1, i0:i1)    !< Lame's parameter mu     [ (g/cm^3) * (km/s) ]
         real(SP), intent(out) :: qp(k0:k1, i0:i1)    !< P-wave attenuation
         real(SP), intent(out) :: qs(k0:k1, i0:i1)    !< S-wave attenuation
@@ -86,11 +86,11 @@ contains
         !! velocity cut-off
         do l = nlayer - 1, 1, -1
             if ((vp0(l) < vcut .or. vs0(l) < vcut) .and. (vp0(l) > 0 .and. vs0(l) > 0)) then
-                vp0(l) = vp0(l + 1)
-                vs0(l) = vs0(l + 1)
-                rho0(l) = rho0(l + 1)
-                qp0(l) = qp0(l + 1)
-                qs0(l) = qs0(l + 1)
+                vp0 (l) = vp0 (l+1)
+                vs0 (l) = vs0 (l+1)
+                rho0(l) = rho0(l+1)
+                qp0 (l) = qp0 (l+1)
+                qs0 (l) = qs0 (l+1)
             end if
         end do
 
@@ -122,17 +122,24 @@ contains
 
             else
 
-                ! chose layer
-                do l = 1, nlayer
-                    if (zs(k) >= depth(l)) then
-                        rho1 = rho0(l)
-                        vp1 = Cv(k) * vp0(l)
-                        vs1 = Cv(k) * vs0(l)
-                        qp1 = qp0(l)
-                        qs1 = qs0(l)
+                ! initialize by the values of the lowermost layer
+                rho1 = rho0(nlayer)
+                vp1  = Cv(k) * vp0(nlayer)
+                vs1  = Cv(k) * vs0(nlayer)
+                qp1  = qp0(nlayer)
+                qs1  = qs0(nlayer)
+
+                !! chose layer
+                do l=1, nlayer-1
+                    if ( depth(l) <= zs(k) .and. zs(k) < depth(l+1) ) then
+                        rho1 =          rho0(l) + (rho0(l+1) - rho0(l)) * (zs(k) - depth(l)) / (depth(l+1) - depth(l))
+                        vp1  = Cv(k) * ( vp0(l) + ( vp0(l+1) -  vp0(l)) * (zs(k) - depth(l)) / (depth(l+1) - depth(l)))
+                        vs1  = Cv(k) * ( vs0(l) + ( vs0(l+1) -  vs0(l)) * (zs(k) - depth(l)) / (depth(l+1) - depth(l)))
+                        qp1  =           qp0(l) + ( qp0(l+1) -  qp0(l)) * (zs(k) - depth(l)) / (depth(l+1) - depth(l))
+                        qs1  =           qs0(l) + ( qs0(l+1) -  qs0(l)) * (zs(k) - depth(l)) / (depth(l+1) - depth(l))
+                        exit
                     end if
                 end do
-            
             end if
 
             ! set medium parameters
@@ -152,6 +159,6 @@ contains
 
         deallocate (depth, rho0, vp0, vs0, qp0, qs0)
 
-    end subroutine vmodel_lhm
+    end subroutine vmodel_lgm
 
-end module m_vmodel_lhm
+end module m_vmodel_lgm

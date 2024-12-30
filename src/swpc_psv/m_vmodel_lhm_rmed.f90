@@ -54,7 +54,7 @@ contains
         character(256), allocatable :: fn_rmed2(:)
         character(256) :: dir_rmed
         real(SP) :: vmin, vmax, dh, cc, rhomin
-        logical  :: is_vmax_over, is_vmin_under, is_rhomin_under
+        logical  :: vmax_over, vmin_under, rhomin_under
         logical :: use_munk
         logical :: earth_flattening
         real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
@@ -92,9 +92,9 @@ contains
         cc = 6./7. !! assume 4th order
         vmax = cc * dh / dt
 
-        is_vmax_over = .false.
-        is_vmin_under = .false.
-        is_rhomin_under = .false.
+        vmax_over = .false.
+        vmin_under = .false.
+        rhomin_under = .false.
 
         l = 0
         do
@@ -185,7 +185,7 @@ contains
 
                         if (vp0(l) > 0 .and. vs0(l) > 0) then
                             call vcheck(vp1, vs1, rho1, xi(k, i, tbl_rmed(l)), vmin, vmax, &
-                                        rhomin, is_vmin_under, is_vmax_over, is_rhomin_under)
+                                        rhomin, vmin_under, vmax_over, rhomin_under)
                         end if
 
                     end if
@@ -202,9 +202,9 @@ contains
         end do
 
         !! notification for velocity torelance
-        if (is_vmax_over) call info('Too high velocity due to random media was corrected. ')
-        if (is_vmin_under) call info('Too low  velocity due to random media was corrected. ')
-        if (is_rhomin_under) call info('Too low  density due to random media was corrected. ')
+        if (vmax_over) call info('Too high velocity due to random media was corrected. ')
+        if (vmin_under) call info('Too low  velocity due to random media was corrected. ')
+        if (rhomin_under) call info('Too low  density due to random media was corrected. ')
 
         ! dummy value
         bd(:, 1:NBD) = -9999
