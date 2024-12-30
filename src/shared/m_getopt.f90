@@ -44,7 +44,7 @@ contains
         character(256) :: optkey
 
 
-        narg = system__iargc()
+        narg = command_argument_count()
         allocate (argv(1:narg))
 
         do i = 1, narg

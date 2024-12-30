@@ -56,11 +56,11 @@ contains
         !!  c(f) = \int r(t) exp(i 2 \pi f t) dt
         !! at discretized frequencies f(1:n)
 
-        integer, intent(in)  :: n                !! number of grid (power of 2)
-        real(DP), intent(in)  :: dt              !! sampling period
-        real(DP), intent(in)  :: r(n)            !! time series
-        complex(DP), intent(out) :: c(n / 2 + 1) !! frequency spectrum (unit [r]*s)
-        real(DP), intent(out) :: f(n / 2 + 1)    !! frequency (Hz)
+        integer,     intent(in)  :: n               !! number of grid (power of 2)
+        real(DP),    intent(in)  :: dt              !! sampling period
+        real(DP),    intent(in)  :: r(n)            !! time series
+        complex(DP), intent(out) :: c(n / 2 + 1)    !! frequency spectrum (unit [r]*s)
+        real(DP),    intent(out) :: f(n / 2 + 1)    !! frequency (Hz)
         integer :: i
 
         call rfft__1drf(n, r, c, 1)
@@ -72,6 +72,7 @@ contains
 
     end subroutine t2f_8
 
+
     subroutine t2f_4(n, dt, r, c, f)
 
         !! Time-to-frequqency domain Fourier transform using FFT
@@ -80,11 +81,11 @@ contains
         !!  c(f) = \int r(t) exp(i 2 \pi f t) dt
         !! at discretized frequencies f(1:n)
 
-        integer, intent(in)  :: n                !! number of grid (power of 2)
-        real(SP), intent(in)  :: dt              !! sampling period
-        real(SP), intent(in)  :: r(n)            !! time series
-        complex(SP), intent(out) :: c(n / 2 + 1) !! frequency spectrum (unit [r]*s)
-        real(SP), intent(out) :: f(n / 2 + 1)    !! frequency (Hz)
+        integer,     intent(in)  :: n               !! number of grid (power of 2)
+        real(SP),    intent(in)  :: dt              !! sampling period
+        real(SP),    intent(in)  :: r(n)            !! time series
+        complex(SP), intent(out) :: c(n / 2 + 1)    !! frequency spectrum (unit [r]*s)
+        real(SP),    intent(out) :: f(n / 2 + 1)    !! frequency (Hz)
 
         integer :: i
 
@@ -97,6 +98,7 @@ contains
 
     end subroutine t2f_4
 
+
     subroutine f2t_8(n, dt, c, r)
 
         !! Frequency-to-Time domain Fourier transform using FFT. Inverse of t2f
@@ -105,15 +107,16 @@ contains
         !!  r(t) = \int c(f) exp(-i 2 \pi f t) df
         !! Result is real value
 
-        integer, intent(in)  :: n        !! number of grid (power of 2)
-        real(DP), intent(in)  :: dt       !! sampling period
-        complex(DP), intent(in)  :: c(n / 2 + 1) !! frequency spectrum (unit [r]*s)
-        real(DP), intent(out) :: r(n)     !! time series
+        integer,     intent(in)  :: n          !! number of grid (power of 2)
+        real(DP),    intent(in)  :: dt         !! sampling period
+        complex(DP), intent(in)  :: c(n/2 + 1) !! frequency spectrum (unit [r]*s)
+        real(DP),    intent(out) :: r(n)       !! time series
 
         call rfft__1dri(n, c, r, -1)
         r(1:n) = r(1:n) / (n * dt)
 
     end subroutine f2t_8
+
 
     subroutine f2t_4(n, dt, c, r)
 
@@ -123,15 +126,16 @@ contains
         !!  r(t) = \int c(f) exp(-i 2 \pi f t) df
         !! Result is real value
 
-        integer, intent(in)  :: n        !! number of grid (power of 2)
-        real(SP), intent(in)  :: dt       !! sampling period
-        complex(SP), intent(in)  :: c(n / 2 + 1) !! frequency spectrum (unit [r]*s)
-        real(SP), intent(out) :: r(n)     !! time series
+        integer,     intent(in)  :: n          !! number of grid (power of 2)
+        real(SP),    intent(in)  :: dt         !! sampling period
+        complex(SP), intent(in)  :: c(n/2 + 1) !! frequency spectrum (unit [r]*s)
+        real(SP),    intent(out) :: r(n)       !! time series
 
         call rfft__1dri(n, c, r, -1)
         r(1:n) = r(1:n) / (n * dt)
 
     end subroutine f2t_4
+
 
     subroutine x2k2d_8(nx, ny, dx, dy, a, b, kx, ky)
 
@@ -140,12 +144,12 @@ contains
         !! Calculate
         !!  b(kx,ky) = \int a(x,y) exp(- i (kx x + ky y) ) dx dy
 
-        integer, intent(in)  :: nx, ny
-        real(DP), intent(in)  :: dx, dy
-        real(DP), intent(in)  :: a(nx, ny)
+        integer,     intent(in)  :: nx, ny
+        real(DP),    intent(in)  :: dx, dy
+        real(DP),    intent(in)  :: a(nx, ny)
         complex(DP), intent(out) :: b(nx, ny)
-        real(DP), intent(out) :: kx(nx)
-        real(DP), intent(out) :: ky(ny)
+        real(DP),    intent(out) :: kx(nx)
+        real(DP),    intent(out) :: ky(ny)
 
         integer :: i, j
 
@@ -161,6 +165,7 @@ contains
 
     end subroutine x2k2d_8
 
+
     subroutine k2x2d_8(nx, ny, dx, dy, b, a)
 
         !! Wavenumber-to-space Fourier transform using FFT
@@ -168,10 +173,10 @@ contains
         !! Calculate
         !!  a(x,y) = \int b(kx,ky) exp( i (kx x + ky y) ) dkx dky / ( 2 \pi )^2
         
-        integer, intent(in)  :: nx, ny
-        real(DP), intent(in)  :: dx, dy
-        complex(DP), intent(inout)  :: b(nx, ny)
-        real(DP), intent(out)    :: a(nx, ny)
+        integer,     intent(in)    :: nx, ny
+        real(DP),    intent(in)    :: dx, dy
+        complex(DP), intent(inout) :: b(nx, ny)
+        real(DP),    intent(out)   :: a(nx, ny)
 
         integer :: i, j
 
@@ -184,6 +189,7 @@ contains
 
     end subroutine k2x2d_8
 
+
     subroutine x2k2d_4(nx, ny, dx, dy, a, b, kx, ky)
 
         !! Space-to-wavenumber Fourier transform using FFT
@@ -191,12 +197,12 @@ contains
         !! Calculate
         !!  b(kx,ky) = \int a(x,y) exp(- i (kx x + ky y) ) dx dy
 
-        integer, intent(in)  :: nx, ny
-        real(SP), intent(in)  :: dx, dy
-        real(SP), intent(in)  :: a(nx, ny)
+        integer,     intent(in)  :: nx, ny
+        real(SP),    intent(in)  :: dx, dy
+        real(SP),    intent(in)  :: a(nx, ny)
         complex(SP), intent(out) :: b(nx, ny)
-        real(SP), intent(out) :: kx(nx)
-        real(SP), intent(out) :: ky(ny)
+        real(SP),    intent(out) :: kx(nx)
+        real(SP),    intent(out) :: ky(ny)
 
         integer :: i, j
 
@@ -220,10 +226,10 @@ contains
         !! Calculate
         !!  a(x,y) = \int b(kx,ky) exp( i (kx x + ky y) ) dkx dky / ( 2 \pi )^2
 
-        integer, intent(in)     :: nx, ny
-        real(SP), intent(in)     :: dx, dy
+        integer,     intent(in)     :: nx, ny
+        real(SP),    intent(in)     :: dx, dy
         complex(SP), intent(inout)  :: b(nx, ny)
-        real(SP), intent(out)    :: a(nx, ny)
+        real(SP),    intent(out)    :: a(nx, ny)
 
         integer :: i, j
 
@@ -237,6 +243,7 @@ contains
 
     end subroutine k2x2d_4
 
+
     subroutine x2k3d_8(nx, ny, nz, dx, dy, dz, a, b, kx, ky, kz)
 
         !! Space-to-wavenumber Fourier transform using FFT
@@ -244,13 +251,13 @@ contains
         !! Calculate
         !!  b(kx,ky,kz) = \int a(x,y,z) exp(- i (kx x + ky y + kz z ) ) dx dy dz
 
-        integer, intent(in)  :: nx, ny, nz
-        real(DP), intent(in)  :: dx, dy, dz
-        real(DP), intent(in)  :: a(nx, ny, nz)
+        integer,     intent(in)  :: nx, ny, nz
+        real(DP),    intent(in)  :: dx, dy, dz
+        real(DP),    intent(in)  :: a(nx, ny, nz)
         complex(DP), intent(out) :: b(nx, ny, nz)
-        real(DP), intent(out) :: kx(nx)
-        real(DP), intent(out) :: ky(ny)
-        real(DP), intent(out) :: kz(nz)
+        real(DP),    intent(out) :: kx(nx)
+        real(DP),    intent(out) :: ky(ny)
+        real(DP),    intent(out) :: kz(nz)
 
         integer :: i, j, k
 
@@ -268,6 +275,7 @@ contains
 
     end subroutine x2k3d_8
 
+
     subroutine x2k3d_4(nx, ny, nz, dx, dy, dz, a, b, kx, ky, kz)
 
         !! Space-to-wavenumber Fourier transform using FFT
@@ -275,13 +283,13 @@ contains
         !! Calculate
         !!  b(kx,ky,kz) = \int a(x,y,z) exp(- i (kx x + ky y + kz z ) ) dx dy dz
 
-        integer, intent(in)  :: nx, ny, nz
-        real(SP), intent(in)  :: dx, dy, dz
-        real(SP), intent(in)  :: a(nx, ny, nz)
+        integer,     intent(in)  :: nx, ny, nz
+        real(SP),    intent(in)  :: dx, dy, dz
+        real(SP),    intent(in)  :: a(nx, ny, nz)
         complex(SP), intent(out) :: b(nx, ny, nz)
-        real(SP), intent(out) :: kx(nx)
-        real(SP), intent(out) :: ky(ny)
-        real(SP), intent(out) :: kz(nz)
+        real(SP),    intent(out) :: kx(nx)
+        real(SP),    intent(out) :: ky(ny)
+        real(SP),    intent(out) :: kz(nz)
 
         integer :: i, j, k
 
@@ -299,6 +307,7 @@ contains
 
     end subroutine x2k3d_4
 
+
     subroutine k2x3d_8(nx, ny, nz, dx, dy, dz, b, a)
 
         !! Space-to-wavenumber Fourier transform using FFT
@@ -307,10 +316,10 @@ contains
         !!  a(x,y,z) = \int b(kx,ky,kz) exp( i (kx x + ky y + kz z) ) dkx dky dkz
         !!           / (2 \pi)^3
 
-        integer, intent(in)     :: nx, ny, nz
-        real(DP), intent(in)     :: dx, dy, dz
+        integer,     intent(in)     :: nx, ny, nz
+        real(DP),    intent(in)     :: dx, dy, dz
         complex(DP), intent(inout)  :: b(nx, ny, nz)
-        real(DP), intent(out)    :: a(nx, ny, nz)
+        real(DP),    intent(out)    :: a(nx, ny, nz)
 
         integer :: i, j, k
 
@@ -326,6 +335,7 @@ contains
 
     end subroutine k2x3d_8
 
+
     subroutine k2x3d_4(nx, ny, nz, dx, dy, dz, b, a)
 
         !! Space-to-wavenumber Fourier transform using FFT
@@ -334,10 +344,10 @@ contains
         !!    a(x,y,z) = \int b(kx,ky,kz) exp( i (kx x + ky y + kz z) ) dkx dky dkz
         !!             / (2 \pi)^3
 
-        integer, intent(in)     :: nx, ny, nz
-        real(SP), intent(in)     :: dx, dy, dz
+        integer,     intent(in)     :: nx, ny, nz
+        real(SP),    intent(in)     :: dx, dy, dz
         complex(SP), intent(inout)  :: b(nx, ny, nz)
-        real(SP), intent(out)    :: a(nx, ny, nz)
+        real(SP),    intent(out)    :: a(nx, ny, nz)
 
         integer :: i, j, k
 
@@ -353,4 +363,5 @@ contains
 
     end subroutine k2x3d_4
 
+    
 end module m_fk

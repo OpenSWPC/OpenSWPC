@@ -32,7 +32,7 @@ m_gk.o      : m_gk.f90   m_std.o
 m_stamp.o   : m_stamp.f90 m_std.o m_pnm.o
 m_pnm.o     : m_pnm.f90    m_std.o m_debug.o
 m_fdsnap.o  : m_fdsnap.f90 m_std.o m_daytim.o m_geomap.o
-m_rmedia.o  : m_rmedia.f90 m_std.o m_fk.o m_gammaf.o
+m_rmedia.o  : m_rmedia.f90 m_std.o m_fk.o 
 m_filt2d.o  : m_filt2d.f90 m_std.o m_fk.o
 m_fdtool.o  : m_fdtool.f90 m_std.o m_gk.o
 m_readini.o : m_readini.f90 m_std.o m_system.o m_debug.o
@@ -43,17 +43,16 @@ m_bicubic.o : m_bicubic.f90 m_std.o
 m_color.o   : m_color.f90 m_std.o
 m_fk.o      : m_fk.f90 m_std.o m_rfft.o
 m_rfft.o    : m_rfft.f90 m_std.o
-m_gammaf.o  : m_gammaf.f90 m_std.o
 m_sac.o    : m_sac.f90 m_std.o
 m_version.o: m_version.f90
 
 .SUFFIXES:
 .SUFFIXES: .f90 .f90 .o
 
-../../bin/gen_rmed2d.x: gen_rmed2d.f90 m_std.o m_system.o m_getopt.o m_rmedia.o m_daytim.o m_fk.o m_rfft.o m_gammaf.o  m_debug.o m_version.o
+../../bin/gen_rmed2d.x: gen_rmed2d.f90 m_std.o m_system.o m_getopt.o m_rmedia.o m_daytim.o m_fk.o m_rfft.o m_debug.o m_version.o
 	$(FC) $(NCLIB) $(NCINC) $(FFLAGS) -o $@ $^ -D_DEBUG $(NETCDF)
 
-../../bin/gen_rmed3d.x: gen_rmed3d.f90 m_std.o m_system.o m_getopt.o m_rmedia.o m_fk.o m_rfft.o m_gammaf.o m_debug.o m_version.o
+../../bin/gen_rmed3d.x: gen_rmed3d.f90 m_std.o m_system.o m_getopt.o m_rmedia.o m_fk.o m_rfft.o m_debug.o m_version.o
 	$(FC) $(NCLIB) $(NCINC) $(FFLAGS) -o $@ $^ -D_DEBUG $(NETCDF)
 
 ../../bin/qmodel_tau.x: qmodel_tau.f90 m_std.o m_system.o m_getopt.o m_fdtool.o m_readini.o m_debug.o m_version.o

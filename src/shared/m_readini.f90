@@ -98,6 +98,7 @@ contains
         call system__expenv(var)
 
     end subroutine readini_c
+    
 
     subroutine readini_d(io, key, var, def)
 
@@ -116,6 +117,7 @@ contains
 
     end subroutine readini_d
 
+     
     subroutine readini_s(io, key, var, def)
 
         integer, intent(in)  :: io
@@ -130,6 +132,7 @@ contains
         read (avar, *) var
 
     end subroutine readini_s
+
 
     subroutine readini_i(io, key, var, def)
 
@@ -146,6 +149,7 @@ contains
 
     end subroutine readini_i
 
+
     subroutine readini_l(io, key, var, def)
 
         integer, intent(in)  :: io
@@ -161,6 +165,7 @@ contains
 
     end subroutine readini_l
 
+    
     subroutine readini__strict_mode(mode)
         logical, intent(in) :: mode
 

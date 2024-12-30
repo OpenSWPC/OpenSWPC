@@ -56,6 +56,7 @@ contains
 
     end subroutine pwatch__setup
 
+
     subroutine pwatch__on(name)
 
         !! stopwatch switch on, labeled by "name"
@@ -104,6 +105,7 @@ contains
 
     end subroutine pwatch__on
 
+
     subroutine pwatch__off(name)
 
         !! stopwatch switch off
@@ -139,6 +141,7 @@ contains
         end if
 
     end subroutine pwatch__off
+
 
     subroutine pwatch__report(io, ionode)
 
@@ -191,4 +194,5 @@ contains
 
     end subroutine pwatch__report
 
+    
 end module m_pwatch

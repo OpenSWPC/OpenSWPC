@@ -58,6 +58,7 @@ contains
 
     end subroutine bicubic__init_s
 
+
     subroutine bicubic__init_d(bd, nxi, nyi, x0i, y0i, dxi, dyi, dati)
 
         !! Set-up new inputdata for bicubic interpolation
@@ -100,6 +101,7 @@ contains
 
     end subroutine bicubic__init_d
 
+    
     subroutine bicubic__terminate(bd)
 
         !! Terminate using bicubic module
@@ -111,6 +113,7 @@ contains
         bd%is_first = .true.
 
     end subroutine bicubic__terminate
+
 
     subroutine bicubic__interp_s(bd, xi, yi, v, default)
 
@@ -133,6 +136,7 @@ contains
         v = real(vv)
 
     end subroutine bicubic__interp_s
+
 
     subroutine bicubic__interp_d(bd, xi, yi, v, default)
 
@@ -225,6 +229,7 @@ contains
 
     end subroutine bicubic__interp_d
 
+
     subroutine bicubic__coef(bd, ii, jj)
 
         !! Set-up interpolation table
@@ -282,6 +287,7 @@ contains
 
     end subroutine bicubic__coef
 
+
     subroutine diffx(nx, ny, dx, ff, ffx)
 
         !! Second-order derivative
@@ -306,6 +312,7 @@ contains
         end do
 
     end subroutine diffx
+
 
     subroutine diffy(nx, ny, dy, ff, ffy)
 
@@ -332,4 +339,5 @@ contains
 
     end subroutine diffy
 
+    
 end module m_bicubic

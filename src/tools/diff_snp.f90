@@ -58,7 +58,7 @@ program diff_snp
     if (snp_type == 'netcdf') then
 
         !! file generation by a simple copy, then modify in what follows
-        call system__call('/bin/cp '//trim(fn_in1)//' '//trim(fn_out))
+        call execute_command_line('/bin/cp '//trim(fn_in1)//' '//trim(fn_out))
         call nc_chk(nf90_open(fn_out, NF90_WRITE, io_out))
 
         !! date & time

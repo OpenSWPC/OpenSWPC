@@ -33,7 +33,7 @@ program ll2xy
     call getopt('-version', is_opt2)
     if (is_opt1 .or. is_opt2) call version__display('ll2xy')
 
-    narg = system__iargc()
+    narg = command_argument_count()
     if (narg /= 4 .and. narg /= 5) call usage_abort
 
     call system__getarg(1, lon)

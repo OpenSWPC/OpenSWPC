@@ -48,6 +48,7 @@ contains
 
     end subroutine vcheck
 
+
     subroutine fdm_stable_dt(dx, dy, dz, vmax, dt)
 
         !! gives maximum time step size by means of stable condition, based on 3D 4th-order assumption
@@ -65,6 +66,7 @@ contains
 
     end subroutine fdm_stable_dt
 
+
     subroutine fdm_cond_stability(dx, dy, dz, vmax, dt, c)
 
         !! Returns stablity condition c: Must be c<=1
@@ -80,6 +82,7 @@ contains
         c = dt / dt2
 
     end subroutine fdm_cond_stability
+
 
     subroutine fdm_cond_wavelength(dx, dy, dz, vmin, fmax, r)
 
@@ -101,7 +104,8 @@ contains
 
     end subroutine fdm_cond_wavelength
 
-    subroutine memory_size(nproc_x, nproc_y, nx, ny, nz, nm, na, memsize_all, memsize_node)
+
+    subroutine memory_size_3d(nproc_x, nproc_y, nx, ny, nz, nm, na, memsize_all, memsize_node)
 
         !! Memory-size rough estimate of FDM simulation
 
@@ -151,7 +155,8 @@ contains
         memsize_all = (ba_com + ba_int + ba_abc) / (1024.)**3
         memsize_node = memsize_all / nproc
 
-    end subroutine memory_size
+    end subroutine memory_size_3d
+
 
     subroutine memory_size_sh(nproc, nx, nz, nm, na, memsize_all, memsize_node)
         !! Memory-size estimate of FDM simulation
@@ -196,6 +201,7 @@ contains
         memsize_node = memsize_all / nproc
 
     end subroutine memory_size_sh
+
 
     subroutine memory_size_psv(nproc, nx, nz, nm, na, memsize_all, memsize_node)
 
@@ -242,6 +248,7 @@ contains
 
     end subroutine memory_size_psv
 
+
     real(SP) pure function moment_magnitude(m0)
 
         !! Calculate moment-magnituide from moment m0
@@ -256,6 +263,7 @@ contains
 
     end function moment_magnitude
 
+
     real(SP) pure function seismic_moment(mw)
 
         !! Calculate seismic moment from moment-magnituide mw
@@ -265,6 +273,7 @@ contains
         seismic_moment = 10**(1.5 * mw + 9.05)
 
     end function seismic_moment
+
 
     subroutine sdr2moment(strike, dip, rake, mxx, myy, mzz, myz, mxz, mxy)
 
@@ -297,6 +306,7 @@ contains
 
     end subroutine sdr2moment
 
+
     real(SP) pure function kupper(t, ts, tr)
 
         !! Single-lobed Kupper function for moment rate
@@ -312,6 +322,7 @@ contains
         end if
 
     end function kupper
+
 
     real(SP) pure function texp(t, ts, tr)
 
@@ -335,6 +346,7 @@ contains
 
     end function texp
 
+
     real(SP) pure function cosine(t, ts, tr)
 
         !! Cosine function for moment rate
@@ -354,6 +366,7 @@ contains
 
     end function cosine
 
+
     real(SP) pure function boxcar(t, ts, tr)
 
         !! Box-car function for moment rate
@@ -372,6 +385,7 @@ contains
         end if
 
     end function boxcar
+
 
     real(SP) pure function triangle(t, ts, tr)
 
@@ -393,6 +407,7 @@ contains
         end if
 
     end function triangle
+
 
     real(SP) pure function herrmann(t, ts, tr)
 
@@ -423,6 +438,7 @@ contains
 
     end function herrmann
 
+
     real(SP) pure function iboxcar(t, ts, tr)
 
         !! Time-integrated box-car function for moment function
@@ -443,6 +459,7 @@ contains
         end if
 
     end function iboxcar
+
 
     real(SP) pure function itriangle(t, ts, tr)
 
@@ -466,6 +483,7 @@ contains
         end if
 
     end function itriangle
+
 
     real(SP) pure function iherrmann(t, ts, tr)
 
@@ -498,6 +516,7 @@ contains
 
     end function iherrmann
 
+
     real(SP) pure function ikupper(t, ts, tr)
 
         !! Time-integrated single-lobed Kupper function for moment function
@@ -519,6 +538,7 @@ contains
 
     end function ikupper
 
+
     integer pure function x2i(x, xbeg, dx)
 
         !! convert coordinate location to cell number
@@ -530,6 +550,7 @@ contains
         x2i = ceiling((x - xbeg) / dx)
 
     end function x2i
+
 
     integer pure function y2j(y, ybeg, dy)
 
@@ -543,6 +564,7 @@ contains
 
     end function y2j
 
+
     integer pure function z2k(z, zbeg, dz)
 
         !! convert coordinate location to cell number
@@ -554,6 +576,7 @@ contains
         z2k = ceiling((z - zbeg) / dz)
 
     end function z2k
+
 
     real(SP) pure function i2x(i, xbeg, dx)
 
@@ -567,6 +590,7 @@ contains
 
     end function i2x
 
+
     real(SP) pure function j2y(j, ybeg, dy)
 
         !! convert cell number to coordinate location
@@ -578,6 +602,7 @@ contains
         j2y = ybeg + (j - 0.5) * dy
 
     end function j2y
+
 
     real(SP) pure function k2z(k, zbeg, dz)
 
@@ -591,6 +616,7 @@ contains
 
     end function k2z
 
+
     real(SP) pure function n2t(n, tbeg, dt)
 
         !! convert time grid number to physical time
@@ -602,6 +628,7 @@ contains
         n2t = tbeg + (n - 0.5) * dt
 
     end function n2t
+
 
     subroutine visco_set_relaxtime(nm, ts, fmin, fmax)
 
@@ -641,6 +668,7 @@ contains
 
     end subroutine visco_set_relaxtime
 
+
     real(SP) pure function visco_chi(nm, ts, tau, f)
 
         !! Set chi-function for velocity dispersion as a function of frequency
@@ -665,6 +693,7 @@ contains
         visco_chi = 1 / real(cc**(-0.5))
 
     end function visco_chi
+
 
     real(SP) function visco_constq_zeta(nm, fmin, fmax, ts)
 
@@ -724,15 +753,16 @@ contains
 
     end function visco_constq_zeta
 
+
     subroutine independent_list(nin, list, nind, ptr, list_ind)
 
         !! Obtain list without duplicaiton from input list.
         !! Pointer integer array to the uniq list from the original list also will be returned.
 
-        integer, intent(in)  :: nin            !! number of input list data
+        integer,      intent(in)  :: nin            !! number of input list data
         character(*), intent(in)  :: list(nin)      !! input list
-        integer, intent(out) :: nind           !! number of independent lines
-        integer, intent(out) :: ptr(nin)       !! pointer to the independent list
+        integer,      intent(out) :: nind           !! number of independent lines
+        integer,      intent(out) :: ptr(nin)       !! pointer to the independent list
         character(*), intent(out) :: list_ind(nin)  !! independent components. 1..nind will be used.
 
         integer :: i, j
@@ -766,4 +796,5 @@ contains
 
     end subroutine independent_list
 
+    
 end module m_fdtool

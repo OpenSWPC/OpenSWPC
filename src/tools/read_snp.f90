@@ -45,7 +45,7 @@ program read_snp
   !!
   !! Check Input File
   !!
-    if (system__iargc() == 0) then
+    if (command_argument_count() == 0) then
         call usage_exit()
     end if
 
@@ -159,7 +159,7 @@ contains
         allocate (den(nx, ny), rig(nx, ny), lam(nx, ny))
         allocate (vp(nx, ny), vs(nx, ny))
 
-        call system__call('/bin/mkdir '//trim(odir)//' > /dev/null 2>&1 ')
+        call execute_command_line('/bin/mkdir '//trim(odir)//' > /dev/null 2>&1 ')
 
         if (typ == 'asc') then
             ext = typ
@@ -349,7 +349,7 @@ contains
         !! output directory
         call getopt('dir', is_exist, odir, typ)
 
-        call system__call('/bin/mkdir '//trim(odir)//' > /dev/null 2>&1 ')
+        call execute_command_line('/bin/mkdir '//trim(odir)//' > /dev/null 2>&1 ')
 
         !! lowpass
         call getopt('lpf', is_lpf, mingrid, 2.0)
