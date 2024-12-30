@@ -278,7 +278,7 @@ gmt grdsample topo.japan2.grd -R$region -I$dlon/$dlat -G$topo_new
 # for shallow structure
 #
 cd code
-${FC} m_std.F90 m_system.F90 extrap.F90 -o extrap.x
+${FC} m_std.f90 m_system.f90 extrap.f90 -o extrap.x
 cd ..
 
 for (( i=2; i<=13; i++ ));
