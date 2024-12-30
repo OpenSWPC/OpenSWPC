@@ -188,6 +188,7 @@ contains
 
     end subroutine rsac_d
 
+
     subroutine rsac_s(fn_sac, ss, dat)
 
         !! Read SAC file (in single precision)
@@ -238,6 +239,7 @@ contains
 
     end subroutine rsac_s
 
+
     subroutine wsac_d(fn_sac, ss, dat, overwrite)
 
         !! Write SAC file [fn_sac] with header [ss] and data [dat] (double precision)
@@ -254,6 +256,7 @@ contains
         end if
 
     end subroutine wsac_d
+
 
     subroutine wsac_s(fn_sac, ss, dat, overwrite)
 
@@ -300,6 +303,7 @@ contains
         close (io)
 
     end subroutine wsac_s
+
 
     subroutine sac__whdr(io, ss)
 
@@ -438,6 +442,7 @@ contains
 
     end subroutine sac__whdr
 
+
     subroutine sac__init(ss)
 
         !! Initialize SAC header
@@ -505,7 +510,7 @@ contains
         ss%leven = .true.
         ss%lpspol = .false.
         ss%lovrok = .true.
-        ss%lcalda = .true.
+        ss%lcalda = .false.
         ss%kstnm = cerr
         ss%kcmpnm = cerr
         ss%kevnm = cerr
@@ -550,6 +555,7 @@ contains
 
     end subroutine sac__init
 
+
     subroutine wcsf_d(fn_csf, ntrace, npts, sh, dat, overwrite)
 
         !! Write csf format
@@ -568,6 +574,7 @@ contains
         end if
 
     end subroutine wcsf_d
+
 
     subroutine wcsf_s(fn_csf, ntrace, npts, sh, dat, overwrite)
 
@@ -633,6 +640,7 @@ contains
         close (io)
 
     end subroutine wcsf_s
+
 
     subroutine sac__rhdr(io, ss, same_endian)
 
@@ -794,6 +802,7 @@ contains
 
     end subroutine sac__rhdr
 
+
     subroutine byteswap(nbyte, foo)
 
         !! Byte swap for nbyte bytes
@@ -813,6 +822,7 @@ contains
 
     end subroutine byteswap
 
+
     subroutine change_endian_r(var)
 
         !! exchange endian of var (real)
@@ -825,6 +835,7 @@ contains
         var = transfer(c, var)
 
     end subroutine change_endian_r
+
 
     subroutine change_endian_i(var)
 
@@ -839,6 +850,7 @@ contains
 
     end subroutine change_endian_i
 
+
     subroutine change_endian_l(var)
 
         !! exchange endian of var (logical)
@@ -851,6 +863,7 @@ contains
         var = transfer(c, var)
 
     end subroutine change_endian_l
+
 
     subroutine char_zeropad(ch)
 
@@ -868,5 +881,6 @@ contains
 
     end subroutine char_zeropad
 
+    
 end module m_sac
 

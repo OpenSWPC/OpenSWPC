@@ -58,6 +58,7 @@ contains
 
     end subroutine rfft1d_8c
 
+
     subroutine rfft1d_4c(n, a, isign)
 
         !! Single precision wrapper to the 1D FFT. Calculation is done in DP.
@@ -81,6 +82,7 @@ contains
         deallocate (aa, bb)
 
     end subroutine rfft1d_4c
+
 
     subroutine rfft2d_8c(n1, n2, a, isign)
 
@@ -113,6 +115,7 @@ contains
         deallocate (b1, b2)
 
     end subroutine rfft2d_8c
+
 
     subroutine rfft2d_4c(n1, n2, a, isign)
 
@@ -151,6 +154,7 @@ contains
         deallocate (aa1, aa2, b1, b2)
 
     end subroutine rfft2d_4c
+
 
     subroutine rfft3d_8c(n1, n2, n3, a, isign)
 
@@ -194,6 +198,7 @@ contains
         deallocate (b1, b2, b3)
 
     end subroutine rfft3d_8c
+
 
     subroutine rfft3d_4c(n1, n2, n3, a, isign)
 
@@ -247,6 +252,7 @@ contains
 
     end subroutine rfft3d_4c
 
+
     subroutine rfft1d_8rf(n, r, c, isign)
 
         !! FFT for real data (real<->complex)
@@ -288,6 +294,7 @@ contains
         deallocate (a)
 
     end subroutine rfft1d_8rf
+
 
     subroutine rfft1d_8ri(n, c, r, isign)
 
@@ -331,6 +338,7 @@ contains
 
     end subroutine rfft1d_8ri
 
+
     subroutine rfft1d_4rf(n, r, c, isign)
 
         !! FFT for real data (real<->complex)
@@ -350,6 +358,7 @@ contains
 
         deallocate (rr, cc)
     end subroutine rfft1d_4rf
+
 
     subroutine rfft1d_4ri(n, c, r, isign)
     
@@ -372,6 +381,7 @@ contains
 
     end subroutine rfft1d_4ri
 
+    
     recursive subroutine fft0(n, theta, a, b)
 
         !! Recursive FFT engine by frequency decimation & out-of-place sorting

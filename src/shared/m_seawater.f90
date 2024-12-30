@@ -15,6 +15,7 @@ module m_seawater
 
     contains
 
+
     subroutine seawater__init(use_munk)
 
         logical, intent(in) :: use_munk
@@ -26,8 +27,10 @@ module m_seawater
         end if
 
         init = .true.
+
     end subroutine seawater__init
 
+    
     function seawater__vel(z) result(c)
 
         real :: c

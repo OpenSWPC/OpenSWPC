@@ -23,7 +23,7 @@ module m_gk
     real(DP), parameter :: F = 298.257222101_DP !! Inverse elliplicity of the Earth (exact value)
     real(DP), parameter :: m0 = 0.9999_DP !! scale factor
     real(DP), parameter :: n = 1.0_DP / (2.0_DP * F - 1.0_DP)
-    real(DP), parameter :: rho = 3600 * 180 / PI_D
+    real(DP), parameter :: rho = 3600 * 180 / PI
     logical :: is_first = .true.
     public :: gk__lltoxy
     public :: gk__xytoll
@@ -91,6 +91,7 @@ contains
 
     end subroutine lltoxy_d
 
+
     subroutine lltoxy_s(lon, lat, lon0, lat0, x, y)
 
         real(SP), intent(in) :: lon
@@ -107,6 +108,7 @@ contains
         y = real(yy)
 
     end subroutine lltoxy_s
+
 
     subroutine xytoll_d(x, y, lon0, lat0, lon, lat)
 
@@ -154,6 +156,7 @@ contains
 
     end subroutine xytoll_d
 
+
     subroutine xytoll_s(x, y, lon0, lat0, lon, lat)
 
         real(SP), intent(in)  :: x
@@ -171,7 +174,9 @@ contains
 
     end subroutine xytoll_s
 
+
     real(DP) function S_phi0(phi0)
+    
         real(DP), intent(in) :: phi0
         integer :: j
 
@@ -182,6 +187,7 @@ contains
         S_phi0 = S_phi0 * (m0 * a / (1 + n))
 
     end function S_phi0
+
 
     subroutine set_coef
 
@@ -207,13 +213,14 @@ contains
         delta(6) = ((((((601676 / 22275._DP) * n) * n) * n) * n) * n) * n
 
         AA(0) = 1 + (1 / 4._DP + 1 / 64._DP * n**2) * n**2
-        AA(1) = -3 / 2._DP * (1._DP - 1 / 8._DP * n**2 - 1 / 64._DP * n**4) * n
-        AA(2) = 15 / 16._DP * (1._DP - 1 / 4._DP * n**2) * n**2
-        AA(3) = -35 / 48._DP * (1._DP - 5 / 16._DP * n**2) * n**3
-        AA(4) = 315 / 512._DP * n**4
+        AA(1) =   -3 /    2._DP * (1._DP - 1 /  8._DP * n**2 - 1 / 64._DP * n**4) * n
+        AA(2) =   15 /   16._DP * (1._DP - 1 /  4._DP * n**2) * n**2
+        AA(3) =  -35 /   48._DP * (1._DP - 5 / 16._DP * n**2) * n**3
+        AA(4) =  315 /  512._DP * n**4
         AA(5) = -693 / 1280._DP * n**5
 
     end subroutine set_coef
+
 
     real(DP) pure function atanh0(x)
 

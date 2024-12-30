@@ -54,6 +54,7 @@ contains
 
     end subroutine daytim__isLeapYear
 
+
     subroutine daytim__ymd2jul(year, month, day, julday)
 
         !! Convert Year/Month/Day to Day of Year (Julian Day)
@@ -100,6 +101,7 @@ contains
 
     end subroutine daytim__ymd2jul
 
+
     subroutine daytim__jul2md(julday, year, month, day)
 
         !! Convert Day of Year (Julian Day) to Year/Month/Day
@@ -145,10 +147,10 @@ contains
 
     end subroutine daytim__jul2md
 
+
     subroutine dayweek_i(year, month, day, dw)
 
         !! Returns day of the week from date information
-        !!
         !! Return dw (integer): 0 (Sunday) to 6 (Satureday)
 
         integer, intent(in)  :: year
@@ -179,6 +181,7 @@ contains
 
     end subroutine dayweek_i
 
+
     subroutine dayweek_a(year, month, day, dw)
 
         !! Returns character formatted day of the week from the given date
@@ -202,10 +205,10 @@ contains
 
     end subroutine dayweek_a
 
+
     subroutine daytim__timelocal(year, month, day, hour, min, sec, tim)
 
         !! Return the elapsed seconds from 1970-01-01 00:00:00 (UNIX time/POSIX time) from given date/time.
-        !!
         !! Almost compatible with timelocal function in perl, but the month takes 1-12, not 0-11 as perl.
 
         integer, intent(in)  :: year
@@ -237,10 +240,10 @@ contains
 
     end subroutine daytim__timelocal
 
+
     subroutine daytim__localtime(tim, year, month, day, hour, min, sec)
 
         !! Inversely convert UNIX/POSIX time (seconds from 1970-01-01 00:00:00) to date and time
-        !!
         !! This is an inverse routine of daytim__timelocal
 
         integer, intent(in)  :: tim
@@ -305,12 +308,11 @@ contains
 
     end subroutine daytim__localtime
 
+
     subroutine getDate_c(date)
 
         !! Return date and time in formatted characters
-        !!
-        !! Example:
-        !! "2005/07/31 15:32:53"
+        !! Example: "2005/07/31 15:32:53"
 
         character(20), intent(out) :: date
 
@@ -321,6 +323,7 @@ contains
         date = ymd(1:4)//'/'//ymd(5:6)//'/'//ymd(7:8)//' '//hms(1:2)//':'//hms(3:4)//':'//hms(5:6)
 
     end subroutine getDate_c
+
 
     subroutine getDate_i1(yr, mo, dy, hr, mi, sc)
 
@@ -341,6 +344,7 @@ contains
         read (hms(5:6), *) sc
 
     end subroutine getDate_i1
+
 
     subroutine getDate_i2(itim)
 
@@ -364,4 +368,5 @@ contains
 
     end subroutine getDate_i2
 
+    
 end module m_daytim

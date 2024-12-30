@@ -67,6 +67,7 @@ contains
 
     end subroutine rdrmed__2d
 
+    
     subroutine rdrmed__3d(ib, ie, jb, je, kb, ke, fn_rmed, vol)
 
         integer, intent(in)  :: ib, ie

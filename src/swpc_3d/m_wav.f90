@@ -11,7 +11,6 @@ module m_wav
     use m_pwatch
     use m_sac
     use m_readini
-    use m_system
     use m_geomap
     implicit none
     private
@@ -89,7 +88,7 @@ contains
 
         call set_stinfo(fn_stloc, st_format)
 
-        call system__call('mkdir -p '//trim(odir)//'/wav > /dev/null 2>&1')
+        call execute_command_line('mkdir -p '//trim(odir)//'/wav > /dev/null 2>&1')
 
         if (sw_wav_v) then
             allocate (wav_vel(ntw, 3, nst), source=0.0)

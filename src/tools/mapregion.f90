@@ -75,7 +75,7 @@ program mapregion
     call readini(io_prm, 'clat', clat, 35.7182)
     call readini(io_prm, 'phi', phi, 0.0)
 
-    call memory_size(nproc_x, nproc_y, nx, ny, nz, nm, na, mem_a, mem_n)
+    call memory_size_3d(nproc_x, nproc_y, nx, ny, nz, nm, na, mem_a, mem_n)
     write (error_unit, *) "grid size ", nx, ny, nz
     write (error_unit, *) "kernel memory size ( whole ) ", mem_a, " [GB]"
     write (error_unit, *) "kernel memory size ( node  ) ", mem_n, " [GB]"

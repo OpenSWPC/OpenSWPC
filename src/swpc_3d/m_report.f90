@@ -66,7 +66,7 @@ contains
 
         end if
 
-        call memory_size(nproc_x, nproc_y, nx, ny, nz, nm, na, mem_all, mem_node)
+        call memory_size_3d(nproc_x, nproc_y, nx, ny, nz, nm, na, mem_all, mem_node)
         call fdm_cond_stability(real(dx), real(dy), real(dz), vmax, dt, c)
         call fdm_cond_wavelength(real(dx), real(dy), real(dz), vmin, fmax, r)
 

@@ -8,7 +8,6 @@ module m_global
     use m_debug
     use m_fdtool
     use m_pwatch
-    use m_system
     use m_daytim
     use m_readini
     use mpi
@@ -257,7 +256,7 @@ contains
                  // trim(odir) // ' > /dev/null 2>&1 ; fi'
         do i=0, nproc_exe-1
             if (myid == i) then
-                call system__call(trim(command))
+                call execute_command_line(trim(command))
             end if
             call mpi_barrier(mpi_comm_world, err)
         end do        

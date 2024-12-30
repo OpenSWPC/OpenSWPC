@@ -14,7 +14,6 @@ module m_green
     use m_readini
     use m_geomap
     use m_pwatch
-    use m_system
     use mpi
     implicit none
     private
@@ -287,7 +286,7 @@ contains
         allocate (gf(ntw, ncmp * ng), source=0.0)
         allocate (fn(ncmp * ng))
 
-        call system__call('mkdir -p '//trim(odir)//'/green/'//trim(green_stnm))
+        call execute_command_line('mkdir -p '//trim(odir)//'/green/'//trim(green_stnm))
 
         do i = 1, ng
 

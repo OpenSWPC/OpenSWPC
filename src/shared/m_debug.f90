@@ -2,6 +2,7 @@ module m_debug
 
     !! Debug routines.
     !! Use with preprocessor macro (#include "m_pdebug.h" at the top of the soruce code) will give richer information.
+    !! 
     !! #### usage
     !! - call debug(var):     show variable var.
     !! - call assert( cond ): abort if cond = .false. . cond must be logical value or condition.
@@ -37,6 +38,7 @@ contains
 
     end subroutine debug__void
 
+
     subroutine debug_c(var, fname, nline)
 
         character(*), intent(in) :: var
@@ -51,6 +53,7 @@ contains
 
     end subroutine debug_c
 
+
     subroutine debug_c0(var)
 
         character(*), intent(in) :: var
@@ -58,6 +61,7 @@ contains
         write (error_unit, '(A)') '[debug] '//trim(adjustl(var))
 
     end subroutine debug_c0
+
 
     subroutine debug_i(var, fname, nline)
 
@@ -72,6 +76,7 @@ contains
 
     end subroutine debug_i
 
+
     subroutine debug_i0(var)
 
         integer, intent(in) :: var
@@ -82,6 +87,7 @@ contains
         call debug_c0(cvar)
 
     end subroutine debug_i0
+
 
     subroutine debug_r(var, fname, nline)
 
@@ -100,6 +106,7 @@ contains
 
     end subroutine debug_r
 
+
     subroutine debug_r0(var)
 
         real, intent(in) :: var
@@ -114,6 +121,7 @@ contains
         call debug_c0(cvar)
 
     end subroutine debug_r0
+
 
     subroutine debug_d(var, fname, nline)
 
@@ -132,6 +140,7 @@ contains
 
     end subroutine debug_d
 
+
     subroutine debug_d0(var)
 
         real(DP), intent(in) :: var
@@ -146,6 +155,7 @@ contains
         call debug_c0(cvar)
 
     end subroutine debug_d0
+
 
     subroutine debug_l(var, fname, nline)
 
@@ -164,6 +174,7 @@ contains
 
     end subroutine debug_l
 
+
     subroutine debug_l0(var)
 
         logical, intent(in) :: var
@@ -179,6 +190,7 @@ contains
 
     end subroutine debug_l0
 
+
     subroutine assert(cond)
 
         logical, intent(in) :: cond
@@ -189,6 +201,7 @@ contains
         end if
 
     end subroutine assert
+
 
     subroutine assert__macro(cond, fname, nline)
 
@@ -207,6 +220,7 @@ contains
 
     end subroutine assert__macro
 
+
     subroutine info(msg)
 
         character(*), intent(in) :: msg
@@ -214,6 +228,7 @@ contains
         write (error_unit, *) '[info] '//trim(adjustl(msg))
 
     end subroutine info
+
 
     subroutine info__macro(msg, fname, nline)
 
@@ -224,5 +239,6 @@ contains
         write (error_unit, '(A,I0,A)') '[info] '//trim(adjustl(fname))//'(', nline, '): '//trim(adjustl(msg))
 
     end subroutine info__macro
+
 
 end module m_debug

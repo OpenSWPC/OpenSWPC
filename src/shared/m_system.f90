@@ -10,9 +10,6 @@ module m_system
     private
 
     public :: system__getarg
-    public :: system__getenv
-    public :: system__call
-    public :: system__iargc
     public :: system__expenv
 
     interface system__getarg
@@ -21,36 +18,10 @@ module m_system
 
 contains
 
-    subroutine system__call(cmd)
 
-        !! Do system-call.
-
-        character(*), intent(in) :: cmd
-
-        call execute_command_line(cmd)
-
-    end subroutine system__call
-
-    integer function system__iargc()
-
-        !! Returns a number of arguments. Fortran2003 wrapper function
-
-        system__iargc = command_argument_count()
-
-    end function system__iargc
-
-    subroutine system__getenv(name, value)
-
-        !! Obtain environmental variable "name".
-
-        character(*), intent(in)  :: name
-        character(*), intent(out) :: value
-
-        call get_environment_variable(name, value)
-
-    end subroutine system__getenv
 
     subroutine getarg_a(i, arg)
+
         !! get i-th command line argument, Fortran2003 wrapper subroutine
 
         integer, intent(in)  :: i   !! order of the arguments
@@ -59,6 +30,7 @@ contains
         call get_command_argument(i, arg)
 
     end subroutine getarg_a
+
 
     subroutine getarg_i(i, arg)
 
@@ -71,6 +43,7 @@ contains
         read (carg, *) arg
 
     end subroutine getarg_i
+
 
     subroutine getarg_f(i, arg)
 
@@ -85,6 +58,7 @@ contains
 
     end subroutine getarg_f
 
+
     subroutine getarg_d(i, arg)
 
         integer, intent(in) :: i
@@ -96,6 +70,7 @@ contains
         read (carg, *) arg
 
     end subroutine getarg_d
+
 
     subroutine system__expenv(str)
 
@@ -115,7 +90,7 @@ contains
 
             ikey2 = scan(str(iptr:), "}") + iptr - 1
             str2 = trim(str2)//str(iptr:ikey1 - 1)
-            call system__getenv(str(ikey1 + 2:ikey2 - 1), str3)
+            call get_environment_variable(str(ikey1 + 2:ikey2 - 1), str3)
             str2 = trim(str2)//trim(str3)
             iptr = ikey2 + 1
 
@@ -125,5 +100,6 @@ contains
         str = trim(str2)
 
     end subroutine system__expenv
+
 
 end module m_system
