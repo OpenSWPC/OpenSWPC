@@ -24,7 +24,6 @@ module m_wav
     integer :: ntdec_w
     integer :: ntdec_w_prg
     character(3) :: wav_format
-    logical :: wav_calc_dist = .false.
 
     logical :: sw_wav_v = .false.
     logical :: sw_wav_u = .false.
@@ -62,7 +61,6 @@ contains
         call readini(io_prm, 'sw_wav_stress', sw_wav_stress, .false.)
         call readini(io_prm, 'sw_wav_strain', sw_wav_strain, .false.)
         call readini(io_prm, 'wav_format', wav_format, 'sac')
-        call readini(io_prm, 'wav_calc_dist', wav_calc_dist, .false.)
         call readini(io_prm, 'st_format', st_format, 'xy')
         call readini(io_prm, 'fn_stloc', fn_stloc, '')
         call readini(io_prm, 'ntdec_w_prg', ntdec_w_prg, 0)
@@ -501,12 +499,10 @@ contains
         sh%stla = stla0
         sh%stdp = zst0 * 1000 ! in meter unit
 
-        if (wav_calc_dist) then
-            sh%lcalda = .false.
-            sh%dist = sqrt((sx0 - xst0)**2)
-            sh%az = std__rad2deg(atan2(0.0, xst0 - sx0))
-            sh%baz = std__rad2deg(atan2(0.0, sx0 - xst0))
-        end if
+        sh%lcalda = .false.
+        sh%dist = sqrt((sx0 - xst0)**2)
+        sh%az = std__rad2deg(atan2(0.0, xst0 - sx0))
+        sh%baz = std__rad2deg(atan2(0.0, sx0 - xst0))
 
     end subroutine initialize_sac_header
 
