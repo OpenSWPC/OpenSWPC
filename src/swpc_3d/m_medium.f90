@@ -13,10 +13,13 @@ module m_medium
     use m_vmodel_uni
     use m_vmodel_grd
     use m_vmodel_lhm
+    use m_vmodel_lgm
     use m_vmodel_user
     use m_vmodel_uni_rmed
     use m_vmodel_grd_rmed
     use m_vmodel_lhm_rmed
+    use m_vmodel_lgm_rmed
+    use m_vmodel_lgm
     implicit none
     private
     save
@@ -101,6 +104,12 @@ contains
                                      rho, lam, mu, taup, taus, bddep)
             case ('lhm_rmed')
                 call vmodel_lhm_rmed(io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
+                                     rho, lam, mu, taup, taus, bddep)
+            case ('lgm')
+                call vmodel_lgm(io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
+                                rho, lam, mu, taup, taus, bddep)
+            case ('lgm_rmed')
+                call vmodel_lgm_rmed(io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
                                      rho, lam, mu, taup, taus, bddep)
 
             case default

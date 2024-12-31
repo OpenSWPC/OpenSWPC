@@ -177,14 +177,14 @@ contains
                         qs1 = qs0(l)
 
                         if (vp0(l) > 0 .and. vs0(l) > 0) then
-                            call vcheck(vp1, vs1, rho1, xi(k, i, tbl_rmed(l)), vmin, vmax, &
+                            call vcheck_sh(vs1, rho1, xi(k, i, tbl_rmed(l)), vmin, vmax, &
                                         rhomin, is_vmin_under, is_vmax_over, is_rhomin_under)
                         end if
 
                     end if
                 end do
 
-            !! set medium parameters
+                ! set medium parameters
                 rho(k, i) = rho1
                 mu(k, i) = rho1 * vs1 * vs1
                 lam(k, i) = rho1 * (vp1 * vp1 - 2 * vs1 * vs1)

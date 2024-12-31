@@ -49,13 +49,8 @@ contains
         real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening
 
         call readini(io_prm, 'fn_lhm', fn_lhm, '')
-
         inquire (file=fn_lhm, exist=is_exist)
-        if (.not. is_exist) then
-            write (error_unit, *) "ERROR [m_vmodel_lhm]: velocity file "//trim(fn_lhm)//" does not exist"
-            call mpi_finalize(ierr)
-            stop
-        end if
+        call assert(is_exist)
 
         !! seawater
         call readini(io_prm, 'munk_profile', use_munk, .false.)
@@ -109,50 +104,43 @@ contains
 
                 if (zs(k) < 0.0) then
 
-                    vp1 = 0.0
-                    vs1 = 0.0
-
-                    rho(k, i0:i1) = 0.001
-                    mu(k, i0:i1) = 0.0
-                    lam(k, i0:i1) = 0.0
-                    ! give artificially strong attenuation in air-column
-                    qp(k, i0:i1) = 10.0
-                    qs(k, i0:i1) = 10.0
+                    rho1 = 0.001
+                    vp1  = 0.0
+                    vs1  = 0.0
+                    qp1  = 10.0   ! give artificially strong attenuation in air-column
+                    qs1  = 10.0
 
                 else
 
-                    vp1 = Cv(k) * seawater__vel(zs(k))
-                    vs1 = 0.0
-
-                    rho(k, i0:i1) = 1.0
-                    mu(k, i0:i1) = 0.0
-                    lam(k, i0:i1) = 1.0 * vp1 * vp1
-
-                    qp(k, i0:i1) = 1000000.0
-                    qs(k, i0:i1) = 1000000.0
+                    rho1 = 1.0
+                    vp1  = Cv(k) * seawater__vel(zs(k))
+                    vs1  = 0.0
+                    qp1  = 1000000.0
+                    qs1  = 1000000.0
 
                 end if
 
-                cycle
+            else
+
+                ! chose layer
+                do l = 1, nlayer
+                    if (zs(k) >= depth(l)) then
+                        rho1 = rho0(l)
+                        vp1 = Cv(k) * vp0(l)
+                        vs1 = Cv(k) * vs0(l)
+                        qp1 = qp0(l)
+                        qs1 = qs0(l)
+                    end if
+                end do
+            
             end if
 
-            !! chose layer
-            do l = 1, nlayer
-                if (zs(k) >= depth(l)) then
-                    rho1 = rho0(l)
-                    vp1 = Cv(k) * vp0(l)
-                    vs1 = Cv(k) * vs0(l)
-                    qp1 = qp0(l)
-                    qs1 = qs0(l)
-                end if
-            end do
-
-            !! set medium parameters
+            ! set medium parameters
             rho(k, i0:i1) = rho1
-            mu(k, i0:i1) = rho1 * vs1 * vs1
+            mu (k, i0:i1) = rho1 * vs1 * vs1
             lam(k, i0:i1) = rho1 * (vp1 * vp1 - 2 * vs1 * vs1)
-            qp(k, i0:i1) = qp1
-            qs(k, i0:i1) = qs1
+            qp (k, i0:i1) = qp1
+            qs (k, i0:i1) = qs1
 
         end do
 

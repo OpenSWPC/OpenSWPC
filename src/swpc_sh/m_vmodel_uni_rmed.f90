@@ -103,7 +103,7 @@ contains
                     vp2 = (1 + xi(k, i)) * Cv(k) * vp0
                     vs2 = (1 + xi(k, i)) * Cv(k) * vs0
 
-                    call vcheck(vp2, vs2, rho2, xi(k, i), vmin, vmax, rhomin, is_vmin_under, is_vmax_over, is_rhomin_under)
+                    call vcheck_sh(vs2, rho2, xi(k, i), vmin, vmax, rhomin, is_vmin_under, is_vmax_over, is_rhomin_under)
 
                     rho(k, i) = rho2
                     mu(k, i) = rho2 * vs2 * vs2

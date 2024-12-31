@@ -30,7 +30,6 @@ contains
 
             xi2 = (1 + xi) * vmax / vp - 1
             vp = vmax
-            vp = vmax
             vs = vmax / gamma
             rho = rho * (1 + 0.8 * xi2) / (1 + 0.8 * xi)
         end if
@@ -47,6 +46,37 @@ contains
         end if
 
     end subroutine vcheck
+
+
+    subroutine vcheck_sh(vs, rho, xi, vmin, vmax, rhomin, is_vmin_under, is_vmax_over, is_rhomin_under)
+
+        real(SP), intent(inout) :: vs, rho
+        real(SP), intent(in) :: xi !! velocity purturbation
+        real(SP), intent(in) :: vmin, vmax, rhomin
+        logical, intent(inout) :: is_vmin_under, is_vmax_over, is_rhomin_under
+        real :: xi2
+
+        !! velocity check
+        if (vs > vmax) then
+            is_vmax_over = .true.
+
+            xi2 = (1 + xi) * vmax / vs - 1
+            vs = vmax
+            rho = rho * (1 + 0.8 * xi2) / (1 + 0.8 * xi)
+        end if
+
+        if (vs < vmin) then
+            is_vmin_under = .true.
+            vs = vmin
+        end if
+
+        if (rho < rhomin) then
+            is_rhomin_under = .true.
+            rho = rhomin
+        end if
+
+    end subroutine vcheck_sh
+
 
 
     subroutine fdm_stable_dt(dx, dy, dz, vmax, dt)

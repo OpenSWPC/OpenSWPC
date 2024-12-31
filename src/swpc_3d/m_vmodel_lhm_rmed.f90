@@ -94,7 +94,7 @@ contains
 
         dh = 1./sqrt(1./dx**2 + 1./dy**2 + 1./dz**2)
         cc = 6./7. !! assume 4th order
-        vmax = 0.95 * cc * dh / dt ! 0.95 is a safety coefficient
+        vmax = cc * dh / dt 
 
         vmax_over = .false.
         vmin_under = .false.
@@ -115,11 +115,11 @@ contains
         !! velocity cut-off
         do l = nlayer - 1, 1, -1
             if ((vp0(l) < vcut .or. vs0(l) < vcut) .and. (vp0(l) > 0 .and. vs0(l) > 0)) then
-                vp0(l) = vp0(l + 1)
-                vs0(l) = vs0(l + 1)
-                rho0(l) = rho0(l + 1)
-                qp0(l) = qp0(l + 1)
-                qs0(l) = qs0(l + 1)
+                vp0(l) = vp0(l+1)
+                vs0(l) = vs0(l+1)
+                rho0(l) = rho0(l+1)
+                qp0(l) = qp0(l+1)
+                qs0(l) = qs0(l+1)
             end if
         end do
 
