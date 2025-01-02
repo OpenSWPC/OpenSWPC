@@ -20,8 +20,6 @@ program read_snp
 
     implicit none
 
-    character(20), parameter :: D_ODIR = "./snap"
-
     character(256) :: fn_snp
 
     type(fdsnap__hdr) :: hdr
@@ -107,20 +105,22 @@ contains
     subroutine usage_exit
 
         write (error_unit, *)
-        write (error_unit, '(A)') ' read_snp.x -i snapfile [-h] [-ppm|-bmp] [-pall] [-mul var | -mul1 var -mul2 var ...] '
-        write (error_unit, '(A)') '                             [-abs] [-bin] [-asc] [-skip n]'
+        write (error_unit, '(A)') ' read_snp.x -i snapshot [-h] '
+        write (error_unit, '(A)') '      [-ppm|-bmp] [-pall] [-mul var | -mul1 var -mul2 var ...] '
+        write (error_unit, '(A)') '      [-abs] [-bin|-asc] [-skip n] [-lpf ng] [-notim]'
         write (error_unit, *)
         write (error_unit, '(A)') '  -h: display header information to terminal output'
-        write (error_unit, '(A)') '  -bmp: output bmp-formatted snapshot figure'
-        write (error_unit, '(A)') '  -ppm: output ppm-formatted snapshot figure'
+        write (error_unit, '(A)') '  -bmp: output bmp-formatted snapshot figures'
+        write (error_unit, '(A)') '  -ppm: output ppm-formatted snapshot figures'
         write (error_unit, '(A)') '  -pall: plot including absorbing boundary area (clipped in default)'
-        write (error_unit, '(A)') '  -mul var: scale amplitude by var by visualization'
+        write (error_unit, '(A)') '  -mul var: scale amplitude by multiplying var for visualization'
         write (error_unit, '(A)') '  -mul1 var, -mul2 var ... : gives scaling factor by each component; default=1000'
         write (error_unit, '(A)') '  -abs: plot absolute value (only for velocity snapshot)'
         write (error_unit, '(A)') '  -bin: export single-precision xyz binary data'
         write (error_unit, '(A)') '  -asc: export xyz ascii data'
         write (error_unit, '(A)') '  -skip n: skip first n snapshots for export'
         write (error_unit, '(A)') '  -notim: do not plot elapsed time on the snapshort figures'
+        write (error_unit, '(A)') '  -lpf ng: apply spatial low-pass filter with corner grid-width of ng before figure output' 
         write (error_unit, *)
 
         stop
@@ -154,12 +154,26 @@ contains
         character(256) :: fn_dat
         integer :: vid_rho, vid_lambda, vid_mu
         integer :: start(3), count(3)
+        character(3) :: codetype
         !--
 
         allocate (den(nx, ny), rig(nx, ny), lam(nx, ny))
         allocate (vp(nx, ny), vs(nx, ny))
 
-        call execute_command_line('/bin/mkdir '//trim(odir)//' > /dev/null 2>&1 ')
+        !! output directory
+        if (trim(hdr%codetype) == 'SWPC_SH') then
+            codetype = 'sh'
+        else if (trim(hdr%codetype) == 'SWPC_PSV') then
+            codetype = 'psv'
+        else
+            codetype = '3d'
+        end if
+        odir = trim(hdr%title)
+        odir = trim(odir) // '/' // trim(codetype)
+        odir = trim(odir) // '/' // trim(hdr%coordinate)
+        odir = trim(odir) // '/' // trim(hdr%datatype)
+
+        call execute_command_line('/bin/mkdir -p '//trim(odir)//' > /dev/null 2>&1 ')
 
         if (typ == 'asc') then
             ext = typ
@@ -257,7 +271,13 @@ contains
                 write (ct, '(F6.1)') t
                 write (cit, '(I6.6)') it
 
-                fn_dat = trim(odir)//'/'//trim(hdr%title)//'.'//trim(hdr%coordinate)//'.'//trim(hdr%datatype)//'.'//cit//'.'//ext
+                fn_dat = trim(odir)//'/'&
+                       //trim(hdr%title)//'.'&
+                       //trim(codetype)//'.'&
+                       //trim(hdr%coordinate)//'.'&
+                       //trim(hdr%datatype)//'.'&
+                       //cit//'.'//ext
+
                 write (error_unit, *) trim(fn_dat)
 
                 if (typ == 'asc') then
@@ -338,6 +358,7 @@ contains
         integer :: vid_rho, vid_mu, vid_lambda, vid_topo
         integer :: start(3), count(3)
         logical :: no_timemark
+        character(3) :: codetype
         !--
 
         !! Memory allocation
@@ -347,13 +368,23 @@ contains
         allocate (medium_bound(nx, ny))
 
         !! output directory
-        call getopt('dir', is_exist, odir, typ)
-
-        call execute_command_line('/bin/mkdir '//trim(odir)//' > /dev/null 2>&1 ')
+        if (trim(hdr%codetype) == 'SWPC_SH') then
+            codetype = 'sh'
+        else if (trim(hdr%codetype) == 'SWPC_PSV') then
+            codetype = 'psv'
+        else
+            codetype = '3d'
+        end if
+        odir = trim(hdr%title)
+        odir = trim(odir) // '/' // trim(codetype)
+        odir = trim(odir) // '/' // trim(hdr%coordinate)
+        odir = trim(odir) // '/' // trim(hdr%datatype)
+        
+        call execute_command_line('/bin/mkdir -p '//trim(odir)//' > /dev/null 2>&1 ')
 
         !! lowpass
         call getopt('lpf', is_lpf, mingrid, 2.0)
-        kmax = 2 * PI / (mingrid * sqrt(hdr%ds1 * hdr%ds2))
+        kmax = 2 * PI / (mingrid * sqrt(hdr%ds1 * hdr%ds2) / sqrt(2.0))
 
         !! amplitude scale
 
@@ -541,7 +572,13 @@ contains
             write (ct, '(F6.1)') t
             write (cit, '(I6.6)') it
 
-            fn_snp = trim(odir)//'/'//trim(hdr%title)//'.'//trim(hdr%coordinate)//'.'//trim(hdr%datatype)//'.'//cit//'.'//typ
+            fn_snp =  trim(odir)//'/'&
+                    //trim(hdr%title)//'.' &
+                    //trim(codetype) // '.' &
+                    //trim(hdr%coordinate)//'.'&
+                    //trim(hdr%datatype)//'.'&
+                    //cit//'.'//typ
+
             write (error_unit, *) trim(fn_snp)
 
             do i = 1, hdr%nsnp
