@@ -95,7 +95,7 @@ else
 
   archive_jivsm=JIVSM_V1R.zip
   if [ ! -e ${archive_jivsm} ]; then
-    curl -o ${archive_jivsm} http://taro.eri.u-tokyo.ac.jp/saigai/models/JIVSM_V1R.zip
+    curl -o ${archive_jivsm} https://taro.eri.u-tokyo.ac.jp/saigai/models/JIVSM_V1R.zip
   fi
   unzip -o ${archive_jivsm}
   edata=JIVSMeast_V1R.dat

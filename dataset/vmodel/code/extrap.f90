@@ -78,7 +78,7 @@ program extrap
   A_W = 2
   isdat( A_S:A_N,A_W:A_E ) = .false.
 
-  write(error_unit,*) A_S, A_N, A_E, A_W
+!  write(error_unit,*) A_S, A_N, A_E, A_W
   !! same for NaN-region B
   do i=N_EW, 1, -1
      if( abs( dep(10,i) -  NOT_A_NUMBER ) > epsilon(1.0) ) then
@@ -96,7 +96,7 @@ program extrap
   B_S = 2
   isdat( B_S:B_N,B_W:B_E ) = .false.
 
-  write(error_unit,*) B_S, B_N, B_E, B_W
+!  write(error_unit,*) B_S, B_N, B_E, B_W
 
 
 
