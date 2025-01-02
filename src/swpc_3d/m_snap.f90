@@ -254,43 +254,43 @@ contains
         !! output settings
         if (snp_format == 'native') then
 
-            if (yz_ps%sw) call newfile_yz(trim(odir)//'/'//trim(title)//'.yz.ps.snp', yz_ps)
-            if (xz_ps%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.xz.ps.snp', xz_ps)
-            if (xy_ps%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.xy.ps.snp', xy_ps)
-            if (fs_ps%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.fs.ps.snp', fs_ps)
-            if (ob_ps%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.ob.ps.snp', ob_ps)
+            if (yz_ps%sw) call newfile_yz(trim(odir)//'/'//trim(title)//'.3d.yz.ps.snp', yz_ps)
+            if (xz_ps%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.3d.xz.ps.snp', xz_ps)
+            if (xy_ps%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.xy.ps.snp', xy_ps)
+            if (fs_ps%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.fs.ps.snp', fs_ps)
+            if (ob_ps%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.ob.ps.snp', ob_ps)
 
-            if (yz_v%sw) call newfile_yz(trim(odir)//'/'//trim(title)//'.yz.v.snp', yz_v)
-            if (xz_v%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.xz.v.snp', xz_v)
-            if (xy_v%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.xy.v.snp', xy_v)
-            if (fs_v%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.fs.v.snp', fs_v)
-            if (ob_v%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.ob.v.snp', ob_v)
+            if (yz_v%sw) call newfile_yz(trim(odir)//'/'//trim(title)//'.3d.yz.v.snp', yz_v)
+            if (xz_v%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.3d.xz.v.snp', xz_v)
+            if (xy_v%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.xy.v.snp', xy_v)
+            if (fs_v%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.fs.v.snp', fs_v)
+            if (ob_v%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.ob.v.snp', ob_v)
 
-            if (yz_u%sw) call newfile_yz(trim(odir)//'/'//trim(title)//'.yz.u.snp', yz_u)
-            if (xz_u%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.xz.u.snp', xz_u)
-            if (xy_u%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.xy.u.snp', xy_u)
-            if (fs_u%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.fs.u.snp', fs_u)
-            if (ob_u%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.ob.u.snp', ob_u)
+            if (yz_u%sw) call newfile_yz(trim(odir)//'/'//trim(title)//'.3d.yz.u.snp', yz_u)
+            if (xz_u%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.3d.xz.u.snp', xz_u)
+            if (xy_u%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.xy.u.snp', xy_u)
+            if (fs_u%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.fs.u.snp', fs_u)
+            if (ob_u%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.ob.u.snp', ob_u)
 
         else
 
-            if (yz_ps%sw) call newfile_yz_nc(trim(odir)//'/'//trim(title)//'.yz.ps.nc', yz_ps)
-            if (xz_ps%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.xz.ps.nc', xz_ps)
-            if (xy_ps%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.xy.ps.nc', xy_ps)
-            if (fs_ps%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.fs.ps.nc', fs_ps)
-            if (ob_ps%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.ob.ps.nc', ob_ps)
+            if (yz_ps%sw) call newfile_yz_nc(trim(odir)//'/'//trim(title)//'.3d.yz.ps.nc', yz_ps)
+            if (xz_ps%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.3d.xz.ps.nc', xz_ps)
+            if (xy_ps%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.xy.ps.nc', xy_ps)
+            if (fs_ps%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.fs.ps.nc', fs_ps)
+            if (ob_ps%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.ob.ps.nc', ob_ps)
 
-            if (yz_v%sw) call newfile_yz_nc(trim(odir)//'/'//trim(title)//'.yz.v.nc', yz_v)
-            if (xz_v%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.xz.v.nc', xz_v)
-            if (xy_v%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.xy.v.nc', xy_v)
-            if (fs_v%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.fs.v.nc', fs_v)
-            if (ob_v%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.ob.v.nc', ob_v)
+            if (yz_v%sw) call newfile_yz_nc(trim(odir)//'/'//trim(title)//'.3d.yz.v.nc', yz_v)
+            if (xz_v%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.3d.xz.v.nc', xz_v)
+            if (xy_v%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.xy.v.nc', xy_v)
+            if (fs_v%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.fs.v.nc', fs_v)
+            if (ob_v%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.ob.v.nc', ob_v)
 
-            if (yz_u%sw) call newfile_yz_nc(trim(odir)//'/'//trim(title)//'.yz.u.nc', yz_u)
-            if (xz_u%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.xz.u.nc', xz_u)
-            if (xy_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.xy.u.nc', xy_u)
-            if (fs_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.fs.u.nc', fs_u)
-            if (ob_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.ob.u.nc', ob_u)
+            if (yz_u%sw) call newfile_yz_nc(trim(odir)//'/'//trim(title)//'.3d.yz.u.nc', yz_u)
+            if (xz_u%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.3d.xz.u.nc', xz_u)
+            if (xy_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.xy.u.nc', xy_u)
+            if (fs_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.fs.u.nc', fs_u)
+            if (ob_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.ob.u.nc', ob_u)
 
         end if
 
