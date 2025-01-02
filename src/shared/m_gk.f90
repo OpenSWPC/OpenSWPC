@@ -8,7 +8,7 @@ module m_gk
     !! - http://surveycalc.gsi.go.jp/sokuchi/surveycalc/algorithm/xy2bl/xy2bl.htm
     !! - http://surveycalc.gsi.go.jp/sokuchi/surveycalc/algorithm/bl2xy/bl2xy.htm
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     implicit none

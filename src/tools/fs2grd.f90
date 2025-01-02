@@ -5,7 +5,7 @@ program fs2grd
     !! #### Usage
     !! fs2grd.x -i swpc-snapshot.nc -R lon0/lon1/lat0/lat1 -dlon delta_lon -dlat delta_lat -v varname
     !!
-    !! Copyright 2020-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2020-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std

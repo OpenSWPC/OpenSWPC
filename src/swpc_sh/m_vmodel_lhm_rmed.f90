@@ -3,7 +3,7 @@ module m_vmodel_lhm_rmed
 
     !! 1D velocity structure with random heterogeneity
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug

@@ -3,7 +3,7 @@ module m_wav
 
     !! waveform output
     !!
-    !! Copyright 2024 Takuto Maeda. All rights reseaved. This project is released under the MIT license.
+    !! Copyright 2025 Takuto Maeda. All rights reseaved. This project is released under the MIT license.
 
     use m_std
     use m_debug

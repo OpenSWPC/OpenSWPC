@@ -15,7 +15,7 @@ program xy2ll
     !!
     !! Calculated longitude and latitude (in degrees) will be printed in output_unit
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit, output_unit
     use m_std

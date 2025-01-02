@@ -4,7 +4,7 @@ module m_pnm
 
     !! Read/Write pnm (color ppm / grayscale pgm ) files
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
