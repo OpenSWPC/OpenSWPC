@@ -629,14 +629,14 @@ contains
 
             if (trim(wav_format) == 'tar_node') then
                 write (cid, '(I6.6)') myid
-                fn_tar = trim(odir)//'/wav/'//trim(title)//'.'//cid//'.sac.tar'
+                fn_tar = trim(odir)//'/wav/'//trim(title)//'.3d.'//cid//'.sac.tar'
                 open(newunit=io, file=fn_tar, action='write', access='stream', status='unknown')
             end if
 
             do i=1, nst
 
                 if (trim(wav_format) == 'tar_st') then
-                    fn_tar = trim(odir)//'/wav/'//trim(title)//'.'//trim(stnm(i))//'.sac.tar'
+                    fn_tar = trim(odir)//'/wav/'//trim(title)//'.3d.'//trim(stnm(i))//'.sac.tar'
                     open(newunit=io, file=fn_tar, action='write', access='stream', status='unknown')
                 end if
 
@@ -687,7 +687,7 @@ contains
 
         character(256) :: fn
 
-        fn = trim(title)//'.'//trim(sh%kstnm)//'.'//trim(sh%kcmpnm)//'.sac'
+        fn = trim(title)//'.'//trim(sh%kstnm)//'.3d.'//trim(sh%kcmpnm)//'.sac'
         call sac__wtar(io, trim(fn), sh, dat)
 
     end subroutine export_wav__tar
@@ -700,7 +700,7 @@ contains
         real(SP), intent(in) :: dat(:)
         character(256) :: fn
 
-        fn = trim(odir)//'/wav/'//trim(title)//'.'//trim(sh%kstnm)//'.'//trim(sh%kcmpnm)//'.sac'
+        fn = trim(odir)//'/wav/'//trim(title)//'.3d.'//trim(sh%kstnm)//'.'//trim(sh%kcmpnm)//'.sac'
         call sac__write(fn, sh, dat, .true.)
 
     end subroutine export_wav__sac
