@@ -23,3 +23,4 @@ clean:
 	cd swpc_sh;  make clean
 	cd swpc_psv; make clean
 	cd tools;    make clean
+	cd shared;   rm -f *.o *.mod
