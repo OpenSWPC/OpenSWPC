@@ -97,6 +97,7 @@
   st_format        = 'll'             !! station format: 'xy' or 'll'
   fn_stloc         = '${DATASET}/station/hinet.stlst'  !! station location file
   wav_format       = 'sac'            !! 'sac' or 'csf'  ('sac' recommended)
+  ntdec_w_prg      = 0                !!  waveform output during computation (0:off)
 
   !! ----------------------------------------------------------------------- !!
   !! Earthquake Source

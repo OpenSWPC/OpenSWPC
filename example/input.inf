@@ -97,6 +97,7 @@
   st_format        = 'xy'             !! station format: 'xy' or 'll'
   fn_stloc         = './example/stloc.xy'  !! station location file
   wav_format       = 'sac'            !! 'sac' or 'csf' ('sac' recommended)
+  ntdec_w_prg      = 0                !!  waveform output during computation (0:off)
   
   !! ----------------------------------------------------------------------- !!
   !! Earthquake Source
