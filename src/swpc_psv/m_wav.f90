@@ -248,7 +248,7 @@ contains
     subroutine wav__write()
 
         integer :: i, j
-        character(256) :: fn_tar, fn_sac
+        character(256) :: fn_tar
         character(6) :: cid
         integer :: io
         !! ----
@@ -335,6 +335,11 @@ contains
                         call export_wav__tar(io, sh_strain(j, i), wav_strain(:, j, i))
                     end do
                 end if                
+
+                if(trim(wav_format) == 'tar_st') then
+                    call tar__wend(io)
+                    close(io)
+                end if        
 
             end do
 
