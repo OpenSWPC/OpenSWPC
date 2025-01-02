@@ -150,7 +150,7 @@ contains
 
         call cread(chdr(158:257), th%linkname)
         call cread(chdr(258:265), th%magic)
-        if (th%magic /= 'ustar') error stop "Not a tar archive: "//trim(th%magic)
+        if (th%magic /= 'ustar') error stop "Not a tar archive: "
 
         th%version = chdr(264:265)
         call cread(chdr(266:297), th%uname)
@@ -227,8 +227,6 @@ contains
     subroutine tar__wend(io)
 
         integer, intent(in) :: io
-        character(1024)     :: blk
-        integer :: i
 
         write(io) null
         write(io) null
