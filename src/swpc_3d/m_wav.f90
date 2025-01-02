@@ -358,7 +358,7 @@ contains
 
             call daytim__localtime(exedate, sh0%nzyear, sh0%nzmonth, sh0%nzday, sh0%nzhour, sh0%nzmin, sh0%nzsec)
             call daytim__ymd2jul(sh0%nzyear, sh0%nzmonth, sh0%nzday, sh0%nzjday)
-            sh%nzmsec = 0
+            sh0%nzmsec = 0
 
             first_call = .false.
         end if
@@ -370,6 +370,7 @@ contains
         sh%stla = stla1
         sh%stdp = zst1 * 1000 ! in meter unit
 
+        
         sh%lcalda = .false.
         sh%dist = sqrt((sx0 - xst1)**2 + (sy0 - yst1)**2)
         sh%az = std__rad2deg(atan2(yst1 - sy0, xst1 - sx0))
@@ -687,7 +688,7 @@ contains
         character(256) :: fn
 
         fn = trim(title)//'.'//trim(sh%kstnm)//'.'//trim(sh%kcmpnm)//'.sac'
-        call sac__wtar(io, fn, sh, dat)
+        call sac__wtar(io, trim(fn), sh, dat)
 
     end subroutine export_wav__tar
 
