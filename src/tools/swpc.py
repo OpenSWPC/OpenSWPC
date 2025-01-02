@@ -76,7 +76,6 @@ def prm_new():
         'st_format'       : 'xy',
         'fn_stloc'        : './example/stloc.xy',
         'wav_format'      : 'sac',
-        'wav_calc_dist'   : False,
         'stf_format'      : 'xym0ij',
         'stftype'         : 'kupper',
         'fn_stf'          : './example/source.dat',
