@@ -56,20 +56,21 @@ s_green   = m_green.f90
 s_wav     = m_wav.f90
 
 ## common library modules
-s_system  = m_system.f90
-s_std     = m_std.f90
-s_getopt  = m_getopt.f90
-s_pwatch  = m_pwatch.f90
-s_gk    = m_gk.f90
-s_bicubic = m_bicubic.f90
-s_daytim  = m_daytim.f90
-s_sac     = m_sac.f90
-s_readini = m_readini.f90
-s_geomap  = m_geomap.f90
-s_pdebug  = m_pdebug.f90
-s_rdrmed = m_rdrmed.f90
+s_system   = m_system.f90
+s_std      = m_std.f90
+s_getopt   = m_getopt.f90
+s_pwatch   = m_pwatch.f90
+s_gk       = m_gk.f90
+s_bicubic  = m_bicubic.f90
+s_daytim   = m_daytim.f90
+s_sac      = m_sac.f90
+s_readini  = m_readini.f90
+s_geomap   = m_geomap.f90
+s_pdebug   = m_pdebug.f90
+s_rdrmed   = m_rdrmed.f90
 s_seawater = m_seawater.f90
-s_version = m_version.f90
+s_version  = m_version.f90
+s_tar      = m_tar.f90
 
 ## main program
 s_main      = main.f90
@@ -84,21 +85,22 @@ o_pdebug   = $(s_pdebug:.f90=.o)
 o_getopt   = $(s_getopt:.f90=.o)
 o_system   = $(s_system:.f90=.o)
 o_pwatch   = $(s_pwatch:.f90=.o)
-o_gk     = $(s_gk:.f90=.o)
+o_gk       = $(s_gk:.f90=.o)
 o_bicubic  = $(s_bicubic:.f90=.o)
 o_daytim   = $(s_daytim:.f90=.o)
-o_sac     = $(s_sac:.f90=.o)
+o_sac      = $(s_sac:.f90=.o)
 o_readini  = $(s_readini:.f90=.o)
 o_geomap   = $(s_geomap:.f90=.o)
 o_rdrmed   = $(s_rdrmed:.f90=.o)
-o_seawater   = $(s_seawater:.f90=.o)
-o_version = $(s_version:.f90=.o)
+o_seawater = $(s_seawater:.f90=.o)
+o_version  = $(s_version:.f90=.o)
+o_tar      = $(s_tar:.f90=.o)
 
 o_global   = $(s_global:.f90=.o)
 o_kernel   = $(s_kernel:.f90=.o)
 o_source   = $(s_source:.f90=.o)
 o_fdtool   = $(s_fdtool:.f90=.o)
-o_snap   = $(s_snap:.f90=.o)
+o_snap     = $(s_snap:.f90=.o)
 o_report   = $(s_report:.f90=.o)
 o_medium   = $(s_medium:.f90=.o)
 o_absorb   = $(s_absorb:.f90=.o)
@@ -123,19 +125,20 @@ o_wav      = $(s_wav:.f90=.o)
 ##
 
 $(o_std):      $(s_std)
-$(o_version): $(s_version)
+$(o_version):  $(s_version)
 $(o_pdebug):   $(s_pdebug)   $(o_std)
 $(o_getopt):   $(s_getopt)   $(o_std) $(o_system) $(o_pdebug)
 $(o_system):   $(s_system)   $(o_std) $(o_pdebug)
 $(o_pwatch):   $(s_pwatch)   $(o_std) $(o_pdebug)
-$(o_gk):     $(s_gk)     $(o_std) $(o_pdebug)
+$(o_gk):       $(s_gk)       $(o_std) $(o_pdebug)
 $(o_bicubic):  $(s_bicubic)  $(o_std) $(o_pdebug)
 $(o_daytim):   $(s_daytim)   $(o_std) $(o_pdebug)
-$(o_sac):     $(s_sac)     $(o_std) 
+$(o_sac):      $(s_sac)      $(o_std) $(o_tar)
 $(o_readini):  $(s_readini)  $(o_std) $(o_system) $(o_pdebug)
 $(o_geomap):   $(s_geomap)   $(o_std) $(o_gk) $(o_pdebug)
-$(o_rdrmed):   $(s_rdrmed)  $(o_std) $(o_pdebug)
-$(o_seawater):  $(s_seawater) $(o_std)
+$(o_rdrmed):   $(s_rdrmed)   $(o_std) $(o_pdebug)
+$(o_seawater): $(s_seawater) $(o_std)
+$(o_tar):      $(s_tar)
 
 $(o_snap):   $(s_snap)   $(o_std) $(o_global) $(o_pwatch) $(o_fdtool) $(o_readini) $(o_geomap) $(o_pdebug)
 $(o_global):   $(s_global)   $(o_std) $(o_fdtool) $(o_pwatch) $(o_pwatch) $(o_daytim) $(o_readini) $(o_pdebug)
@@ -169,12 +172,12 @@ $(o_wav): $(s_wav) $(o_std) $(o_global) $(o_pwatch) $(o_readini) $(o_geomap) $(o
 ## Targets
 ##
 
-../../bin/swpc_3d.x: $(s_main) $(o_std) $(o_version) $(o_pdebug) $(o_system) $(o_fdtool) $(o_global) $(o_kernel) $(o_getopt) $(o_source) $(o_medium) $(o_report) $(o_pwatch) $(o_snap) $(o_absorb) $(o_absorb_p) $(o_absorb_c) $(o_vmodel1) $(o_vmodel2) $(o_vmodel3) $(o_gk) $(o_bicubic) $(o_daytim) $(o_sac)  $(o_readini)  $(o_geomap) $(o_green) $(o_rdrmed) $(o_vmodel1r)  $(o_vmodel2r) $(o_vmodel3r) $(o_vmodel0) $(o_vmodel4) $(o_vmodel4r) $(o_seawater) $(o_wav)
+../../bin/swpc_3d.x: $(s_main) $(o_std) $(o_version) $(o_pdebug) $(o_system) $(o_fdtool) $(o_global) $(o_kernel) $(o_getopt) $(o_source) $(o_medium) $(o_report) $(o_pwatch) $(o_snap) $(o_absorb) $(o_absorb_p) $(o_absorb_c) $(o_vmodel1) $(o_vmodel2) $(o_vmodel3) $(o_gk) $(o_bicubic) $(o_daytim) $(o_sac)  $(o_readini)  $(o_geomap) $(o_green) $(o_rdrmed) $(o_vmodel1r)  $(o_vmodel2r) $(o_vmodel3r) $(o_vmodel0) $(o_vmodel4) $(o_vmodel4r) $(o_seawater) $(o_wav) $(o_tar)
 	@echo $(o_version)
 	$(FC) $(NCINC) $(NCLIB) $(FFLAGS)  -o $@ $^  $(NETCDF)
 
 clean:
-	/bin/rm -f $(o_std) $(o_pdebug) $(o_system) $(o_fdtool) $(o_global) $(o_kernel) $(o_getopt) $(o_source) $(o_medium) $(o_report) $(o_pwatch) $(o_snap) $(o_absorb) $(o_absorb_p) $(o_absorb_c) $(o_gk) $(o_bicubic) $(o_daytim) $(o_sac) $(o_readini)  $(o_geomap) $(o_vmodel1) $(o_vmodel2) $(o_vmodel3) $(o_green) $(o_rdrmed) $(o_vmodel1r)  $(o_vmodel2r) $(o_vmodel3r) $(o_vmodel0) $(o_seawater) $(o_version) ../../bin/swpc_3d.x
+	/bin/rm -f $(o_std) $(o_pdebug) $(o_system) $(o_fdtool) $(o_global) $(o_kernel) $(o_getopt) $(o_source) $(o_medium) $(o_report) $(o_pwatch) $(o_snap) $(o_absorb) $(o_absorb_p) $(o_absorb_c) $(o_gk) $(o_bicubic) $(o_daytim) $(o_sac) $(o_readini)  $(o_geomap) $(o_vmodel1) $(o_vmodel2) $(o_vmodel3) $(o_green) $(o_rdrmed) $(o_vmodel1r)  $(o_vmodel2r) $(o_vmodel3r) $(o_vmodel0) $(o_seawater) $(o_version) $(o_tar) ../../bin/swpc_3d.x
 	/bin/rm -f *.mod
 	/bin/rm -f *~
 	/bin/rm -f *.L

@@ -6,15 +6,17 @@ module m_sac
 
     use iso_fortran_env, only: error_unit, input_unit
     use m_std
+    use m_tar
     implicit none
     private
 
-    public :: sac__hdr     ! sac data type
-    public :: sac__write   ! write sac datafile
-    public :: sac__read    ! read  sac datafile
-    public :: sac__init    ! initialize sac data type
-    public :: sac__whdr    ! read header
-    public :: csf__write   ! write concatenated sac format file
+    public :: sac__hdr      ! sac data type
+    public :: sac__write    ! write sac datafile
+    public :: sac__read     ! read  sac datafile
+    public :: sac__init     ! initialize sac data type
+    public :: sac__whdr     ! read header
+    public :: csf__write    ! write concatenated sac format file
+    public :: sac__wtar     ! write sac data to tar archive
 
     type sac__hdr
 
@@ -167,6 +169,10 @@ module m_sac
     interface csf__write
         module procedure wcsf_d, wcsf_s
     end interface csf__write
+
+    interface sac__wtar
+        module procedure tarwrite_s, tarwrite_d
+    end interface sac__wtar
 
 contains
 
@@ -801,6 +807,39 @@ contains
         if (present(same_endian)) same_endian = same_endian0
 
     end subroutine sac__rhdr
+
+    
+    subroutine tarwrite_s(io, fn_sac, sh, dat)
+
+        integer, intent(in) :: io
+        character(*), intent(in) :: fn_sac
+        type(sac__hdr), intent(in) :: sh
+        real(SP), intent(in) :: dat(sh%npts)
+        character(:), allocatable :: buf
+        type(tar__hdr) :: th
+
+        call tar__inithdr(th)
+        th%fname = trim(fn_sac)
+        th%fsize = (158 + sh%npts) * 4
+        th%mtime = sh%tim
+        call tar__whdr(io, th)
+        call sac__whdr(io, sh)
+        write(io) dat(1:sh%npts)
+        call tar__wpad(io, th%fsize)
+
+    end subroutine tarwrite_s
+
+
+    subroutine tarwrite_d(io, fn_sac, sh, dat)
+
+        integer, intent(in) :: io
+        character(*), intent(in) :: fn_sac
+        type(sac__hdr), intent(in) :: sh
+        real(DP), intent(in) :: dat(sh%npts)
+
+        call tarwrite_s(io, fn_sac, sh, real(dat, SP))
+
+    end subroutine tarwrite_d
 
 
     subroutine byteswap(nbyte, foo)

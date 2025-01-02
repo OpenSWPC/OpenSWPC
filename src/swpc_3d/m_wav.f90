@@ -12,6 +12,7 @@ module m_wav
     use m_sac
     use m_readini
     use m_geomap
+    use m_tar
     implicit none
     private
     save
@@ -23,7 +24,7 @@ module m_wav
 
     integer :: ntdec_w
     integer :: ntdec_w_prg
-    character(3) :: wav_format !! sac or csf
+    character(8) :: wav_format !! sac / csf / tar_st / tar_node
 
     logical :: sw_wav_v = .false.
     logical :: sw_wav_u = .false.
@@ -542,7 +543,8 @@ contains
     end subroutine wav__store
 
     subroutine wav__stquery(stnm1, is_exist, ist1, jst1, kst1, xst1, yst1, zst1, stlo1, stla1)
-    !! Return location and indices of the requested station
+
+        !! Return location and indices of the requested station
 
         character(*), intent(in)    :: stnm1
         logical, intent(out)   :: is_exist
@@ -575,6 +577,8 @@ contains
 
         integer :: i, j
         character(6) :: cid
+        character(256) :: fn_tar
+        integer :: io
 
         call pwatch__on("wav__write")
 
@@ -583,7 +587,7 @@ contains
             return
         end if
 
-        if (wav_format == 'sac') then
+        if (trim(wav_format) == 'sac') then
 
             do i = 1, nst
 
@@ -613,20 +617,80 @@ contains
 
             end do
 
-        else if (wav_format == 'csf') then
-
-            write (cid, '(I6.6)') myid
+        else if (trim(wav_format) == 'csf') then
 
             if (sw_wav_v) call export_wav__csf(nst, 3, sh_vel, wav_vel)
             if (sw_wav_u) call export_wav__csf(nst, 3, sh_disp, wav_disp)
             if (sw_wav_stress) call export_wav__csf(nst, 6, sh_stress, wav_stress)
             if (sw_wav_strain) call export_wav__csf(nst, 6, sh_strain, wav_strain)
 
+        else if (trim(wav_format) == 'tar_st' .or. trim(wav_format) == 'tar_node') then
+
+            if (trim(wav_format) == 'tar_node') then
+                write (cid, '(I6.6)') myid
+                fn_tar = trim(odir)//'/wav/'//trim(title)//'.'//cid//'.sac.tar'
+                open(newunit=io, file=fn_tar, action='write', access='stream', status='unknown')
+            end if
+
+            do i=1, nst
+
+                if (trim(wav_format) == 'tar_st') then
+                    fn_tar = trim(odir)//'/wav/'//trim(title)//'.'//trim(stnm(i))//'.sac.tar'
+                    open(newunit=io, file=fn_tar, action='write', access='stream', status='unknown')
+                end if
+
+                if(sw_wav_v) then
+                    do j=1, 3
+                        call export_wav__tar(io, sh_vel(j,i), wav_vel(:,j,i))
+                    end do
+                end if
+                if(sw_wav_u) then
+                    do j=1, 3
+                        call export_wav__tar(io, sh_disp(j,i), wav_disp(:,j,i))
+                    end do
+                end if
+                if(sw_wav_stress) then
+                    do j=1, 6
+                        call export_wav__tar(io, sh_stress(j,i), wav_stress(:,j,i))
+                    end do
+                end if
+                if(sw_wav_strain) then
+                    do j=1, 6
+                        call export_wav__tar(io, sh_strain(j,i), wav_strain(:,j,i))
+                    end do
+                end if
+
+                if(trim(wav_format) == 'tar_st') then
+                    call tar__wend(io)
+                    close(io)
+                end if
+
+            end do
+            if (trim(wav_format) == 'tar_node') then
+                call tar__wend(io)
+                close(io)
+            end if
+
         end if
 
         call pwatch__off("wav__write")
 
     end subroutine wav__write
+
+
+    subroutine export_wav__tar(io, sh, dat)
+
+        integer, intent(in) :: io
+        type(sac__hdr), intent(in) :: sh
+        real(SP), intent(in) :: dat(:)
+
+        character(256) :: fn
+
+        fn = trim(title)//'.'//trim(sh%kstnm)//'.'//trim(sh%kcmpnm)//'.sac'
+        call sac__wtar(io, fn, sh, dat)
+
+    end subroutine export_wav__tar
+
 
     subroutine export_wav__sac(sh, dat)
 
@@ -639,6 +703,7 @@ contains
         call sac__write(fn, sh, dat, .true.)
 
     end subroutine export_wav__sac
+
 
     subroutine export_wav__csf(nst1, ncmp, sh, dat)
 
