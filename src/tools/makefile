@@ -43,8 +43,9 @@ m_bicubic.o : m_bicubic.f90 m_std.o
 m_color.o   : m_color.f90 m_std.o
 m_fk.o      : m_fk.f90 m_std.o m_rfft.o
 m_rfft.o    : m_rfft.f90 m_std.o
-m_sac.o    : m_sac.f90 m_std.o
-m_version.o: m_version.f90
+m_sac.o     : m_sac.f90 m_std.o m_tar.o
+m_version.o : m_version.f90
+m_tar.o     : m_tar.f90
 
 .SUFFIXES:
 .SUFFIXES: .f90 .f90 .o
@@ -82,7 +83,7 @@ m_version.o: m_version.f90
 ../../bin/fs2grd.x: fs2grd.f90 m_std.o m_system.o m_gk.o m_geomap.o m_getopt.o m_bicubic.o m_fdsnap.o m_daytim.o m_version.o
 	$(FC) $(NCLIB) $(NCINC) $(FFLAGS) -o $@ $^ $(NETCDF)
 
-../../bin/wvconv.x: wvconv.f90 m_std.o m_rfft.o m_fk.o m_sac.o m_version.o m_getopt.o m_system.o
+../../bin/wvconv.x: wvconv.f90 m_std.o m_rfft.o m_fk.o m_sac.o m_tar.o m_version.o m_getopt.o m_system.o
 	$(FC) $(FFLAGS) -o $@ $^ 
 
 clean:

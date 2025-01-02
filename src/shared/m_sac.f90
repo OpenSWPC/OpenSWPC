@@ -6,15 +6,17 @@ module m_sac
 
     use iso_fortran_env, only: error_unit, input_unit
     use m_std
+    use m_tar
     implicit none
     private
 
-    public :: sac__hdr     ! sac data type
-    public :: sac__write   ! write sac datafile
-    public :: sac__read    ! read  sac datafile
-    public :: sac__init    ! initialize sac data type
-    public :: sac__whdr    ! read header
-    public :: csf__write   ! write concatenated sac format file
+    public :: sac__hdr      ! sac data type
+    public :: sac__write    ! write sac datafile
+    public :: sac__read     ! read  sac datafile
+    public :: sac__init     ! initialize sac data type
+    public :: sac__whdr     ! read header
+    public :: csf__write    ! write concatenated sac format file
+    public :: sac__wtar     ! write sac data to tar archive
 
     type sac__hdr
 
@@ -167,6 +169,10 @@ module m_sac
     interface csf__write
         module procedure wcsf_d, wcsf_s
     end interface csf__write
+
+    interface sac__wtar
+        module procedure tarwrite_s, tarwrite_d
+    end interface sac__wtar
 
 contains
 
@@ -409,30 +415,30 @@ contains
 
         lheader(110) = ss%luser0
 
-        aheader(111) = ss%kstnm(1:4); aheader(112) = ss%kstnm(5:8)
-        aheader(113) = ss%kevnm(1:4); aheader(114) = ss%kevnm(5:8)
+        aheader(111) = ss%kstnm(1:4);  aheader(112) = ss%kstnm(5:8)
+        aheader(113) = ss%kevnm(1:4);  aheader(114) = ss%kevnm(5:8)
         aheader(115) = ss%kevnm(9:12); aheader(116) = ss%kevnm(13:16)
-        aheader(117) = ss%khole(1:4); aheader(118) = ss%khole(5:8)
-        aheader(119) = ss%ko(1:4); aheader(120) = ss%ko(5:8)
-        aheader(121) = ss%ka(1:4); aheader(122) = ss%ka(5:8)
-        aheader(123) = ss%kt0(1:4); aheader(124) = ss%kt0(5:8)
-        aheader(125) = ss%kt1(1:4); aheader(126) = ss%kt1(5:8)
-        aheader(127) = ss%kt2(1:4); aheader(128) = ss%kt2(5:8)
-        aheader(129) = ss%kt3(1:4); aheader(130) = ss%kt3(5:8)
-        aheader(131) = ss%kt4(1:4); aheader(132) = ss%kt4(5:8)
-        aheader(133) = ss%kt5(1:4); aheader(134) = ss%kt5(5:8)
-        aheader(135) = ss%kt6(1:4); aheader(136) = ss%kt6(5:8)
-        aheader(137) = ss%kt7(1:4); aheader(138) = ss%kt7(5:8)
-        aheader(139) = ss%kt8(1:4); aheader(140) = ss%kt8(5:8)
-        aheader(141) = ss%kt9(1:4); aheader(142) = ss%kt9(5:8)
-        aheader(143) = ss%kf(1:4); aheader(143) = ss%kf(5:8)
+        aheader(117) = ss%khole(1:4);  aheader(118) = ss%khole(5:8)
+        aheader(119) = ss%ko(1:4);     aheader(120) = ss%ko(5:8)
+        aheader(121) = ss%ka(1:4);     aheader(122) = ss%ka(5:8)
+        aheader(123) = ss%kt0(1:4);    aheader(124) = ss%kt0(5:8)
+        aheader(125) = ss%kt1(1:4);    aheader(126) = ss%kt1(5:8)
+        aheader(127) = ss%kt2(1:4);    aheader(128) = ss%kt2(5:8)
+        aheader(129) = ss%kt3(1:4);    aheader(130) = ss%kt3(5:8)
+        aheader(131) = ss%kt4(1:4);    aheader(132) = ss%kt4(5:8)
+        aheader(133) = ss%kt5(1:4);    aheader(134) = ss%kt5(5:8)
+        aheader(135) = ss%kt6(1:4);    aheader(136) = ss%kt6(5:8)
+        aheader(137) = ss%kt7(1:4);    aheader(138) = ss%kt7(5:8)
+        aheader(139) = ss%kt8(1:4);    aheader(140) = ss%kt8(5:8)
+        aheader(141) = ss%kt9(1:4);    aheader(142) = ss%kt9(5:8)
+        aheader(143) = ss%kf(1:4);     aheader(144) = ss%kf(5:8)
         aheader(145) = ss%kuser0(1:4); aheader(146) = ss%kuser0(5:8)
         aheader(147) = ss%kuser1(1:4); aheader(148) = ss%kuser1(5:8)
         aheader(149) = ss%kuser2(1:4); aheader(150) = ss%kuser2(5:8)
         aheader(151) = ss%kcmpnm(1:4); aheader(152) = ss%kcmpnm(5:8)
         aheader(153) = ss%knetwk(1:4); aheader(154) = ss%knetwk(5:8)
         aheader(155) = ss%kdatrd(1:4); aheader(156) = ss%kdatrd(5:8)
-        aheader(157) = ss%kinst(1:4); aheader(158) = ss%kinst(5:8)
+        aheader(157) = ss%kinst(1:4);  aheader(158) = ss%kinst(5:8)
 
         !! write
         write (io) fheader(1:70)
@@ -801,6 +807,39 @@ contains
         if (present(same_endian)) same_endian = same_endian0
 
     end subroutine sac__rhdr
+
+    
+    subroutine tarwrite_s(io, fn_sac, sh, dat)
+
+        integer, intent(in) :: io
+        character(*), intent(in) :: fn_sac
+        type(sac__hdr), intent(in) :: sh
+        real(SP), intent(in) :: dat(sh%npts)
+        character(:), allocatable :: buf
+        type(tar__hdr) :: th
+
+        call tar__inithdr(th)
+        th%fname = trim(fn_sac)
+        th%fsize = (158 + sh%npts) * 4
+        th%mtime = sh%tim
+        call tar__whdr(io, th)
+        call sac__whdr(io, sh)
+        write(io) dat(1:sh%npts)
+        call tar__wpad(io, th%fsize)
+
+    end subroutine tarwrite_s
+
+
+    subroutine tarwrite_d(io, fn_sac, sh, dat)
+
+        integer, intent(in) :: io
+        character(*), intent(in) :: fn_sac
+        type(sac__hdr), intent(in) :: sh
+        real(DP), intent(in) :: dat(sh%npts)
+
+        call tarwrite_s(io, fn_sac, sh, real(dat, SP))
+
+    end subroutine tarwrite_d
 
 
     subroutine byteswap(nbyte, foo)
