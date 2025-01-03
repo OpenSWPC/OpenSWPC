@@ -56,6 +56,8 @@ contains
         logical :: green_mode
         character(256) :: fn_stloc
         character(2) :: st_format
+        character(256) :: command
+        integer :: i, err
 
         call pwatch__on('wav__setup')
 
@@ -89,7 +91,17 @@ contains
 
         call set_stinfo(fn_stloc, st_format)
 
-        call execute_command_line('mkdir -p '//trim(odir)//'/wav > /dev/null 2>&1')
+
+        ! create output directory (if it does not exist)
+        call mpi_barrier(mpi_comm_world, err)
+        command = 'if [ ! -d '// trim(odir) // '/wav ]; then mkdir -p ' &
+                 // trim(odir) // '/wav > /dev/null 2>&1 ; fi'
+        do i=0, nproc-1
+            if (myid == i) then
+                call execute_command_line(trim(command))
+            end if
+            call mpi_barrier(mpi_comm_world, err)
+        end do                
 
         if (sw_wav_v) then
             allocate (wav_vel(ntw, 3, nst), source=0.0)
