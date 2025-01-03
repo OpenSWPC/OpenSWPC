@@ -254,7 +254,7 @@ contains
         call mpi_barrier(mpi_comm_world, err)
         command = 'if [ ! -d '// trim(odir) // ' ]; then mkdir -p ' &
                  // trim(odir) // ' > /dev/null 2>&1 ; fi'
-        do i=0, nproc_exe-1
+        do i=0, nproc-1
             if (myid == i) then
                 call execute_command_line(trim(command))
             end if
