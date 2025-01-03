@@ -173,7 +173,7 @@ contains
         integer :: i
 
         chdr = c_null_char
-        chdr(1:1+len_trim(th%fname)) = th%fname // c_null_char
+        chdr(1:1+len_trim(th%fname)) = trim(th%fname) // c_null_char
         write (chdr(101:108), '(O8.8)') th%mode
         write (chdr(109:116), '(O8.8)') th%uid
         write (chdr(117:124), '(O8.8)') th%gid

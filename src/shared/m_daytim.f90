@@ -4,7 +4,6 @@ module m_daytim
     !!
     !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
-    use m_std
     use iso_fortran_env, only: error_unit
 
     implicit none
@@ -222,8 +221,11 @@ contains
         integer :: doy
         integer :: jday
         integer :: i
+        integer :: values(8)
 
-        tim = 0
+        call date_and_time(values=values)        
+
+        tim = - values(4) * 60
         if (year > 1970) then
             do i = 1970, year - 1
                 call daytim__ymd2jul(i, 12, 31, doy)
@@ -255,8 +257,11 @@ contains
         integer, intent(out) :: sec
 
         integer :: doy, soy, ttim, jday
+        integer :: values(8)
 
-        ttim = tim
+        call date_and_time(values=values)        
+        
+        ttim = tim + values(4) * 60
 
         if (ttim >= 0) then
             year = 1970
