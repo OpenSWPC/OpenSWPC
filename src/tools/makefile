@@ -27,7 +27,7 @@ include ../shared/makefile-tools.arch
 m_std.o     : m_std.f90
 m_system.o  : m_system.f90 m_std.o
 m_getopt.o  : m_getopt.f90 m_std.o m_system.o
-m_daytim.o  : m_daytim.f90 m_std.o
+m_daytim.o  : m_daytim.f90 
 m_gk.o      : m_gk.f90   m_std.o
 m_stamp.o   : m_stamp.f90 m_std.o m_pnm.o
 m_pnm.o     : m_pnm.f90    m_std.o m_debug.o

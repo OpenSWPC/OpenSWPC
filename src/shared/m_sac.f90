@@ -837,7 +837,7 @@ contains
         type(sac__hdr), intent(in) :: sh
         real(DP), intent(in) :: dat(sh%npts)
 
-        call tarwrite_s(io, fn_sac, sh, real(dat, SP))
+        call tarwrite_s(io, trim(fn_sac), sh, real(dat, SP))
 
     end subroutine tarwrite_d
 
