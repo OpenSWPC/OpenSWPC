@@ -2,7 +2,7 @@ module m_seawater
 
     !! Seawater velocity model
     !!
-    !! Copyright 2023-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2023-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     implicit none
@@ -15,6 +15,7 @@ module m_seawater
 
     contains
 
+
     subroutine seawater__init(use_munk)
 
         logical, intent(in) :: use_munk
@@ -26,8 +27,10 @@ module m_seawater
         end if
 
         init = .true.
+
     end subroutine seawater__init
 
+    
     function seawater__vel(z) result(c)
 
         real :: c

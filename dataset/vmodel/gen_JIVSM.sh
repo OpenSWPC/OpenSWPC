@@ -95,7 +95,7 @@ else
 
   archive_jivsm=JIVSM_V1R.zip
   if [ ! -e ${archive_jivsm} ]; then
-    curl -o ${archive_jivsm} http://taro.eri.u-tokyo.ac.jp/saigai/models/JIVSM_V1R.zip
+    curl -o ${archive_jivsm} https://taro.eri.u-tokyo.ac.jp/saigai/models/JIVSM_V1R.zip
   fi
   unzip -o ${archive_jivsm}
   edata=JIVSMeast_V1R.dat
@@ -278,7 +278,7 @@ gmt grdsample topo.japan2.grd -R$region -I$dlon/$dlat -G$topo_new
 # for shallow structure
 #
 cd code
-${FC} m_std.F90 m_system.F90 extrap.F90 -o extrap.x
+${FC} m_std.f90 m_system.f90 extrap.f90 -o extrap.x
 cd ..
 
 for (( i=2; i<=13; i++ ));

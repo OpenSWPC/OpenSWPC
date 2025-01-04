@@ -2,7 +2,7 @@ module m_pwatch
 
     !! Stopwatch module for MPI parallel computation environment
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -56,6 +56,7 @@ contains
 
     end subroutine pwatch__setup
 
+
     subroutine pwatch__on(name)
 
         !! stopwatch switch on, labeled by "name"
@@ -104,6 +105,7 @@ contains
 
     end subroutine pwatch__on
 
+
     subroutine pwatch__off(name)
 
         !! stopwatch switch off
@@ -139,6 +141,7 @@ contains
         end if
 
     end subroutine pwatch__off
+
 
     subroutine pwatch__report(io, ionode)
 
@@ -191,4 +194,5 @@ contains
 
     end subroutine pwatch__report
 
+    
 end module m_pwatch

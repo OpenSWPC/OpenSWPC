@@ -2,7 +2,7 @@ module m_geomap
 
     !! Geographical coordinate <-> Cartesian Coordinate
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_gk
@@ -37,6 +37,7 @@ contains
 
     end subroutine geomap__g2c
 
+    
     subroutine geomap__c2g(x, y, lon0, lat0, phi, lon, lat)
 
         !! Geomap change from geographical (lat,lon) to cartesian (x,y) with rotation

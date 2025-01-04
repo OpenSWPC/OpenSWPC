@@ -2,7 +2,7 @@ module m_system
 
     !! System routines, for processig command line argument, environment variables, and system call
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
 

@@ -2,12 +2,11 @@ module m_rmedia
 
     !! Calculate power spectrum density functions (PSDF) and synthetizing realization of random media
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
     use m_fk
-    use m_gammaf
 
     implicit none
     private
@@ -173,6 +172,7 @@ contains
 
     end subroutine rmedia__3dgen_ani
 
+
     subroutine rmedia__3dgen(ptype, nx, ny, nz, dx, dy, dz, a, epsil, kappa, x, y, z, media, seed)
 
         !! Generate 3D random media having specific power spectrum density function
@@ -306,6 +306,7 @@ contains
 
     end subroutine rmedia__3dgen
 
+
     subroutine rmedia__2dgen_ani(ptype, nx, ny, dx, dy, ax, ay, epsil, kappa, x, y, media, seed)
 
         !! generate 2D anistropic random media having specific power spectrum density function
@@ -419,6 +420,7 @@ contains
 
     end subroutine rmedia__2dgen_ani
 
+
     subroutine rmedia__2dgen(ptype, nx, ny, dx, dy, a, epsil, kappa, x, y, media, seed)
 
         integer, intent(in)  :: ptype         !< type of random media
@@ -518,6 +520,7 @@ contains
 
     end subroutine rmedia__2dgen
 
+
     subroutine rmedia__psdf_exp1d(m, a, epsil, psdf)
 
         real(SP), intent(in)  :: m         !! wavenumber
@@ -529,6 +532,7 @@ contains
 
     end subroutine rmedia__psdf_exp1d
 
+
     subroutine rmedia__psdf_exp2d(m, a, epsil, psdf)
 
         real(SP), intent(in)  :: m         !! wavenumber
@@ -536,9 +540,10 @@ contains
         real(SP), intent(in)  :: epsil     !! rms amplitude of fluctuation
         real(SP), intent(out) :: psdf      !! psdf value
 
-        psdf = (2 * epsil * epsil * a * a * PI_D) / (1 + a * a * m * m)**1.5
+        psdf = (2 * epsil * epsil * a * a * PI) / (1 + a * a * m * m)**1.5
 
     end subroutine rmedia__psdf_exp2d
+
 
     subroutine rmedia__psdf_ani_gauss2d(mx, mz, ax, az, epsil, psdf)
 
@@ -549,9 +554,10 @@ contains
         real(SP), intent(in)  :: epsil     !! rms amplitude of fluctuation
         real(SP), intent(out) :: psdf      !! psdf value
 
-        psdf = epsil * epsil * PI_D * ax * az * exp(-(ax * ax * mx * mx + az * az * mz * mz) / 4.0_SP)
+        psdf = epsil * epsil * PI * ax * az * exp(-(ax * ax * mx * mx + az * az * mz * mz) / 4.0_SP)
 
     end subroutine rmedia__psdf_ani_gauss2d
+
 
     subroutine rmedia__psdf_ani_exp2d(mx, mz, ax, az, epsil, psdf)
 
@@ -562,9 +568,10 @@ contains
         real(SP), intent(in)  :: epsil     !! rms amplitude of fluctuation
         real(SP), intent(out) :: psdf      !! psdf value
 
-        psdf = (2 * PI_D * epsil * epsil * ax * az) / (1 + ax * ax * mx * mx + az * az * mz * mz)**1.5_SP
+        psdf = (2 * PI * epsil * epsil * ax * az) / (1 + ax * ax * mx * mx + az * az * mz * mz)**1.5_SP
 
     end subroutine rmedia__psdf_ani_exp2d
+
 
     subroutine rmedia__psdf_ani_vonKarman2d(mx, mz, ax, az, epsil, kappa, psdf)
 
@@ -576,10 +583,10 @@ contains
         real(SP), intent(in)  :: kappa     !! rms amplitude of fluctuation
         real(SP), intent(out) :: psdf      !! psdf value
 
-        psdf = (4 * PI_D * kappa * epsil * epsil * ax * az) / (1 + ax * ax * mx * mx + az * az * mz * mz)**(1.0_SP + kappa)
+        psdf = (4 * PI * kappa * epsil * epsil * ax * az) / (1 + ax * ax * mx * mx + az * az * mz * mz)**(1.0_SP + kappa)
 
     end subroutine rmedia__psdf_ani_vonKarman2d
-
+    
     subroutine rmedia__psdf_exp3d(m, a, epsil, psdf)
 
         real(SP), intent(in)  :: m         !! wavenumber
@@ -589,9 +596,10 @@ contains
         real(SP) :: wk
 
         wk = 1.0 + a * a * m * m
-        psdf = (8 * epsil * epsil * a * a * a * PI_D) / (wk * wk)
+        psdf = (8 * epsil * epsil * a * a * a * PI) / (wk * wk)
 
     end subroutine rmedia__psdf_exp3d
+
 
     subroutine rmedia__psdf_gauss1d(m, a, epsil, psdf)
 
@@ -600,9 +608,10 @@ contains
         real(SP), intent(in)  :: epsil     !! rms amplitude of fluctuation
         real(SP), intent(out) :: psdf      !! psdf value
 
-        psdf = epsil * epsil * a * sqrt(PI_D) * exp(-m * m * a * a * 0.25)
+        psdf = epsil * epsil * a * sqrt(PI) * exp(-m * m * a * a * 0.25)
 
     end subroutine rmedia__psdf_gauss1d
+
 
     subroutine rmedia__psdf_gauss2d(m, a, epsil, psdf)
 
@@ -611,9 +620,10 @@ contains
         real(SP), intent(in)  :: epsil     !! rms amplitude of fluctuation
         real(SP), intent(out) :: psdf      !! psdf value
 
-        psdf = epsil * epsil * a * a * PI_D * exp(-m * m * a * a * 0.25)
+        psdf = epsil * epsil * a * a * PI * exp(-m * m * a * a * 0.25)
 
     end subroutine rmedia__psdf_gauss2d
+
 
     subroutine rmedia__psdf_gauss3d(m, a, epsil, psdf)
 
@@ -622,9 +632,10 @@ contains
         real(SP), intent(in)  :: epsil     !! rms amplitude of fluctuation
         real(SP), intent(out) :: psdf      !! psdf value
 
-        psdf = (epsil * epsil) * (a * a * a) * PI_D**1.5 * exp(-m * m * a * a * 0.25)
+        psdf = (epsil * epsil) * (a * a * a) * PI**1.5 * exp(-m * m * a * a * 0.25)
 
     end subroutine rmedia__psdf_gauss3d
+
 
     subroutine rmedia__psdf_vonKarman1d(m, a, epsil, kappa, psdf)
 
@@ -634,10 +645,11 @@ contains
         real(SP), intent(in)  :: kappa     !! von karman parameter
         real(SP), intent(out) :: psdf      !! psdf value
 
-        psdf = (2 * sqrt(PI_D) * epsil * epsil * a * gammaf(kappa + 0.5)) / &
-               (gammaf(kappa) * (1 + a * a * m * m)**(kappa + 0.5))
+        psdf = (2 * sqrt(PI) * epsil * epsil * a * gamma(kappa + 0.5)) / &
+               (gamma(kappa) * (1 + a * a * m * m)**(kappa + 0.5))
 
     end subroutine rmedia__psdf_vonKarman1d
+
 
     subroutine rmedia__psdf_vonKarman2d(m, a, epsil, kappa, psdf)
 
@@ -647,9 +659,10 @@ contains
         real(SP), intent(in)  :: kappa     !! von karman parameter
         real(SP), intent(out) :: psdf      !! psdf value
 
-        psdf = (4 * PI_D * a * a * epsil * epsil * kappa) / (1 + a * a * m * m)**(1 + kappa)
+        psdf = (4 * PI * a * a * epsil * epsil * kappa) / (1 + a * a * m * m)**(1 + kappa)
 
     end subroutine rmedia__psdf_vonKarman2d
+
 
     subroutine rmedia__psdf_vonKarman3d(m, a, epsil, kappa, psdf)
 
@@ -659,11 +672,12 @@ contains
         real(SP), intent(in)  :: kappa     !! von karman parameter
         real(SP), intent(out) :: psdf      !! psdf value
 
-        psdf = (8 * PI_D**(1.5) * &
-                epsil * epsil * a * a * a * gammaf(kappa + 1.5)) / &
-               (gammaf(kappa) * (1 + a * a * m * m)**(kappa + 1.5))
+        psdf = (8 * PI**(1.5) * &
+                epsil * epsil * a * a * a * gamma(kappa + 1.5)) / &
+               (gamma(kappa) * (1 + a * a * m * m)**(kappa + 1.5))
 
     end subroutine rmedia__psdf_vonKarman3d
+
 
     subroutine rmedia__psdf_ani_gauss3d(mx, my, mz, ax, ay, az, epsil, psdf)
 
@@ -679,6 +693,7 @@ contains
         psdf = (epsil * epsil) * (ax * ay * az) * PI**1.5 * exp(-((mx * ax)**2 + (my * ay)**2 + (mz * az)**2) * 0.25)
 
     end subroutine rmedia__psdf_ani_gauss3d
+
 
     subroutine rmedia__psdf_ani_exp3d(mx, my, mz, ax, ay, az, epsil, psdf)
 
@@ -697,6 +712,7 @@ contains
 
     end subroutine rmedia__psdf_ani_exp3d
 
+
     subroutine rmedia__psdf_ani_vonKarman3d(mx, my, mz, ax, ay, az, epsil, kappa, psdf)
 
         real(SP), intent(in)  :: mx        !! wavenumber
@@ -709,10 +725,11 @@ contains
         real(SP), intent(in)  :: kappa     !! von karman parameter
         real(SP), intent(out) :: psdf      !! psdf value
 
-        psdf = (8 * PI_D**(1.5) * &
-                epsil * epsil * ax * ay * az * gammaf(kappa + 1.5)) / &
-               (gammaf(kappa) * (1 + (mx * ax)**2 + (my * ay)**2 + (mz * az)**2)**(kappa + 1.5))
+        psdf = (8 * PI**(1.5) * &
+                epsil * epsil * ax * ay * az * gamma(kappa + 1.5)) / &
+               (gamma(kappa) * (1 + (mx * ax)**2 + (my * ay)**2 + (mz * az)**2)**(kappa + 1.5))
 
     end subroutine rmedia__psdf_ani_vonKarman3d
 
+    
 end module m_rmedia

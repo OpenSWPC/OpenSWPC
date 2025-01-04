@@ -3,7 +3,7 @@ module m_rdrmed
 
     !! Read random media volume
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -67,6 +67,7 @@ contains
 
     end subroutine rdrmed__2d
 
+    
     subroutine rdrmed__3d(ib, ie, jb, je, kb, ke, fn_rmed, vol)
 
         integer, intent(in)  :: ib, ie

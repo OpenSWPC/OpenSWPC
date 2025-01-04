@@ -2,7 +2,7 @@ module m_fdsnap
 
     !! Snapshot binary
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -53,7 +53,7 @@ contains
         logical, intent(out) :: is_exist
         character(6), intent(out) :: snp_type
         integer :: ierr
-        \
+        
         !! first, try open as netcdf file
         ierr = nf90_open(fname, NF90_NOWRITE, io)
         if (ierr /= NF90_NOERR) then
@@ -67,6 +67,7 @@ contains
         end if
 
     end subroutine fdsnap__open
+
 
     subroutine native_file_open(fname, io, is_exist)
 
@@ -106,6 +107,7 @@ contains
 
     end subroutine native_file_open
 
+
     subroutine fdsnap__checkhdr(io, hdr)
 
         !! Write header for terminal
@@ -114,29 +116,31 @@ contains
         type(fdsnap__hdr), intent(in) :: hdr
 
         integer :: yr, mo, dy, hr, mi, sc
+        character(100) :: fmt
 
         call daytim__localtime(hdr%exedate, yr, mo, dy, hr, mi, sc)
 
-        write (io, '(A,A)') "[binary type]   : ", hdr%bintype
-        write (io, '(A,A)') "[code type]     : ", hdr%codetype
-        write (io, '(A,I10)') "[header version]: ", hdr%hdrver
-        write (io, '(A,A)') "[title]         : ", trim(hdr%title)
-        write (io, '(A,I10)') "[date generated]: ", hdr%exedate
-        write (io, '(A,I4,A,I2.2,A,I2.2,A,I2.2,A,I2.2,A,I2.2)') &
-            "                  ", yr, "-", mo, "-", dy, "T", hr, "-", mi, "-", sc
-        write (io, '(A,A)') "[coordinate]    : ", hdr%coordinate
-        write (io, '(A,A)') "[data type]     : ", hdr%datatype
-        write (io, '(A,I10)') "[ns1]           : ", hdr%ns1
-        write (io, '(A,I10)') "[ns2]           : ", hdr%ns2
+        fmt = '(A,I4,A,I2.2,A,I2.2,A,I2.2,A,I2.2,A,I2.2)'
+
+        write (io, '(A,A)'    ) "[binary type]   : ", hdr%bintype
+        write (io, '(A,A)'    ) "[code type]     : ", hdr%codetype
+        write (io, '(A,I10)'  ) "[header version]: ", hdr%hdrver
+        write (io, '(A,A)'    ) "[title]         : ", trim(hdr%title)
+        write (io, '(A,I10)'  ) "[date generated]: ", hdr%exedate
+        write (io, fmt        ) "                  ", yr, "-", mo, "-", dy, "T", hr, "-", mi, "-", sc
+        write (io, '(A,A)'    ) "[coordinate]    : ", hdr%coordinate
+        write (io, '(A,A)'    ) "[data type]     : ", hdr%datatype
+        write (io, '(A,I10)'  ) "[ns1]           : ", hdr%ns1
+        write (io, '(A,I10)'  ) "[ns2]           : ", hdr%ns2
         write (io, '(A,F15.5)') "[beg1]          : ", hdr%beg1
         write (io, '(A,F15.5)') "[beg2]          : ", hdr%beg2
         write (io, '(A,F15.5)') "[ds1]           : ", hdr%ds1
         write (io, '(A,F15.5)') "[ds2]           : ", hdr%ds2
         write (io, '(A,F15.5)') "[dt]            : ", hdr%dt
-        write (io, '(A,I10)') "[na1]           : ", hdr%na1
-        write (io, '(A,I10)') "[na2]           : ", hdr%na2
-        write (io, '(A,I10)') "[nmed]          : ", hdr%nmed
-        write (io, '(A,I10)') "[nsnp]          : ", hdr%nsnp
+        write (io, '(A,I10)'  ) "[na1]           : ", hdr%na1
+        write (io, '(A,I10)'  ) "[na2]           : ", hdr%na2
+        write (io, '(A,I10)'  ) "[nmed]          : ", hdr%nmed
+        write (io, '(A,I10)'  ) "[nsnp]          : ", hdr%nsnp
         write (io, '(A,F15.5)') "[clon]          : ", hdr%clon
         write (io, '(A,F15.5)') "[clat]          : ", hdr%clat
         write (io, '(A,F15.5)') "[L]             : ", hdr%L
@@ -144,6 +148,7 @@ contains
         write (io, '(A,F15.5)') "[C0]            : ", hdr%C0
 
     end subroutine fdsnap__checkhdr
+
 
     subroutine fdsnap__writehdr(io, hdr)
 
@@ -172,6 +177,7 @@ contains
         write (io) hdr%nsnp
         write (io) hdr%clon
         write (io) hdr%clat
+
         if (hdr%hdrver == 5) write (io) hdr%phi
 
         if (hdr%hdrver == 3) then
@@ -184,6 +190,7 @@ contains
         end if
 
     end subroutine fdsnap__writehdr
+
 
     subroutine fdsnap__readhdr(fname, io, snp_type, hdr)
 
@@ -254,6 +261,7 @@ contains
 
     contains
 
+
         subroutine endian_check(io, hdrver)
 
             integer, intent(in) :: io
@@ -262,15 +270,17 @@ contains
             if (0 <= hdrver .and. hdrver <= 140101) then
                 ! ok
             else
-                write (error_unit, '(A,I5,A)') "ERROR [fdsnap__read]: the file "//trim(fname)// &
+                write (error_unit, '(A,I5,A)') "ERROR [fdsnap__readhdr]: the file "//trim(fname)// &
                     " (", io, ") is generated in different endian."
-                write (error_unit, '(A)') "ERROR [fdsnap__read]: stop reading. close file."
+                write (error_unit, '(A)') "ERROR [fdsnap__readhdr]: stop reading. close file."
                 close (io)
                 return
             end if
         end subroutine endian_check
 
+
     end subroutine fdsnap__readhdr
+
 
     subroutine nc_chk(ierr)
 
@@ -282,4 +292,5 @@ contains
 
     end subroutine nc_chk
     
+
 end module m_fdsnap

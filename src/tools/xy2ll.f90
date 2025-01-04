@@ -15,7 +15,7 @@ program xy2ll
     !!
     !! Calculated longitude and latitude (in degrees) will be printed in output_unit
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit, output_unit
     use m_std
@@ -33,7 +33,7 @@ program xy2ll
     call getopt('-version', is_opt2)
     if (is_opt1 .or. is_opt2) call version__display('xy2ll')
 
-    narg = system__iargc()
+    narg = command_argument_count()
     if (narg /= 4 .and. narg /= 5) call usage_abort
 
     call system__getarg(1, x)

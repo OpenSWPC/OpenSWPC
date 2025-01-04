@@ -3,7 +3,7 @@ module m_snap
 
     !! Snapshot output
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -125,11 +125,11 @@ contains
 
         !! output settings
         if (snp_format == 'native') then
-            if (xz_v%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.xz.v.snp', xz_v)
-            if (xz_u%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.xz.u.snp', xz_u)
+            if (xz_v%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.sh.xz.v.snp', xz_v)
+            if (xz_u%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.sh.xz.u.snp', xz_u)
         else
-            if (xz_v%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.xz.v.nc', xz_v)
-            if (xz_u%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.xz.u.nc', xz_u)
+            if (xz_v%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.sh.xz.v.nc', xz_v)
+            if (xz_u%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.sh.xz.u.nc', xz_u)
         end if
 
         allocate (buf_u(nxs, nzs))

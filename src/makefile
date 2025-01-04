@@ -3,7 +3,7 @@
 ## compile all SWPC codes
 ##
 ## @copyright
-##   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+##   Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 ##
 ## ------------------------------------------------------------------------------------------------------------------------------ ##
 
@@ -23,3 +23,4 @@ clean:
 	cd swpc_sh;  make clean
 	cd swpc_psv; make clean
 	cd tools;    make clean
+	cd shared;   rm -f *.o *.mod

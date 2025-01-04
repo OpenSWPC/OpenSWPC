@@ -3,7 +3,7 @@ module m_snap
 
     !! Snapshot/waveform output
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -139,13 +139,13 @@ contains
 
         !! output settings
         if (snp_format == 'native') then
-            if (xz_ps%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.xz.ps.snp', xz_ps)
-            if (xz_v%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.xz.v.snp', xz_v)
-            if (xz_u%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.xz.u.snp', xz_u)
+            if (xz_ps%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.psv.xz.ps.snp', xz_ps)
+            if (xz_v%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.psv.xz.v.snp', xz_v)
+            if (xz_u%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.psv.xz.u.snp', xz_u)
         else
-            if (xz_ps%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.xz.ps.nc', xz_ps)
-            if (xz_v%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.xz.v.nc', xz_v)
-            if (xz_u%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.xz.u.nc', xz_u)
+            if (xz_ps%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.psv.xz.ps.nc', xz_ps)
+            if (xz_v%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.psv.xz.v.nc', xz_v)
+            if (xz_u%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.psv.xz.u.nc', xz_u)
         end if
 
         !! for taking derivatives

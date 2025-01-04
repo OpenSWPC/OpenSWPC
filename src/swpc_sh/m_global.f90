@@ -1,15 +1,14 @@
 #include "../shared/m_debug.h"
 module m_global
 
-    !! global control parameters, shared arrays and MPI communication
+    ! global control parameters, shared arrays and MPI communication
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    ! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
     use m_fdtool
     use m_pwatch
-    use m_system
     use m_daytim
     use m_readini
     use mpi
@@ -98,7 +97,7 @@ module m_global
     real(MP), private, allocatable :: rbuf_ip(:), rbuf_im(:)          !<  mpi recv buffer
     integer, private :: mpi_precision
 
-  !! fullspace-mdoe
+  ! fullspace-mdoe
 !  logical :: fullspace_mode
 
     private :: inside_node
@@ -152,14 +151,14 @@ contains
 
     subroutine global__setup(io_prm)
 
-        !! read parameter file, memory allocation, MPI set-ups
+        ! read parameter file, memory allocation, MPI set-ups
 
         integer, intent(in) :: io_prm
         integer :: err
 
-        call pwatch__on("global__setup") !! measure from here
+        call pwatch__on("global__setup") ! measure from here
 
-        !! MPI status check
+        ! MPI status check
         call mpi_comm_rank(mpi_comm_world, myid, err)
         if (MP == DP) then
             mpi_precision = MPI_DOUBLE_PRECISION
@@ -167,34 +166,33 @@ contains
             mpi_precision = MPI_REAL
         end if
 
-        !! read key parameters
+        ! read key parameters
         call global__readprm(io_prm)
 
-        !! obtain date by unixtime: seconds measured from 1970/1/1 0:0:0
+        ! obtain date by unixtime: seconds measured from 1970/1/1 0:0:0
         if (myid == 0) call daytim__getdate(exedate)
         call mpi_bcast(exedate, 1, MPI_INTEGER, 0, mpi_comm_world, err)
 
-        !! derived parameters
+        ! derived parameters
         xend = xbeg + nx * real(dx)
         zend = zbeg + nz * real(dz)
         tend = tbeg + nt * dt
 
-        call pwatch__off("global__setup") !! measure from here
+        call pwatch__off("global__setup") ! measure from here
 
     end subroutine global__setup
 
     subroutine global__setup2
 
-        !! Common parameter setup, needed only for starting
+        ! Common parameter setup, needed only for starting
 
         integer :: i, k
         integer :: err, nproc_exe
         integer :: mx, proc_x
+        character(256) :: command
 
-        call pwatch__on("global__setup2") !! measure from here
+        call pwatch__on("global__setup2") ! measure from here
 
-        !! output directory create (if it does not exist)
-        call system__call('mkdir -p '//trim(odir)//'> /dev/null 2>&1')
 
         call mpi_comm_size(mpi_comm_world, nproc_exe, err)
         call assert(nproc_x == nproc_exe)
@@ -207,7 +205,7 @@ contains
             nxp = (nx - mx) / nproc_x + 1
         end if
 
-        !! MPI coordinate
+        ! MPI coordinate
         allocate (itbl(-1:nproc_x))
 
         allocate (sbuf_ip(2 * nz), source=0.0_MP)
@@ -215,10 +213,21 @@ contains
         allocate (rbuf_ip(2 * nz), source=0.0_MP)
         allocate (rbuf_im(2 * nz), source=0.0_MP)
 
-        !! MPI communication table
+        ! MPI communication table
         call set_mpi_table
 
-        !! computation region in this node (#244)
+        ! create output directory (if it does not exist)
+        call mpi_barrier(mpi_comm_world, err)
+        command = 'if [ ! -d '// trim(odir) // ' ]; then mkdir -p ' &
+                 // trim(odir) // ' > /dev/null 2>&1 ; fi'
+        do i=0, nproc_exe-1
+            if (myid == i) then
+                call execute_command_line(trim(command))
+            end if
+            call mpi_barrier(mpi_comm_world, err)
+        end do                
+
+        ! computation region in this node (#244)
         if (proc_x <= nproc_x - mx - 1) then
             ibeg = proc_x * (nx - mx) / nproc_x + 1
             iend = (proc_x + 1) * (nx - mx) / nproc_x
@@ -229,14 +238,14 @@ contains
         kbeg = 1
         kend = nz
 
-        !! memory requirements including margin for MPI/boundary conditions
-        !! stress glut also requires sleeve area
+        ! memory requirements including margin for MPI/boundary conditions
+        ! stress glut also requires sleeve area
         ibeg_m = ibeg - 3
         iend_m = iend + 3 + ipad
         kbeg_m = kbeg - 3
         kend_m = kend + 3 + kpad
 
-        !! coordinate setting
+        ! coordinate setting
         allocate (xc(ibeg_m:iend_m), zc(kbeg_m:kend_m))
 
         do i = ibeg_m, iend_m
@@ -246,7 +255,7 @@ contains
             zc(k) = k2z(k, zbeg, real(dz))
         end do
 
-        !! Absorbing region definition
+        ! Absorbing region definition
         allocate (kbeg_a(ibeg_m:iend_m))
         do i = ibeg_m, iend_m
             if (i <= na .or. nx - na + 1 <= i) then
@@ -276,13 +285,13 @@ contains
             kend_k = nz - na
         end if
 
-        call pwatch__off("global__setup2") !! measure from here
+        call pwatch__off("global__setup2") ! measure from here
 
     end subroutine global__setup2
 
     subroutine global__comm_vel()
 
-        !! Data buffring & communication for velocity vector ( 2013-0420, 2013-0421)
+        ! Data buffring & communication for velocity vector ( 2013-0420, 2013-0421)
 
         integer :: err
         integer :: istatus(mpi_status_size, 4)
@@ -311,7 +320,7 @@ contains
 
     subroutine global__comm_stress()
 
-        !! Data buffring & communication for stress tensor
+        ! Data buffring & communication for stress tensor
 
         integer :: err
         integer :: istatus(mpi_status_size, 4)
@@ -332,7 +341,7 @@ contains
 
         call mpi_waitall(4, req, istatus, err)
 
-        !! Resore the data
+        ! Resore the data
         Sxy(kbeg:kend, iend + 1:iend + 1) = reshape(rbuf_ip(1:nz), (/nz, 1/))
         Sxy(kbeg:kend, ibeg - 2:ibeg - 1) = reshape(rbuf_im(1:2 * nz), (/nz, 2/))
 
@@ -342,7 +351,7 @@ contains
 
     logical function inside_node(i, k)
 
-        !! check if the voxcel location is inside the MPI node
+        ! check if the voxcel location is inside the MPI node
 
         integer, intent(in) :: i, k
 
@@ -357,7 +366,7 @@ contains
 
     subroutine set_mpi_table
 
-        !! 2D communication table (2013-0439)
+        ! 2D communication table (2013-0439)
 
         integer :: i
         integer :: ii
@@ -370,7 +379,7 @@ contains
 
         end do
 
-        !! location of this process
+        ! location of this process
         idx = mod(myid, nproc_x)
     end subroutine set_mpi_table
 

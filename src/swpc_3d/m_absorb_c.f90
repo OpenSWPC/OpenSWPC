@@ -3,7 +3,7 @@ module m_absorb_c
 
     !! Boundary absorber module: Cerjan's Sponge
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -19,8 +19,8 @@ module m_absorb_c
     public :: absorb_c__update_stress
     public :: absorb_c__update_vel
 
-    real(SP), allocatable :: gx_c(:), gy_c(:), gz_c(:)                !<  attenuator for Q and B.C. for voxel center
-    real(SP), allocatable :: gx_b(:), gy_b(:), gz_b(:)                !<  attenuator for Q and B.C. for voxel boundary
+    real(SP), allocatable :: gx_c(:), gy_c(:), gz_c(:)     !<  attenuator for Q and B.C. for voxel center
+    real(SP), allocatable :: gx_b(:), gy_b(:), gz_b(:)     !<  attenuator for Q and B.C. for voxel boundary
 
 contains
 

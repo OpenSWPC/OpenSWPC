@@ -1,6 +1,6 @@
 """Accompanying python module for OpenSWPC
 
-Copyright 2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+Copyright 2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 """
 
 import sys
@@ -76,7 +76,6 @@ def prm_new():
         'st_format'       : 'xy',
         'fn_stloc'        : './example/stloc.xy',
         'wav_format'      : 'sac',
-        'wav_calc_dist'   : False,
         'stf_format'      : 'xym0ij',
         'stftype'         : 'kupper',
         'fn_stf'          : './example/source.dat',

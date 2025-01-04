@@ -4,7 +4,7 @@ program diff_snp
 
     !! Generate differential snapfile from two inputs
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -58,7 +58,7 @@ program diff_snp
     if (snp_type == 'netcdf') then
 
         !! file generation by a simple copy, then modify in what follows
-        call system__call('/bin/cp '//trim(fn_in1)//' '//trim(fn_out))
+        call execute_command_line('/bin/cp '//trim(fn_in1)//' '//trim(fn_out))
         call nc_chk(nf90_open(fn_out, NF90_WRITE, io_out))
 
         !! date & time

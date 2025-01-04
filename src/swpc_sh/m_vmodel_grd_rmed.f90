@@ -3,7 +3,7 @@ module m_vmodel_grd_rmed
 
     !! grid data + random media
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -270,7 +270,7 @@ contains
                     rho2 = Cv(k)**(-5) * rho1(n) * (1.0 + 0.8 * xi(kk, i, tbl_rmed(n)))
 
                     if (vp1(n) > 0 .and. vs1(n) > 0) then
-                        call vcheck(vp2, vs2, rho2, xi(kk, i, tbl_rmed(n)), vmin, vmax, &
+                        call vcheck_sh(vs2, rho2, xi(kk, i, tbl_rmed(n)), vmin, vmax, &
                                     rhomin, is_vmin_under, is_vmax_over, is_rhomin_under)
                     end if
 

@@ -2,7 +2,7 @@ module m_getopt
 
     !! Obtain command-line option
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -44,7 +44,7 @@ contains
         character(256) :: optkey
 
 
-        narg = system__iargc()
+        narg = command_argument_count()
         allocate (argv(1:narg))
 
         do i = 1, narg

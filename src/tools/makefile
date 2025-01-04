@@ -3,7 +3,7 @@
 ## makefile for tools in SWPC
 ##
 ## @copyright
-##   Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+##   Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 ##
 ## --
 
@@ -27,12 +27,12 @@ include ../shared/makefile-tools.arch
 m_std.o     : m_std.f90
 m_system.o  : m_system.f90 m_std.o
 m_getopt.o  : m_getopt.f90 m_std.o m_system.o
-m_daytim.o  : m_daytim.f90 m_std.o
+m_daytim.o  : m_daytim.f90 
 m_gk.o      : m_gk.f90   m_std.o
 m_stamp.o   : m_stamp.f90 m_std.o m_pnm.o
 m_pnm.o     : m_pnm.f90    m_std.o m_debug.o
 m_fdsnap.o  : m_fdsnap.f90 m_std.o m_daytim.o m_geomap.o
-m_rmedia.o  : m_rmedia.f90 m_std.o m_fk.o m_gammaf.o
+m_rmedia.o  : m_rmedia.f90 m_std.o m_fk.o 
 m_filt2d.o  : m_filt2d.f90 m_std.o m_fk.o
 m_fdtool.o  : m_fdtool.f90 m_std.o m_gk.o
 m_readini.o : m_readini.f90 m_std.o m_system.o m_debug.o
@@ -43,17 +43,17 @@ m_bicubic.o : m_bicubic.f90 m_std.o
 m_color.o   : m_color.f90 m_std.o
 m_fk.o      : m_fk.f90 m_std.o m_rfft.o
 m_rfft.o    : m_rfft.f90 m_std.o
-m_gammaf.o  : m_gammaf.f90 m_std.o
-m_sac.o    : m_sac.f90 m_std.o
-m_version.o: m_version.f90
+m_sac.o     : m_sac.f90 m_std.o m_tar.o
+m_version.o : m_version.f90
+m_tar.o     : m_tar.f90
 
 .SUFFIXES:
 .SUFFIXES: .f90 .f90 .o
 
-../../bin/gen_rmed2d.x: gen_rmed2d.f90 m_std.o m_system.o m_getopt.o m_rmedia.o m_daytim.o m_fk.o m_rfft.o m_gammaf.o  m_debug.o m_version.o
+../../bin/gen_rmed2d.x: gen_rmed2d.f90 m_std.o m_system.o m_getopt.o m_rmedia.o m_daytim.o m_fk.o m_rfft.o m_debug.o m_version.o
 	$(FC) $(NCLIB) $(NCINC) $(FFLAGS) -o $@ $^ -D_DEBUG $(NETCDF)
 
-../../bin/gen_rmed3d.x: gen_rmed3d.f90 m_std.o m_system.o m_getopt.o m_rmedia.o m_fk.o m_rfft.o m_gammaf.o m_debug.o m_version.o
+../../bin/gen_rmed3d.x: gen_rmed3d.f90 m_std.o m_system.o m_getopt.o m_rmedia.o m_fk.o m_rfft.o m_debug.o m_version.o
 	$(FC) $(NCLIB) $(NCINC) $(FFLAGS) -o $@ $^ -D_DEBUG $(NETCDF)
 
 ../../bin/qmodel_tau.x: qmodel_tau.f90 m_std.o m_system.o m_getopt.o m_fdtool.o m_readini.o m_debug.o m_version.o
@@ -83,7 +83,7 @@ m_version.o: m_version.f90
 ../../bin/fs2grd.x: fs2grd.f90 m_std.o m_system.o m_gk.o m_geomap.o m_getopt.o m_bicubic.o m_fdsnap.o m_daytim.o m_version.o
 	$(FC) $(NCLIB) $(NCINC) $(FFLAGS) -o $@ $^ $(NETCDF)
 
-../../bin/wvconv.x: wvconv.f90 m_std.o m_rfft.o m_fk.o m_sac.o m_version.o m_getopt.o m_system.o
+../../bin/wvconv.x: wvconv.f90 m_std.o m_rfft.o m_fk.o m_sac.o m_tar.o m_version.o m_getopt.o m_system.o
 	$(FC) $(FFLAGS) -o $@ $^ 
 
 clean:

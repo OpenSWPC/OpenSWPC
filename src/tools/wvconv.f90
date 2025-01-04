@@ -10,7 +10,7 @@ program wvconv
     !! -  out.sac: output SAC filename
     !! -  V0 (optional): assumed average velocity in m/s unit. Default is 4000 m/s
     !!
-    !! Copyright 2021-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2021-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std

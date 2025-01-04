@@ -2,13 +2,13 @@ module m_version
 
     !! Code Version
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: output_unit
     implicit none
     public
 
-    character(80), private :: version = '24.09'     !! Do not modify this unless version up
+    character(80), private :: version = '25.01'     !! Do not modify this unless version up
 
 contains
 

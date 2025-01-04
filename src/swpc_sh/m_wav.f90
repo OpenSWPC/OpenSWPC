@@ -3,7 +3,7 @@ module m_wav
 
     !! waveform output
     !!
-    !! Copyright 2024 Takuto Maeda. All rights reseaved. This project is released under the MIT license.
+    !! Copyright 2025 Takuto Maeda. All rights reseaved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -11,8 +11,8 @@ module m_wav
     use m_pwatch
     use m_sac
     use m_readini
-    use m_system
     use m_geomap
+    use m_tar
     implicit none
     private
     save
@@ -23,8 +23,7 @@ module m_wav
 
     integer :: ntdec_w
     integer :: ntdec_w_prg
-    character(3) :: wav_format
-    logical :: wav_calc_dist = .false.
+    character(8) :: wav_format
 
     logical :: sw_wav_v = .false.
     logical :: sw_wav_u = .false.
@@ -53,6 +52,8 @@ contains
         integer, intent(in) :: io_prm
         character(245) :: fn_stloc
         character(2) :: st_format
+        character(256) :: command
+        integer :: i, err
 
         call pwatch__on('wav__setup')
 
@@ -62,7 +63,6 @@ contains
         call readini(io_prm, 'sw_wav_stress', sw_wav_stress, .false.)
         call readini(io_prm, 'sw_wav_strain', sw_wav_strain, .false.)
         call readini(io_prm, 'wav_format', wav_format, 'sac')
-        call readini(io_prm, 'wav_calc_dist', wav_calc_dist, .false.)
         call readini(io_prm, 'st_format', st_format, 'xy')
         call readini(io_prm, 'fn_stloc', fn_stloc, '')
         call readini(io_prm, 'ntdec_w_prg', ntdec_w_prg, 0)
@@ -85,7 +85,17 @@ contains
 
         call set_stinfo(fn_stloc, st_format)
 
-        call system__call('mkdir -p '//trim(odir)//'/wav > /dev/null 2>&1')
+        ! create output directory (if it does not exist)
+        call mpi_barrier(mpi_comm_world, err)
+        command = 'if [ ! -d '// trim(odir) // '/wav ]; then mkdir -p ' &
+                 // trim(odir) // '/wav > /dev/null 2>&1 ; fi'
+        do i=0, nproc_x-1
+            if (myid == i) then
+                call execute_command_line(trim(command))
+            end if
+            call mpi_barrier(mpi_comm_world, err)
+        end do
+
 
         if (sw_wav_v) then
             allocate (wav_vel(ntw, nst), source=0.0)
@@ -118,6 +128,7 @@ contains
         call pwatch__off('wav__setup')
 
     end subroutine wav__setup
+
 
     subroutine wav__store(it)
 
@@ -228,10 +239,13 @@ contains
 
     end subroutine wav__store
 
+
     subroutine wav__write()
 
         integer :: i, j
         character(6) :: cid
+        character(256) :: fn_tar
+        integer :: io
 
         call pwatch__on("wav__write")
 
@@ -275,11 +289,73 @@ contains
             if (sw_wav_stress) call export_wav__csf(nst, 2, sh_stress, wav_stress)
             if (sw_wav_strain) call export_wav__csf(nst, 2, sh_strain, wav_strain)
 
+        else if (trim(wav_format) == 'tar_st' .or. trim(wav_format) == 'tar_node') then
+            
+            if (trim(wav_format) == 'tar_node') then
+                write (cid, '(I6.6)') myid
+                fn_tar = trim(odir)//'/wav/'//trim(title)//'.sh.'//cid//'.sac.tar'
+                open(newunit=io, file=fn_tar, action='write', access='stream', status='unknown')
+            end if            
+
+            do i=1, nst
+
+                if (trim(wav_format) == 'tar_st') then
+                    fn_tar = trim(odir)//'/wav/'//trim(title)//'.sh.'//trim(stnm(i))//'.sac.tar'
+                    open(newunit=io, file=fn_tar, action='write', access='stream', status='unknown')
+                end if
+
+                if (sw_wav_v) then
+                    call export_wav__tar(io, sh_vel(i), wav_vel(:,i))
+                end if
+
+                if (sw_wav_u) then
+                    call export_wav__tar(io, sh_disp(i), wav_disp(:,i))
+                end if
+
+                if (sw_wav_stress) then
+                    do j = 1, 2
+                        call export_wav__tar(io, sh_stress(j, i), wav_stress(:, j, i))
+                    end do
+                end if
+
+                if (sw_wav_strain) then
+                    do j = 1, 2
+                        call export_wav__tar(io, sh_strain(j, i), wav_strain(:, j, i))
+                    end do
+                end if    
+                
+                if(trim(wav_format) == 'tar_st') then
+                    call tar__wend(io)
+                    close(io)
+                end if                
+
+            end do
+
+            if (trim(wav_format) == 'tar_node') then
+                call tar__wend(io)
+                close(io)
+            end if            
+
         end if
 
         call pwatch__off("wav__write")
 
     end subroutine wav__write
+
+
+    subroutine export_wav__tar(io, sh, dat)
+
+        integer, intent(in) :: io
+        type(sac__hdr), intent(in) :: sh
+        real(SP), intent(in) :: dat(:)
+
+        character(256) :: fn
+
+        fn = trim(title)//'.sh.'//trim(sh%kstnm)//'.'//trim(sh%kcmpnm)//'.sac'
+        call sac__wtar(io, trim(fn), sh, dat)
+
+    end subroutine export_wav__tar    
+
 
     subroutine set_stinfo(fn_stloc, st_format)
 
@@ -489,7 +565,7 @@ contains
 
             call daytim__localtime(exedate, sh0%nzyear, sh0%nzmonth, sh0%nzday, sh0%nzhour, sh0%nzmin, sh0%nzsec)
             call daytim__ymd2jul(sh0%nzyear, sh0%nzmonth, sh0%nzday, sh0%nzjday)
-            sh%nzmsec = 0
+            sh0%nzmsec = 0
 
             first_call = .false.
         end if
@@ -501,12 +577,10 @@ contains
         sh%stla = stla0
         sh%stdp = zst0 * 1000 ! in meter unit
 
-        if (wav_calc_dist) then
-            sh%lcalda = .false.
-            sh%dist = sqrt((sx0 - xst0)**2)
-            sh%az = std__rad2deg(atan2(0.0, xst0 - sx0))
-            sh%baz = std__rad2deg(atan2(0.0, sx0 - xst0))
-        end if
+        sh%lcalda = .false.
+        sh%dist = sqrt((sx0 - xst0)**2)
+        sh%az = std__rad2deg(atan2(0.0, xst0 - sx0))
+        sh%baz = std__rad2deg(atan2(0.0, sx0 - xst0))
 
     end subroutine initialize_sac_header
 
@@ -516,7 +590,7 @@ contains
         real(SP), intent(in) :: dat(:)
         character(256) :: fn
 
-        fn = trim(odir)//'/wav/'//trim(title)//'.'//trim(sh%kstnm)//'.'//trim(sh%kcmpnm)//'.sac'
+        fn = trim(odir)//'/wav/'//trim(title)//'.sh.'//trim(sh%kstnm)//'.'//trim(sh%kcmpnm)//'.sac'
         call sac__write(fn, sh, dat, .true.)
 
     end subroutine export_wav__sac

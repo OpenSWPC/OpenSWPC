@@ -2,7 +2,7 @@ module m_stamp
 
     !! Ascii font image and stamp routine to image data
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -21,9 +21,10 @@ contains
 
     subroutine char_mono(char, i0, j0, wid, hei, img, is_white)
 
-        !! モノクロ画像データのi0, j0を左上とする位置に、文字コード 32-127 に相当する文字列を描画する。
-        !! 一文字あたり縦20, 横12のサイズが画像imgに確保されていなければならない。
-        !! フォントデータは幅15で作成されているが、描画は12まで詰める。 is_white = .true. が指定されると反転白抜きにする。
+        !! Draw a string corresponding to character codes 32-127 at the position (i0, j0) of the monochrome image data.
+        !! The image `img` must have sufficient space to allocate each character with a height of 20 and a width of 12.
+        !! Although the font data is designed with a width of 15, the drawing is compressed to fit within a width of 12.
+        !! If `is_white = .true.` is specified, the text will be rendered in inverted white.
 
         character(*), intent(in) :: char
         integer, intent(in) :: i0, j0 ! reference location
@@ -63,7 +64,7 @@ contains
                 exit
             end if
 
-            !! 幅15データのうち10を使う「詰め」モード
+            !! width-compression
             is = i0 + (i - 1) * W1
             js = j0
             ie = is + W1 - 1
@@ -85,8 +86,8 @@ contains
 
     subroutine char_col(char, i0, j0, wid, hei, img, is_white)
 
-        !! カラー画像データのi0, j0を左上とする位置に、文字コード 32-127 に相当する文字列を描画する。
-        !! char_monoを複数回callすることで実現する。
+        !! Draw a string corresponding to character codes 32-127 at the position (i0, j0) of the color image data.
+        !! This is achieved by calling `char_mono` multiple times.
 
         character(*), intent(in) :: char
         integer, intent(in) :: i0, j0 ! reference location
@@ -9090,5 +9091,6 @@ contains
 
     end subroutine char_img
 
+    
 end module m_stamp
 

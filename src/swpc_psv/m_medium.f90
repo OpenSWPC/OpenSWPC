@@ -3,7 +3,7 @@ module m_medium
 
     !! Set-up medium velocity/attenuation structure
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -17,6 +17,8 @@ module m_medium
     use m_vmodel_uni_rmed
     use m_vmodel_lhm_rmed
     use m_vmodel_grd_rmed
+    use m_vmodel_lgm
+    use m_vmodel_lgm_rmed
 
     implicit none
     private
@@ -94,17 +96,20 @@ contains
             case ('lhm')
                 call vmodel_lhm(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, rho, lam, mu, taup, taus, bddep)
 
-            case ('uni_rmed')
+            case ('lgm')
+                call vmodel_lgm(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, rho, lam, mu, taup, taus, bddep)
 
+            case ('uni_rmed')
                 call vmodel_uni_rmed(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, rho, lam, mu, taup, taus, bddep)
 
             case ('grd_rmed')
-
                 call vmodel_grd_rmed(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, rho, lam, mu, taup, taus, bddep)
 
             case ('lhm_rmed')
-
                 call vmodel_lhm_rmed(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, rho, lam, mu, taup, taus, bddep)
+
+            case ('lgm_rmed')
+                call vmodel_lgm_rmed(io_prm, ibeg_m, iend_m, kbeg_m, kend_m, xc, zc, vcut, rho, lam, mu, taup, taus, bddep)
 
             case default
                 if (myid == 0) then

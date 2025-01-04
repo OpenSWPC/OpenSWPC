@@ -3,7 +3,7 @@ module m_vmodel_grd_rmed
 
     !! Velocity/attenuation structure: GMT(netcdf) input
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -115,9 +115,9 @@ contains
 
         vmin = vcut
 
-        dh = sqrt(3.) / sqrt(1./dx**2 + 1./dy**2 + 1./dz**2)
+        dh = 1./ sqrt(1./dx**2 + 1./dy**2 + 1./dz**2)
         cc = 6./7. !! assume 4th order
-        vmax = 0.95 * cc * dh / dt  ! 0.95 is a safety coefficient
+        vmax = cc * dh / dt  
 
         vmax_over = .false.
         vmin_under = .false.

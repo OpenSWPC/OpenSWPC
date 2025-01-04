@@ -2,7 +2,7 @@ module m_prem
 
     !! Modified PREM 1D velocity structure
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
     
     use iso_fortran_env, only: DP => REAL64
     implicit none

@@ -3,7 +3,7 @@ module m_report
 
     !! Terminal/logfile report
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -66,7 +66,7 @@ contains
 
         end if
 
-        call memory_size(nproc_x, nproc_y, nx, ny, nz, nm, na, mem_all, mem_node)
+        call memory_size_3d(nproc_x, nproc_y, nx, ny, nz, nm, na, mem_all, mem_node)
         call fdm_cond_stability(real(dx), real(dy), real(dz), vmax, dt, c)
         call fdm_cond_wavelength(real(dx), real(dy), real(dz), vmin, fmax, r)
 

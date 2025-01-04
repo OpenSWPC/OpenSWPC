@@ -3,7 +3,7 @@ module m_green
 
     !! Green's Function Special Mode for SWPC
     !!
-    !! Copyright 2013-2024 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -14,7 +14,6 @@ module m_green
     use m_readini
     use m_geomap
     use m_pwatch
-    use m_system
     use mpi
     implicit none
     private
@@ -88,6 +87,7 @@ contains
         real(SP)       :: dd
         character(256) :: abuf
         real(SP)       :: evlo1, evla1
+        character(256) :: command
 
         if (benchmark_mode) then
             green_mode = .false.
@@ -287,7 +287,17 @@ contains
         allocate (gf(ntw, ncmp * ng), source=0.0)
         allocate (fn(ncmp * ng))
 
-        call system__call('mkdir -p '//trim(odir)//'/green/'//trim(green_stnm))
+
+        ! create output directory (if it does not exist)
+        call mpi_barrier(mpi_comm_world, ierr)
+        command = 'if [ ! -d '// trim(odir) // '/green/' // trim(green_stnm) //' ]; then mkdir -p ' &
+                 // trim(odir) // '/green/' //trim(green_stnm) // ' > /dev/null 2>&1 ; fi'
+        do i=0, nproc-1
+            if (myid == i) then
+                call execute_command_line(trim(command))
+            end if
+            call mpi_barrier(mpi_comm_world, ierr)
+        end do                  
 
         do i = 1, ng
 
