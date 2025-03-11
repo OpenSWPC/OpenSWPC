@@ -55,7 +55,7 @@ contains
         close (io_ppm)
 
         !! Re-open the file in the stream i/o mode to add binary data
-        open(io_ppm, file=fname, access='stream', position='append', form='unformatted', iostat=ierr)
+        open(newunit=io_ppm, file=fname, access='stream', position='append', form='unformatted', iostat=ierr)
         call assert(ierr == 0)
         write (io_ppm) aimg
         close (io_ppm)
@@ -145,7 +145,7 @@ contains
         close (io_pgm)
 
         !! Re-open the same file in the stream access mode to add binary data
-        open (io_pgm, file=fname, access='stream', position='append', form='unformatted', iostat=ierr)
+        open (newunit=io_pgm, file=fname, access='stream', position='append', form='unformatted', iostat=ierr)
         call assert(ierr == 0)
         write (io_pgm) aimg
         close (io_pgm)

@@ -236,7 +236,9 @@ contains
 
         end if
 
-        if (ntdec_w_prg > 0 .and. mod(it - 1, ntdec_w_prg) == 0) call wav__write()
+        if (ntdec_w_prg > 0) then
+            if (mod(it - 1, ntdec_w_prg) == 0 ) call wav__write()
+        end if
 
         call pwatch__off('wav__store')
 
