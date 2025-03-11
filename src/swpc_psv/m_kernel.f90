@@ -256,6 +256,7 @@ contains
                 end do
             end if
 
+            !ocl unroll('full')
             do k = kbeg_k, kend_k
 
                 mu2 = 2 * mu(k, i)
