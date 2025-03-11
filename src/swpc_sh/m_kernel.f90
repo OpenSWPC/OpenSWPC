@@ -169,6 +169,7 @@ contains
 
             end do
 
+            !ocl unroll('full')
             do k = kbeg_k, kend_k
 
                 !! effective rigidity for shear stress components
