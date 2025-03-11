@@ -12,6 +12,7 @@ module m_vmodel_grd
     use m_fdtool
     use m_geomap
     use m_system
+    use m_readini
     use netcdf
 
     implicit none

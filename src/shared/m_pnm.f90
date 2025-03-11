@@ -78,7 +78,7 @@ contains
         character     :: aimage(3, width, height)
         integer       :: i, j, k
         integer       :: ierr
-\
+
         !! Header part: first read long bufffe, then look for line break
         open (newunit=io_ppm, file=fname, access='stream', form='unformatted', iostat=ierr)
         call assert(ierr == 0)

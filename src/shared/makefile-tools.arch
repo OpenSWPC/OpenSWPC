@@ -58,6 +58,27 @@ ifeq ($(arch),mac-m1)
   endif
 endif
 
+## EIC @ ERI, UTokyo (2025 System) with Intel Compiler
+ifeq ($(arch), eic2025-intel)
+  FC     = module purge; module load PrgEnv-intel HDF5/1.14.5/intel/2024.2.1 NetCDF/4.9.2/intel/2024.2.1; CRAY_CPU_TARGET=x86-64 ftn
+  FFLAGS = -O2 -fpp
+  NCLIB  = 
+  NCINC  = 
+  NETCDF = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
+endif
+
+ifeq ($(arch), eic2025-cray)
+  FC     = module purge; module load PrgEnv-cray HDF5/1.14.5/cray/18.0.1 NetCDF/4.9.2/cray/18.0.1; CRAY_CPU_TARGET=x86-64 ftn 
+  FFLAGS = -O3 -eZ
+  NCLIB  = -L/home/app/local/NetCDF/4.9.2/cray/18.0.1/lib
+  NCINC  = -I/home/app/local/NetCDF/4.9.2/cray/18.0.1/include
+  NETCDF = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
+endif
+
+### 
+### Obsolete systems
+###
+
 ## EIC @ ERI,U-TOKYO (2020 System)
 ifeq ($(arch),eic)
   FC      = module purge; module load intel mpt lib/NetCDF lib/HDF5; ifort
@@ -66,10 +87,6 @@ ifeq ($(arch),eic)
   NCINC   = 
   NETCDF  = -lnetcdff -lnetcdf -lhdf5 -lhdf5_hl -lz
 endif
-
-### 
-### Obsolete systems
-###
 
 ## Mac OSX + Intel Compiler + OpenMPI (obsolete)
 ifeq ($(arch),mac-intel)

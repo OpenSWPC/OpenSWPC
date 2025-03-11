@@ -14,6 +14,8 @@ module m_green
     use m_readini
     use m_geomap
     use m_pwatch
+    use m_fdtool
+    use m_daytim
     use mpi
     implicit none
     private

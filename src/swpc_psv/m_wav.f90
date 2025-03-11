@@ -13,6 +13,8 @@ module m_wav
     use m_readini
     use m_geomap
     use m_tar
+    use m_fdtool
+    use mpi
     implicit none
     private
     save
@@ -396,6 +398,8 @@ contains
             nst = 0
             return
         end if
+
+        nst_g = 0
 
         do
             read (io_stlst, '(a256)', iostat=err) abuf

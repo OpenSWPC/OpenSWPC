@@ -10,6 +10,7 @@ module m_medium
     use m_global
     use m_pwatch
     use m_readini
+    use m_fdtool
     use m_vmodel_uni
     use m_vmodel_grd
     use m_vmodel_lhm
@@ -20,6 +21,7 @@ module m_medium
     use m_vmodel_lhm_rmed
     use m_vmodel_lgm_rmed
     use m_vmodel_lgm
+    use mpi
     implicit none
     private
     save

@@ -10,7 +10,9 @@ module m_rdrmed
     use netcdf
     implicit none
 
-    public
+    private
+    public :: rdrmed__2d
+    public :: rdrmed__3d
 
 contains
 

@@ -73,7 +73,7 @@ contains
 
         complex(DP), allocatable :: aa(:), bb(:)
         real(DP) :: theta
-\
+
         allocate (aa(0:n - 1), bb(0:n - 1))
         aa(0:n - 1) = a(0:n - 1)
         theta = sign(1, isign) * 2 * PI / n
