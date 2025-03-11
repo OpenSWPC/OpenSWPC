@@ -37,7 +37,7 @@ contains
         real(SP), intent(out) :: bd(i0:i1, 0:NBD)    !< Boundary depths
 
         character(256) :: fn_lhm
-        integer :: i, j, k, l
+        integer :: i, k, l
         real(SP), allocatable, dimension(:) :: vp0, vs0, rho0, qp0, qs0, depth
         real(SP) :: vp1, vs1, rho1, qp1, qs1
         real(SP) :: dum
@@ -46,7 +46,6 @@ contains
         logical :: is_exist
         integer :: nlayer
         character(256) :: adum
-        logical :: use_munk
         logical :: earth_flattening
         real(SP) :: zs(k0:k1) ! spherical depth for earth_flattening
         real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening

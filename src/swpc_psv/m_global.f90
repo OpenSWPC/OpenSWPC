@@ -23,64 +23,64 @@ module m_global
     public :: global__comm_stress
 
 
-    real(SP), public           :: UC = 10.0**(-12)                            !< Conventional -> SI unit for moment tensor
-    integer, parameter, public :: MP = DP                                     !< Mixed precision
-    integer, parameter, public :: NM = 3                                      !< Number of memory variables
-    integer, parameter, public :: NBD = 9                                     !< Number of boundary depths to be memorized
+    real(SP), public           :: UC = 10.0**(-12)                       !< Conventional -> SI unit for moment tensor
+    integer, parameter, public :: MP = DP                                !< Mixed precision
+    integer, parameter, public :: NM = 3                                 !< Number of memory variables
+    integer, parameter, public :: NBD = 9                                !< Number of boundary depths to be memorized
 
-    real(MP), allocatable, public :: Vx(:, :), Vz(:, :)                       !<  velocity components
-    real(MP), allocatable, public :: Sxx(:, :), Szz(:, :), Sxz(:, :)          !<  normal stress components
-    real(SP), allocatable, public :: Rxx(:, :, :), Rzz(:, :, :), Rxz(:, :, :) !<  memory variables: normal components
-    real(SP), allocatable, public :: rho(:, :), lam(:, :), mu(:, :)           !<  density, relaxed moduli
-    real(SP), allocatable, public :: taup(:, :), taus(:, :)                   !<  creep/relax time ratio based on tau-method
-    real(SP), allocatable, public :: ts(:)                                    !<  relaxation time of visco-elastic medium
+    real(MP), allocatable, public :: Vx(:,:), Vz(:,:)                    !< velocity components
+    real(MP), allocatable, public :: Sxx(:,:), Szz(:,:), Sxz(:,:)        !< normal stress components
+    real(SP), allocatable, public :: Rxx(:,:,:), Rzz(:,:,:), Rxz(:,:,:)  !< memory variables: normal components
+    real(SP), allocatable, public :: rho(:,:), lam(:,:), mu(:,:)         !< density, relaxed moduli
+    real(SP), allocatable, public :: taup(:,:), taus(:,:)                !< creep/relax time ratio based on tau-method
+    real(SP), allocatable, public :: ts(:)                               !< relaxation time of visco-elastic medium
 
-    character(80), public         :: title                                    !<  execution title, used in filename and headers
-    integer, public               :: exedate                                  !<  date and time by seconds from 1970/1/1 0:0:0
+    character(80), public         :: title                               !< execution title, used in filename and headers
+    integer, public               :: exedate                             !< date and time by seconds from 1970/1/1 0:0:0
 
-    integer , public              :: nx, nz                                   !<  space grid number (global)
-    integer , public              :: nt                                       !<  time grid number
-    real(MP), public              :: dx, dz                                   !<  space grid width
-    real(SP), public              :: dt                                       !<  time  grid width
-    real(SP), public              :: xbeg, xend                               !<  global coordinate: x start / end
-    real(SP), public              :: zbeg, zend                               !<  global coordinate: z start / end
-    real(SP), public              :: tbeg, tend                               !<  beggining and ending elapsed time
+    integer , public              :: nx, nz                              !< space grid number (global)
+    integer , public              :: nt                                  !< time grid number
+    real(MP), public              :: dx, dz                              !< space grid width
+    real(SP), public              :: dt                                  !< time  grid width
+    real(SP), public              :: xbeg, xend                          !< global coordinate: x start / end
+    real(SP), public              :: zbeg, zend                          !< global coordinate: z start / end
+    real(SP), public              :: tbeg, tend                          !< beggining and ending elapsed time
 
-    real(SP), public              :: vmin                                     !<  minimum velocity
-    real(SP), public              :: vmax                                     !<  maximum velocity
-    real(SP), public              :: fmax                                     !<  maximum frequency by the source
-    real(SP), public              :: fcut                                     !<  cut-off frequency by the source
+    real(SP), public              :: vmin                                !< minimum velocity
+    real(SP), public              :: vmax                                !< maximum velocity
+    real(SP), public              :: fmax                                !< maximum frequency by the source
+    real(SP), public              :: fcut                                !< cut-off frequency by the source
 
-    integer, public               :: nproc_x                                  !<  total numbers of process
-    integer, public               :: nxp                                      !<  space grid number in the assigned node
-    integer, public               :: myid                                     !<  MPI node number
-    integer, public               :: idx, idy                                 !<  2D horizontal division ID
-    integer, allocatable, public  :: itbl(:)                                  !<  node layout table
-    integer, public               :: ibeg, iend                               !<  i-region in the node
-    integer, public               :: kbeg, kend                               !<  k-region in the node
-    integer, public               :: ibeg_m, iend_m                           !<  i- memory allocation area
-    integer, public               :: kbeg_m, kend_m                           !<  k- memory allocation area
-    integer, public               :: ipad, kpad                               !<  memory padding size for optimization
+    integer, public               :: nproc_x                             !< total numbers of process
+    integer, public               :: nxp                                 !< space grid number in the assigned node
+    integer, public               :: myid                                !< MPI node number
+    integer, public               :: idx, idy                            !< 2D horizontal division ID
+    integer, allocatable, public  :: itbl(:)                             !< node layout table
+    integer, public               :: ibeg, iend                          !< i-region in the node
+    integer, public               :: kbeg, kend                          !< k-region in the node
+    integer, public               :: ibeg_m, iend_m                      !< i- memory allocation area
+    integer, public               :: kbeg_m, kend_m                      !< k- memory allocation area
+    integer, public               :: ipad, kpad                          !< memory padding size for optimization
 
-    real(SP), public              :: M0                                       !<  total moment
+    real(SP), public              :: M0                                  !< total moment
 
-    integer, public               :: na                                       !<  absorber thickness
-    integer, public               :: ibeg_k, iend_k                           !<  i- kernel integration area without absorption band
-    integer, public               :: kbeg_k, kend_k                           !<  k- kernel integration area without absorption band
+    integer, public               :: na                                  !< absorber thickness
+    integer, public               :: ibeg_k, iend_k                      !< i- kernel integration area without absorption band
+    integer, public               :: kbeg_k, kend_k                      !< k- kernel integration area without absorption band
     integer, allocatable, public  :: kbeg_a(:)
     character(16), public         :: abc_type
 
     character(256), public :: odir
 
-    integer, allocatable, public :: kfs(:)                                    !<  free surface depth grid in the node
-    integer, allocatable, public :: kob(:)                                    !<  ocean bottom depth grid in the node
-    integer, allocatable, public :: kfs_top(:), kfs_bot(:)                    !<  region in which 2nd-order FDM is applied for free surface
-    integer, allocatable, public :: kob_top(:), kob_bot(:)                    !<  region in which 2nd-order FDM is applied for ocean bottom
-    real(SP), allocatable, public :: bddep(:, :)
+    integer, allocatable, public :: kfs(:)                               !< free surface depth grid in the node
+    integer, allocatable, public :: kob(:)                               !< ocean bottom depth grid in the node
+    integer, allocatable, public :: kfs_top(:), kfs_bot(:)               !< region of 2nd-order FDM for free surface
+    integer, allocatable, public :: kob_top(:), kob_bot(:)               !< region of 2nd-order FDM for ocean bottom
+    real(SP), allocatable, public :: bddep(:,:)
 
-    real(SP), public :: clon                                                  !< center longitude
-    real(SP), public :: clat                                                  !< center latitude
-    real(SP), public :: phi                                                   !< azimuth
+    real(SP), public :: clon                                             !< center longitude
+    real(SP), public :: clat                                             !< center latitude
+    real(SP), public :: phi                                              !< azimuth
     real(SP), allocatable, public :: xc(:), zc(:)
 
     real(SP), public :: evlo
@@ -91,8 +91,8 @@ module m_global
     real(SP), public :: otim
     real(SP), public :: sx0, sy0
 
-    real(MP), private, allocatable :: sbuf_ip(:), sbuf_im(:)          !<  mpi send buffer for x-dir
-    real(MP), private, allocatable :: rbuf_ip(:), rbuf_im(:)          !<  mpi recv buffer for x-dir
+    real(MP), private, allocatable :: sbuf_ip(:), sbuf_im(:)             !< mpi send buffer for x-dir
+    real(MP), private, allocatable :: rbuf_ip(:), rbuf_im(:)             !< mpi recv buffer for x-dir
     integer, private :: mpi_precision
 
     ! fullspace-mode

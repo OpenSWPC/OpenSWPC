@@ -272,22 +272,22 @@ contains
                 do k = kbeg_k, kend_k
 
                     dxVy_dyVx(k) = (Vy(k, i + 1, j) - Vy(k, i, j)) * r40x - (Vy(k, i + 2, j) - Vy(k, i - 1, j)) * r41x &
-                                   + (Vx(k, i, j + 1) - Vx(k, i, j)) * r40y - (Vx(k, i, j + 2) - Vx(k, i, j - 1)) * r41y
+                                 + (Vx(k, i, j + 1) - Vx(k, i, j)) * r40y - (Vx(k, i, j + 2) - Vx(k, i, j - 1)) * r41y
                     dxVz_dzVx(k) = (Vz(k, i + 1, j) - Vz(k, i, j)) * r40x - (Vz(k, i + 2, j) - Vz(k, i - 1, j)) * r41x &
-                                   + (Vx(k + 1, i, j) - Vx(k, i, j)) * r40z - (Vx(k + 2, i, j) - Vx(k - 1, i, j)) * r41z
+                                 + (Vx(k + 1, i, j) - Vx(k, i, j)) * r40z - (Vx(k + 2, i, j) - Vx(k - 1, i, j)) * r41z
                     dyVz_dzVy(k) = (Vz(k, i, j + 1) - Vz(k, i, j)) * r40y - (Vz(k, i, j + 2) - Vz(k, i, j - 1)) * r41y &
-                                   + (Vy(k + 1, i, j) - Vy(k, i, j)) * r40z - (Vy(k + 2, i, j) - Vy(k - 1, i, j)) * r41z
+                                 + (Vy(k + 1, i, j) - Vy(k, i, j)) * r40z - (Vy(k + 2, i, j) - Vy(k - 1, i, j)) * r41z
                 end do
 
                 !! overwrite around free surface
                 do k = kfs_top(i, j), kfs_bot(i, j)
 
                     dxVy_dyVx(k) = (Vy(k, i + 1, j) - Vy(k, i, j)) * r20x &
-                                   + (Vx(k, i, j + 1) - Vx(k, i, j)) * r20y
+                                 + (Vx(k, i, j + 1) - Vx(k, i, j)) * r20y
                     dxVz_dzVx(k) = (Vz(k, i + 1, j) - Vz(k, i, j)) * r20x &
-                                   + (Vx(k + 1, i, j) - Vx(k, i, j)) * r20z
+                                 + (Vx(k + 1, i, j) - Vx(k, i, j)) * r20z
                     dyVz_dzVy(k) = (Vz(k, i, j + 1) - Vz(k, i, j)) * r20y &
-                                   + (Vy(k + 1, i, j) - Vy(k, i, j)) * r20z
+                                 + (Vy(k + 1, i, j) - Vy(k, i, j)) * r20z
 
                 end do
 
@@ -295,11 +295,11 @@ contains
                 do k = kob_top(i, j), kob_bot(i, j)
 
                     dxVy_dyVx(k) = (Vy(k, i + 1, j) - Vy(k, i, j)) * r20x &
-                                   + (Vx(k, i, j + 1) - Vx(k, i, j)) * r20y
+                                 + (Vx(k, i, j + 1) - Vx(k, i, j)) * r20y
                     dxVz_dzVx(k) = (Vz(k, i + 1, j) - Vz(k, i, j)) * r20x &
-                                   + (Vx(k + 1, i, j) - Vx(k, i, j)) * r20z
+                                 + (Vx(k + 1, i, j) - Vx(k, i, j)) * r20z
                     dyVz_dzVy(k) = (Vz(k, i, j + 1) - Vz(k, i, j)) * r20y &
-                                   + (Vy(k + 1, i, j) - Vy(k, i, j)) * r20z
+                                 + (Vy(k + 1, i, j) - Vy(k, i, j)) * r20z
 
                 end do
 

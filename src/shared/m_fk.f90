@@ -153,7 +153,7 @@ contains
 
         integer :: i, j
 
-        b(1:nx, 1:ny) = dcmplx(a(1:nx, 1:ny))
+        b(1:nx, 1:ny) = cmplx(a(1:nx, 1:ny), kind=DP)
         call rfft__2d(nx, ny, b, -1)
 
         b(1:nx, 1:ny) = b(1:nx, 1:ny) * (dx * dy)
@@ -206,7 +206,7 @@ contains
 
         integer :: i, j
 
-        b(1:nx, 1:ny) = dcmplx(a(1:nx, 1:ny))
+        b(1:nx, 1:ny) = cmplx(a(1:nx, 1:ny), kind=DP)
         call rfft__2d(nx, ny, b, -1)
 
         b(1:nx, 1:ny) = b(1:nx, 1:ny) * (dx * dy)
@@ -261,7 +261,7 @@ contains
 
         integer :: i, j, k
 
-        b(1:nx, 1:ny, 1:nz) = dcmplx(a(1:nx, 1:ny, 1:nz))
+        b(1:nx, 1:ny, 1:nz) = cmplx(a(1:nx, 1:ny, 1:nz), kind=DP)
         call rfft__3d(nx, ny, nz, b, -1)
 
         b(1:nx, 1:ny, 1:nz) = b(1:nx, 1:ny, 1:nz) * (dx * dy * dz)
@@ -293,7 +293,7 @@ contains
 
         integer :: i, j, k
 
-        b(1:nx, 1:ny, 1:nz) = dcmplx(a(1:nx, 1:ny, 1:nz))
+        b(1:nx, 1:ny, 1:nz) = cmplx(a(1:nx, 1:ny, 1:nz), kind=DP)
         call rfft__3d(nx, ny, nz, b, -1)
 
         b(1:nx, 1:ny, 1:nz) = b(1:nx, 1:ny, 1:nz) * (dx * dy * dz)

@@ -815,7 +815,6 @@ contains
         character(*), intent(in) :: fn_sac
         type(sac__hdr), intent(in) :: sh
         real(SP), intent(in) :: dat(sh%npts)
-        character(:), allocatable :: buf
         type(tar__hdr) :: th
 
         call tar__inithdr(th)
