@@ -20,13 +20,6 @@ module m_kernel
     public :: kernel__update_stress
     public :: kernel__vmax
 
-    real(MP), parameter   :: C20 = 1.0_MP
-    real(MP), parameter   :: C40 = 9.0_MP / 8.0_MP
-    real(MP), parameter   :: C41 = 1.0_MP / 24.0_MP
-
-    real(MP)              :: r40x, r40y, r40z
-    real(MP)              :: r41x, r41y, r41z
-    real(MP)              :: r20x, r20y, r20z
     real(SP), allocatable :: c1(:), c2(:), d1(:)
     real(SP) :: d2
     real(MP) :: rc40x, rc41x, rc40y, rc41y, rc40z, rc41z
@@ -46,15 +39,6 @@ contains
         call pwatch__on("kernel__setup")
         call assert(medium__initialized())
 
-        r40x = C40 / dx
-        r40y = C40 / dy
-        r40z = C40 / dz
-        r41x = C41 / dx
-        r41y = C41 / dy
-        r41z = C41 / dz
-        r20x = C20 / dx
-        r20y = C20 / dy
-        r20z = C20 / dz
 
         rc40x = 17.0_MP / 16.0_MP / dx
         rc40y = 17.0_MP / 16.0_MP / dy
@@ -104,12 +88,7 @@ contains
         !$omp do &
         !$omp schedule(static,1)
         do j = jbeg_k, jend_k
-
             do i = ibeg_k, iend_k
-
-                !!
-                !! derivateives
-                !!
                 do k = kbeg_k, kend_k
                 
                     isign = sign(1, max((k - kfs_top(i,j)) * (kfs_bot(i,j) - k), &
@@ -119,8 +98,8 @@ contains
                     re41x = rc41x + isign * rd41x
                     re40y = rc40y + isign * rd40y
                     re41y = rc41y + isign * rd41y
-                    re40z = rc40y + isign * rd40z
-                    re41z = rc41y + isign * rd41z
+                    re40z = rc40z + isign * rd40z
+                    re41z = rc41z + isign * rd41z
             
                     d3Sx3 = (Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )) * re40x - (Sxx(k  ,i+2,j  ) - Sxx(k  ,i-1,j  )) * re41x &
                           + (Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)) * re40y - (Sxy(k  ,i  ,j+1) - Sxy(k  ,i  ,j-2)) * re41y &
@@ -170,7 +149,7 @@ contains
         !$omp private( taup1, taus1, taup_plus1, taus_plus1 ) &
         !$omp private( d3v3, dyVy_dzVz, dxVx_dzVz, dxVx_dyVy ) &
         !$omp private( Rxx_n, Ryy_n, Rzz_n ) &
-        !$omp private(re40x, re41x, re40y, re41y, re40z, re41z, isign) &
+        !$omp private( re40x, re41x, re40y, re41y, re40z, re41z, isign) &
         !$omp private( i, j, k, m )
         !$omp do &
         !$omp schedule(static,1)
@@ -190,8 +169,8 @@ contains
                     re41x = rc41x + isign * rd41x
                     re40y = rc40y + isign * rd40y
                     re41y = rc41y + isign * rd41y
-                    re40z = rc40y + isign * rd40z
-                    re41z = rc41y + isign * rd41z
+                    re40z = rc40z + isign * rd40z
+                    re41z = rc41z + isign * rd41z
 
                     dxVx = (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * re40x - (Vx(k  ,i+1,j  ) - Vx(k  ,i-2,j  )) * re41x
                     dyVy = (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * re40y - (Vy(k  ,i  ,j+1) - Vy(k  ,i  ,j-2)) * re41y
@@ -243,7 +222,7 @@ contains
         !$omp private( dxVy_dyVx, dxVz_dzVx, dyVz_dzVy ) &
         !$omp private( taus1, taus_plus1 ) &
         !$omp private( Ryz_n, Rxz_n, Rxy_n ) &
-        !$omp private(re40x, re41x, re40y, re41y, re40z, re41z, isign) &
+        !$omp private( re40x, re41x, re40y, re41y, re40z, re41z, isign) &
         !$omp private( i, j, k, m )
         !$omp do  &
         !$omp schedule(static,1)
@@ -263,8 +242,8 @@ contains
                     re41x = rc41x + isign * rd41x
                     re40y = rc40y + isign * rd40y
                     re41y = rc41y + isign * rd41y
-                    re40z = rc40y + isign * rd40z
-                    re41z = rc41y + isign * rd41z
+                    re40z = rc40z + isign * rd40z
+                    re41z = rc41z + isign * rd41z
 
                     dxVy_dyVx = (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * re40x - (Vy(k  ,i+2,j  ) - Vy(k  ,i-1,j  )) * re41x &
                               + (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * re40y - (Vx(k  ,i  ,j+2) - Vx(k  ,i  ,j-1)) * re41y
