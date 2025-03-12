@@ -202,7 +202,7 @@ contains
         xend = xbeg+nx*real(dx)
         yend = ybeg+ny*real(dy)
         zend = zbeg+nz*real(dz)
-        tend = ybeg+nt*dt
+        tend = tbeg+nt*dt
 
     end subroutine global__setup
 
