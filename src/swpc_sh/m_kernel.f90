@@ -225,7 +225,7 @@ contains
         if (nm > 0) then
             allocate (Ryz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k), source=0.0)
             allocate (Rxy(1:nm, kbeg_k:kend_k, ibeg_k:iend_k), source=0.0)
-            allocate (c1(1:nm), c2(1:nm))
+            allocate (c1(1:nm), c2(1:nm), d1(1:nm))
         end if
 
     end subroutine memory_allocate

@@ -146,18 +146,20 @@ contains
         call pwatch__on("kernel__update_stress")
 
         !$omp parallel  &
-        !$omp private( dxVx, dxVz, dzVx, dzVz ) &
+        !$omp private( dxVx, dxVz ) &
         !$omp private( mu2, lam2mu ) &
-        !$omp private( taup1, taus1, nnn, pnn, npn, ppn, mu_xz, taup_plus1, taus_plus1 ) &
-        !$omp private( d2v2, dxVx_dzVz, dxVz_dzVx ) &
-        !$omp private( f_Rxx, f_Rzz, f_Rxz ) &
-        !$omp private( Rxx_n, Rzz_n, Rxz_n ) &
+        !$omp private( taup1, taus1, taup_plus1, taus_plus1 ) &
+        !$omp private( d2v2, dxVx_dzVz ) &
+        !$omp private( f_Rxx, f_Rzz ) &
+        !$omp private( Rxx_n, Rzz_n ) &
         !$omp private( re40x, re41x, re40z, re41z, isign) &
         !$omp private( i, k, m )
         !$omp do &
         !$omp schedule(static,1)
         do i = ibeg_k, iend_k
             !ocl unroll('full')
+            !ocl swp
+            !OCL SWP_IREG_RATE(200)
             do k = kbeg_k, kend_k
 
                 isign = sign(1, max((k - kfs_top(i)) * (kfs_bot(i) - k), &
@@ -169,8 +171,6 @@ contains
                 re41z = rc41z + isign * rd41z               
 
                 dxVx = (Vx(k  ,i  ) - Vx(k  ,i-1)) * re40x - (Vx(k  ,i+1) - Vx(k  ,i-2)) * re41x
-                dxVz = (Vz(k  ,i+1) - Vz(k  ,i  )) * re40x - (Vz(k  ,i+2) - Vz(k  ,i-1)) * re41x
-                dzVx = (Vx(k+1,i  ) - Vx(k  ,i  )) * re40z - (Vx(k+2,i  ) - Vx(k-1,i  )) * re41z
                 dzVz = (Vz(k  ,i  ) - Vz(k-1,i  )) * re40z - (Vz(k+1,i  ) - Vz(k-2,i  )) * re41z
 
                 mu2 = 2 * mu(k, i)
@@ -179,32 +179,21 @@ contains
                 taup1 = taup(k, i)
                 taus1 = taus(k, i)
 
-                nnn = mu(k, i)
-                pnn = mu(k + 1, i)
-                npn = mu(k, i + 1)
-                ppn = mu(k + 1, i + 1)
-                mu_xz = 4 * nnn * pnn * npn * ppn / (nnn * pnn * npn + nnn * pnn * ppn + nnn * npn * ppn + pnn * npn * ppn + epsl)
-
                 d2v2 = dxVx + dzVz
                 dxVx_dzVz = dxVx + dzVz
-                dxVz_dzVx = dxVz + dzVx
 
                 f_Rxx = lam2mu * taup1 * d2v2 - mu2 * taus1 * dzVz
                 f_Rzz = lam2mu * taup1 * d2v2 - mu2 * taus1 * dxVx
-                f_Rxz = mu_xz * taus1 * dxVz_dzVx
 
                 Rxx_n = 0.0
                 Rzz_n = 0.0
-                Rxz_n = 0.0
 
                 !! Crank-Nicolson Method for avoiding stiff solution
                 do m = 1, nm
                     Rxx(m, k, i) = c1(m) * Rxx(m, k, i) - c2(m) * f_Rxx * dt
                     Rzz(m, k, i) = c1(m) * Rzz(m, k, i) - c2(m) * f_Rzz * dt
-                    Rxz(m, k, i) = c1(m) * Rxz(m, k, i) - c2(m) * f_Rxz * dt
                     Rxx_n = Rxx_n + d1(m) * Rxx(m,k,i)
                     Rzz_n = Rzz_n + d1(m) * Rzz(m,k,i)
-                    Rxz_n = Rxz_n + d1(m) * Rxz(m,k,i)
                 end do
 
                 !! update stress components
@@ -213,12 +202,68 @@ contains
 
                 Sxx(k,i) = Sxx(k,i) + (lam2mu * taup_plus1 * d2v2 - mu2 * taus_plus1 * dzVz + Rxx_n) * dt
                 Szz(k,i) = Szz(k,i) + (lam2mu * taup_plus1 * d2v2 - mu2 * taus_plus1 * dxVx + Rzz_n) * dt
-                Sxz(k,i) = Sxz(k,i) + (mu_xz  * taus_plus1 * dxVz_dzVx + Rxz_n) * dt
 
             end do
         end do
         !$omp end do nowait
         !$omp end parallel
+
+        !$omp parallel  &
+        !$omp private( dxVz, dzVx ) &
+        !$omp private( taus1, nnn, pnn, npn, ppn, mu_xz, taup_plus1, taus_plus1 ) &
+        !$omp private( dxVz_dzVx ) &
+        !$omp private( f_Rxz ) &
+        !$omp private( Rxz_n ) &
+        !$omp private( re40x, re41x, re40z, re41z, isign) &
+        !$omp private( i, k, m )
+        !$omp do &
+        !$omp schedule(static,1)
+        do i = ibeg_k, iend_k
+            !ocl unroll('full')
+            !ocl swp
+            !OCL SWP_IREG_RATE(200)
+            do k = kbeg_k, kend_k
+
+                isign = sign(1, max((k - kfs_top(i)) * (kfs_bot(i) - k), &
+                                    (k - kob_top(i)) * (kob_bot(i) - k)))
+
+                re40x = rc40x + isign * rd40x
+                re41x = rc41x + isign * rd41x
+                re40z = rc40z + isign * rd40z
+                re41z = rc41z + isign * rd41z               
+
+                dxVz = (Vz(k  ,i+1) - Vz(k  ,i  )) * re40x - (Vz(k  ,i+2) - Vz(k  ,i-1)) * re41x
+                dzVx = (Vx(k+1,i  ) - Vx(k  ,i  )) * re40z - (Vx(k+2,i  ) - Vx(k-1,i  )) * re41z
+
+                taus1 = taus(k, i)
+
+                nnn = mu(k, i)
+                pnn = mu(k + 1, i)
+                npn = mu(k, i + 1)
+                ppn = mu(k + 1, i + 1)
+                mu_xz = 4 * nnn * pnn * npn * ppn / (nnn * pnn * npn + nnn * pnn * ppn + nnn * npn * ppn + pnn * npn * ppn + epsl)
+
+                dxVz_dzVx = dxVz + dzVx
+
+                f_Rxz = mu_xz * taus1 * dxVz_dzVx
+
+                Rxz_n = 0.0
+
+                !! Crank-Nicolson Method for avoiding stiff solution
+                do m = 1, nm
+                    Rxz(m, k, i) = c1(m) * Rxz(m, k, i) - c2(m) * f_Rxz * dt
+                    Rxz_n = Rxz_n + d1(m) * Rxz(m,k,i)
+                end do
+
+                !! update stress components
+                taus_plus1 = 1 + taus1 * (1 + d2)
+
+                Sxz(k,i) = Sxz(k,i) + (mu_xz  * taus_plus1 * dxVz_dzVx + Rxz_n) * dt
+
+            end do
+        end do
+        !$omp end do nowait
+        !$omp end parallel        
 
         !$omp barrier
         call pwatch__off("kernel__update_stress")
@@ -254,7 +299,7 @@ contains
             allocate (Rxx(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
             allocate (Rzz(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
             allocate (Rxz(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
-            allocate (c1(1:nm), c2(1:nm))
+            allocate (c1(1:nm), c2(1:nm), d1(1:nm))
         end if
 
     end subroutine memory_allocate
