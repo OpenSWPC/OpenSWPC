@@ -42,7 +42,7 @@ endif
 ## Wisteria/BDEC-01 Odyssey at the University of Tokyo
 ifeq ($(arch),bdec-o)
   FC      = module purge; module load fj fjmpi netcdf netcdf-fortran hdf5; mpifrtpx
-  FFLAGS  = -O3 -Keval -Kfp_contract -Kfp_relaxed -Kfz -Kilfunc -Kmfunc -Komitfp -Kopenmp -Kparallel -Ksimd=2 -Kocl -Kassume=memory_bandwidth -Koptmsg=guide -Nlst=t -D_FX -Cpp
+  FFLAGS  = -O3 -Keval -Kfp_contract -Kfp_relaxed -Kfz -Kilfunc -Kmfunc -Komitfp -Kopenmp -Kparallel -Ksimd=2 -Kocl -Kassume=memory_bandwidth -Koptmsg=guide -Nlst=t -D_FX -Cpp -Kswp_strong -Kswp_ireg_rate=200
   NCLIB = 
   NCINC = 
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz

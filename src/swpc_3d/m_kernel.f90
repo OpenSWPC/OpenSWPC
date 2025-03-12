@@ -29,6 +29,8 @@ module m_kernel
     real(MP)              :: r20x, r20y, r20z
     real(SP), allocatable :: c1(:), c2(:), d1(:)
     real(SP) :: d2
+    real(MP) :: rc40x, rc41x, rc40y, rc41y, rc40z, rc41z
+    real(MP) :: rd40x, rd41x, rd40y, rd41y, rd40z, rd41z
 
 contains
 
@@ -54,6 +56,19 @@ contains
         r20y = C20 / dy
         r20z = C20 / dz
 
+        rc40x = 17.0_MP / 16.0_MP / dx
+        rc40y = 17.0_MP / 16.0_MP / dy
+        rc40z = 17.0_MP / 16.0_MP / dz
+        rc41x =  1.0_MP / 48.0_MP / dx
+        rc41y =  1.0_MP / 48.0_MP / dy
+        rc41z =  1.0_MP / 48.0_MP / dz
+        rd40x = -1.0_MP / 16.0_MP / dx
+        rd40y = -1.0_MP / 16.0_MP / dy
+        rd40z = -1.0_MP / 16.0_MP / dz
+        rd41x = -1.0_MP / 48.0_MP / dx
+        rd41y = -1.0_MP / 48.0_MP / dy
+        rd41z = -1.0_MP / 48.0_MP / dz       
+
         call memory_allocate()
 
         if (nm > 0) then
@@ -76,13 +91,16 @@ contains
         !! Update vel for one time step
 
         integer :: i, j, k
-        real(MP) :: d3Sx3(kbeg:kend), d3Sy3(kbeg:kend), d3Sz3(kbeg:kend)
+        real(MP) :: d3Sx3, d3Sy3, d3Sz3
+        integer :: isign
+        real(MP) :: re40x, re41x, re40y, re41y, re40z, re41z
 
         call pwatch__on("kernel__update_vel")
 
         !$omp parallel &
         !$omp private( d3Sx3, d3Sy3, d3Sz3 ) &
-        !$omp private( i, j, k )
+        !$omp private( i, j, k) &
+        !$omp private(re40x, re41x, re40y, re41y, re40z, re41z, isign)
         !$omp do &
         !$omp schedule(static,1)
         do j = jbeg_k, jend_k
@@ -92,64 +110,31 @@ contains
                 !!
                 !! derivateives
                 !!
+                do k = kbeg_k, kend_k
                 
-                !! stress derivatives
-                do k = kbeg_k, kend_k
-                    
-                    d3Sx3(k) = (Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )) * r40x - (Sxx(k  ,i+2,j  ) - Sxx(k  ,i-1,j  )) * r41x &
-                             + (Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)) * r40y - (Sxy(k  ,i  ,j+1) - Sxy(k  ,i  ,j-2)) * r41y &
-                             + (Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )) * r40z - (Sxz(k+1,i  ,j  ) - Sxz(k-2,i  ,j  )) * r41z
+                    isign = sign(1, max((k - kfs_top(i,j)) * (kfs_bot(i,j) - k), &
+                                        (k - kob_top(i,j)) * (kob_bot(i,j) - k)))
 
-                    d3Sy3(k) = (Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )) * r40x - (Sxy(k  ,i+1,j  ) - Sxy(k  ,i-2,j  )) * r41x &
-                             + (Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )) * r40y - (Syy(k  ,i  ,j+2) - Syy(k  ,i  ,j-1)) * r41y &
-                             + (Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )) * r40z - (Syz(k+1,i  ,j  ) - Syz(k-2,i  ,j  )) * r41z
+                    re40x = rc40x + isign * rd40x
+                    re41x = rc41x + isign * rd41x
+                    re40y = rc40y + isign * rd40y
+                    re41y = rc41y + isign * rd41y
+                    re40z = rc40y + isign * rd40z
+                    re41z = rc41y + isign * rd41z
+            
+                    d3Sx3 = (Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )) * re40x - (Sxx(k  ,i+2,j  ) - Sxx(k  ,i-1,j  )) * re41x &
+                          + (Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)) * re40y - (Sxy(k  ,i  ,j+1) - Sxy(k  ,i  ,j-2)) * re41y &
+                          + (Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )) * re40z - (Sxz(k+1,i  ,j  ) - Sxz(k-2,i  ,j  )) * re41z
+                    d3Sy3 = (Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )) * re40x - (Sxy(k  ,i+1,j  ) - Sxy(k  ,i-2,j  )) * re41x &
+                          + (Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )) * re40y - (Syy(k  ,i  ,j+2) - Syy(k  ,i  ,j-1)) * re41y &
+                          + (Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )) * re40z - (Syz(k+1,i  ,j  ) - Syz(k-2,i  ,j  )) * re41z
+                    d3Sz3 = (Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )) * re40x - (Sxz(k  ,i+1,j  ) - Sxz(k  ,i-2,j  )) * re41x &
+                          + (Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)) * re40y - (Syz(k  ,i  ,j+1) - Syz(k  ,i  ,j-2)) * re41y &
+                          + (Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )) * re40z - (Szz(k+2,i  ,j  ) - Szz(k-1,i  ,j  )) * re41z
 
-                    d3Sz3(k) = (Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )) * r40x - (Sxz(k  ,i+1,j  ) - Sxz(k  ,i-2,j  )) * r41x &
-                             + (Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)) * r40y - (Syz(k  ,i  ,j+1) - Syz(k  ,i  ,j-2)) * r41y &
-                             + (Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )) * r40z - (Szz(k+2,i  ,j  ) - Szz(k-1,i  ,j  )) * r41z
-
-                end do
-
-                !! overwrite around free surface
-                do k=kfs_top(i,j), kfs_bot(i,j)
-
-                    d3Sx3(k) = (Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )) * r20x  &
-                             + (Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)) * r20y  &
-                             + (Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )) * r20z
-
-                    d3Sy3(k) = (Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )) * r20x  &
-                             + (Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )) * r20y  &
-                             + (Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )) * r20z
-
-                    d3Sz3(k) = (Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )) * r20x  &
-                             + (Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)) * r20y  &
-                             + (Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )) * r20z
-
-                end do
-
-                !! overwrite around seafloor
-                do k=kob_top(i,j), kob_bot(i,j)
-
-                    d3Sx3(k) = (Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )) * r20x  &
-                             + (Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)) * r20y  &
-                             + (Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )) * r20z
-
-                    d3Sy3(k) = (Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )) * r20x  &
-                             + (Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )) * r20y  &
-                             + (Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )) * r20z
-
-                    d3Sz3(k) = (Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )) * r20x  &
-                             + (Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)) * r20y  &
-                             + (Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )) * r20z
-
-                end do
-
-                !! update velocity
-                do k = kbeg_k, kend_k
-
-                    Vx(k, i, j) = Vx(k, i, j) + bx(k, i, j) * d3Sx3(k) * dt
-                    Vy(k, i, j) = Vy(k, i, j) + by(k, i, j) * d3Sy3(k) * dt
-                    Vz(k, i, j) = Vz(k, i, j) + bz(k, i, j) * d3Sz3(k) * dt
+                    Vx(k, i, j) = Vx(k, i, j) + bx(k, i, j) * d3Sx3 * dt
+                    Vy(k, i, j) = Vy(k, i, j) + by(k, i, j) * d3Sy3 * dt
+                    Vz(k, i, j) = Vz(k, i, j) + bz(k, i, j) * d3Sz3 * dt
 
                 end do
             end do
@@ -172,8 +157,10 @@ contains
         real(SP) :: taup1, taus1, taup_plus1, taus_plus1
         real(SP) :: d3v3, dxVx_dyVy, dxVx_dzVz, dyVy_dzVz
         real(SP) :: Rxx_n, Ryy_n, Rzz_n, Ryz_n, Rxz_n, Rxy_n
-        real(MP) :: dxVx(kbeg:kend), dyVy(kbeg:kend), dzVz(kbeg:kend)
-        real(MP) :: dxVy_dyVx(kbeg:kend), dxVz_dzVx(kbeg:kend), dyVz_dzVy(kbeg:kend)
+        real(MP) :: dxVx, dyVy, dzVz
+        real(MP) :: dxVy_dyVx, dxVz_dzVx, dyVz_dzVy
+        integer  :: isign
+        real(MP) :: re40x, re41x, re40y, re41y, re40z, re41z
 
         call pwatch__on("kernel__update_stress")
 
@@ -183,43 +170,32 @@ contains
         !$omp private( taup1, taus1, taup_plus1, taus_plus1 ) &
         !$omp private( d3v3, dyVy_dzVz, dxVx_dzVz, dxVx_dyVy ) &
         !$omp private( Rxx_n, Ryy_n, Rzz_n ) &
+        !$omp private(re40x, re41x, re40y, re41y, re40z, re41z, isign) &
         !$omp private( i, j, k, m )
         !$omp do &
         !$omp schedule(static,1)
         do j = jbeg_k, jend_k
             do i = ibeg_k, iend_k
 
-                !! Derivatives
-                do k = kbeg_k, kend_k
-
-                    dxVx(k) = (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r40x - (Vx(k  ,i+1,j  ) - Vx(k  ,i-2,j  )) * r41x
-                    dyVy(k) = (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r40y - (Vy(k  ,i  ,j+1) - Vy(k  ,i  ,j-2)) * r41y
-                    dzVz(k) = (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r40z - (Vz(k+1,i  ,j  ) - Vz(k-2,i  ,j  )) * r41z
-          
-                end do
-
-                !! overwrite around free surface
-                do k = kfs_top(i, j), kfs_bot(i, j)
-
-                    dxVx(k) = (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x
-                    dyVy(k) = (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y
-                    dzVz(k) = (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z
-          
-                end do
-
-                !! overwrite around seafloor
-                do k = kob_top(i, j), kob_bot(i, j)
-
-                    dxVx(k) = (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x
-                    dyVy(k) = (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y
-                    dzVz(k) = (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z
-
-                end do
-
-                !! update memory variables and stress tensors: normal stress components
-                
                 !ocl unroll('full')
+                !ocl swp
+                !OCL SWP_IREG_RATE(200)
                 do k = kbeg_k, kend_k
+
+
+                    isign = sign(1, max((k - kfs_top(i,j)) * (kfs_bot(i,j) - k), &
+                                        (k - kob_top(i,j)) * (kob_bot(i,j) - k)))
+
+                    re40x = rc40x + isign * rd40x
+                    re41x = rc41x + isign * rd41x
+                    re40y = rc40y + isign * rd40y
+                    re41y = rc41y + isign * rd41y
+                    re40z = rc40y + isign * rd40z
+                    re41z = rc41y + isign * rd41z
+
+                    dxVx = (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * re40x - (Vx(k  ,i+1,j  ) - Vx(k  ,i-2,j  )) * re41x
+                    dyVy = (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * re40y - (Vy(k  ,i  ,j+1) - Vy(k  ,i  ,j-2)) * re41y
+                    dzVz = (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * re40z - (Vz(k+1,i  ,j  ) - Vz(k-2,i  ,j  )) * re41z
 
                     !! medium copy
                     mu2 = 2 * mu(k, i, j)
@@ -231,21 +207,21 @@ contains
                     !! update memory variables
 
                     !! working variables for combinations of velocity derivatives
-                    d3v3      = dxVx(k) + dyVy(k) + dzVz(k)
-                    dyVy_dzVz = dyVy(k) + dzVz(k)
-                    dxVx_dzVz = dxVx(k) + dzVz(k)
-                    dxVx_dyVy = dxVx(k) + dyVy(k)
+                    d3v3      = dxVx + dyVy + dzVz
+                    dyVy_dzVz = dyVy + dzVz
+                    dxVx_dzVz = dxVx + dzVz
+                    dxVx_dyVy = dxVx + dyVy
                   
                     Rxx_n = 0.0
                     Ryy_n = 0.0
                     Rzz_n = 0.0
                     do m=1, nm
-                      Rxx(k,i,j,m) = c1(m) * Rxx(k,i,j,m) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dyVy_dzVz) * dt
-                      Ryy(k,i,j,m) = c1(m) * Ryy(k,i,j,m) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dzVz) * dt
-                      Rzz(k,i,j,m) = c1(m) * Rzz(k,i,j,m) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dyVy) * dt
-                      Rxx_n = Rxx_n + d1(m) * Rxx(k,i,j,m)
-                      Ryy_n = Ryy_n + d1(m) * Ryy(k,i,j,m)
-                      Rzz_n = Rzz_n + d1(m) * Rzz(k,i,j,m)
+                      Rxx(m,k,i,j) = c1(m) * Rxx(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dyVy_dzVz) * dt
+                      Ryy(m,k,i,j) = c1(m) * Ryy(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dzVz) * dt
+                      Rzz(m,k,i,j) = c1(m) * Rzz(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dyVy) * dt
+                      Rxx_n = Rxx_n + d1(m) * Rxx(m,k,i,j)
+                      Ryy_n = Ryy_n + d1(m) * Ryy(m,k,i,j)
+                      Rzz_n = Rzz_n + d1(m) * Rzz(m,k,i,j)
                     end do
                     
                     !! update stress components
@@ -253,9 +229,9 @@ contains
                     taup_plus1 = 1 + taup1 * ( 1 + d2 )
                     taus_plus1 = 1 + taus1 * ( 1 + d2 )
           
-                    Sxx (k,i,j) = Sxx (k,i,j) + ( lam2mu * taup_plus1 * d3v3 - mu2 * taus_plus1 * dyVy_dzVz + Rxx_n ) * dt
-                    Syy (k,i,j) = Syy (k,i,j) + ( lam2mu * taup_plus1 * d3v3 - mu2 * taus_plus1 * dxVx_dzVz + Ryy_n ) * dt
-                    Szz (k,i,j) = Szz (k,i,j) + ( lam2mu * taup_plus1 * d3v3 - mu2 * taus_plus1 * dxVx_dyVy + Rzz_n ) * dt
+                    Sxx (k,i,j) = Sxx (k,i,j) + (lam2mu * taup_plus1 * d3v3 - mu2 * taus_plus1 * dyVy_dzVz + Rxx_n) * dt
+                    Syy (k,i,j) = Syy (k,i,j) + (lam2mu * taup_plus1 * d3v3 - mu2 * taus_plus1 * dxVx_dzVz + Ryy_n) * dt
+                    Szz (k,i,j) = Szz (k,i,j) + (lam2mu * taup_plus1 * d3v3 - mu2 * taus_plus1 * dxVx_dyVy + Rzz_n) * dt
                     
                 end do
             end do
@@ -265,57 +241,39 @@ contains
 
         !$omp parallel &
         !$omp private( dxVy_dyVx, dxVz_dzVx, dyVz_dzVy ) &
-        !$omp private( mu2, taus1, taus_plus1 ) &
+        !$omp private( taus1, taus_plus1 ) &
         !$omp private( Ryz_n, Rxz_n, Rxy_n ) &
+        !$omp private(re40x, re41x, re40y, re41y, re40z, re41z, isign) &
         !$omp private( i, j, k, m )
         !$omp do  &
         !$omp schedule(static,1)
         do j = jbeg_k, jend_k
             do i = ibeg_k, iend_k
 
-                !! Derivatives
+                !ocl unroll('full')
+                !ocl swp
+                !OCL SWP_IREG_RATE(300)
+                !OCL SWP_FREG_RATE(200)
                 do k=kbeg_k, kend_k
 
-                    dxVy_dyVx(k) = (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r40x - (Vy(k  ,i+2,j  ) - Vy(k  ,i-1,j  )) * r41x &
-                                 + (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r40y - (Vx(k  ,i  ,j+2) - Vx(k  ,i  ,j-1)) * r41y
-                    dxVz_dzVx(k) = (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r40x - (Vz(k  ,i+2,j  ) - Vz(k  ,i-1,j  )) * r41x &
-                                 + (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r40z - (Vx(k+2,i  ,j  ) - Vx(k-1,i  ,j  )) * r41z
-                    dyVz_dzVy(k) = (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r40y - (Vz(k  ,i  ,j+2) - Vz(k  ,i  ,j-1)) * r41y &
-                                 + (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r40z - (Vy(k+2,i  ,j  ) - Vy(k-1,i  ,j  )) * r41z
+                    isign = sign(1, max((k - kfs_top(i,j)) * (kfs_bot(i,j) - k), &
+                                        (k - kob_top(i,j)) * (kob_bot(i,j) - k)))
 
-                end do
-          
-                !! overwrite around free surface
-                do k = kfs_top(i, j), kfs_bot(i, j)
+                    re40x = rc40x + isign * rd40x
+                    re41x = rc41x + isign * rd41x
+                    re40y = rc40y + isign * rd40y
+                    re41y = rc41y + isign * rd41y
+                    re40z = rc40y + isign * rd40z
+                    re41z = rc41y + isign * rd41z
 
-                    dxVy_dyVx(k) = (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x  &
-                                 + (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y
-                    dxVz_dzVx(k) = (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x  &
-                                 + (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z
-                    dyVz_dzVy(k) = (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y  &
-                                 + (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z
-
-                end do
-
-                !! overwrite around seafloor
-                do k = kob_top(i, j), kob_bot(i, j)
-
-                    dxVy_dyVx(k) = (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x  &
-                                 + (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y
-                    dxVz_dzVx(k) = (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x  &
-                                 + (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z
-                    dyVz_dzVy(k) = (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y  &
-                                 + (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z
-
-                end do
-
-                !! update memory variables and stress tensors: shear stress components
-
-                !ocl unroll('full')
-                do k = kbeg_k, kend_k
+                    dxVy_dyVx = (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * re40x - (Vy(k  ,i+2,j  ) - Vy(k  ,i-1,j  )) * re41x &
+                              + (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * re40y - (Vx(k  ,i  ,j+2) - Vx(k  ,i  ,j-1)) * re41y
+                    dxVz_dzVx = (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * re40x - (Vz(k  ,i+2,j  ) - Vz(k  ,i-1,j  )) * re41x &
+                              + (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * re40z - (Vx(k+2,i  ,j  ) - Vx(k-1,i  ,j  )) * re41z
+                    dyVz_dzVy = (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * re40y - (Vz(k  ,i  ,j+2) - Vz(k  ,i  ,j-1)) * re41y &
+                              + (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * re40z - (Vy(k+2,i  ,j  ) - Vy(k-1,i  ,j  )) * re41z
 
                     !! medium copy
-                    mu2 = 2 * mu(k, i, j)
                     taus1 = taus(k, i, j)
 
                     !! update memory variables
@@ -323,20 +281,20 @@ contains
                     Rxz_n = 0.0
                     Rxy_n = 0.0
                     do m = 1, nm
-                        Ryz(k,i,j,m) = c1(m) * Ryz(k,i,j,m) - c2(m) * muyz(k,i,j) * taus1 * dyVz_dzVy(k) * dt
-                        Rxz(k,i,j,m) = c1(m) * Rxz(k,i,j,m) - c2(m) * muxz(k,i,j) * taus1 * dxVz_dzVx(k) * dt
-                        Rxy(k,i,j,m) = c1(m) * Rxy(k,i,j,m) - c2(m) * muxy(k,i,j) * taus1 * dxVy_dyVx(k) * dt
-                        Ryz_n = Ryz_n + d1(m) * Ryz(k,i,j,m)
-                        Rxz_n = Rxz_n + d1(m) * Rxz(k,i,j,m)
-                        Rxy_n = Rxy_n + d1(m) * Rxy(k,i,j,m)
+                        Ryz(m,k,i,j) = c1(m) * Ryz(m,k,i,j) - c2(m) * muyz(k,i,j) * taus1 * dyVz_dzVy * dt
+                        Rxz(m,k,i,j) = c1(m) * Rxz(m,k,i,j) - c2(m) * muxz(k,i,j) * taus1 * dxVz_dzVx * dt
+                        Rxy(m,k,i,j) = c1(m) * Rxy(m,k,i,j) - c2(m) * muxy(k,i,j) * taus1 * dxVy_dyVx * dt
+                        Ryz_n = Ryz_n + d1(m) * Ryz(m,k,i,j)
+                        Rxz_n = Rxz_n + d1(m) * Rxz(m,k,i,j)
+                        Rxy_n = Rxy_n + d1(m) * Rxy(m,k,i,j)
                     end do
 
                     !! update stress components
                     taus_plus1 = 1 + taus1 * (1 + d2)
 
-                    Syz (k,i,j) = Syz (k,i,j) + ( muyz(k,i,j) * taus_plus1 * dyVz_dzVy(k) + Ryz_n ) * dt
-                    Sxz (k,i,j) = Sxz (k,i,j) + ( muxz(k,i,j) * taus_plus1 * dxVz_dzVx(k) + Rxz_n ) * dt
-                    Sxy (k,i,j) = Sxy (k,i,j) + ( muxy(k,i,j) * taus_plus1 * dxVy_dyVx(k) + Rxy_n ) * dt
+                    Syz (k,i,j) = Syz (k,i,j) + (muyz(k,i,j) * taus_plus1 * dyVz_dzVy + Ryz_n) * dt
+                    Sxz (k,i,j) = Sxz (k,i,j) + (muxz(k,i,j) * taus_plus1 * dxVz_dzVx + Rxz_n) * dt
+                    Sxy (k,i,j) = Sxy (k,i,j) + (muxy(k,i,j) * taus_plus1 * dxVy_dyVx + Rxy_n) * dt
                               
                 end do
             end do
@@ -388,12 +346,12 @@ contains
 
         if (nm > 0) then
             allocate (c1(nm), c2(nm), d1(nm))
-            allocate (Rxx(kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm), source=0.0)
-            allocate (Ryy(kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm), source=0.0)
-            allocate (Rzz(kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm), source=0.0)
-            allocate (Ryz(kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm), source=0.0)
-            allocate (Rxz(kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm), source=0.0)
-            allocate (Rxy(kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm), source=0.0)
+            allocate (Rxx(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), source=0.0)
+            allocate (Ryy(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), source=0.0)
+            allocate (Rzz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), source=0.0)
+            allocate (Ryz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), source=0.0)
+            allocate (Rxz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), source=0.0)
+            allocate (Rxy(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), source=0.0)
         end if
 
     end subroutine memory_allocate
