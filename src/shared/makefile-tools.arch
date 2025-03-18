@@ -59,7 +59,7 @@ ifeq ($(arch),mac-m1)
 endif
 
 ## EIC @ ERI, UTokyo (2025 System) with Intel Compiler
-ifeq ($(arch), eic2025-intel)
+ifeq ($(arch), eic2025)
   FC     = module purge; module load PrgEnv-intel HDF5/1.14.5/intel/2024.2.1 NetCDF/4.9.2/intel/2024.2.1; CRAY_CPU_TARGET=x86-64 ftn
   FFLAGS = -O2 -fpp
   NCLIB  = 

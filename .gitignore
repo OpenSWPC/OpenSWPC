@@ -9,6 +9,7 @@
 *.optrpt
 src/*/*.lst
 *.i90
+*.i
 
 # Executables
 *.x
