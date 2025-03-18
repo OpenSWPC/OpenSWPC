@@ -381,7 +381,7 @@ contains
                         vz(k, i, j) = -cd * stf_vz
                         sxx(k, i, j) = -(la0 + 2 * mu0 * sd * sd * sf * sf) * stf_ii / vp
                         syy(k, i, j) = -(la0 + 2 * mu0 * sd * sd * cf * cf) * stf_ii / vp
-                        szz(k, i, j) = -(la0 + 2 * mu0 + cd * cd) * stf_ii / vp
+                        szz(k, i, j) = -(la0 + 2 * mu0 * cd * cd) * stf_ii / vp
                         syz(k, i, j) = 2 * mu0 * sd * cd * cf * stf_yz / vp
                         sxz(k, i, j) = -2 * mu0 * sd * cd * sf * stf_xz / vp
                         sxy(k, i, j) = 2 * mu0 * sd * cd * sf * stf_xy / vp
