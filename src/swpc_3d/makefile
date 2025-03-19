@@ -183,6 +183,7 @@ clean:
 	/bin/rm -f *.L
 	/bin/rm -f *.lst
 	/bin/rm -f *.if90
+	/bin/rm -f *.i
 
 clean2:
 	/bin/rm -f *.o
@@ -191,3 +192,5 @@ clean2:
 	/bin/rm -f *.L
 	/bin/rm -f *.lst
 	/bin/rm -f *.if90
+	/bin/rm -f *.i
+

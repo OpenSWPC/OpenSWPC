@@ -1,13 +1,12 @@
 #!/bin/bash
-#PBS -q E 
-#PBS -l select=2:ncpus=80:mpiprocs=4:ompthreads=20:mem=755gb
-#PBS -N OpenSWPC-example
-## -------------------------------------- ##
-source /etc/profile.d/modules.sh
-module load intel mpt lib/NetCDF lib/HDF5 
+#PBS -q D 
+#PBS -l select=1:ncpus=96:mpiprocs=96:ompthreads=1
+#PBS -N swpc-W
+
+module load PrgEnv-intel; module load cray-pals; module load cray-pmi
+module load HDF5/1.14.5/intel/2024.2.1 NetCDF/4.9.2/intel/2024.2.1
+
 cd $PBS_O_WORKDIR
-## -------------------------------------- ##
-# OpenSWPCの構造モデル等の置き場の設定
-export DATASET=/work/tktmyd/dataset  
-## -------------------------------------- ##
-mpiexec omplace -bs ./bin/swpc_3d.x -i example/input_WJapan.inf
+export DATASET=${HOME}/dataset
+
+mpirun ./bin/swpc_3d.x -i example/input_WJapan.inf

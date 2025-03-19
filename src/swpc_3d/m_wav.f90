@@ -13,6 +13,8 @@ module m_wav
     use m_readini
     use m_geomap
     use m_tar
+    use m_fdtool
+    use mpi
     implicit none
     private
     save
@@ -158,6 +160,8 @@ contains
             return
         end if
 
+        nst_g = 0
+        
         do
             read (io_stlst, '(a256)', iostat=err) abuf
             if (err /= 0) exit
@@ -549,8 +553,10 @@ contains
 
         end if
 
-        if (ntdec_w_prg > 0 .and. mod(it - 1, ntdec_w_prg) == 0) call wav__write()
-
+        if (ntdec_w_prg > 0) then
+            if (mod(it - 1, ntdec_w_prg) == 0 ) call wav__write()
+        end if
+        
         call pwatch__off("wav__store")
 
     end subroutine wav__store

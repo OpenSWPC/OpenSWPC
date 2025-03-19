@@ -73,7 +73,7 @@ contains
 
         complex(DP), allocatable :: aa(:), bb(:)
         real(DP) :: theta
-\
+
         allocate (aa(0:n - 1), bb(0:n - 1))
         aa(0:n - 1) = a(0:n - 1)
         theta = sign(1, isign) * 2 * PI / n
@@ -275,19 +275,19 @@ contains
         allocate (a(0:n / 2 - 1))
 
         do j = 0, n / 2 - 1
-            a(j) = dcmplx(r(2 * j), r(2 * j + 1))
+            a(j) = cmplx(r(2 * j), r(2 * j + 1), kind=DP)
         end do
         call rfft1d_8c(n / 2, a, isign)
 
         theta = sign(1, isign) * 2 * PI / n
         do k = 1, n / 4 - 1
-            ww = dcmplx(cos(k * theta), sin(k * theta))
+            ww = cmplx(cos(k * theta), sin(k * theta), kind=DP)
             c(k) = a(k) - (1 + EI * ww) / 2.*(a(k) - conjg(a(n / 2 - k)))
             c(n / 2 - k) = conjg(a(n / 2 - k)) + (1 + EI * ww) / 2.*(a(k) - conjg(a(n / 2 - k)))
             c(n / 2 - k) = conjg(c(n / 2 - k))
         end do
-        c(0) = dcmplx(dble(a(0)) + aimag(a(0)), 0.0_DP)
-        c(n / 2) = dcmplx(dble(a(0)) - aimag(a(0)), 0.0_DP)
+        c(0) = cmplx(dble(a(0)) + aimag(a(0)), 0.0_DP, kind=DP)
+        c(n / 2) = cmplx(dble(a(0)) - aimag(a(0)), 0.0_DP, kind=DP)
 
         c(n / 4) = a(n / 4)
 
@@ -317,11 +317,11 @@ contains
         allocate (a(0:n / 2 - 1))
 
         !! c(0), c(n/2) are pure real value
-        a(0) = dcmplx(0.5 * dble(c(0) + c(n / 2)), 0.5 * dble(c(0) - c(n / 2)))
+        a(0) = cmplx(0.5 * dble(c(0) + c(n / 2)), 0.5 * dble(c(0) - c(n / 2)), kind=DP)
         a(n / 4) = c(n / 4)
         theta = sign(1, isign) * 2 * PI / n
         do k = 1, n / 4 - 1
-            ww = dcmplx(cos(k * theta), sin(k * theta))
+            ww = cmplx(cos(k * theta), sin(k * theta), kind=DP)
             a(k) = c(k) - (1 - EI * ww) / 2.*(c(k) - conjg(c(n / 2 - k)))
             a(n / 2 - k) = conjg(c(n / 2 - k)) + (1 - EI * ww) / 2.*(c(k) - conjg(c(n / 2 - k)))
             a(n / 2 - k) = conjg(a(n / 2 - k))
@@ -403,8 +403,8 @@ contains
 
         if (nh >= 2) then
             tsq = 2 * sin(theta)
-            wp1 = dcmplx(cos(theta), sin(theta))
-            wp2 = dcmplx(1.0_DP, 0.0_DP)
+            wp1 = cmplx(cos(theta), sin(theta), kind=DP)
+            wp2 = cmplx(1.0_DP, 0.0_DP, kind=DP)
             b(1) = a(1) + a(nh + 1)
             b(nh + 1) = (a(1) - a(nh + 1)) * wp1
             do j = 2, nh - 1

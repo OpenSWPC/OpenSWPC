@@ -11,6 +11,7 @@ module m_vmodel_uni_rmed
     use m_global
     use m_rdrmed
     use m_seawater
+    use m_fdtool
     implicit none
     private
     save

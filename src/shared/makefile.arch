@@ -42,7 +42,7 @@ endif
 ## Wisteria/BDEC-01 Odyssey at the University of Tokyo
 ifeq ($(arch),bdec-o)
   FC      = module purge; module load fj fjmpi netcdf netcdf-fortran hdf5; mpifrtpx
-  FFLAGS  = -O3 -Keval -Kfp_contract -Kfp_relaxed -Kfz -Kilfunc -Kmfunc -Komitfp -Kopenmp -Kparallel -Ksimd=2 -Kocl -Kassume=memory_bandwidth -Koptmsg=guide -Nlst=t -D_FX -Cpp
+  FFLAGS  = -O3 -Keval -Kfp_contract -Kfp_relaxed -Kfz -Kilfunc -Kmfunc -Komitfp -Kopenmp -Kparallel -Ksimd=2 -Kocl -Kassume=memory_bandwidth -Koptmsg=guide -Nlst=t -D_FX -Cpp -Kswp_strong -Kswp_ireg_rate=200
   NCLIB = 
   NCINC = 
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
@@ -53,7 +53,7 @@ endif
 ifeq ($(arch),mac-m1)
 
   FC      = mpif90
-  FFLAGS  = -O2 -ffast-math -fopenmp -cpp
+  FFLAGS  = -O2 -ffast-math -fopenmp -cpp -std=f2018 -Werror=line-truncation
   NCLIB   = -L/opt/homebrew/lib
   NCINC   = -I/opt/homebrew/include
   NETCDF  = -lnetcdff -lnetcdf -lhdf5 -lhdf5_hl -lz
@@ -61,11 +61,34 @@ ifeq ($(arch),mac-m1)
   ifeq ($(debug),true)
     FFLAGS  = -Wall -pedantic -fbounds-check -O -Wuninitialized \
               -Wno-conversion -ffixed-line-length-132 \
-	          -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 \
-	          -D_DEBUG -cpp
+	            -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 \
+	            -D_DEBUG -cpp -std=f2018
   endif
 
 endif
+
+#### EIC @ ERI, UTokyo (2025 System) with Intel Compiler (Job Classes L,M,N)
+## Intel Compiler (recommended)
+ifeq ($(arch), eic2025)
+  FC     = module purge; module load PrgEnv-intel HDF5/1.14.5/intel/2024.2.1 NetCDF/4.9.2/intel/2024.2.1; CRAY_CPU_TARGET=x86-64 ftn
+  FFLAGS = -O2 -fpp -qopenmp
+  NCLIB  = 
+  NCINC  = 
+  NETCDF = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
+endif
+
+## For CRAY's environment (not recommended)
+ifeq ($(arch), eic2025-cray)
+  FC     = module purge; module load PrgEnv-cray HDF5/1.14.5/cray/18.0.1 NetCDF/4.9.2/cray/18.0.1; CRAY_CPU_TARGET=x86-64 ftn 
+  FFLAGS = -O3 -fopenmp -eZ
+  NCLIB  = -L/home/app/local/NetCDF/4.9.2/cray/18.0.1/lib
+  NCINC  = -I/home/app/local/NetCDF/4.9.2/cray/18.0.1/include
+  NETCDF = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
+endif
+
+###
+### Obsolete systems
+###
 
 ## EIC @ ERI,U-TOKYO (2020 System)
 ifeq ($(arch),eic)
@@ -76,10 +99,6 @@ ifeq ($(arch),eic)
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
 endif
 
-
-###
-### Obsolete systems
-###
 
 ## Earth Simulator 3 (Use fortran 90 compiler for better speed) (obsolete)
 ifeq ($(arch),es3)
@@ -128,7 +147,7 @@ endif
 ifeq ($(arch),mac-gfortran)
   LOCAL  = /usr/local
   FC      = mpif90
-  FFLAGS  = -O2 -ffast-math   -fopenmp
+  FFLAGS  = -O2 -ffast-math -fopenmp
   NCLIB   = -L$(LOCAL)/lib
   NCINC   = -I$(LOCAL)/include
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
@@ -136,7 +155,7 @@ ifeq ($(arch),mac-gfortran)
   ifeq ($(debug),true)
     FFLAGS  = -Wall -pedantic -fbounds-check -O -Wuninitialized \
 	          -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 \
-	           -D_DEBUG 
+	          -D_DEBUG 
   endif
 
 endif

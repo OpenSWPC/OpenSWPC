@@ -15,6 +15,7 @@ module m_snap
     use m_readini
     use m_geomap
     use netcdf
+    use mpi
 
     implicit none
     private

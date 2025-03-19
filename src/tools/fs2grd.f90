@@ -31,11 +31,10 @@ program fs2grd
     integer :: var_id
     real :: dlon, dlat
     logical :: is_time_dependent_variable
-    logical :: is_opt1, is_opt2
+    logical :: is_opt
 
-    call getopt('v', is_opt1)
-    call getopt('-version', is_opt2)
-    if (is_opt1 .or. is_opt2) call version__display('fs2grd')
+    call getopt('-version', is_opt)
+    if (is_opt) call version__display('fs2grd')
 
     call option_processings(nlon, nlat, dlon, dlat, lon_g, lat_g, fn_in, varname)
 

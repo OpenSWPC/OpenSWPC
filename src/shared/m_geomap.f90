@@ -9,7 +9,10 @@ module m_geomap
     implicit none
 
     save
-    public
+    private
+
+    public :: geomap__g2c
+    public :: geomap__c2g
 
 contains
 

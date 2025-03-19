@@ -26,9 +26,9 @@ module m_source
     character(16)         :: stftype                                        !< type of source time function: used in u_source
     integer               :: nsrc                                           !< source grid number inside the node
     integer               :: n_stfprm                                       !< number of parameters for moment-rate function
-    real(SP), allocatable :: srcprm(:, :)                                    !< control paramater for moment-rate function at grids
+    real(SP), allocatable :: srcprm(:, :)                                   !< control paramater for moment-rate function at grids
     real(SP), allocatable :: sx(:), sz(:)                                   !< source location in distance scale
-    integer, allocatable :: isrc(:), ksrc(:)                               !< source grid location voxel
+    integer, allocatable :: isrc(:), ksrc(:)                                !< source grid location voxel
     real(MP), allocatable :: myz(:), mxy(:)                                 !< moment rate
     real(MP), allocatable :: mo(:)                                          !< moment at grids
     real(MP), allocatable :: fy(:)                                          !< body force magnitude at grids

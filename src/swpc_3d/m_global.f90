@@ -10,10 +10,11 @@ module m_global
     use m_pwatch
     use m_daytim
     use m_readini
+    use m_daytim
     use mpi
 
     implicit none
-    public
+    private
     save
 
     public :: global__setup
@@ -22,95 +23,95 @@ module m_global
     public :: global__comm_stress
     public :: global__getnode
 
-    real(SP) :: UC = 10.0**(-15) !< Conventional -> SI unit for moment tensor of [Nm]
-    integer, parameter :: MP = DP !< DP for mixed precision, SP for pure single precision
-    integer, parameter :: NM = 3 !< Number of memory variables
-    integer, parameter :: NBD = 9 !< Number of boundary depths to be memorized
+    real(SP), public :: UC = 10.0**(-15)                                        !< Conventional -> SI unit 
+    integer, parameter, public :: MP = DP                                      !< DP for mixed, SP for single precisions
+    integer, parameter, public :: NM = 3                                       !< Number of memory variables
+    integer, parameter, public :: NBD = 9                                      !< Number of boundary depths to be memorized
 
-    real(MP), allocatable :: Vx(:, :, :), Vy(:, :, :), Vz(:, :, :) !<  velocity components
-    real(MP), allocatable :: Sxx(:, :, :), Syy(:, :, :), Szz(:, :, :) !<  normal stress components
-    real(MP), allocatable :: Syz(:, :, :), Sxz(:, :, :), Sxy(:, :, :) !<  shear  stress components
-    real(SP), allocatable :: Rxx(:, :, :, :), Ryy(:, :, :, :), Rzz(:, :, :, :) !<  memory variables: normal components
-    real(SP), allocatable :: Ryz(:, :, :, :), Rxz(:, :, :, :), Rxy(:, :, :, :) !<  memory variables: shear  components
-    real(SP), allocatable :: rho(:, :, :), lam(:, :, :), mu(:, :, :) !<  density and relaxed moduli
-    real(SP), allocatable :: bx(:, :, :), by(:, :, :), bz(:, :, :) !<  inverse density (buoyancy) at velocity grids
-    real(SP), allocatable :: muyz(:, :, :), muxz(:, :, :), muxy(:, :, :) !<  averaged rigidity at shear stress compoments
-    real(SP), allocatable :: taup(:, :, :), taus(:, :, :) !<  creep/relax time ratio based on tau-method
-    real(SP), allocatable :: ts(:) !<  relaxation time of visco-elastic medium
+    real(MP), allocatable, public :: Vx(:,:,:), Vy(:,:,:), Vz(:,:,:)           !< velocity components
+    real(MP), allocatable, public :: Sxx(:,:,:), Syy(:,:,:), Szz(:,:,:)        !< normal stress components
+    real(MP), allocatable, public :: Syz(:,:,:), Sxz(:,:,:), Sxy(:,:,:)        !< shear  stress components
+    real(SP), allocatable, public :: Rxx(:,:,:,:), Ryy(:,:,:,:), Rzz(:,:,:,:)  !< memory variables: normal components
+    real(SP), allocatable, public :: Ryz(:,:,:,:), Rxz(:,:,:,:), Rxy(:,:,:,:)  !< memory variables: shear  components
+    real(SP), allocatable, public :: rho(:,:,:), lam(:,:,:), mu(:,:,:)         !< density and relaxed moduli
+    real(SP), allocatable, public :: bx(:,:,:), by(:,:,:), bz(:,:,:)           !< inverse density (buoyancy) at velocity grids
+    real(SP), allocatable, public :: muyz(:,:,:), muxz(:,:,:), muxy(:,:,:)     !< averaged rigidity at shear stress compoments
+    real(SP), allocatable, public :: taup(:,:,:), taus(:,:,:)                  !< creep/relax time ratio based on tau-method
+    real(SP), allocatable, public :: ts(:)                                     !< relaxation time of visco-elastic medium
 
-    logical :: benchmark_mode !<  true for fixed parameter run
-    logical :: pw_mode !< Plane wave mode
-    logical :: bf_mode !< Body force soruce mode
-    logical :: green_mode !< Green's function computaiton with reciprocity
-    !logical :: fullspace_mode
+    logical, public :: benchmark_mode                                          !< true for fixed parameter run
+    logical, public :: pw_mode                                                 !< Plane wave mode
+    logical, public :: bf_mode                                                 !< Body force soruce mode
+    logical, public :: green_mode                                              !< Green's function computaiton with reciprocity
+    !logical, public :: fullspace_mode
 
-    character(80) :: title !<  execution title, used in filename and headers
-    integer :: exedate !<  date and time by seconds from 1970/1/1 0:0:0
+    character(80), public :: title                                             !< execution title, used in filename and headers
+    integer, public :: exedate                                                 !< date and time by seconds from 1970/1/1 0:0:0
 
-    integer :: nx, ny, nz !<  space grid number (global)
-    integer :: nt !<  time grid number
-    real(MP) :: dx, dy, dz !<  space grid width
-    real(SP) :: dt !<  time  grid width
-    real(SP) :: xbeg, xend !<  global coordinate: x start / end
-    real(SP) :: ybeg, yend !<  global coordinate: y start / end
-    real(SP) :: zbeg, zend !<  global coordinate: z start / end
-    real(SP) :: tbeg, tend !<  beggining and ending elapsed time
+    integer, public :: nx, ny, nz                                              !< space grid number (global)
+    integer, public :: nt                                                      !< time grid number
+    real(MP), public :: dx, dy, dz                                             !< space grid width
+    real(SP), public :: dt                                                     !< time  grid width
+    real(SP), public :: xbeg, xend                                             !< global coordinate: x start / end
+    real(SP), public :: ybeg, yend                                             !< global coordinate: y start / end
+    real(SP), public :: zbeg, zend                                             !< global coordinate: z start / end
+    real(SP), public :: tbeg, tend                                             !< beggining and ending elapsed time
 
-    real(SP) :: vmin !<  minimum velocity
-    real(SP) :: vmax !<  maximum velocity
-    real(SP) :: fmax !<  maximum frequency by the source
-    real(SP) :: fcut !<  cut-off frequency by the source
+    real(SP), public :: vmin                                                   !< minimum velocity
+    real(SP), public :: vmax                                                   !< maximum velocity
+    real(SP), public :: fmax                                                   !< maximum frequency by the source
+    real(SP), public :: fcut                                                   !< cut-off frequency by the source
 
-    integer :: nproc_x !<  process numbers for x/i - direction
-    integer :: nproc_y !<  process numbers for y/j - direction
-    integer :: nproc !<  total   numbers of process
-    integer :: nxp !<  space grid number in the assigned node
-    integer :: nyp !<  space grid number in the assigned node
-    integer :: myid !<  MPI node number
-    integer :: idx, idy !<  2D horizontal division ID
-    integer, allocatable :: itbl(:, :) !<  node layout table
-    integer :: ibeg, iend !<      i-region in the node
-    integer :: jbeg, jend !<      j-region in the node
-    integer :: kbeg, kend !<      k-region in the node
-    integer :: ibeg_m, iend_m !<  i- memory allocation area
-    integer :: jbeg_m, jend_m !<  j- memory allocation area
-    integer :: kbeg_m, kend_m !<  k- memory allocation area
-    integer :: ipad, jpad, kpad !<  memory padding size for optimization
+    integer, public :: nproc_x                                                 !< process numbers for x/i - direction
+    integer, public :: nproc_y                                                 !< process numbers for y/j - direction
+    integer, public :: nproc                                                   !< total   numbers of process
+    integer, public :: nxp                                                     !< space grid number in the assigned node
+    integer, public :: nyp                                                     !< space grid number in the assigned node
+    integer, public :: myid                                                    !< MPI node number
+    integer, public :: idx, idy                                                !< 2D horizontal division ID
+    integer, allocatable, public :: itbl(:,:)                                  !< node layout table
+    integer, public :: ibeg, iend                                              !< i-region in the node
+    integer, public :: jbeg, jend                                              !< j-region in the node
+    integer, public :: kbeg, kend                                              !< k-region in the node
+    integer, public :: ibeg_m, iend_m                                          !< i- memory allocation area
+    integer, public :: jbeg_m, jend_m                                          !< j- memory allocation area
+    integer, public :: kbeg_m, kend_m                                          !< k- memory allocation area
+    integer, public :: ipad, jpad, kpad                                        !< memory padding size for optimization
 
-    integer :: na !<  absorber thickness
-    integer :: ibeg_k, iend_k !<  i- kernel integration area without absorption band
-    integer :: jbeg_k, jend_k !<  j- kernel integration area without absorption band
-    integer :: kbeg_k, kend_k !<  k- kernel integration area without absorption band
-    integer, allocatable :: kbeg_a(:, :) !<  k>=kbeg_a(i,j) is in absorber region
-    character(16) :: abc_type
+    integer, public :: na                                                      !< absorber thickness
+    integer, public :: ibeg_k, iend_k                                          !< i- kernel integration area w/o absorption band
+    integer, public :: jbeg_k, jend_k                                          !< j- kernel integration area w/o absorption band
+    integer, public :: kbeg_k, kend_k                                          !< k- kernel integration area w/o absorption band
+    integer, allocatable, public :: kbeg_a(:,:)                                !< k>=kbeg_a(i,j) is in absorber region
+    character(16), public :: abc_type
 
-    real(SP) :: M0 !<  total moment
+    real(SP), public :: M0                                                     !< total moment
 
-    character(256) :: odir !<  output directory
+    character(256), public :: odir                                             !< output directory
 
-    integer, allocatable :: kfs(:, :) !<  free surface depth grid in the node
-    integer, allocatable :: kob(:, :) !<  ocean bottom depth grid in the node
-    integer, allocatable :: kfs_top(:, :), kfs_bot(:, :) !<  region in which 2nd-order FDM is applied for free surface
-    integer, allocatable :: kob_top(:, :), kob_bot(:, :) !<  region in which 2nd-order FDM is applied for ocean bottom
-    real(SP), allocatable :: bddep(:, :, :) !<  boundary depth in physical coordinate
+    integer, allocatable, public :: kfs(:,:)                                   !< free surface depth grid in the node
+    integer, allocatable, public :: kob(:,:)                                   !< ocean bottom depth grid in the node
+    integer, allocatable, public :: kfs_top(:,:), kfs_bot(:,:)                 !< region of 2nd-order FDM for free surface
+    integer, allocatable, public :: kob_top(:,:), kob_bot(:,:)                 !< region of 2nd-order FDM for ocean bottom
+    real(SP), allocatable, public :: bddep(:,:,:)                              !< boundary depth in physical coordinate
 
-    real(SP) :: clon !< center longitude
-    real(SP) :: clat !< center latitude
-    real(SP) :: phi !< azimuth
-    real(SP), allocatable :: xc(:), yc(:), zc(:)
+    real(SP), public :: clon                                                   !< center longitude
+    real(SP), public :: clat                                                   !< center latitude
+    real(SP), public :: phi                                                    !< azimuth
+    real(SP), allocatable, public :: xc(:), yc(:), zc(:)
 
-    real(SP) :: evlo
-    real(SP) :: evla
-    real(SP) :: evdp !< unit:km
-    real(SP) :: mxx0, myy0, mzz0, myz0, mxz0, mxy0
-    real(SP) :: fx0, fy0, fz0
-    real(SP) :: otim
-    real(SP) :: sx0, sy0
+    real(SP), public :: evlo
+    real(SP), public :: evla
+    real(SP), public :: evdp                                                   !< unit:km
+    real(SP), public :: mxx0, myy0, mzz0, myz0, mxz0, mxy0
+    real(SP), public :: fx0, fy0, fz0
+    real(SP), public :: otim
+    real(SP), public :: sx0, sy0
 
-    real(MP), private, allocatable :: sbuf_ip(:), sbuf_im(:) !<  mpi send buffer for x-dir
-    real(MP), private, allocatable :: sbuf_jp(:), sbuf_jm(:) !<  mpi send buffer for y-dir
-    real(MP), private, allocatable :: rbuf_ip(:), rbuf_im(:) !<  mpi recv buffer for x-dir
-    real(MP), private, allocatable :: rbuf_jp(:), rbuf_jm(:) !<  mpi recv buffer for y-dir
+    real(MP), private, allocatable :: sbuf_ip(:), sbuf_im(:)                   !< mpi send buffer for x-dir
+    real(MP), private, allocatable :: sbuf_jp(:), sbuf_jm(:)                   !< mpi send buffer for y-dir
+    real(MP), private, allocatable :: rbuf_ip(:), rbuf_im(:)                   !< mpi recv buffer for x-dir
+    real(MP), private, allocatable :: rbuf_jp(:), rbuf_jm(:)                   !< mpi recv buffer for y-dir
 
     integer, private :: mpi_precision
 
@@ -201,7 +202,7 @@ contains
         xend = xbeg+nx*real(dx)
         yend = ybeg+ny*real(dy)
         zend = zbeg+nz*real(dz)
-        tend = ybeg+nt*dt
+        tend = tbeg+nt*dt
 
     end subroutine global__setup
 

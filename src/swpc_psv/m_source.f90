@@ -737,7 +737,7 @@ contains
                     vx(k, i) = -sd * sf * stf_vx
                     vz(k, i) = -cd * stf_vz
                     sxx(k, i) = -(la0 + 2 * mu0 * sd * sd * sf * sf) * stf_ii / vp
-                    szz(k, i) = -(la0 + 2 * mu0 + cd * cd) * stf_ii / vp
+                    szz(k, i) = -(la0 + 2 * mu0 * cd * cd) * stf_ii / vp
                     sxz(k, i) = -2 * mu0 * sd * cd * sf * stf_xz / vp
 
                 end do

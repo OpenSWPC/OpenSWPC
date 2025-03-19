@@ -19,6 +19,8 @@ module m_medium
     use m_vmodel_grd_rmed
     use m_vmodel_lgm
     use m_vmodel_lgm_rmed
+    use m_fdtool
+    use mpi
 
     implicit none
     private

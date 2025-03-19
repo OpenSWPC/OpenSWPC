@@ -55,7 +55,7 @@ contains
         close (io_ppm)
 
         !! Re-open the file in the stream i/o mode to add binary data
-        open (io_ppm, file=fname, access='stream', position='append', form='unformatted', iostat=ierr)
+        open(newunit=io_ppm, file=fname, access='stream', position='append', form='unformatted', iostat=ierr)
         call assert(ierr == 0)
         write (io_ppm) aimg
         close (io_ppm)
@@ -78,7 +78,8 @@ contains
         character     :: aimage(3, width, height)
         integer       :: i, j, k
         integer       :: ierr
-\
+        integer(1)    :: ibuf
+
         !! Header part: first read long bufffe, then look for line break
         open (newunit=io_ppm, file=fname, access='stream', form='unformatted', iostat=ierr)
         call assert(ierr == 0)
@@ -92,7 +93,7 @@ contains
         do k = 1, height
             do j = 1, width
                 do i = 1, 3
-                    image(i, j, k) = transfer(aimage(i, j, k), width)
+                    image(i, j, k) = int(transfer(aimage(i, j, k), ibuf), kind=sp)
                 end do
             end do
         end do
@@ -144,7 +145,7 @@ contains
         close (io_pgm)
 
         !! Re-open the same file in the stream access mode to add binary data
-        open (io_pgm, file=fname, access='stream', position='append', form='unformatted', iostat=ierr)
+        open (newunit=io_pgm, file=fname, access='stream', position='append', form='unformatted', iostat=ierr)
         call assert(ierr == 0)
         write (io_pgm) aimg
         close (io_pgm)
@@ -170,6 +171,7 @@ contains
         integer       :: i, j, k
         integer       :: var1, var2
         integer       :: ierr
+        integer(1)    :: ibuf
 
         !! Read header part: First read long array, then look for line-break
         open (newunit=io_pgm, file=fname, access='stream', form='unformatted', iostat=ierr)
@@ -188,8 +190,8 @@ contains
         !! convert to integer
         do j = 1, height
             do i = 1, width
-                var1 = transfer(aimage(1, i, j), width)
-                var2 = transfer(aimage(2, i, j), width)
+                var1 = int(transfer(aimage(1, i, j), ibuf), kind=sp)
+                var2 = int(transfer(aimage(2, i, j), ibuf), kind=sp)
                 image(i, j) = var1 * 256 + var2
             end do
         end do
@@ -252,6 +254,7 @@ contains
         character     :: aimage(width, height)
         integer       :: i, j, k
         integer       :: ierr
+        integer(kind=1) :: ibuf
 
         open (newunit=io_pgm, file=fname, access='stream', form='unformatted', iostat=ierr)
         call assert(ierr == 0)
@@ -267,7 +270,7 @@ contains
 
         do j = 1, height
             do i = 1, width
-                image(i, j) = transfer(aimage(i, j), width)
+                image(i, j) = int(transfer(aimage(i, j), ibuf), kind=sp)
             end do
         end do
 

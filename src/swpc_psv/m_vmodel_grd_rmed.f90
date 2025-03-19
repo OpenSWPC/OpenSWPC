@@ -15,6 +15,7 @@ module m_vmodel_grd_rmed
     use m_rdrmed
     use m_fdtool
     use m_seawater
+    use m_readini
     use netcdf
 
     implicit none

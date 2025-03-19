@@ -8,7 +8,36 @@ module m_fdtool
     implicit none
 
     save
-    public
+    private
+
+    public :: vcheck
+    public :: vcheck_sh
+    public :: fdm_stable_dt
+    public :: fdm_cond_stability
+    public :: fdm_cond_wavelength
+    public :: memory_size_3d
+    public :: memory_size_sh
+    public :: memory_size_psv
+    public :: moment_magnitude
+    public :: seismic_moment
+    public :: sdr2moment
+    public :: kupper
+    public :: texp
+    public :: cosine
+    public :: boxcar
+    public :: triangle
+    public :: herrmann
+    public :: iboxcar
+    public :: itriangle
+    public :: iherrmann
+    public :: ikupper
+    public :: x2i, y2j, z2k
+    public :: i2x, j2y, k2z
+    public :: n2t
+    public :: visco_set_relaxtime
+    public :: visco_chi
+    public :: visco_constq_zeta
+    public :: independent_list
 
 contains
 
@@ -76,7 +105,6 @@ contains
         end if
 
     end subroutine vcheck_sh
-
 
 
     subroutine fdm_stable_dt(dx, dy, dz, vmax, dt)

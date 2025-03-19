@@ -13,6 +13,8 @@ module m_report
     use m_kernel
     use m_readini
     use m_version
+    use m_fdtool
+    use mpi
 
     implicit none
     private

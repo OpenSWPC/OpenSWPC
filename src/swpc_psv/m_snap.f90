@@ -15,6 +15,7 @@ module m_snap
     use m_readini
     use m_geomap
     use netcdf
+    use mpi
 
     implicit none
     private
@@ -626,7 +627,6 @@ contains
         integer :: ns, ib, ie
         integer :: stt(3), cnt(3)
         integer :: vid
-        call pwatch__on("wbuf_nc")
 
         ns = nx1 * nx2
         cnt = (/nx1, nx2, 1/)
@@ -642,10 +642,9 @@ contains
             call nc_chk(nf90_redef(hdr%io))
             call nc_chk(nf90_put_att(hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)))
             call nc_chk(nf90_enddef(hdr%io))
-            call nc_chk(nf90_sync(hdr%io))
+!            call nc_chk(nf90_sync(hdr%io))
 
         end do
-        call pwatch__off("wbuf_nc")
 
     end subroutine wbuf_nc
 
