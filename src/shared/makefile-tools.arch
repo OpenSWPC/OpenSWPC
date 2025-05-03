@@ -75,6 +75,15 @@ ifeq ($(arch), eic2025-cray)
   NETCDF = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
 endif
 
+ifeq ($(arch), miyabi-gpu)
+  FC =  module purge; module load nvidia nv-hpcx netcdf hdf5 netcdf-fortran; nvfortran
+  FFLAGS = -fast -Mconcur -Minfo -mp -cpp
+  NCLIB = 
+  NCINC = -I $(NETCDF_FORTRAN_INC)
+  NETCDF = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5
+endif
+
+
 ### 
 ### Obsolete systems
 ###
@@ -180,3 +189,4 @@ ifeq ($(arch),obcx)
   NCINC =
   NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5
 endif
+
