@@ -251,7 +251,7 @@ contains
 
 
     subroutine tar__extract_filename(fullpath, filename)
-        implicit none
+
         character(*), intent(in) :: fullpath
         character(*), intent(out) :: filename
         integer :: last_slash
@@ -259,7 +259,7 @@ contains
 
         last_slash = 0
 
-        last_slash = max(index(fullpath, '/'), index(fullpath, '\'))
+        last_slash = max(index(fullpath, '/'), index(fullpath, '\\'))
 
         if (last_slash > 0) then
             filename = fullpath(last_slash + 1:)
