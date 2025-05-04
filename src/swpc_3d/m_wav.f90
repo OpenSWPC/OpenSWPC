@@ -435,7 +435,7 @@ contains
             #ifdef _OPENACC
             !$acc kernels &
             !$acc pcopyin(Vx, Vy, Vz, ux, uy, uz)
-            !$acc loop
+            !$acc loop independent
             #else
             !$omp parallel do private(n,i,j,k)
             #endif
@@ -459,7 +459,7 @@ contains
             #ifdef _OPENACC
             !$acc kernels &
             !$acc pcopyin(Vx, Vy, Vz, exx, eyy, ezz, eyz, exz, exy)
-            !$acc loop
+            !$acc loop independent
             #else
             !$omp parallel do private(n, i, j, k, dxVx, dyVy, dzVz, dyVz, dzVy, dxVz, dzVx, dxVy, dyVx)
             #endif
@@ -525,7 +525,7 @@ contains
                 #ifdef _OPENACC
                 !$acc kernels &
                 !$acc pcopyin(Vx, Vy, Vz, wav_vel, ist, jst, kst)
-                !$acc loop
+                !$acc loop independent
                 #else
                 !$omp parallel do private(n,i,j,k)
                 #endif
@@ -549,7 +549,7 @@ contains
                 #ifdef _OPENACC
                 !$acc kernels &
                 !$acc pcopyin(ux, uy, uz, wav_disp)
-                !$acc loop
+                !$acc loop independent
                 #else
                 !$omp parallel do private(n)
                 #endif
@@ -572,7 +572,7 @@ contains
                 #ifdef _OPENACC
                 !$acc kernels &
                 !$acc pcopyin(ist, jst, kst, Sxx, Syy, Szz, Syz, Sxz, Sxy, wav_stress)
-                !$acc loop
+                !$acc loop independent
                 #else
                 !$omp parallel do private(n, i, j, k)
                 #endif
@@ -602,7 +602,7 @@ contains
                 #ifdef _OPENACC
                 !$acc kernels &
                 !$acc pcopyin(exx, eyy, ezz, eyz, exz, exy, wav_strain)
-                !$acc loop
+                !$acc loop independent
                 #else
                 !$omp parallel do private(n)
                 #endif
