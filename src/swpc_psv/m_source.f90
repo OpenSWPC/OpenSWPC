@@ -587,7 +587,7 @@ contains
 
         do i = 1, nsrc
 
-            stime = source__momentrate(t, stftype, n_stfprm, srcprm(:, i))
+            stime = momentrate(t, stftype, n_stfprm, srcprm(:, i))
             sdrop = mo(i) * stime * dt_dxz
 
             ii = isrc(i)
@@ -626,7 +626,7 @@ contains
 
         do i = 1, nsrc
 
-            stime = source__momentrate(t, stftype, n_stfprm, srcprm(:, i))
+            stime = momentrate(t, stftype, n_stfprm, srcprm(:, i))
 
             ii = isrc(i)
             kk = ksrc(i)
@@ -642,7 +642,7 @@ contains
 
     end subroutine source__bodyforce
 
-    real(SP) function source__momentrate(t, stftype, nprm, srcprm)
+    real(SP) function momentrate(t, stftype, nprm, srcprm)
 
         !! returns number of source grids
 
@@ -658,16 +658,16 @@ contains
         trise = srcprm(2)
 
         select case (trim(stftype))
-        case ('boxcar'); source__momentrate = boxcar(t, tbeg, trise)
-        case ('triangle'); source__momentrate = triangle(t, tbeg, trise)
-        case ('herrmann'); source__momentrate = herrmann(t, tbeg, trise)
-        case ('kupper'); source__momentrate = kupper(t, tbeg, trise)
-        case ('cosine'); source__momentrate = cosine(t, tbeg, trise)
-        case ('texp'); source__momentrate = texp(t, tbeg, trise)
-        case default; source__momentrate = kupper(t, tbeg, trise)
+        case ('boxcar'); momentrate = boxcar(t, tbeg, trise)
+        case ('triangle'); momentrate = triangle(t, tbeg, trise)
+        case ('herrmann'); momentrate = herrmann(t, tbeg, trise)
+        case ('kupper'); momentrate = kupper(t, tbeg, trise)
+        case ('cosine'); momentrate = cosine(t, tbeg, trise)
+        case ('texp'); momentrate = texp(t, tbeg, trise)
+        case default; momentrate = kupper(t, tbeg, trise)
         end select
 
-    end function source__momentrate
+    end function momentrate
 
     subroutine pw_setup(io_prm)
 
@@ -726,10 +726,10 @@ contains
                     z1 = z0 + dz / 2.
 
                     !! source time function evaluated along rotated zeta value at staggered grid points
-                    stf_ii = source__momentrate(sd * sf * x0 + cd * z0, stftype, 2, (/0., pw_zlen/))
-                    stf_vx = source__momentrate(sd * sf * x1 + cd * z0 + dt / 2.*vp, stftype, 2, (/0., pw_zlen/))
-                    stf_vz = source__momentrate(sd * sf * x0 + cd * z1 + dt / 2.*vp, stftype, 2, (/0., pw_zlen/))
-                    stf_xz = source__momentrate(sd * sf * x1 + cd * z1, stftype, 2, (/0., pw_zlen/))
+                    stf_ii = momentrate(sd * sf * x0 + cd * z0, stftype, 2, (/0., pw_zlen/))
+                    stf_vx = momentrate(sd * sf * x1 + cd * z0 + dt / 2.*vp, stftype, 2, (/0., pw_zlen/))
+                    stf_vz = momentrate(sd * sf * x0 + cd * z1 + dt / 2.*vp, stftype, 2, (/0., pw_zlen/))
+                    stf_xz = momentrate(sd * sf * x1 + cd * z1, stftype, 2, (/0., pw_zlen/))
 
                     la0 = lam(k, i)
                     mu0 = mu(k, i)
@@ -760,10 +760,10 @@ contains
                     mu0 = mu(k, i)
 
                     !! source time function evaluated along rotated zeta value at staggered grid points
-                    stf_ii = source__momentrate(sd * sf * x0 + cd * z0, stftype, 2, (/0., pw_zlen/))
-                    stf_vx = source__momentrate(sd * sf * x1 + cd * z0 + dt / 2.*vs, stftype, 2, (/0., pw_zlen/))
-                    stf_vz = source__momentrate(sd * sf * x0 + cd * z1 + dt / 2.*vs, stftype, 2, (/0., pw_zlen/))
-                    stf_xz = source__momentrate(sd * sf * x1 + cd * z1, stftype, 2, (/0., pw_zlen/))
+                    stf_ii = momentrate(sd * sf * x0 + cd * z0, stftype, 2, (/0., pw_zlen/))
+                    stf_vx = momentrate(sd * sf * x1 + cd * z0 + dt / 2.*vs, stftype, 2, (/0., pw_zlen/))
+                    stf_vz = momentrate(sd * sf * x0 + cd * z1 + dt / 2.*vs, stftype, 2, (/0., pw_zlen/))
+                    stf_xz = momentrate(sd * sf * x1 + cd * z1, stftype, 2, (/0., pw_zlen/))
 
                     vx(k, i) = (cl * cf + sl * cd * sf) * stf_vx
                     vz(k, i) = -sl * sd * stf_vz

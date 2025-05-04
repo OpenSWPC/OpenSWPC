@@ -134,6 +134,9 @@ contains
         r41y = 1.0_MP / 24.0_MP / dy
         r41z = 1.0_MP / 24.0_MP / dz
 
+        !$acc enter data &
+        !$acc copyin(wav_vel, wav_disp, wav_stress, wav_strain, ist, jst, kst)
+
         call pwatch__off('wav__setup')
 
     end subroutine wav__setup
@@ -413,6 +416,7 @@ contains
                 allocate (ux(nst), source=0.0)
                 allocate (uy(nst), source=0.0)
                 allocate (uz(nst), source=0.0)
+                !$acc enter data copyin(ux, uy, uz)
             end if
 
             if (sw_wav_strain) then
@@ -422,25 +426,43 @@ contains
                 allocate (eyz(nst), source=0.0)
                 allocate (exz(nst), source=0.0)
                 allocate (exy(nst), source=0.0)
+                !$acc enter data copyin(exx, eyy, ezz, eyz, exz, exy)
             end if
         end if
 
         if (sw_wav_u) then
 
+            #ifdef _OPENACC
+            !$acc kernels &
+            !$acc pcopyin(Vx, Vy, Vz, ux, uy, uz)
+            !$acc loop
+            #else
             !$omp parallel do private(n,i,j,k)
+            #endif
             do n = 1, nst
                 i = ist(n); j = jst(n); k = kst(n)
                 ux(n) = ux(n) + real(Vx(k, i, j) + Vx(k, i - 1, j)) * 0.5 * dt
                 uy(n) = uy(n) + real(Vy(k, i, j) + Vy(k, i, j - 1)) * 0.5 * dt
                 uz(n) = uz(n) - real(Vz(k, i, j) + Vz(k - 1, i, j)) * 0.5 * dt ! positive upward
             end do
+            #ifdef _OPENACC
+            !$acc end loop
+            !$acc end kernels
+            #else
             !$omp end parallel do
+            #endif
 
         end if
 
         if (sw_wav_strain) then
 
+            #ifdef _OPENACC
+            !$acc kernels &
+            !$acc pcopyin(Vx, Vy, Vz, exx, eyy, ezz, eyz, exz, exy)
+            !$acc loop
+            #else
             !$omp parallel do private(n, i, j, k, dxVx, dyVy, dzVz, dyVz, dzVy, dxVz, dzVx, dxVy, dyVx)
+            #endif
             do n = 1, nst
                 i = ist(n); j = jst(n); k = kst(n)
 
@@ -486,7 +508,13 @@ contains
                 exy(n) = exy(n) + real(dxVy + dyVx) / 2.0 * dt
 
             end do
+            #ifdef _OPENACC
+            !$acc end loop
+            !$acc end kernels
+            #else
             !$omp end parallel do
+            #endif
+
         end if
 
         if (mod(it - 1, ntdec_w) == 0) then
@@ -494,32 +522,60 @@ contains
             itw = (it - 1) / ntdec_w + 1
             if (sw_wav_v) then
 
+                #ifdef _OPENACC
+                !$acc kernels &
+                !$acc pcopyin(Vx, Vy, Vz, wav_vel, ist, jst, kst)
+                !$acc loop
+                #else
                 !$omp parallel do private(n,i,j,k)
+                #endif
                 do n = 1, nst
                     i = ist(n); j = jst(n); k = kst(n)
                     wav_vel(itw, 1, n) = real(Vx(k, i, j) + Vx(k, i - 1, j)) / 2.0 * M0 * UC * 1e9
                     wav_vel(itw, 2, n) = real(Vy(k, i, j) + Vy(k, i, j - 1)) / 2.0 * M0 * UC * 1e9
                     wav_vel(itw, 3, n) = -real(Vz(k, i, j) + Vz(k - 1, i, j)) / 2.0 * M0 * UC * 1e9
                 end do
+                #ifdef _OPENACC
+                !$acc end loop
+                !$acc end kernels
+                #else
                 !$omp end parallel do
+                #endif
 
             end if
 
             if (sw_wav_u) then
 
+                #ifdef _OPENACC
+                !$acc kernels &
+                !$acc pcopyin(ux, uy, uz, wav_disp)
+                !$acc loop
+                #else
                 !$omp parallel do private(n)
+                #endif
                 do n = 1, nst
                     wav_disp(itw, 1, n) = real(ux(n)) * M0 * UC * 1e9
                     wav_disp(itw, 2, n) = real(uy(n)) * M0 * UC * 1e9
                     wav_disp(itw, 3, n) = real(uz(n)) * M0 * UC * 1e9
                 end do
+                #ifdef _OPENACC
+                !$acc end loop
+                !$acc end kernels
+                #else
                 !$omp end parallel do
-
+                #endif
+    
             end if
 
             if (sw_wav_stress) then
 
+                #ifdef _OPENACC
+                !$acc kernels &
+                !$acc pcopyin(ist, jst, kst, Sxx, Syy, Szz, Syz, Sxz, Sxy, wav_stress)
+                !$acc loop
+                #else
                 !$omp parallel do private(n, i, j, k)
+                #endif
                 do n = 1, nst
                     i = ist(n); j = jst(n); k = kst(n)
                     wav_stress(itw, 1, n) = real(Sxx(k, i, j)) * M0 * UC * 1e6
@@ -532,13 +588,24 @@ contains
                     wav_stress(itw, 6, n) = real(Sxy(k, i, j) + Sxy(k, i, j - 1) &
                                                  + Sxy(k, i - 1, j) + Sxy(k, i - 1, j - 1)) / 4.0 * M0 * UC * 1e6
                 end do
+                #ifdef _OPENACC
+                !$acc end loop
+                !$acc end kernels
+                #else
                 !$omp end parallel do
+                #endif
 
             end if
 
             if (sw_wav_strain) then
 
+                #ifdef _OPENACC
+                !$acc kernels &
+                !$acc pcopyin(exx, eyy, ezz, eyz, exz, exy, wav_strain)
+                !$acc loop
+                #else
                 !$omp parallel do private(n)
+                #endif
                 do n = 1, nst
                     wav_strain(itw, 1, n) = exx(n) * M0 * UC * 1e-3
                     wav_strain(itw, 2, n) = eyy(n) * M0 * UC * 1e-3
@@ -547,7 +614,12 @@ contains
                     wav_strain(itw, 5, n) = exz(n) * M0 * UC * 1e-3
                     wav_strain(itw, 6, n) = exy(n) * M0 * UC * 1e-3
                 end do
+                #ifdef _OPENACC
+                !$acc end loop
+                !$acc end kernels
+                #else
                 !$omp end parallel do
+                #endif 
 
             end if
 
@@ -605,6 +677,11 @@ contains
             call pwatch__off("wav__write")
             return
         end if
+
+        !$acc update self(wav_vel   )
+        !$acc update self(wav_disp  )
+        !$acc update self(wav_stress)
+        !$acc update self(wav_strain)
 
         if (trim(wav_format) == 'sac') then
 
@@ -730,7 +807,7 @@ contains
         type(sac__hdr), intent(in) :: sh(ncmp, nst1)
         real(SP), intent(in) :: dat(ntw, ncmp, nst1)
 
-        character(5) :: cid
+        character(5) :: cid  
         character(256) :: fn
 
         write (cid, '(I5.5)') myid

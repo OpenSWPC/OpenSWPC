@@ -8,36 +8,7 @@ module m_fdtool
     implicit none
 
     save
-    private
-
-    public :: vcheck
-    public :: vcheck_sh
-    public :: fdm_stable_dt
-    public :: fdm_cond_stability
-    public :: fdm_cond_wavelength
-    public :: memory_size_3d
-    public :: memory_size_sh
-    public :: memory_size_psv
-    public :: moment_magnitude
-    public :: seismic_moment
-    public :: sdr2moment
-    public :: kupper
-    public :: texp
-    public :: cosine
-    public :: boxcar
-    public :: triangle
-    public :: herrmann
-    public :: iboxcar
-    public :: itriangle
-    public :: iherrmann
-    public :: ikupper
-    public :: x2i, y2j, z2k
-    public :: i2x, j2y, k2z
-    public :: n2t
-    public :: visco_set_relaxtime
-    public :: visco_chi
-    public :: visco_constq_zeta
-    public :: independent_list
+    public
 
 contains
 
@@ -364,7 +335,7 @@ contains
 
     end subroutine sdr2moment
 
-
+    !$acc routine(kupper)
     real(SP) pure function kupper(t, ts, tr)
 
         !! Single-lobed Kupper function for moment rate
@@ -381,8 +352,8 @@ contains
 
     end function kupper
 
-
-    real(SP) pure function texp(t, ts, tr)
+    !$acc routine(texp)
+    pure function texp(t, ts, tr)
 
         !! t-exp type source time function
         !!
@@ -392,7 +363,7 @@ contains
         real(SP), intent(in) :: t  !! time
         real(SP), intent(in) :: ts !! rupture start time
         real(SP), intent(in) :: tr !! characteristic time
-
+        real(SP) :: texp
         real(SP) :: tt
 
         if (ts <= t) then
@@ -404,7 +375,7 @@ contains
 
     end function texp
 
-
+    !$acc routine(cosine)
     real(SP) pure function cosine(t, ts, tr)
 
         !! Cosine function for moment rate
@@ -424,7 +395,7 @@ contains
 
     end function cosine
 
-
+    !$acc routine(boxcar)
     real(SP) pure function boxcar(t, ts, tr)
 
         !! Box-car function for moment rate
@@ -444,7 +415,7 @@ contains
 
     end function boxcar
 
-
+    !$acc routine(triangle)
     real(SP) pure function triangle(t, ts, tr)
 
         !! Triangle function for moment rate
@@ -466,7 +437,7 @@ contains
 
     end function triangle
 
-
+    !$acc routine(herrmann)
     real(SP) pure function herrmann(t, ts, tr)
 
         !! The Herrmann function for moment rate
@@ -495,6 +466,35 @@ contains
         end if
 
     end function herrmann
+
+
+    !$acc routine(momentrate)
+    real(SP) pure function momentrate(t, stftype, nprm, srcprm)
+
+        !! returns number of source grids
+
+        real(SP), intent(in) :: t
+        character(*), intent(in) :: stftype
+        integer, intent(in) :: nprm
+        real(SP), intent(in) :: srcprm(1:nprm)
+
+        real(SP) :: tbeg
+        real(SP) :: trise
+
+        tbeg = srcprm(1)
+        trise = srcprm(2)
+
+        select case (stftype)
+        case ('boxcar');   momentrate = boxcar(t, tbeg, trise)
+        case ('triangle'); momentrate = triangle(t, tbeg, trise)
+        case ('herrmann'); momentrate = herrmann(t, tbeg, trise)
+        case ('kupper');   momentrate = kupper(t, tbeg, trise)
+        case ('cosine');   momentrate = cosine(t, tbeg, trise)
+        case ('texp');     momentrate = texp(t, tbeg, trise)
+        case default;      momentrate = kupper(t, tbeg, trise)
+        end select
+
+    end function momentrate
 
 
     real(SP) pure function iboxcar(t, ts, tr)

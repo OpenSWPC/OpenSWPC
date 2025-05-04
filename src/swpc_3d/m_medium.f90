@@ -476,12 +476,12 @@ contains
 
     subroutine allocate_memory()
 
-        allocate (rho(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
-        allocate (bx(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
-        allocate (by(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
-        allocate (bz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
-        allocate (lam(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
-        allocate (mu(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+        allocate (rho (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+        allocate (bx  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+        allocate (by  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+        allocate (bz  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+        allocate (lam (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+        allocate (mu  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
         allocate (muyz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
         allocate (muxz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
         allocate (muxy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)

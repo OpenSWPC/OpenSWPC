@@ -68,6 +68,10 @@ contains
 
         call pwatch__off("kernel__setup")
 
+        #ifdef _OPENACC
+        !$acc enter data copyin(c1, c2, d1, d2)
+        #endif
+
     end subroutine kernel__setup
 
     subroutine kernel__update_vel()
@@ -81,12 +85,19 @@ contains
 
         call pwatch__on("kernel__update_vel")
 
+
+        #ifdef _OPENACC
+        !$acc kernels &
+        !$acc pcopyin(bx, by, bz, Sxx, Syy, Szz, Syz, Sxz, Sxy, Vx, Vy, Vz, kfs_top, kfs_bot, kob_top, kob_bot)
+        !$acc loop independent collapse(3)
+        #else
         !$omp parallel &
         !$omp private( d3Sx3, d3Sy3, d3Sz3 ) &
         !$omp private( i, j, k) &
         !$omp private(re40x, re41x, re40y, re41y, re40z, re41z, isign)
         !$omp do &
         !$omp schedule(static,1)
+        #endif
         do j = jbeg_k, jend_k
             do i = ibeg_k, iend_k
                 do k = kbeg_k, kend_k
@@ -118,11 +129,15 @@ contains
                 end do
             end do
         end do
+        #ifdef _OPENACC
+        !$acc end loop
+        !$acc end kernels
+        #else
         !$omp end do nowait
         !$omp end parallel
-
         !$omp barrier
-
+        #endif 
+         
         call pwatch__off("kernel__update_vel")
 
     end subroutine kernel__update_vel
@@ -143,6 +158,13 @@ contains
 
         call pwatch__on("kernel__update_stress")
 
+        #ifdef _OPENACC
+        !$acc kernels &
+        !$acc pcopyin(Vx, Vy, Vz,  Sxx, Syy, Szz, Rxx, Ryy, Rzz, &
+        !$acc         mu, lam, taup, taus, c1, c2, d1, d2, &
+        !$acc         kfs_top, kfs_bot, kob_top, kob_bot)
+        !$acc loop independent collapse(3)
+        #else
         !$omp parallel  &
         !$omp private( dxVx, dyVy, dzVz ) &
         !$omp private( mu2, lam2mu ) &
@@ -153,6 +175,7 @@ contains
         !$omp private( i, j, k, m )
         !$omp do &
         !$omp schedule(static,1)
+        #endif
         do j = jbeg_k, jend_k
             do i = ibeg_k, iend_k
 
@@ -194,6 +217,10 @@ contains
                     Rxx_n = 0.0
                     Ryy_n = 0.0
                     Rzz_n = 0.0
+
+                    #ifdef _OPENACC
+                    !$acc loop seq reduction(+:Rxx_n,Ryy_n,Rzz_n)
+                    #endif
                     do m=1, nm
                       Rxx(m,k,i,j) = c1(m) * Rxx(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dyVy_dzVz) * dt
                       Ryy(m,k,i,j) = c1(m) * Ryy(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dzVz) * dt
@@ -202,7 +229,11 @@ contains
                       Ryy_n = Ryy_n + d1(m) * Ryy(m,k,i,j)
                       Rzz_n = Rzz_n + d1(m) * Rzz(m,k,i,j)
                     end do
-                    
+                    #ifdef _OPENACC
+                    !$acc end loop
+                    #endif
+
+
                     !! update stress components
 
                     taup_plus1 = 1 + taup1 * ( 1 + d2 )
@@ -215,9 +246,21 @@ contains
                 end do
             end do
         end do
+        #ifdef _OPENACC
+        !$acc end loop
+        !$acc end kernels
+        #else
         !$omp end do nowait
         !$omp end parallel
+        #endif 
 
+        #ifdef _OPENACC
+        !$acc kernels &
+        !$acc pcopyin(Vx, Vy, Vz, Sxy, Sxz, Syz, Rxy, Rxz, Ryz, &
+        !$acc         muxy, muxz, muyz, taus, c1, c2, d1, d2, &
+        !$acc         kfs_top, kfs_bot, kob_top, kob_bot)
+        !$acc loop independent collapse(3)
+        #else
         !$omp parallel &
         !$omp private( dxVy_dyVx, dxVz_dzVx, dyVz_dzVy ) &
         !$omp private( taus1, taus_plus1 ) &
@@ -226,6 +269,7 @@ contains
         !$omp private( i, j, k, m )
         !$omp do  &
         !$omp schedule(static,1)
+        #endif
         do j = jbeg_k, jend_k
             do i = ibeg_k, iend_k
 
@@ -259,6 +303,9 @@ contains
                     Ryz_n = 0.0
                     Rxz_n = 0.0
                     Rxy_n = 0.0
+                    #ifdef _OPENACC
+                    !$acc loop seq reduction(+:Rxy_n,Ryz_n,Rxz_n)
+                    #endif
                     do m = 1, nm
                         Ryz(m,k,i,j) = c1(m) * Ryz(m,k,i,j) - c2(m) * muyz(k,i,j) * taus1 * dyVz_dzVy * dt
                         Rxz(m,k,i,j) = c1(m) * Rxz(m,k,i,j) - c2(m) * muxz(k,i,j) * taus1 * dxVz_dzVx * dt
@@ -267,6 +314,9 @@ contains
                         Rxz_n = Rxz_n + d1(m) * Rxz(m,k,i,j)
                         Rxy_n = Rxy_n + d1(m) * Rxy(m,k,i,j)
                     end do
+                    #ifdef _OPENACC
+                    !$acc end loop
+                    #endif
 
                     !! update stress components
                     taus_plus1 = 1 + taus1 * (1 + d2)
@@ -278,10 +328,14 @@ contains
                 end do
             end do
         end do
+        #ifdef _OPENACC
+        !$acc end loop
+        !$acc end kernels
+        #else
         !$omp end do nowait
         !$omp end parallel
-
         !$omp barrier
+        #endif
 
         call pwatch__off("kernel__update_stress")
 
@@ -299,6 +353,8 @@ contains
         zmax = 0.0
 
         !! avoid nearby the absorbing boundary
+        !$acc kernels present(Vx, Vy, vz) copyout(xmax, ymax, zmax) 
+        !$acc loop reduction(max:ymax,zmax,xmax)
         do j = max(na + margin + 1, jbeg_k), min(ny - na - margin, jend_k)
             do i = max(na + margin + 1, ibeg_k), min(ny - na - margin, iend_k)
                 xmax = max(xmax, real(abs(vx(kob(i, j) + 1, i, j))))
@@ -306,6 +362,8 @@ contains
                 zmax = max(zmax, real(abs(vz(kob(i, j) + 1, i, j))))
             end do
         end do
+        !$acc end loop
+        !$acc end kernels
 
     end subroutine kernel__vmax
 

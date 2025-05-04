@@ -102,6 +102,12 @@ contains
 
         !! dummy
         io2 = io_prm
+
+        #ifdef _OPENACC
+        !$acc enter data &
+        !$acc copyin(gx_c, gx_b, gy_c, gy_b, gz_c, gz_b)
+        #endif
+
     end subroutine absorb_c__setup
 
     subroutine absorb_c__update_stress
@@ -109,7 +115,13 @@ contains
         integer :: i, j, k
         real(SP) :: gcc
 
+        #ifdef _OPENACC
+        !$acc kernels &
+        !$acc pcopyin(Sxx, Syy, Szz, Syz, Sxz, Sxy, gx_c, gx_b, gy_c, gy_b, gz_c, gz_b)
+        !$acc loop independent collapse(3)
+        #else
         !$omp parallel do schedule(dynamic) private( i, j, k, gcc )
+        #endif
         do j = jbeg, jend
             do i = ibeg, iend
                 do k = kbeg, kend_k
@@ -126,15 +138,26 @@ contains
                 end do
             end do
         end do
+        #ifdef _OPENACC
+        !$acc end loop
+        !$acc end kernels
+        #else
         !$omp end parallel do
-
+        #endif
+         
     end subroutine absorb_c__update_stress
 
     subroutine absorb_c__update_vel
 
         integer :: i, j, k
 
+        #ifdef _OPENACC
+        !$acc kernels &
+        !$acc pcopyin(Vx, Vy, Vz, gx_c, gx_b, gy_c, gy_b, gz_c, gz_b)
+        !$acc loop independent collapse(3)
+        #else
         !$omp parallel do schedule(dynamic) private(i,j,k)
+        #endif
         do j = jbeg, jend
             do i = ibeg, iend
                 do k = kbeg, kend
@@ -146,6 +169,12 @@ contains
                 end do
             end do
         end do
+        #ifdef _OPENACC
+        !$acc end loop
+        !$acc end kernels
+        #else
+        !$omp end parallel do
+        #endif
 
     end subroutine absorb_c__update_vel
 

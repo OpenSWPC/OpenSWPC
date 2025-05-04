@@ -89,7 +89,7 @@ endif
 # Miyabi GPU supercomputer of the University of Tokyo
 ifeq ($(arch), miyabi-gpu)
   FC = module purge; module load nvidia nv-hpcx netcdf hdf5 netcdf-fortran; mpifort
-  FFLAGS = -fast -Mconcur -Minfo -acc -cpp -gpu=cc90
+  FFLAGS = -fast -Minfo=all -acc -cpp -gpu=cc90
   NCLIB = 
   NCINC = -I $(NETCDF_FORTRAN_INC)
   NETCDF = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5

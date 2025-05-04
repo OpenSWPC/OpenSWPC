@@ -81,8 +81,8 @@ module m_snap
     character(6) :: snp_format ! native or netcdf
 
     ! displacement snapshot buffer
-    real(SP), allocatable :: buf_yz_u(:, :, :), buf_xz_u(:, :, :), buf_xy_u(:, :, :), buf_fs_u(:, :, :), buf_ob_u(:, :, :)
-    real(SP), allocatable :: max_ob_v(:, :, :), max_ob_u(:, :, :), max_fs_v(:, :, :), max_fs_u(:, :, :)
+    real(SP), allocatable :: buf_yz_u(:,:,:), buf_xz_u(:,:,:), buf_xy_u(:,:,:), buf_fs_u(:,:,:), buf_ob_u(:,:,:)
+    real(SP), allocatable :: max_ob_v(:,:,:), max_ob_u(:,:,:), max_fs_v(:,:,:), max_fs_u(:,:,:)
 
     ! cross-section data MPI communicator
     integer :: mpi_comm_xz, mpi_comm_yz
@@ -312,6 +312,9 @@ contains
         allocate (max_fs_v(nxs, nys, 3), source=0.0)
         allocate (max_fs_u(nxs, nys, 3), source=0.0)
 
+        !$acc enter data copyin(buf_yz_u, buf_xz_u, buf_xy_u, buf_fs_u, buf_ob_u&
+        !$acc                   max_ob_v, max_ob_u, max_fs_v, max_fs_u)
+
         call mpi_barrier(mpi_comm_world, err)
 
         call pwatch__off("snap__setup")
@@ -460,7 +463,7 @@ contains
 
                 ii = i * idec - idec / 2
                 jj = j * jdec - jdec / 2
-        !! topography data
+                !! topography data
                 buf(i, j, 1) = -bddep(ii, jj, 0) * 1000 ! positive upward, in unit of [m]
 
             end do

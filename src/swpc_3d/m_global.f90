@@ -12,6 +12,9 @@ module m_global
     use m_readini
     use m_daytim
     use mpi
+#ifdef _OPENACC
+    use openacc
+#endif 
 
     implicit none
     private
@@ -204,6 +207,15 @@ contains
         zend = zbeg+nz*real(dz)
         tend = tbeg+nt*dt
 
+#ifdef _OPENACC
+        block
+            integer :: ngpus
+            ngpus = acc_get_num_devices(acc_device_nvidia)
+            call acc_set_device_num(mod(myid, ngpus), acc_device_nvidia)
+            write(*,*) "MYID = ", myid, "MY GPU = ", mod(myid, ngpus), "#GPU = ", ngpus
+        end block
+#endif                
+
     end subroutine global__setup
 
     ! Common parameter setup, needed only for starting
@@ -366,6 +378,18 @@ contains
 
         end if
 
+        !$acc enter data copyin(&
+        !$acc       sbuf_ip(5*nyp*nz), &
+        !$acc       sbuf_im(5*nyp*nz), &
+        !$acc       rbuf_ip(5*nyp*nz), &
+        !$acc       rbuf_im(5*nyp*nz), &
+        !$acc       sbuf_jp(5*nxp*nz), &
+        !$acc       sbuf_jm(5*nxp*nz), &
+        !$acc       rbuf_jp(5*nxp*nz), &
+        !$acc       rbuf_jm(5*nxp*nz), &
+        !$acc       itbl(-1:nproc_x, -1:nproc_y))
+ 
+
         call pwatch__off("global__setup2") ! measure from here
 
     end subroutine global__setup2
@@ -377,6 +401,7 @@ contains
         integer :: err
         integer :: istatus(mpi_status_size, 4)
         integer :: req_i(4), req_j(4)
+        integer :: i, j
 
         if (myid >= nproc) return
 
@@ -386,50 +411,90 @@ contains
         isize = nyp*nz
         jsize = nxp*nz
 
+        !$acc host_data use_device(rbuf_ip, rbuf_im, rbuf_jp, rbuf_jm)
         call mpi_irecv(rbuf_ip, 5*isize, mpi_precision, itbl(idx+1, idy), 1, mpi_comm_world, req_i(1), err)
         call mpi_irecv(rbuf_im, 4*isize, mpi_precision, itbl(idx-1, idy), 2, mpi_comm_world, req_i(2), err)
         call mpi_irecv(rbuf_jp, 5*jsize, mpi_precision, itbl(idx, idy+1), 3, mpi_comm_world, req_j(1), err)
         call mpi_irecv(rbuf_jm, 4*jsize, mpi_precision, itbl(idx, idy-1), 4, mpi_comm_world, req_j(2), err)
+        !$acc end host_data
 
-        sbuf_ip(1:2*isize) = reshape(Vx(1:nz, iend-1:iend, jbeg:jend), (/2*isize/))
-        sbuf_ip(2*isize+1:3*isize) = reshape(Vy(1:nz, iend:iend, jbeg:jend), (/isize/))
-        sbuf_ip(3*isize+1:4*isize) = reshape(Vz(1:nz, iend:iend, jbeg:jend), (/isize/))
+        !$acc kernels pcopyin(Vx, Vy, Vz) 
+        !$acc loop independent
+        do j=jbeg, jend
+            sbuf_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Vx(1:nz,iend-1,j)
+            sbuf_ip(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz) = Vx(1:nz,iend  ,j)
+            sbuf_ip(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz) = Vy(1:nz,iend  ,j)
+            sbuf_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Vz(1:nz,iend  ,j)
+            
+            sbuf_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Vx(1:nz,ibeg  ,j)
+            sbuf_im(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz) = Vy(1:nz,ibeg  ,j)
+            sbuf_im(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz) = Vy(1:nz,ibeg+1,j)
+            sbuf_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Vz(1:nz,ibeg  ,j)
+            sbuf_im(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz) = Vz(1:nz,ibeg+1,j)
+        end do
+        !$acc end loop
+        !$acc end kernels
+
+        !$acc kernels pcopyin(Vx, Vy, Vz) 
+        !$acc loop independent
+        do i=ibeg, iend
+            sbuf_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Vx(1:nz,i,jend  )
+            sbuf_jp(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz) = Vy(1:nz,i,jend-1)
+            sbuf_jp(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz) = Vy(1:nz,i,jend  )
+            sbuf_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Vz(1:nz,i,jend  )
+
+            sbuf_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Vx(1:nz,i,jbeg  )
+            sbuf_jm(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz) = Vx(1:nz,i,jbeg+1)
+            sbuf_jm(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz) = Vy(1:nz,i,jbeg  )
+            sbuf_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Vz(1:nz,i,jbeg  )
+            sbuf_jm(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz) = Vz(1:nz,i,jbeg+1)
+        end do
+        !$acc end loop
+        !$acc end kernels
+
+        !$acc host_data use_device(sbuf_ip, sbuf_im, sbuf_jp, sbuf_jm)
         call mpi_isend(sbuf_ip, 4*isize, mpi_precision, itbl(idx+1, idy), 2, mpi_comm_world, req_i(3), err)
-
-        sbuf_im(1:isize) = reshape(Vx(1:nz, ibeg:ibeg, jbeg:jend), (/isize/))
-        sbuf_im(isize+1:3*isize) = reshape(Vy(1:nz, ibeg:ibeg+1, jbeg:jend), (/2*isize/))
-        sbuf_im(3*isize+1:5*isize) = reshape(Vz(1:nz, ibeg:ibeg+1, jbeg:jend), (/2*isize/))
         call mpi_isend(sbuf_im, 5*isize, mpi_precision, itbl(idx-1, idy), 1, mpi_comm_world, req_i(4), err)
-
-        sbuf_jp(1:jsize) = reshape(Vx(1:nz, ibeg:iend, jend:jend), (/jsize/))
-        sbuf_jp(jsize+1:3*jsize) = reshape(Vy(1:nz, ibeg:iend, jend-1:jend), (/2*jsize/))
-        sbuf_jp(3*jsize+1:4*jsize) = reshape(Vz(1:nz, ibeg:iend, jend:jend), (/jsize/))
         call mpi_isend(sbuf_jp, 4*jsize, mpi_precision, itbl(idx, idy+1), 4, mpi_comm_world, req_j(3), err)
-
-        sbuf_jm(1:2*jsize) = reshape(Vx(1:nz, ibeg:iend, jbeg:jbeg+1), (/2*jsize/))
-        sbuf_jm(2*jsize+1:3*jsize) = reshape(Vy(1:nz, ibeg:iend, jbeg:jbeg), (/jsize/))
-        sbuf_jm(3*jsize+1:5*jsize) = reshape(Vz(1:nz, ibeg:iend, jbeg:jbeg+1), (/2*jsize/))
         call mpi_isend(sbuf_jm, 5*jsize, mpi_precision, itbl(idx, idy-1), 3, mpi_comm_world, req_j(4), err)
+        !$acc end host_data
 
         call mpi_waitall(4, req_i, istatus, err)
-
-        Vx(1:nz, ibeg-2:ibeg-1, jbeg:jend) = reshape(rbuf_im(1:2*isize), (/nz, 2, nyp/))
-        Vy(1:nz, ibeg-1:ibeg-1, jbeg:jend) = reshape(rbuf_im(2*isize+1:3*isize), (/nz, 1, nyp/))
-        Vz(1:nz, ibeg-1:ibeg-1, jbeg:jend) = reshape(rbuf_im(3*isize+1:4*isize), (/nz, 1, nyp/))
-
-        Vx(1:nz, iend+1:iend+1, jbeg:jend) = reshape(rbuf_ip(1:isize), (/nz, 1, nyp/))
-        Vy(1:nz, iend+1:iend+2, jbeg:jend) = reshape(rbuf_ip(isize+1:3*isize), (/nz, 2, nyp/))
-        Vz(1:nz, iend+1:iend+2, jbeg:jend) = reshape(rbuf_ip(3*isize+1:5*isize), (/nz, 2, nyp/))
-
         call mpi_waitall(4, req_j, istatus, err)
 
-        Vx(1:nz, ibeg:iend, jbeg-1:jbeg-1) = reshape(rbuf_jm(1:jsize), (/nz, nxp, 1/))
-        Vy(1:nz, ibeg:iend, jbeg-2:jbeg-1) = reshape(rbuf_jm(jsize+1:3*jsize), (/nz, nxp, 2/))
-        Vz(1:nz, ibeg:iend, jbeg-1:jbeg-1) = reshape(rbuf_jm(3*jsize+1:4*jsize), (/nz, nxp, 1/))
+        !$acc kernels present(Vx, Vy, Vz)
+        !$acc loop independent
+        do j=jbeg, jend
+            Vx(1:nz,ibeg-2,j) = rbuf_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
+            Vx(1:nz,ibeg-1,j) = rbuf_im(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz)
+            Vy(1:nz,ibeg-1,j) = rbuf_im(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz)
+            Vz(1:nz,ibeg-1,j) = rbuf_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
 
-        Vx(1:nz, ibeg:iend, jend+1:jend+2) = reshape(rbuf_jp(1:2*jsize), (/nz, nxp, 2/))
-        Vy(1:nz, ibeg:iend, jend+1:jend+1) = reshape(rbuf_jp(2*jsize+1:3*jsize), (/nz, nxp, 1/))
-        Vz(1:nz, ibeg:iend, jend+1:jend+2) = reshape(rbuf_jp(3*jsize+1:5*jsize), (/nz, nxp, 2/))
+            Vx(1:nz,iend+1,j) = rbuf_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
+            Vy(1:nz,iend+1,j) = rbuf_ip(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz)
+            Vy(1:nz,iend+2,j) = rbuf_ip(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz)
+            Vz(1:nz,iend+1,j) = rbuf_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
+            Vz(1:nz,iend+2,j) = rbuf_ip(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz)
+        end do
+        !$acc end loop
+        !$acc end kernels
+
+        !$acc kernels present(Vx, Vy, Vz)
+        !$acc loop independent
+        do i=ibeg, iend
+            Vx(1:nz,i,jbeg-1) = rbuf_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
+            Vy(1:nz,i,jbeg-2) = rbuf_jm(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz)
+            Vy(1:nz,i,jbeg-1) = rbuf_jm(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz)
+            Vz(1:nz,i,jbeg-1) = rbuf_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
+
+            Vx(1:nz,i,jend+1) = rbuf_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
+            Vx(1:nz,i,jend+2) = rbuf_jp(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz)
+            Vy(1:nz,i,jend+1) = rbuf_jp(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz)
+            Vz(1:nz,i,jend+1) = rbuf_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
+            Vz(1:nz,i,jend+2) = rbuf_jp(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz)
+        end do
+        !$acc end loop
+        !$acc end kernels
 
         call pwatch__off("global__comm_vel")
 
@@ -445,6 +510,7 @@ contains
         integer :: err
         integer :: istatus(mpi_status_size, 4)
         integer :: req_i(4), req_j(4)
+        integer :: i, j
 
         if (myid >= nproc) return
 
@@ -454,50 +520,93 @@ contains
         isize = nyp*nz
         jsize = nxp*nz
 
+        !$acc host_data use_device(rbuf_ip, rbuf_jp, rbuf_im, rbuf_jm)
         call mpi_irecv(rbuf_ip, 4*isize, mpi_precision, itbl(idx+1, idy), 5, mpi_comm_world, req_i(1), err)
         call mpi_irecv(rbuf_im, 5*isize, mpi_precision, itbl(idx-1, idy), 6, mpi_comm_world, req_i(2), err)
         call mpi_irecv(rbuf_jp, 4*jsize, mpi_precision, itbl(idx, idy+1), 7, mpi_comm_world, req_j(1), err)
         call mpi_irecv(rbuf_jm, 5*jsize, mpi_precision, itbl(idx, idy-1), 8, mpi_comm_world, req_j(2), err)
+        !$acc end host_data
 
-        sbuf_ip(1:isize) = reshape(Sxx(1:nz, iend:iend, jbeg:jend), (/isize/))
-        sbuf_ip(isize+1:3*isize) = reshape(Sxy(1:nz, iend-1:iend, jbeg:jend), (/2*isize/))
-        sbuf_ip(3*isize+1:5*isize) = reshape(Sxz(1:nz, iend-1:iend, jbeg:jend), (/2*isize/))
+            !$acc kernels &
+            !$acc pcopyin(Sxx, Sxy, Sxz) 
+            !$acc loop independent 
+        do j=jbeg, jend
+            sbuf_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Sxx(1:nz,iend  ,j)
+            sbuf_ip(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz) = Sxy(1:nz,iend-1,j)
+            sbuf_ip(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz) = Sxy(1:nz,iend  ,j)
+            sbuf_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Sxz(1:nz,iend-1,j)
+            sbuf_ip(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz) = Sxz(1:nz,iend  ,j)
+
+            sbuf_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Sxx(1:nz,ibeg  ,j)
+            sbuf_im(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz) = Sxx(1:nz,ibeg+1,j)
+            sbuf_im(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz) = Sxy(1:nz,ibeg  ,j)
+            sbuf_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Sxz(1:nz,ibeg  ,j)
+        end do
+        !$acc end loop
+        !$acc end kernels
+
+        !$acc kernels pcopyin(Syy, Sxy, Syz) 
+        !$acc loop independent
+        do i=ibeg, iend
+            sbuf_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Syy(1:nz,i,jend  )
+            sbuf_jp(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz) = Sxy(1:nz,i,jend-1)
+            sbuf_jp(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz) = Sxy(1:nz,i,jend  )
+            sbuf_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Syz(1:nz,i,jend-1)
+            sbuf_jp(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz) = Syz(1:nz,i,jend  )
+
+            sbuf_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Syy(1:nz,i,jbeg  )
+            sbuf_jm(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz) = Syy(1:nz,i,jbeg+1)
+            sbuf_jm(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz) = Sxy(1:nz,i,jbeg  )
+            sbuf_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Syz(1:nz,i,jbeg  )
+        end do
+        !$acc end loop
+        !$acc end kernels
+
+        !$acc host_data use_device(sbuf_ip, sbuf_jp, sbuf_im, sbuf_jm)
         call mpi_isend(sbuf_ip, 5*isize, mpi_precision, itbl(idx+1, idy), 6, mpi_comm_world, req_i(3), err)
-
-        sbuf_im(1:2*isize) = reshape(Sxx(1:nz, ibeg:ibeg+1, jbeg:jend), (/2*isize/))
-        sbuf_im(2*isize+1:3*isize) = reshape(Sxy(1:nz, ibeg:ibeg, jbeg:jend), (/isize/))
-        sbuf_im(3*isize+1:4*isize) = reshape(Sxz(1:nz, ibeg:ibeg, jbeg:jend), (/isize/))
         call mpi_isend(sbuf_im, 4*isize, mpi_precision, itbl(idx-1, idy), 5, mpi_comm_world, req_i(4), err)
-
-        sbuf_jp(1:jsize) = reshape(Syy(1:nz, ibeg:iend, jend:jend), (/jsize/))
-        sbuf_jp(jsize+1:3*jsize) = reshape(Sxy(1:nz, ibeg:iend, jend-1:jend), (/2*jsize/))
-        sbuf_jp(3*jsize+1:5*jsize) = reshape(Syz(1:nz, ibeg:iend, jend-1:jend), (/2*jsize/))
         call mpi_isend(sbuf_jp, 5*jsize, mpi_precision, itbl(idx, idy+1), 8, mpi_comm_world, req_j(3), err)
-
-        sbuf_jm(1:2*jsize) = reshape(Syy(1:nz, ibeg:iend, jbeg:jbeg+1), (/2*jsize/))
-        sbuf_jm(2*jsize+1:3*jsize) = reshape(Sxy(1:nz, ibeg:iend, jbeg:jbeg), (/jsize/))
-        sbuf_jm(3*jsize+1:4*jsize) = reshape(Syz(1:nz, ibeg:iend, jbeg:jbeg), (/jsize/))
         call mpi_isend(sbuf_jm, 4*jsize, mpi_precision, itbl(idx, idy-1), 7, mpi_comm_world, req_j(4), err)
+        !$acc end host_data
 
         call mpi_waitall(4, req_i, istatus, err)
-
-        Sxx(1:nz, ibeg-1:ibeg-1, jbeg:jend) = reshape(rbuf_im(1:isize), (/nz, 1, nyp/))
-        Sxy(1:nz, ibeg-2:ibeg-1, jbeg:jend) = reshape(rbuf_im(isize+1:3*isize), (/nz, 2, nyp/))
-        Sxz(1:nz, ibeg-2:ibeg-1, jbeg:jend) = reshape(rbuf_im(3*isize+1:5*isize), (/nz, 2, nyp/))
-
-        Sxx(1:nz, iend+1:iend+2, jbeg:jend) = reshape(rbuf_ip(1:2*isize), (/nz, 2, nyp/))
-        Sxy(1:nz, iend+1:iend+1, jbeg:jend) = reshape(rbuf_ip(2*isize+1:3*isize), (/nz, 1, nyp/))
-        Sxz(1:nz, iend+1:iend+1, jbeg:jend) = reshape(rbuf_ip(3*isize+1:4*isize), (/nz, 1, nyp/))
-
         call mpi_waitall(4, req_j, istatus, err)
 
-        Syy(1:nz, ibeg:iend, jbeg-1:jbeg-1) = reshape(rbuf_jm(1:jsize), (/nz, nxp, 1/))
-        Sxy(1:nz, ibeg:iend, jbeg-2:jbeg-1) = reshape(rbuf_jm(jsize+1:3*jsize), (/nz, nxp, 2/))
-        Syz(1:nz, ibeg:iend, jbeg-2:jbeg-1) = reshape(rbuf_jm(3*jsize+1:5*jsize), (/nz, nxp, 2/))
+            !$acc kernels present(Sxx, Sxy, Sxz) 
+            !$acc loop independent
+        do j=jbeg, jend
+            Sxx(1:nz,ibeg-1,j) = rbuf_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
+            Sxy(1:nz,ibeg-2,j) = rbuf_im(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz)
+            Sxy(1:nz,ibeg-1,j) = rbuf_im(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz)
+            Sxz(1:nz,ibeg-2,j) = rbuf_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
+            Sxz(1:nz,ibeg-1,j) = rbuf_im(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz)
 
-        Syy(1:nz, ibeg:iend, jend+1:jend+2) = reshape(rbuf_jp(1:2*jsize), (/nz, nxp, 2/))
-        Sxy(1:nz, ibeg:iend, jend+1:jend+1) = reshape(rbuf_jp(2*jsize+1:3*jsize), (/nz, nxp, 1/))
-        Syz(1:nz, ibeg:iend, jend+1:jend+1) = reshape(rbuf_jp(3*jsize+1:4*jsize), (/nz, nxp, 1/))
+            Sxx(1:nz,iend+1,j) = rbuf_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
+            Sxx(1:nz,iend+2,j) = rbuf_ip(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz)
+            Sxy(1:nz,iend+1,j) = rbuf_ip(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz)
+            Sxz(1:nz,iend+1,j) = rbuf_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
+        end do
+        !$acc end loop
+        !$acc end kernels
+
+        !$acc kernels present(Syy, Sxy, Syz) 
+        !$acc loop independent
+        do i=ibeg, iend
+            Syy(1:nz,i,jbeg-1) = rbuf_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
+            Sxy(1:nz,i,jbeg-2) = rbuf_jm(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz)
+            Sxy(1:nz,i,jbeg-1) = rbuf_jm(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz)
+            Syz(1:nz,i,jbeg-2) = rbuf_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
+            Syz(1:nz,i,jbeg-1) = rbuf_jm(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz)
+
+            Syy(1:nz,i,jend+1) = rbuf_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
+            Syy(1:nz,i,jend+2) = rbuf_jp(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz)
+            Sxy(1:nz,i,jend+1) = rbuf_jp(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz)
+            Syz(1:nz,i,jend+1) = rbuf_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
+        end do
+        !$acc end loop
+        !$acc end kernels
+
+
 
         call pwatch__off("global__comm_stress")
 

@@ -33,7 +33,7 @@ program swpc_3d
     use m_version
     use m_wav
     use mpi
-
+ 
     implicit none
 
     character(256) :: fn_prm
@@ -79,6 +79,47 @@ program swpc_3d
     call report__setup(io_prm)
 
     close (io_prm)
+
+    !$acc enter data copyin(&
+    !$acc       Vx (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       Vy (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       Vz (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       Sxx(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       Syy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       Szz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       Syz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       Sxz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       Sxy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       Rxx(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), &
+    !$acc       Ryy(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), &
+    !$acc       Rzz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), &
+    !$acc       Ryz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), &
+    !$acc       Rxz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), &
+    !$acc       Rxy(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k)  )
+    
+    !$acc enter data copyin(&    
+    !$acc       rho (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       bx  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), & 
+    !$acc       by  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), & 
+    !$acc       bz  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), & 
+    !$acc       lam (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       mu  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), & 
+    !$acc       muyz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       muxz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       muxy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       taup(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       taus(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &   
+    !$acc       ts(nm) )
+
+    !$acc enter data copyin(&
+    !$acc       kfs(ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       kob(ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       kfs_top(ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       kfs_bot(ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       kob_top(ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       kob_bot(ibeg_m:iend_m, jbeg_m:jend_m), &
+    !$acc       bddep(ibeg_m:iend_m, jbeg_m:jend_m, 0:NBD))
+
 
     !! mainloop
     do it = 1, nt

@@ -569,7 +569,7 @@ contains
 
         do i = 1, nsrc
 
-            stime = source__momentrate(t, stftype, n_stfprm, srcprm(:, i))
+            stime = momentrate(t, stftype, n_stfprm, srcprm(:, i))
             sdrop = mo(i) * stime * dt_dxz
 
             ii = isrc(i)
@@ -603,7 +603,7 @@ contains
 
         do i = 1, nsrc
 
-            stime = source__momentrate(t, stftype, n_stfprm, srcprm(:, i))
+            stime = momentrate(t, stftype, n_stfprm, srcprm(:, i))
 
             ii = isrc(i)
             kk = ksrc(i)
@@ -615,7 +615,7 @@ contains
         call pwatch__off("source__bodyforce")
     end subroutine source__bodyforce
 
-    real(SP) function source__momentrate(t, stftype, nprm, srcprm)
+    real(SP) function momentrate(t, stftype, nprm, srcprm)
 
         !! returns number of source grids
 
@@ -631,16 +631,16 @@ contains
         trise = srcprm(2)
 
         select case (trim(stftype))
-        case ('boxcar'); source__momentrate = boxcar(t, tbeg, trise)
-        case ('triangle'); source__momentrate = triangle(t, tbeg, trise)
-        case ('herrmann'); source__momentrate = herrmann(t, tbeg, trise)
-        case ('kupper'); source__momentrate = kupper(t, tbeg, trise)
-        case ('cosine'); source__momentrate = cosine(t, tbeg, trise)
-        case ('texp'); source__momentrate = texp(t, tbeg, trise)
-        case default; source__momentrate = kupper(t, tbeg, trise)
+        case ('boxcar'); momentrate = boxcar(t, tbeg, trise)
+        case ('triangle'); momentrate = triangle(t, tbeg, trise)
+        case ('herrmann'); momentrate = herrmann(t, tbeg, trise)
+        case ('kupper'); momentrate = kupper(t, tbeg, trise)
+        case ('cosine'); momentrate = cosine(t, tbeg, trise)
+        case ('texp'); momentrate = texp(t, tbeg, trise)
+        case default; momentrate = kupper(t, tbeg, trise)
         end select
 
-    end function source__momentrate
+    end function momentrate
 
     subroutine pw_setup(io_prm)
 
@@ -700,9 +700,9 @@ contains
                     mu0 = mu(k, i)
 
                     !! source time function evaluated along rotated zeta value at staggered grid points
-                    stf_vy = source__momentrate(sd * sf * x0 + cd * z0 + dt / 2.*vs, stftype, 2, (/0., pw_zlen/))
-                    stf_yz = source__momentrate(sd * sf * x0 + cd * z1, stftype, 2, (/0., pw_zlen/))
-                    stf_xy = source__momentrate(sd * sf * x1 + cd * z0, stftype, 2, (/0., pw_zlen/))
+                    stf_vy = momentrate(sd * sf * x0 + cd * z0 + dt / 2.*vs, stftype, 2, (/0., pw_zlen/))
+                    stf_yz = momentrate(sd * sf * x0 + cd * z1, stftype, 2, (/0., pw_zlen/))
+                    stf_xy = momentrate(sd * sf * x1 + cd * z0, stftype, 2, (/0., pw_zlen/))
 
                     vy(k, i) = (cl * sf - sl * cd * cf) * stf_vy
                     syz(k, i) = mu0 * (cl * cd * sf - sl * c2d * cf) * stf_yz / vs
