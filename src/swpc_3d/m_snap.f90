@@ -951,10 +951,6 @@ contains
         integer :: stt(3), cnt(3)
         integer :: vid
 
-        #ifdef _OPENACC
-        !$acc update self(rbuf)
-        #endif
-
         ns = nx1 * nx2
         cnt = (/nx1, nx2, 1/)
         stt = (/1, 1, it0 / ntdec_s + 1/)
@@ -1051,7 +1047,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nys * nzs * 4), rbuf(nys * nzs * 4))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == yz_ps%ionode) call wbuf_nc(yz_ps, 4, nys, nzs, it0, rbuf)
@@ -1059,9 +1055,9 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nys, nzs, 4, buf, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nys * nzs * 4, mpi_real, mpi_sum, yz_ps%ionode_local, mpi_comm_yz, req, err)
-                    !$acc end host_data
+
                     it0 = it ! remember
                 end if
             end if
@@ -1147,7 +1143,7 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nzs * 4), rbuf(nxs * nzs * 4))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xz_ps%ionode)  call wbuf_nc(xz_ps, 4, nxs, nzs, it0, rbuf)
@@ -1155,9 +1151,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nzs, 4, buf, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nzs * 4, mpi_real, mpi_sum, xz_ps%ionode_local, mpi_comm_xz, req, err)
-                    !$acc end host_data
 
                     it0 = it ! remember
                 end if
@@ -1238,7 +1233,7 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 4), rbuf(nxs * nys * 4))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xy_ps%ionode) call wbuf_nc(xy_ps, 4, nxs, nys, it0, rbuf)
@@ -1246,9 +1241,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nys, 4, buf, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 4, mpi_real, mpi_sum, xy_ps%ionode, mpi_comm_world, req, err)
-                    !$acc end host_data
 
                     it0 = it ! remember
                 end if
@@ -1330,7 +1324,7 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 4), rbuf(nxs * nys * 4))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == fs_ps%ionode) call wbuf_nc(fs_ps, 4, nxs, nys, it0, rbuf)
@@ -1338,9 +1332,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nys, 4, buf, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 4, mpi_real, mpi_sum, fs_ps%ionode, mpi_comm_world, req, err)
-                    !$acc end host_data
 
                     it0 = it ! remember
                 end if
@@ -1423,7 +1416,7 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 4), rbuf(nxs * nys * 4))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == ob_ps%ionode) call wbuf_nc(ob_ps, 4, nxs, nys, it0, rbuf)
@@ -1431,9 +1424,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nys, 4, buf, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 4, mpi_real, mpi_sum, ob_ps%ionode, mpi_comm_world, req, err)
-                    !$acc end host_data
 
                     it0 = it ! remember
                 end if
@@ -1502,7 +1494,7 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nys * nzs * 3), rbuf(nys * nzs * 3))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == yz_v%ionode) call wbuf_nc(yz_v, 3, nys, nzs, it0, rbuf)
@@ -1510,9 +1502,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nys, nzs, 3, buf, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nys * nzs * 3, mpi_real, mpi_sum, yz_v%ionode_local, mpi_comm_yz, req, err)
-                    !$acc end host_data
 
                     it0 = it ! remember
                 end if
@@ -1580,7 +1571,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nzs * 3), rbuf(nxs * nzs * 3))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xz_v%ionode) call wbuf_nc(xz_v, 3, nxs, nzs, it0, rbuf)
@@ -1588,9 +1579,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nzs, 3, buf, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nzs * 3, mpi_real, mpi_sum, xz_v%ionode_local, mpi_comm_xz, req, err)
-                    !$acc end host_data
                     
                     it0 = it ! remember
                 end if
@@ -1648,7 +1638,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xy_v%ionode) call wbuf_nc(xy_v, 3, nxs, nys, it0, rbuf)
@@ -1656,9 +1646,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nys, 3, buf, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, xy_v%ionode, mpi_comm_world, req, err)
-                    !$acc end host_data
 
                     it0 = it ! remember
                 end if
@@ -1738,7 +1727,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == fs_v%ionode) call wbuf_nc(fs_v, 3, nxs, nys, it0, rbuf)
@@ -1746,9 +1735,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nys, 3, buf, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, fs_v%ionode, mpi_comm_world, req, err)
-                    !$acc end host_data
 
                     it0 = it ! remember
                 end if
@@ -1828,7 +1816,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == ob_v%ionode) call wbuf_nc(ob_v, 3, nxs, nys, it0, rbuf)
@@ -1836,9 +1824,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nys, 3, buf, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, ob_v%ionode, mpi_comm_world, req, err)
-                    !$acc end host_data
 
                     it0 = it ! remember
                 end if
@@ -1898,7 +1885,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nys * nzs * 3), rbuf(nys * nzs * 3))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == yz_u%ionode) call wbuf_nc(yz_u, 3, nys, nzs, it0, rbuf)
@@ -1906,9 +1893,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nys, nzs, 3, buf_yz_u, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nys * nzs * 3, mpi_real, mpi_sum, yz_u%ionode_local, mpi_comm_yz, req, err)
-                    !$acc end host_data
 
                     it0 = it ! remember
                 end if
@@ -1969,7 +1955,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nzs * 3), rbuf(nxs * nzs * 3))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xz_u%ionode) call wbuf_nc(xz_u, 3, nxs, nzs, it0, rbuf)
@@ -1977,9 +1963,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nzs, 3, buf_xz_u, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nzs * 3, mpi_real, mpi_sum, xz_u%ionode_local, mpi_comm_xz, req, err)
-                    !$acc end host_data
 
                     it0 = it ! remember
                 end if
@@ -2034,7 +2019,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xy_u%ionode) call wbuf_nc(xy_u, 3, nxs, nys, it0, rbuf)
@@ -2042,9 +2027,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nys, 3, buf_xy_u, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, xy_u%ionode, mpi_comm_world, req, err)
-                    !$acc end host_data
 
                     it0 = it ! remember
                 end if
@@ -2119,7 +2103,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == fs_u%ionode) call wbuf_nc(fs_u, 3, nxs, nys, it0, rbuf)
@@ -2127,9 +2111,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nys, 3, buf_fs_u, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, fs_u%ionode, mpi_comm_world, req, err)
-                    !$acc end host_data
 
                     it0 = it ! remember
                 end if
@@ -2203,7 +2186,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
-                    !$acc enter data copyin(sbuf, rbuf)
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == ob_u%ionode) call wbuf_nc(ob_u, 3, nxs, nys, it0, rbuf)
@@ -2211,9 +2194,8 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nys, 3, buf_ob_u, sbuf)
 
-                    !$acc host_data use_device(sbuf, rbuf)
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, ob_u%ionode, mpi_comm_world, req, err)
-                    !$acc end host_data
 
                     it0 = it ! remember
                 end if
@@ -2399,7 +2381,7 @@ contains
 
         idx = 1
         #ifdef _OPENACC
-        !$acc kernels pcopyin(buf3d, buf1d)
+        !$acc kernels present(buf3d, buf1d)
         !$acc loop independent collapse(3) 
         #else
         !$omp parallel do private(i, j, k, idx)
