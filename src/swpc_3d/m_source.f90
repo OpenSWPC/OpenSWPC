@@ -222,8 +222,11 @@ contains
         allocate (srcprm(n_stfprm, nsrc))
         if (bf_mode) then
             allocate (fx(nsrc), fy(nsrc), fz(nsrc))
+            allocate (mo(0), mxx(0), myy(0), mzz(0), myz(0), mxz(0), mxy(0))
+
         else
             allocate (mo(nsrc), mxx(nsrc), myy(nsrc), mzz(nsrc), myz(nsrc), mxz(nsrc), mxy(nsrc))
+            allocate (fx(0), fy(0), fz(0))
         end if
 
         !! copy source grid information for the current node
@@ -775,6 +778,7 @@ contains
         real(MP) :: sdrop
         integer  :: i
         real(SP) :: stime
+        real(SP) :: vxm, vym, vzm
 
         if (bf_mode) return
 
@@ -784,8 +788,8 @@ contains
 
         #ifdef _OPENACC
         !$acc kernels &
-        !$acc pcopyin(nsrc, mo, n_stfprm, stftype, t, srcprm, &
-        !$acc         isrc, jsrc, ksrc, Sxx, Syy, Szz, Sxy, Sxz, Syz, mxx, myy, mzz, mxy, mxz, myz)
+        !$acc pcopyin(t, stftype, n_stfprm, mo, srcprm, isrc, jsrc, ksrc, &
+        !$acc         Sxx, Syy, Szz, Sxy, Sxz, Syz, mxx, myy, mzz, mxy, mxz, myz)
         !$acc loop seq
         #endif
         do i = 1, nsrc
@@ -843,7 +847,7 @@ contains
 
         #ifdef _OPENACC
         !$acc kernels &
-        !$acc pcopyin(Vx, Vy, Vz, isrc, jsrc, ksrc, t, stftype, n_stfprm, srcprm, fx, fy, fz, bx, by, bz)
+        !$acc present(Vx, Vy, Vz, isrc, jsrc, ksrc, srcprm, fx, fy, fz, bx, by, bz) copyin(t) pcopyin(n_stfprm, stftype)
         !$acc loop seq
         #endif
         do i = 1, nsrc

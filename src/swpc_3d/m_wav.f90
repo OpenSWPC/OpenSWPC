@@ -434,7 +434,7 @@ contains
 
             #ifdef _OPENACC
             !$acc kernels &
-            !$acc pcopyin(Vx, Vy, Vz, ux, uy, uz)
+            !$acc pcopyin(Vx, Vy, Vz, ux, uy, uz, ist, jst, kst)
             !$acc loop independent
             #else
             !$omp parallel do private(n,i,j,k)
@@ -458,7 +458,7 @@ contains
 
             #ifdef _OPENACC
             !$acc kernels &
-            !$acc pcopyin(Vx, Vy, Vz, exx, eyy, ezz, eyz, exz, exy)
+            !$acc pcopyin(Vx, Vy, Vz, exx, eyy, ezz, eyz, exz, exy, ist, jst, kst)
             !$acc loop independent
             #else
             !$omp parallel do private(n, i, j, k, dxVx, dyVy, dzVz, dyVz, dzVy, dxVz, dzVx, dxVy, dyVx)

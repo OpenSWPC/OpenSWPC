@@ -916,11 +916,11 @@ contains
 
         call pwatch__on("snap__write")
 
-        if (yz_ps%sw) call wbuf_yz_ps(it)
         if (xz_ps%sw) call wbuf_xz_ps(it)
         if (xy_ps%sw) call wbuf_xy_ps(it)
         if (fs_ps%sw) call wbuf_fs_ps(it)
         if (ob_ps%sw) call wbuf_ob_ps(it)
+        if (yz_ps%sw) call wbuf_yz_ps(it)
 
         if (yz_v%sw) call wbuf_yz_v(it)
         if (xz_v%sw) call wbuf_xz_v(it)
@@ -938,10 +938,46 @@ contains
 
     end subroutine snap__write
 
+
+    subroutine wbuf_nc(hdr, nvar, nx1, nx2, it0, rbuf)
+
+        type(snp), intent(inout) :: hdr
+        integer, intent(in) :: nvar
+        integer, intent(in) :: nx1, nx2
+        integer, intent(in) :: it0
+        real, intent(in) :: rbuf(:)
+
+        integer :: ns, ib, ie
+        integer :: stt(3), cnt(3)
+        integer :: vid
+
+        #ifdef _OPENACC
+        !$acc update self(rbuf)
+        #endif
+
+        ns = nx1 * nx2
+        cnt = (/nx1, nx2, 1/)
+        stt = (/1, 1, it0 / ntdec_s + 1/)
+        do vid = 1, nvar
+            ib = (vid - 1) * ns + 1
+            ie = ib + ns - 1
+
+            call nc_chk(nf90_put_var(hdr%io, hdr%varid(vid), reshape(rbuf(ib:ie), (/nx1, nx2/)), stt, cnt))
+            call nc_chk(nf90_put_var(hdr%io, hdr%vid_t, it0 * dt, start=(/it0 / ntdec_s + 1/)))
+            hdr%vmax(vid) = max(hdr%vmax(vid), maxval(rbuf(ib:ie)))
+            hdr%vmin(vid) = min(hdr%vmin(vid), minval(rbuf(ib:ie)))
+            call nc_chk(nf90_redef(hdr%io))
+            call nc_chk(nf90_put_att(hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)))
+            call nc_chk(nf90_enddef(hdr%io))
+            call nc_chk(nf90_sync(hdr%io))
+        end do
+
+    end subroutine wbuf_nc    
+
     subroutine wbuf_yz_ps(it)
 
         integer, intent(in) :: it
-        integer :: i, j, k, l, idx
+        integer :: i, j, k, l
         integer :: jj, kk
         real(SP) :: div, rot_x, rot_y, rot_z
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
@@ -952,7 +988,10 @@ contains
 
         if (idx /= idx_yz) return
 
-        if (.not. allocated(buf)) allocate (buf(nys, nzs, 4), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nys, nzs, 4), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if ((mod(it - 1, ntdec_s) == 0) .or. (it > nt)) then
 
@@ -960,7 +999,7 @@ contains
             if (ibeg <= i .and. i <= iend) then
                 #ifdef _OPENACC
                 !$acc kernels &
-                !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf)
+                !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, i0_yz)
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel do private( i, j, k, kk, jj, div, rot_x, rot_y ,rot_z)
@@ -1012,6 +1051,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nys * nzs * 4), rbuf(nys * nzs * 4))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == yz_ps%ionode) call wbuf_nc(yz_ps, 4, nys, nzs, it0, rbuf)
@@ -1030,44 +1070,11 @@ contains
 
     end subroutine wbuf_yz_ps
 
-    subroutine wbuf_nc(hdr, nvar, nx1, nx2, it0, rbuf)
-
-        type(snp), intent(inout) :: hdr
-        integer, intent(in) :: nvar
-        integer, intent(in) :: nx1, nx2
-        integer, intent(in) :: it0
-        real, intent(in) :: rbuf(:)
-
-        integer :: ns, ib, ie
-        integer :: stt(3), cnt(3)
-        integer :: vid
-
-        !$acc update self(rbuf)
-
-        ns = nx1 * nx2
-        cnt = (/nx1, nx2, 1/)
-        stt = (/1, 1, it0 / ntdec_s + 1/)
-        do vid = 1, nvar
-            ib = (vid - 1) * ns + 1
-            ie = ib + ns - 1
-
-            call nc_chk(nf90_put_var(hdr%io, hdr%varid(vid), reshape(rbuf(ib:ie), (/nx1, nx2/)), stt, cnt))
-            call nc_chk(nf90_put_var(hdr%io, hdr%vid_t, it0 * dt, start=(/it0 / ntdec_s + 1/)))
-            hdr%vmax(vid) = max(hdr%vmax(vid), maxval(rbuf(ib:ie)))
-            hdr%vmin(vid) = min(hdr%vmin(vid), minval(rbuf(ib:ie)))
-            call nc_chk(nf90_redef(hdr%io))
-            call nc_chk(nf90_put_att(hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)))
-            call nc_chk(nf90_enddef(hdr%io))
-            call nc_chk(nf90_sync(hdr%io))
-        end do
-
-    end subroutine wbuf_nc
-
     subroutine wbuf_xz_ps(it)
 
         integer, intent(in) :: it
         integer :: ii, kk
-        integer :: i, j, k, l, idx
+        integer :: i, j, k, l
         real(SP) :: div, rot_x, rot_y, rot_z
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
         integer, save :: req
@@ -1077,7 +1084,10 @@ contains
 
         if (idy /= idy_xz) return
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nzs, 4), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nzs, 4), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
@@ -1085,7 +1095,7 @@ contains
 
                 #ifdef _OPENACC
                 !$acc kernels &
-                !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf)
+                !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, j0_xz)
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel do private( ii, kk, i, j, k, div, rot_x, rot_y, rot_z)
@@ -1105,7 +1115,13 @@ contains
                                     - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
                         rot_z = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
                                     - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
-                
+
+                        !! masking
+                        div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                        rot_x = rot_x * muyz(k,i,j) / abs(muyz(k,i,j) + epsilon(1.0))
+                        rot_y = rot_y * muxz(k,i,j) / abs(muxz(k,i,j) + epsilon(1.0))
+                        rot_z = rot_z * muxy(k,i,j) / abs(muxy(k,i,j) + epsilon(1.0))                                
+                                                    
                         !! dx, dy, dz have km unit. correction for 1e3 factor.
                         buf(ii, kk, 1) = div   * UC * M0 * 1e-3
                         buf(ii, kk, 2) = rot_x * UC * M0 * 1e-3
@@ -1131,9 +1147,10 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nzs * 4), rbuf(nxs * nzs * 4))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
-                    if (myid == xz_ps%ionode) call wbuf_nc(xz_ps, 4, nxs, nzs, it0, rbuf)
+                    if (myid == xz_ps%ionode)  call wbuf_nc(xz_ps, 4, nxs, nzs, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nzs, 4, buf, sbuf)
@@ -1152,7 +1169,7 @@ contains
     subroutine wbuf_xy_ps(it)
 
         integer, intent(in) :: it
-        integer :: i, j, k, l, idx
+        integer :: i, j, k, l
         integer :: ii, jj
         real(SP) :: div, rot_x, rot_y, rot_z
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
@@ -1161,14 +1178,16 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nys, 4), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nys, 4), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-
             #ifdef _OPENACC
             !$acc kernels &
-            !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf)
+            !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, k0_xy)
             !$acc loop independent collapse(2)
             #else
             !$omp parallel do private( ii, jj, i, j, k, div, rot_x, rot_y, rot_z)
@@ -1219,6 +1238,7 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 4), rbuf(nxs * nys * 4))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xy_ps%ionode) call wbuf_nc(xy_ps, 4, nxs, nys, it0, rbuf)
@@ -1226,7 +1246,10 @@ contains
                 if (it <= nt) then ! except for the last call
                     call pack_3d(nxs, nys, 4, buf, sbuf)
 
+                    !$acc host_data use_device(sbuf, rbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 4, mpi_real, mpi_sum, xy_ps%ionode, mpi_comm_world, req, err)
+                    !$acc end host_data
+
                     it0 = it ! remember
                 end if
 
@@ -1248,13 +1271,16 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nys, 4), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nys, 4), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
             #ifdef _OPENACC
             !$acc kernels &
-            !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf)
+            !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, kfs)
             !$acc loop independent collapse(2)
             #else
             !$omp parallel do private( ii, jj, i, j, k, div, rot )
@@ -1304,6 +1330,7 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 4), rbuf(nxs * nys * 4))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == fs_ps%ionode) call wbuf_nc(fs_ps, 4, nxs, nys, it0, rbuf)
@@ -1336,11 +1363,20 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nys, 4), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nys, 4), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
+            #ifdef _OPENACC
+            !$acc kernels &
+            !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, kob)
+            !$acc loop independent collapse(2)
+            #else
             !$omp parallel do private( ii, jj, i, j, k, div, rot )
+            #endif            
             do jj = js0, js1
                 do ii = is0, is1
                     j = jj * jdec - jdec / 2
@@ -1371,7 +1407,12 @@ contains
 
                 end do
             end do
+            #ifdef _OPENACC
+            !$acc end loop
+            !$acc end kernels
+            #else
             !$omp end parallel do
+            #endif
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nxs, nys, ob_ps%ionode, ob_ps%io, buf(:, :, 1))
@@ -1382,6 +1423,7 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 4), rbuf(nxs * nys * 4))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == ob_ps%ionode) call wbuf_nc(ob_ps, 4, nxs, nys, it0, rbuf)
@@ -1413,7 +1455,10 @@ contains
 
         if (idx /= idx_yz) return
 
-        if (.not. allocated(buf)) allocate (buf(nys, nzs, 3), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nys, nzs, 3), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
@@ -1457,6 +1502,7 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nys * nzs * 3), rbuf(nys * nzs * 3))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == yz_v%ionode) call wbuf_nc(yz_v, 3, nys, nzs, it0, rbuf)
@@ -1489,7 +1535,10 @@ contains
 
         if (idy /= idy_xz) return
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nzs, 3), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nzs, 3), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
@@ -1531,6 +1580,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nzs * 3), rbuf(nxs * nzs * 3))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xz_v%ionode) call wbuf_nc(xz_v, 3, nxs, nzs, it0, rbuf)
@@ -1558,7 +1608,10 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nys, 3), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nys, 3), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
@@ -1595,6 +1648,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xy_v%ionode) call wbuf_nc(xy_v, 3, nxs, nys, it0, rbuf)
@@ -1624,11 +1678,14 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nys, 3), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nys, 3), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         #ifdef _OPENACC
         !$acc kernels &
-        !$acc pcopyin(Vx, Vy, Vz, buf)
+        !$acc pcopyin(Vx, Vy, Vz, buf, kfs)
         !$acc loop independent collapse(2)
         #else
         !$omp parallel do private( ii, jj, i, j, k )
@@ -1653,7 +1710,7 @@ contains
         #endif
 
         #ifdef _OPENACC
-        !$acc kernels present(buf, max_fs_v)
+        !$acc kernels pcopyin(buf, max_fs_v)
         !$acc loop independent collapse(2)
         #else
         !$omp parallel do private(ii,jj)
@@ -1681,6 +1738,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == fs_v%ionode) call wbuf_nc(fs_v, 3, nxs, nys, it0, rbuf)
@@ -1710,11 +1768,14 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nys, 3), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nys, 3), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         #ifdef _OPENACC
         !$acc kernels &
-        !$acc pcopyin(Vx, Vy, Vz, buf)
+        !$acc pcopyin(Vx, Vy, Vz, buf, kob)
         !$acc loop independent collapse(2)
         #else
         !$omp parallel do private( ii, jj, i, j, k )
@@ -1739,7 +1800,7 @@ contains
         #endif
 
         #ifdef _OPENACC
-        !$acc kernels present(buf, max_ob_v)
+        !$acc kernels pcopyin(buf, max_ob_v)
         !$acc loop independent collapse(2)
         #else
         !$omp parallel do private(ii,jj)
@@ -1767,6 +1828,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == ob_v%ionode) call wbuf_nc(ob_v, 3, nxs, nys, it0, rbuf)
@@ -1836,6 +1898,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nys * nzs * 3), rbuf(nys * nzs * 3))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == yz_u%ionode) call wbuf_nc(yz_u, 3, nys, nzs, it0, rbuf)
@@ -1906,6 +1969,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nzs * 3), rbuf(nxs * nzs * 3))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xz_u%ionode) call wbuf_nc(xz_u, 3, nxs, nzs, it0, rbuf)
@@ -1937,7 +2001,7 @@ contains
 
         #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vx, Vy, Vz, buf_xy_u)
+        !$acc pcopyin(Vx, Vy, Vz, buf_xy_u)
         !$acc loop independent collapse(2)
         #else            
         !$omp parallel do private( jj, ii, k, i, j )
@@ -1970,6 +2034,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xy_u%ionode) call wbuf_nc(xy_u, 3, nxs, nys, it0, rbuf)
@@ -2002,7 +2067,7 @@ contains
 
         #ifdef _OPENACC
         !$acc kernels &
-        !$acc pcopyin(Vx, Vy, Vz, buf_fs_u)
+        !$acc pcopyin(Vx, Vy, Vz, buf_fs_u, kfs)
         !$acc loop independent collapse(2)
         #else            
         !$omp parallel do private( jj, ii, k, i, j )
@@ -2027,7 +2092,7 @@ contains
         #endif
 
         #ifdef _OPENACC
-        !$acc kernels present(buf_fs_u, max_fs_u)
+        !$acc kernels pcopyin(buf_fs_u, max_fs_u)
         !$acc loop independent collapse(2)
         #else
         !$omp parallel do private(ii,jj)
@@ -2054,6 +2119,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == fs_u%ionode) call wbuf_nc(fs_u, 3, nxs, nys, it0, rbuf)
@@ -2085,7 +2151,7 @@ contains
 
         #ifdef _OPENACC
         !$acc kernels &
-        !$acc pcopyin(Vx, Vy, Vz, buf_ob_u)
+        !$acc pcopyin(Vx, Vy, Vz, buf_ob_u, kob)
         !$acc loop independent collapse(2)
         #else            
         !$omp parallel do private( jj, ii, k, i, j )
@@ -2110,7 +2176,7 @@ contains
         #endif
 
         #ifdef _OPENACC
-        !$acc kernels present(buf_ob_u, max_ob_u)
+        !$acc kernels pcopyin(buf_ob_u, max_ob_u)
         !$acc loop independent collapse(2)
         #else
         !$omp parallel do private(ii,jj)
@@ -2137,6 +2203,7 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    !$acc enter data copyin(sbuf, rbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == ob_u%ionode) call wbuf_nc(ob_u, 3, nxs, nys, it0, rbuf)
@@ -2332,7 +2399,7 @@ contains
 
         idx = 1
         #ifdef _OPENACC
-        !$acc kernels present(buf3d, buf1d)
+        !$acc kernels pcopyin(buf3d, buf1d)
         !$acc loop independent collapse(3) 
         #else
         !$omp parallel do private(i, j, k, idx)

@@ -212,7 +212,6 @@ contains
             integer :: ngpus
             ngpus = acc_get_num_devices(acc_device_nvidia)
             call acc_set_device_num(mod(myid, ngpus), acc_device_nvidia)
-            write(*,*) "MYID = ", myid, "MY GPU = ", mod(myid, ngpus), "#GPU = ", ngpus
         end block
 #endif                
 
@@ -379,14 +378,10 @@ contains
         end if
 
         !$acc enter data copyin(&
-        !$acc       sbuf_ip(5*nyp*nz), &
-        !$acc       sbuf_im(5*nyp*nz), &
-        !$acc       rbuf_ip(5*nyp*nz), &
-        !$acc       rbuf_im(5*nyp*nz), &
-        !$acc       sbuf_jp(5*nxp*nz), &
-        !$acc       sbuf_jm(5*nxp*nz), &
-        !$acc       rbuf_jp(5*nxp*nz), &
-        !$acc       rbuf_jm(5*nxp*nz), &
+        !$acc       sbuf_ip, sbuf_im, &
+        !$acc       rbuf_ip, rbuf_im, &
+        !$acc       sbuf_jp, sbuf_jm, &
+        !$acc       rbuf_jp, rbuf_jm, &
         !$acc       itbl(-1:nproc_x, -1:nproc_y))
  
 
@@ -418,7 +413,7 @@ contains
         call mpi_irecv(rbuf_jm, 4*jsize, mpi_precision, itbl(idx, idy-1), 4, mpi_comm_world, req_j(2), err)
         !$acc end host_data
 
-        !$acc kernels pcopyin(Vx, Vy, Vz) 
+        !$acc kernels pcopyin(Vx, Vy, Vz, sbuf_ip, sbuf_im) 
         !$acc loop independent
         do j=jbeg, jend
             sbuf_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Vx(1:nz,iend-1,j)
@@ -435,7 +430,7 @@ contains
         !$acc end loop
         !$acc end kernels
 
-        !$acc kernels pcopyin(Vx, Vy, Vz) 
+        !$acc kernels pcopyin(Vx, Vy, Vz, sbuf_jp, sbuf_jm) 
         !$acc loop independent
         do i=ibeg, iend
             sbuf_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Vx(1:nz,i,jend  )
@@ -462,7 +457,7 @@ contains
         call mpi_waitall(4, req_i, istatus, err)
         call mpi_waitall(4, req_j, istatus, err)
 
-        !$acc kernels present(Vx, Vy, Vz)
+        !$acc kernels pcopyin(Vx, Vy, Vz, rbuf_ip, rbuf_im)
         !$acc loop independent
         do j=jbeg, jend
             Vx(1:nz,ibeg-2,j) = rbuf_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
@@ -479,7 +474,7 @@ contains
         !$acc end loop
         !$acc end kernels
 
-        !$acc kernels present(Vx, Vy, Vz)
+        !$acc kernels pcopyin(Vx, Vy, Vz, rbuf_jp, rbuf_jm)
         !$acc loop independent
         do i=ibeg, iend
             Vx(1:nz,i,jbeg-1) = rbuf_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
@@ -527,9 +522,9 @@ contains
         call mpi_irecv(rbuf_jm, 5*jsize, mpi_precision, itbl(idx, idy-1), 8, mpi_comm_world, req_j(2), err)
         !$acc end host_data
 
-            !$acc kernels &
-            !$acc pcopyin(Sxx, Sxy, Sxz) 
-            !$acc loop independent 
+        !$acc kernels &
+        !$acc pcopyin(Sxx, Sxy, Sxz, sbuf_ip, sbuf_im) 
+        !$acc loop independent 
         do j=jbeg, jend
             sbuf_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Sxx(1:nz,iend  ,j)
             sbuf_ip(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz) = Sxy(1:nz,iend-1,j)
@@ -545,7 +540,7 @@ contains
         !$acc end loop
         !$acc end kernels
 
-        !$acc kernels pcopyin(Syy, Sxy, Syz) 
+        !$acc kernels pcopyin(Syy, Sxy, Syz, sbuf_jp, sbuf_jm) 
         !$acc loop independent
         do i=ibeg, iend
             sbuf_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Syy(1:nz,i,jend  )
@@ -572,8 +567,8 @@ contains
         call mpi_waitall(4, req_i, istatus, err)
         call mpi_waitall(4, req_j, istatus, err)
 
-            !$acc kernels present(Sxx, Sxy, Sxz) 
-            !$acc loop independent
+        !$acc kernels pcopyin(Sxx, Sxy, Sxz, rbuf_ip, rbuf_im) 
+        !$acc loop independent
         do j=jbeg, jend
             Sxx(1:nz,ibeg-1,j) = rbuf_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
             Sxy(1:nz,ibeg-2,j) = rbuf_im(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz)
@@ -589,7 +584,7 @@ contains
         !$acc end loop
         !$acc end kernels
 
-        !$acc kernels present(Syy, Sxy, Syz) 
+        !$acc kernels pcopyin(Syy, Sxy, Syz, rbuf_jp, rbuf_jm) 
         !$acc loop independent
         do i=ibeg, iend
             Syy(1:nz,i,jbeg-1) = rbuf_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)

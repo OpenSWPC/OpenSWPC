@@ -353,8 +353,8 @@ contains
         zmax = 0.0
 
         !! avoid nearby the absorbing boundary
-        !$acc kernels present(Vx, Vy, vz) copyout(xmax, ymax, zmax) 
-        !$acc loop reduction(max:ymax,zmax,xmax)
+        !$acc kernels pcopyin(Vx, Vy, Vz, kob) copyout(xmax, ymax, zmax) 
+        !$acc loop reduction(max:xmax,ymax,zmax)
         do j = max(na + margin + 1, jbeg_k), min(ny - na - margin, jend_k)
             do i = max(na + margin + 1, ibeg_k), min(ny - na - margin, iend_k)
                 xmax = max(xmax, real(abs(vx(kob(i, j) + 1, i, j))))

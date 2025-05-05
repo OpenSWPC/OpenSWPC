@@ -122,8 +122,8 @@ contains
         !! Show progres to the terminal
 
         integer, intent(in) :: it
-        real(SP) :: vxm, vym, vzm
-        real(SP) :: vxa, vya, vza
+        real(SP) :: vm(3)
+        real(SP) :: va(3)
         integer  :: ierr
         real(SP) :: etas
         integer  :: etah, etam, etasi
@@ -135,30 +135,26 @@ contains
 
         call pwatch__on("report__progress")
 
-        call kernel__vmax(vxm, vym, vzm)
+        call kernel__vmax(vm(1), vm(2), vm(3))
 
-        call mpi_allreduce(vxm, vxa, 1, MPI_REAL, MPI_MAX, mpi_comm_world, ierr)
-        call mpi_allreduce(vym, vya, 1, MPI_REAL, MPI_MAX, mpi_comm_world, ierr)
-        call mpi_allreduce(vzm, vza, 1, MPI_REAL, MPI_MAX, mpi_comm_world, ierr)
+        call mpi_reduce(vm, va, 3, MPI_REAL, MPI_MAX, terminal_output_node, mpi_comm_world, ierr)
 
         !! check numerical divergence
-        if (max(vxa, vya, vza) * UC > TOL) then
-            if (myid == terminal_output_node) then
+        if (myid == terminal_output_node) then
+            if (maxval(va) * UC > TOL) then
                 write (error_unit, '(A)') 'numerical divergence detected with max amp =  ', &
-                    max(vxa, vya, vza) * UC, '[(m/s)/moment]'
+                maxval(va) * UC, '[(m/s)/moment]'
                 write (error_unit, '(A)') 'aborting ... '
-            end if
 
-            call mpi_finalize(ierr)
-            stop
+                call mpi_finalize(ierr)
+                error stop
+            end if
         end if
 
         if (myid == terminal_output_node) then
 
             !! convert to the physical domain
-            vxa = vxa * UC * M0
-            vya = vya * UC * M0
-            vza = vza * UC * M0
+            va = va * UC * M0
 
             !! eta count
             call system_clock(timcount, crate, cmax)
@@ -180,7 +176,7 @@ contains
             write (error_unit, '(A,I7.7,  A,F6.3,A,   A,I3.3,A,I2.2,A,I2.2,A, 3(ES9.2,A))') &
                 "  it=", it, ",", &
                 ttotal / it, " s/loop,", &
-                " eta ", etah, ":", etam, ":", etasi, ", (", vxa, " ", vya, " ", vza, " )"
+                " eta ", etah, ":", etam, ":", etasi, ", (", va(1), " ", va(2), " ", va(3), " )"
 
         end if
 
