@@ -433,7 +433,7 @@ contains
         if (sw_wav_u) then
 
             #ifdef _OPENACC
-            !$acc kernels &
+            !$acc kernels async(30) &
             !$acc pcopyin(Vx, Vy, Vz, ux, uy, uz, ist, jst, kst)
             !$acc loop independent
             #else
@@ -457,7 +457,7 @@ contains
         if (sw_wav_strain) then
 
             #ifdef _OPENACC
-            !$acc kernels &
+            !$acc kernels async(31) &
             !$acc pcopyin(Vx, Vy, Vz, exx, eyy, ezz, eyz, exz, exy, ist, jst, kst)
             !$acc loop independent
             #else
@@ -523,7 +523,7 @@ contains
             if (sw_wav_v) then
 
                 #ifdef _OPENACC
-                !$acc kernels &
+                !$acc kernels async(32) &
                 !$acc pcopyin(Vx, Vy, Vz, wav_vel, ist, jst, kst)
                 !$acc loop independent
                 #else
@@ -547,7 +547,7 @@ contains
             if (sw_wav_u) then
 
                 #ifdef _OPENACC
-                !$acc kernels &
+                !$acc kernels async(30) &
                 !$acc pcopyin(ux, uy, uz, wav_disp)
                 !$acc loop independent
                 #else
@@ -570,7 +570,7 @@ contains
             if (sw_wav_stress) then
 
                 #ifdef _OPENACC
-                !$acc kernels &
+                !$acc kernels async(33) &
                 !$acc pcopyin(ist, jst, kst, Sxx, Syy, Szz, Syz, Sxz, Sxy, wav_stress)
                 !$acc loop independent
                 #else
@@ -600,7 +600,7 @@ contains
             if (sw_wav_strain) then
 
                 #ifdef _OPENACC
-                !$acc kernels &
+                !$acc kernels async(31) &
                 !$acc pcopyin(exx, eyy, ezz, eyz, exz, exy, wav_strain)
                 !$acc loop independent
                 #else
@@ -629,6 +629,8 @@ contains
             if (mod(it - 1, ntdec_w_prg) == 0 ) call wav__write()
         end if
         
+        !$acc wait(30, 31, 32, 33)
+
         call pwatch__off("wav__store")
 
     end subroutine wav__store
@@ -684,7 +686,7 @@ contains
         !$acc update self(wav_strain)
 
         if (trim(wav_format) == 'sac') then
-
+\
             do i = 1, nst
 
                 if (sw_wav_v) then
