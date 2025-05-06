@@ -136,7 +136,7 @@ contains
         if (pw_mode) then
             if (idx == 0) then
                 #ifdef _OPENACC
-                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) async(12)
+                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(j,k)
@@ -155,7 +155,6 @@ contains
                     #endif
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end do nowait
@@ -165,7 +164,7 @@ contains
 
             if (idx == nproc_x - 1) then
                 #ifdef _OPENACC
-                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) async(12)
+                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(j,k)
@@ -182,7 +181,6 @@ contains
                     end do
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end do nowait
@@ -192,7 +190,7 @@ contains
 
             if (idy == 0) then
                 #ifdef _OPENACC
-                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) async(12)
+                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(i,k)
@@ -209,7 +207,6 @@ contains
                     end do
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end do nowait
@@ -219,7 +216,7 @@ contains
 
             if (idy == nproc_y - 1) then
                 #ifdef _OPENACC
-                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) async(12)
+                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(i,k)
@@ -236,7 +233,6 @@ contains
                     end do
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end do nowait
@@ -251,7 +247,7 @@ contains
         !! time-marching
 
         #ifdef _OPENACC
-        !$acc kernels async(12) &
+        !$acc kernels &
         !$acc present(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
         !$acc         axSxx, aySxy, azSxz, axSxy, aySyy, azSyz, axSxz, aySyz, azSzz, &
         !$acc         bx, by, bz, gxc, gxe, gyc, gye, gzc, gze, kbeg_a)
@@ -307,13 +303,9 @@ contains
                     azSzz(k,i,j) = gze(3,k) * azSzz(k,i,j) + gze(4,k) * real(dzSzz) * dt
 
                 end do
-                #ifdef _OPENACC
-                !$acc end loop
-                #endif
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end do nowait
@@ -337,7 +329,7 @@ contains
         if (pw_mode) then
             if (idx == 0) then
                 #ifdef _OPENACC
-                !$acc kernels present(Vx, Vy, Vz) async(22)
+                !$acc kernels present(Vx, Vy, Vz) 
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(j,k)
@@ -351,7 +343,6 @@ contains
                     end do
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end do nowait
@@ -361,7 +352,7 @@ contains
 
             if (idx == nproc_x - 1) then
                 #ifdef _OPENACC
-                !$acc kernels present(Vx, Vy, Vz)  async(22)
+                !$acc kernels present(Vx, Vy, Vz) 
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(j,k)
@@ -375,7 +366,6 @@ contains
                     end do
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end do nowait
@@ -385,7 +375,7 @@ contains
 
             if (idy == 0) then
                 #ifdef _OPENACC
-                !$acc kernels present(Vx, Vy, Vz)  async(22)
+                !$acc kernels present(Vx, Vy, Vz)
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(i,k)
@@ -399,7 +389,6 @@ contains
                     end do
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end do nowait
@@ -409,7 +398,7 @@ contains
 
             if (idy == nproc_y - 1) then
                 #ifdef _OPENACC
-                !$acc kernels present(Vx, Vy, Vz)  async(22)
+                !$acc kernels present(Vx, Vy, Vz) 
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(i,k)
@@ -423,7 +412,6 @@ contains
                     end do
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end do nowait
@@ -438,7 +426,7 @@ contains
         !! Time-marching
 
         #ifdef _OPENACC
-        !$acc kernels async(22) &
+        !$acc kernels &
         !$acc present(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
         !$acc         axVx, ayVx, azVx, axVy, ayVy, azVy, axVz, ayVz, azVz, &
         !$acc         lam, mu, muyz, muxz, muxy, gxc, gxe, gyc, gye, gzc, gze, kbeg_a)
@@ -518,7 +506,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end do nowait

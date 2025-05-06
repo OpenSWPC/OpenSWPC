@@ -433,7 +433,7 @@ contains
         if (sw_wav_u) then
 
             #ifdef _OPENACC
-            !$acc kernels async(30) &
+            !$acc kernels &
             !$acc pcopyin(Vx, Vy, Vz, ux, uy, uz, ist, jst, kst)
             !$acc loop independent
             #else
@@ -446,7 +446,6 @@ contains
                 uz(n) = uz(n) - real(Vz(k, i, j) + Vz(k - 1, i, j)) * 0.5 * dt ! positive upward
             end do
             #ifdef _OPENACC
-            !$acc end loop
             !$acc end kernels
             #else
             !$omp end parallel do
@@ -457,7 +456,7 @@ contains
         if (sw_wav_strain) then
 
             #ifdef _OPENACC
-            !$acc kernels async(31) &
+            !$acc kernels &
             !$acc pcopyin(Vx, Vy, Vz, exx, eyy, ezz, eyz, exz, exy, ist, jst, kst)
             !$acc loop independent
             #else
@@ -509,7 +508,6 @@ contains
 
             end do
             #ifdef _OPENACC
-            !$acc end loop
             !$acc end kernels
             #else
             !$omp end parallel do
@@ -523,7 +521,7 @@ contains
             if (sw_wav_v) then
 
                 #ifdef _OPENACC
-                !$acc kernels async(32) &
+                !$acc kernels &
                 !$acc pcopyin(Vx, Vy, Vz, wav_vel, ist, jst, kst)
                 !$acc loop independent
                 #else
@@ -536,7 +534,6 @@ contains
                     wav_vel(itw, 3, n) = -real(Vz(k, i, j) + Vz(k - 1, i, j)) / 2.0 * M0 * UC * 1e9
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end parallel do
@@ -547,7 +544,7 @@ contains
             if (sw_wav_u) then
 
                 #ifdef _OPENACC
-                !$acc kernels async(30) &
+                !$acc kernels &
                 !$acc pcopyin(ux, uy, uz, wav_disp)
                 !$acc loop independent
                 #else
@@ -559,7 +556,6 @@ contains
                     wav_disp(itw, 3, n) = real(uz(n)) * M0 * UC * 1e9
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end parallel do
@@ -570,7 +566,7 @@ contains
             if (sw_wav_stress) then
 
                 #ifdef _OPENACC
-                !$acc kernels async(33) &
+                !$acc kernels &
                 !$acc pcopyin(ist, jst, kst, Sxx, Syy, Szz, Syz, Sxz, Sxy, wav_stress)
                 !$acc loop independent
                 #else
@@ -589,7 +585,6 @@ contains
                                                  + Sxy(k, i - 1, j) + Sxy(k, i - 1, j - 1)) / 4.0 * M0 * UC * 1e6
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end parallel do
@@ -600,7 +595,7 @@ contains
             if (sw_wav_strain) then
 
                 #ifdef _OPENACC
-                !$acc kernels async(31) &
+                !$acc kernels &
                 !$acc pcopyin(exx, eyy, ezz, eyz, exz, exy, wav_strain)
                 !$acc loop independent
                 #else
@@ -615,7 +610,6 @@ contains
                     wav_strain(itw, 6, n) = exy(n) * M0 * UC * 1e-3
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end parallel do
@@ -628,8 +622,6 @@ contains
         if (ntdec_w_prg > 0) then
             if (mod(it - 1, ntdec_w_prg) == 0 ) call wav__write()
         end if
-        
-        !$acc wait(30, 31, 32, 33)
 
         call pwatch__off("wav__store")
 

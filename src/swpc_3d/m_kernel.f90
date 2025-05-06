@@ -87,9 +87,9 @@ contains
 
 
         #ifdef _OPENACC
-        !$acc kernels async(10) &
+        !$acc kernels &
         !$acc pcopyin(bx, by, bz, Sxx, Syy, Szz, Syz, Sxz, Sxy, Vx, Vy, Vz, kfs_top, kfs_bot, kob_top, kob_bot)
-        !$acc loop independent collapse(3) asumc)
+        !$acc loop independent collapse(3) 
         #else
         !$omp parallel &
         !$omp private( d3Sx3, d3Sy3, d3Sz3 ) &
@@ -130,7 +130,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end do nowait
@@ -159,7 +158,7 @@ contains
         call pwatch__on("kernel__update_stress")
 
         #ifdef _OPENACC
-        !$acc kernels async(20) &
+        !$acc kernels &
         !$acc present(Vx, Vy, Vz,  Sxx, Syy, Szz, Rxx, Ryy, Rzz, &
         !$acc         mu, lam, taup, taus, c1, c2, d1, d2, &
         !$acc         kfs_top, kfs_bot, kob_top, kob_bot)
@@ -229,10 +228,6 @@ contains
                       Ryy_n = Ryy_n + d1(m) * Ryy(m,k,i,j)
                       Rzz_n = Rzz_n + d1(m) * Rzz(m,k,i,j)
                     end do
-                    #ifdef _OPENACC
-                    !$acc end loop
-                    #endif
-
 
                     !! update stress components
 
@@ -247,7 +242,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end do nowait
@@ -255,7 +249,7 @@ contains
         #endif 
 
         #ifdef _OPENACC
-        !$acc kernels async(21) &
+        !$acc kernels &
         !$acc present(Vx, Vy, Vz, Sxy, Sxz, Syz, Rxy, Rxz, Ryz, &
         !$acc         muxy, muxz, muyz, taus, c1, c2, d1, d2, &
         !$acc         kfs_top, kfs_bot, kob_top, kob_bot)
@@ -314,9 +308,6 @@ contains
                         Rxz_n = Rxz_n + d1(m) * Rxz(m,k,i,j)
                         Rxy_n = Rxy_n + d1(m) * Rxy(m,k,i,j)
                     end do
-                    #ifdef _OPENACC
-                    !$acc end loop
-                    #endif
 
                     !! update stress components
                     taus_plus1 = 1 + taus1 * (1 + d2)
@@ -329,7 +320,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end do nowait
@@ -348,21 +338,21 @@ contains
         real(SP), intent(out) :: xmax, ymax, zmax
         integer :: i, j
         integer, parameter :: margin = 5
+        real(SP) :: xmax_local, ymax_local, zmax_local
+
+        !! avoid nearby the absorbing boundary
+        !$acc kernels present(Vx, Vy, Vz, kob) copyout(xmax, ymax, zmax)
         xmax = 0.0
         ymax = 0.0
         zmax = 0.0
-
-        !! avoid nearby the absorbing boundary
-        !$acc kernels pcopyin(Vx, Vy, Vz, kob) copyout(xmax, ymax, zmax) 
-        !$acc loop reduction(max:xmax,ymax,zmax)
+        !$acc loop reduction(max:xmax, ymax, zmax)
         do j = max(na + margin + 1, jbeg_k), min(ny - na - margin, jend_k)
-            do i = max(na + margin + 1, ibeg_k), min(ny - na - margin, iend_k)
+            do i = max(na + margin + 1, ibeg_k), min(nx - na - margin, iend_k)
                 xmax = max(xmax, real(abs(vx(kob(i, j) + 1, i, j))))
                 ymax = max(ymax, real(abs(vy(kob(i, j) + 1, i, j))))
                 zmax = max(zmax, real(abs(vz(kob(i, j) + 1, i, j))))
             end do
         end do
-        !$acc end loop
         !$acc end kernels
 
     end subroutine kernel__vmax

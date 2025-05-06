@@ -825,7 +825,6 @@ contains
 
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #endif
 
@@ -870,7 +869,6 @@ contains
 
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #endif
 

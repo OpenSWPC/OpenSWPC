@@ -116,7 +116,7 @@ contains
         real(SP) :: gcc
 
         #ifdef _OPENACC
-        !$acc kernels async(20) &
+        !$acc kernels &
         !$acc pcopyin(Sxx, Syy, Szz, gx_c, gy_c, gz_c)
         !$acc loop independent collapse(3)
         #else
@@ -135,7 +135,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end parallel do
@@ -143,7 +142,7 @@ contains
 
         
         #ifdef _OPENACC
-        !$acc kernels async(21) &
+        !$acc kernels &
         !$acc pcopyin(Syz, Sxz, Sxy, gx_c, gx_b, gy_c, gy_b, gz_c, gz_b)
         !$acc loop independent collapse(3)
         #else
@@ -161,7 +160,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end parallel do
@@ -174,7 +172,7 @@ contains
         integer :: i, j, k
 
         #ifdef _OPENACC
-        !$acc kernels async(10) &
+        !$acc kernels &
         !$acc pcopyin(Vx, Vy, Vz, gx_c, gx_b, gy_c, gy_b, gz_c, gz_b)
         !$acc loop independent collapse(3)
         #else
@@ -192,7 +190,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end parallel do

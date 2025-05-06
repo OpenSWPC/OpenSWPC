@@ -1032,7 +1032,6 @@ contains
                     end do
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end parallel do
@@ -1127,7 +1126,6 @@ contains
                     end do
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end parallel do
@@ -1218,7 +1216,6 @@ contains
                 end do
             end do
             #ifdef _OPENACC
-            !$acc end loop
             !$acc end kernels
             #else
             !$omp end parallel do
@@ -1277,7 +1274,7 @@ contains
             !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, kfs)
             !$acc loop independent collapse(2)
             #else
-            !$omp parallel do private( ii, jj, i, j, k, div, rot )
+            !$omp parallel do private( ii, jj, i, j, k, div, rot_x, rot_y, rot_z)
             #endif
             do jj = js0, js1
                 do ii = is0, is1
@@ -1309,7 +1306,6 @@ contains
                 end do
             end do
             #ifdef _OPENACC
-            !$acc end loop
             !$acc end kernels
             #else
             !$omp end parallel do
@@ -1368,7 +1364,7 @@ contains
             !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, kob)
             !$acc loop independent collapse(2)
             #else
-            !$omp parallel do private( ii, jj, i, j, k, div, rot )
+            !$omp parallel do private( ii, jj, i, j, k, div, rot_x, rot_y, rot_z )
             #endif            
             do jj = js0, js1
                 do ii = is0, is1
@@ -1401,7 +1397,6 @@ contains
                 end do
             end do
             #ifdef _OPENACC
-            !$acc end loop
             !$acc end kernels
             #else
             !$omp end parallel do
@@ -1478,7 +1473,6 @@ contains
                     end do
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end parallel do
@@ -1556,7 +1550,6 @@ contains
                     end do
                 end do
                 #ifdef _OPENACC
-                !$acc end loop
                 !$acc end kernels
                 #else
                 !$omp end parallel do
@@ -1625,7 +1618,6 @@ contains
                 end do
             end do
             #ifdef _OPENACC
-            !$acc end loop
             !$acc end kernels
             #else
             !$omp end parallel do
@@ -1692,7 +1684,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end parallel do
@@ -1712,7 +1703,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end parallel do
@@ -1781,7 +1771,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end parallel do
@@ -1801,7 +1790,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end parallel do
@@ -1869,7 +1857,6 @@ contains
                 end do
             end do
             #ifdef _OPENACC
-            !$acc end loop
             !$acc end kernels
             #else
             !$omp end parallel do
@@ -1938,7 +1925,6 @@ contains
                 end do
             end do
             #ifdef _OPENACC
-            !$acc end loop
             !$acc end kernels
             #else
             !$omp end parallel do
@@ -2004,7 +1990,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end parallel do
@@ -2069,7 +2054,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end parallel do
@@ -2089,7 +2073,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end parallel do
@@ -2152,7 +2135,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end parallel do
@@ -2172,7 +2154,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end parallel do
@@ -2395,7 +2376,6 @@ contains
             end do
         end do
         #ifdef _OPENACC
-        !$acc end loop
         !$acc end kernels
         #else
         !$omp end parallel do

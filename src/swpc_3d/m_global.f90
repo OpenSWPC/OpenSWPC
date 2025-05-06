@@ -402,8 +402,6 @@ contains
 
         call pwatch__on("global__comm_vel")
 
-        !$acc wait(10,11,12)
-
         ! unit buffer size
         isize = nyp*nz
         jsize = nxp*nz
@@ -415,7 +413,7 @@ contains
         call mpi_irecv(rbuf_jm, 4*jsize, mpi_precision, itbl(idx, idy-1), 4, mpi_comm_world, req_j(2), err)
         !$acc end host_data
 
-        !$acc kernels present(Vx, Vy, Vz, sbuf_ip, sbuf_im) async(13)
+        !$acc kernels present(Vx, Vy, Vz, sbuf_ip, sbuf_im) async(1)
         !$acc loop independent
         do j=jbeg, jend
             sbuf_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Vx(1:nz,iend-1,j)
@@ -429,10 +427,9 @@ contains
             sbuf_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Vz(1:nz,ibeg  ,j)
             sbuf_im(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz) = Vz(1:nz,ibeg+1,j)
         end do
-        !$acc end loop
         !$acc end kernels
 
-        !$acc kernels present(Vx, Vy, Vz, sbuf_jp, sbuf_jm) async(14)
+        !$acc kernels present(Vx, Vy, Vz, sbuf_jp, sbuf_jm) async(2)
         !$acc loop independent
         do i=ibeg, iend
             sbuf_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Vx(1:nz,i,jend  )
@@ -446,10 +443,9 @@ contains
             sbuf_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Vz(1:nz,i,jbeg  )
             sbuf_jm(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz) = Vz(1:nz,i,jbeg+1)
         end do
-        !$acc end loop
         !$acc end kernels
 
-        !$acc wait(13, 14)
+        !$acc wait
 
         !$acc host_data use_device(sbuf_ip, sbuf_im, sbuf_jp, sbuf_jm)
         call mpi_isend(sbuf_ip, 4*isize, mpi_precision, itbl(idx+1, idy), 2, mpi_comm_world, req_i(3), err)
@@ -461,7 +457,7 @@ contains
         call mpi_waitall(4, req_i, istatus, err)
         call mpi_waitall(4, req_j, istatus, err)
 
-        !$acc kernels present(Vx, Vy, Vz, rbuf_ip, rbuf_im) async(15) 
+        !$acc kernels present(Vx, Vy, Vz, rbuf_ip, rbuf_im) async(1)
         !$acc loop independent
         do j=jbeg, jend
             Vx(1:nz,ibeg-2,j) = rbuf_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
@@ -475,10 +471,9 @@ contains
             Vz(1:nz,iend+1,j) = rbuf_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
             Vz(1:nz,iend+2,j) = rbuf_ip(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz)
         end do
-        !$acc end loop
         !$acc end kernels
 
-        !$acc kernels present(Vx, Vy, Vz, rbuf_jp, rbuf_jm) async(16)
+        !$acc kernels present(Vx, Vy, Vz, rbuf_jp, rbuf_jm) async(2)
         !$acc loop independent
         do i=ibeg, iend
             Vx(1:nz,i,jbeg-1) = rbuf_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
@@ -492,10 +487,9 @@ contains
             Vz(1:nz,i,jend+1) = rbuf_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
             Vz(1:nz,i,jend+2) = rbuf_jp(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz)
         end do
-        !$acc end loop
         !$acc end kernels
 
-        !$acc wait(15, 16)
+        !$acc wait
 
         call pwatch__off("global__comm_vel")
 
@@ -517,8 +511,6 @@ contains
 
         call pwatch__on("global__comm_stress")
 
-        !$acc wait(20, 21, 22)
-
         ! unit buffer size
         isize = nyp*nz
         jsize = nxp*nz
@@ -530,7 +522,7 @@ contains
         call mpi_irecv(rbuf_jm, 5*jsize, mpi_precision, itbl(idx, idy-1), 8, mpi_comm_world, req_j(2), err)
         !$acc end host_data
 
-        !$acc kernels async(23) &
+        !$acc kernels async(1) &
         !$acc present(Sxx, Sxy, Sxz, sbuf_ip, sbuf_im) 
         !$acc loop independent 
         do j=jbeg, jend
@@ -545,10 +537,10 @@ contains
             sbuf_im(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz) = Sxy(1:nz,ibeg  ,j)
             sbuf_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Sxz(1:nz,ibeg  ,j)
         end do
-        !$acc end loop
         !$acc end kernels
 
-        !$acc kernels async(24) present(Syy, Sxy, Syz, sbuf_jp, sbuf_jm) 
+        !$acc kernels async(2) &
+        !$acc present(Syy, Sxy, Syz, sbuf_jp, sbuf_jm) 
         !$acc loop independent
         do i=ibeg, iend
             sbuf_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Syy(1:nz,i,jend  )
@@ -562,10 +554,9 @@ contains
             sbuf_jm(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz) = Sxy(1:nz,i,jbeg  )
             sbuf_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Syz(1:nz,i,jbeg  )
         end do
-        !$acc end loop
         !$acc end kernels
 
-        !$acc wait(23, 24)
+        !$acc wait
 
         !$acc host_data use_device(sbuf_ip, sbuf_jp, sbuf_im, sbuf_jm)
         call mpi_isend(sbuf_ip, 5*isize, mpi_precision, itbl(idx+1, idy), 6, mpi_comm_world, req_i(3), err)
@@ -577,7 +568,8 @@ contains
         call mpi_waitall(4, req_i, istatus, err)
         call mpi_waitall(4, req_j, istatus, err)
 
-        !$acc kernels present(Sxx, Sxy, Sxz, rbuf_ip, rbuf_im)  async(25)
+        !$acc kernels async(1) &
+        !$acc present(Sxx, Sxy, Sxz, rbuf_ip, rbuf_im) 
         !$acc loop independent
         do j=jbeg, jend
             Sxx(1:nz,ibeg-1,j) = rbuf_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
@@ -591,10 +583,10 @@ contains
             Sxy(1:nz,iend+1,j) = rbuf_ip(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz)
             Sxz(1:nz,iend+1,j) = rbuf_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
         end do
-        !$acc end loop
         !$acc end kernels
 
-        !$acc kernels present(Syy, Sxy, Syz, rbuf_jp, rbuf_jm) async(26)
+        !$acc kernels async(2) &
+        !$acc present(Syy, Sxy, Syz, rbuf_jp, rbuf_jm) 
         !$acc loop independent
         do i=ibeg, iend
             Syy(1:nz,i,jbeg-1) = rbuf_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
@@ -608,10 +600,9 @@ contains
             Sxy(1:nz,i,jend+1) = rbuf_jp(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz)
             Syz(1:nz,i,jend+1) = rbuf_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
         end do
-        !$acc end loop
         !$acc end kernels
 
-        !$acc wait(25,26)
+        !$acc wait
 
         call pwatch__off("global__comm_stress")
 
