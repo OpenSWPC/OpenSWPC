@@ -313,7 +313,7 @@ contains
         allocate (max_fs_u(nxs, nys, 3), source=0.0)
 
         !$acc enter data copyin(buf_yz_u, buf_xz_u, buf_xy_u, buf_fs_u, buf_ob_u, &
-        !$acc                   max_ob_v, max_ob_u, max_fs_v, max_fs_u)
+        !$acc                   max_ob_v, max_ob_u, max_fs_v, max_fs_u, i0_yz, j0_xz, k0_xy)
 
         call mpi_barrier(mpi_comm_world, err)
 
@@ -965,7 +965,7 @@ contains
             call nc_chk(nf90_redef(hdr%io))
             call nc_chk(nf90_put_att(hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)))
             call nc_chk(nf90_enddef(hdr%io))
-            call nc_chk(nf90_sync(hdr%io))
+            !call nc_chk(nf90_sync(hdr%io))
         end do
 
     end subroutine wbuf_nc    

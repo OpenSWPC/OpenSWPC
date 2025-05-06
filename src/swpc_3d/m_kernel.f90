@@ -87,9 +87,9 @@ contains
 
 
         #ifdef _OPENACC
-        !$acc kernels &
+        !$acc kernels async(10) &
         !$acc pcopyin(bx, by, bz, Sxx, Syy, Szz, Syz, Sxz, Sxy, Vx, Vy, Vz, kfs_top, kfs_bot, kob_top, kob_bot)
-        !$acc loop independent collapse(3)
+        !$acc loop independent collapse(3) asumc)
         #else
         !$omp parallel &
         !$omp private( d3Sx3, d3Sy3, d3Sz3 ) &
@@ -159,8 +159,8 @@ contains
         call pwatch__on("kernel__update_stress")
 
         #ifdef _OPENACC
-        !$acc kernels &
-        !$acc pcopyin(Vx, Vy, Vz,  Sxx, Syy, Szz, Rxx, Ryy, Rzz, &
+        !$acc kernels async(20) &
+        !$acc present(Vx, Vy, Vz,  Sxx, Syy, Szz, Rxx, Ryy, Rzz, &
         !$acc         mu, lam, taup, taus, c1, c2, d1, d2, &
         !$acc         kfs_top, kfs_bot, kob_top, kob_bot)
         !$acc loop independent collapse(3)
@@ -255,8 +255,8 @@ contains
         #endif 
 
         #ifdef _OPENACC
-        !$acc kernels &
-        !$acc pcopyin(Vx, Vy, Vz, Sxy, Sxz, Syz, Rxy, Rxz, Ryz, &
+        !$acc kernels async(21) &
+        !$acc present(Vx, Vy, Vz, Sxy, Sxz, Syz, Rxy, Rxz, Ryz, &
         !$acc         muxy, muxz, muyz, taus, c1, c2, d1, d2, &
         !$acc         kfs_top, kfs_bot, kob_top, kob_bot)
         !$acc loop independent collapse(3)

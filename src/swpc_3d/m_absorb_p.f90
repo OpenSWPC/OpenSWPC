@@ -136,7 +136,7 @@ contains
         if (pw_mode) then
             if (idx == 0) then
                 #ifdef _OPENACC
-                !$acc kernels pcopyin(Sxx, Syy, Szz, Syz, Sxz, Sxy)
+                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) async(12)
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(j,k)
@@ -165,7 +165,7 @@ contains
 
             if (idx == nproc_x - 1) then
                 #ifdef _OPENACC
-                !$acc kernels pcopyin(Sxx, Syy, Szz, Syz, Sxz, Sxy)
+                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) async(12)
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(j,k)
@@ -192,7 +192,7 @@ contains
 
             if (idy == 0) then
                 #ifdef _OPENACC
-                !$acc kernels pcopyin(Sxx, Syy, Szz, Syz, Sxz, Sxy)
+                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) async(12)
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(i,k)
@@ -219,7 +219,7 @@ contains
 
             if (idy == nproc_y - 1) then
                 #ifdef _OPENACC
-                !$acc kernels pcopyin(Sxx, Syy, Szz, Syz, Sxz, Sxy)
+                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) async(12)
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(i,k)
@@ -251,8 +251,8 @@ contains
         !! time-marching
 
         #ifdef _OPENACC
-        !$acc kernels &
-        !$acc pcopyin(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
+        !$acc kernels async(12) &
+        !$acc present(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
         !$acc         axSxx, aySxy, azSxz, axSxy, aySyy, azSyz, axSxz, aySyz, azSzz, &
         !$acc         bx, by, bz, gxc, gxe, gyc, gye, gzc, gze, kbeg_a)
         !$acc loop independent collapse(2)
@@ -337,7 +337,7 @@ contains
         if (pw_mode) then
             if (idx == 0) then
                 #ifdef _OPENACC
-                !$acc kernels pcopyin(Vx, Vy, Vz)
+                !$acc kernels present(Vx, Vy, Vz) async(22)
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(j,k)
@@ -361,7 +361,7 @@ contains
 
             if (idx == nproc_x - 1) then
                 #ifdef _OPENACC
-                !$acc kernels pcopyin(Vx, Vy, Vz)
+                !$acc kernels present(Vx, Vy, Vz)  async(22)
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(j,k)
@@ -385,7 +385,7 @@ contains
 
             if (idy == 0) then
                 #ifdef _OPENACC
-                !$acc kernels pcopyin(Vx, Vy, Vz)
+                !$acc kernels present(Vx, Vy, Vz)  async(22)
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(i,k)
@@ -409,7 +409,7 @@ contains
 
             if (idy == nproc_y - 1) then
                 #ifdef _OPENACC
-                !$acc kernels pcopyin(Vx, Vy, Vz)
+                !$acc kernels present(Vx, Vy, Vz)  async(22)
                 !$acc loop independent collapse(2)
                 #else
                 !$omp parallel private(i,k)
@@ -438,8 +438,8 @@ contains
         !! Time-marching
 
         #ifdef _OPENACC
-        !$acc kernels &
-        !$acc pcopyin(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
+        !$acc kernels async(22) &
+        !$acc present(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
         !$acc         axVx, ayVx, azVx, axVy, ayVy, azVy, axVz, ayVz, azVz, &
         !$acc         lam, mu, muyz, muxz, muxy, gxc, gxe, gyc, gye, gzc, gze, kbeg_a)
         !$acc loop independent collapse(2)

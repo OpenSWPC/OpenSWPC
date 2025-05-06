@@ -304,6 +304,10 @@ contains
         !! common grid-related value for stress drip calculation
         dt_dxyz = dt / (dx * dy * dz)
 
+
+        !$acc enter data copyin(stftype, n_stfprm, mo, srcprm, isrc, jsrc, ksrc, &
+        !$acc                   mxx, myy, mzz, mxy, mxz, myz)
+
         call pwatch__off("source__setup")
 
     end subroutine source__setup
@@ -784,17 +788,16 @@ contains
 
         call pwatch__on("source__stressglut")
 
-        t = n2t(it, tbeg, dt)
 
         #ifdef _OPENACC
         !$acc kernels &
-        !$acc pcopyin(t, stftype, n_stfprm, mo, srcprm, isrc, jsrc, ksrc, &
+        !$acc pcopyin(stftype, n_stfprm, mo, srcprm, isrc, jsrc, ksrc, &
         !$acc         Sxx, Syy, Szz, Sxy, Sxz, Syz, mxx, myy, mzz, mxy, mxz, myz)
         !$acc loop seq
         #endif
         do i = 1, nsrc
 
-            stime = momentrate(t, stftype, n_stfprm, srcprm(:, i))
+            stime = momentrate(tbeg + (it-0.5) * dt , stftype, n_stfprm, srcprm(:, i))
             sdrop = mo(i) * stime * dt_dxyz
 
             ii = isrc(i)
@@ -843,16 +846,16 @@ contains
 
         call pwatch__on("source__bodyforce")
 
-        t = n2t(it, tbeg, dt) + dt / 2
 
         #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vx, Vy, Vz, isrc, jsrc, ksrc, srcprm, fx, fy, fz, bx, by, bz) copyin(t) pcopyin(n_stfprm, stftype)
+        !$acc pcopyin(Vx, Vy, Vz, isrc, jsrc, ksrc, srcprm, fx, fy, fz, bx, by, bz, n_stfprm, stftype)
         !$acc loop seq
         #endif
         do i = 1, nsrc
 
-            stime = momentrate(t, stftype, n_stfprm, srcprm(:, i))
+            !! t= nt2(it,tbeg,dt) + dt/2
+            stime = momentrate(tbeg + it * dt , stftype, n_stfprm, srcprm(:, i))
 
             ii = isrc(i)
             jj = jsrc(i)

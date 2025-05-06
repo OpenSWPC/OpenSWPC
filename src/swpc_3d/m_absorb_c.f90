@@ -116,8 +116,8 @@ contains
         real(SP) :: gcc
 
         #ifdef _OPENACC
-        !$acc kernels &
-        !$acc pcopyin(Sxx, Syy, Szz, Syz, Sxz, Sxy, gx_c, gx_b, gy_c, gy_b, gz_c, gz_b)
+        !$acc kernels async(20) &
+        !$acc pcopyin(Sxx, Syy, Szz, gx_c, gy_c, gz_c)
         !$acc loop independent collapse(3)
         #else
         !$omp parallel do schedule(dynamic) private( i, j, k, gcc )
@@ -130,6 +130,28 @@ contains
                     Sxx(k, i, j) = Sxx(k, i, j) * gcc
                     Syy(k, i, j) = Syy(k, i, j) * gcc
                     Szz(k, i, j) = Szz(k, i, j) * gcc
+
+                end do
+            end do
+        end do
+        #ifdef _OPENACC
+        !$acc end loop
+        !$acc end kernels
+        #else
+        !$omp end parallel do
+        #endif
+
+        
+        #ifdef _OPENACC
+        !$acc kernels async(21) &
+        !$acc pcopyin(Sxx, Syy, Szz, Syz, Sxz, Sxy, gx_c, gx_b, gy_c, gy_b, gz_c, gz_b)
+        !$acc loop independent collapse(3)
+        #else
+        !$omp parallel do schedule(dynamic) private( i, j, k, gcc )
+        #endif
+        do j = jbeg, jend
+            do i = ibeg, iend
+                do k = kbeg, kend_k
 
                     Syz(k, i, j) = Syz(k, i, j) * gx_c(i) * gy_b(j) * gz_b(k)
                     Sxz(k, i, j) = Sxz(k, i, j) * gx_b(i) * gy_c(j) * gz_b(k)
@@ -144,7 +166,7 @@ contains
         #else
         !$omp end parallel do
         #endif
-         
+
     end subroutine absorb_c__update_stress
 
     subroutine absorb_c__update_vel
@@ -152,7 +174,7 @@ contains
         integer :: i, j, k
 
         #ifdef _OPENACC
-        !$acc kernels &
+        !$acc kernels async(10) &
         !$acc pcopyin(Vx, Vy, Vz, gx_c, gx_b, gy_c, gy_b, gz_c, gz_b)
         !$acc loop independent collapse(3)
         #else
