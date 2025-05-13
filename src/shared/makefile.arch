@@ -95,6 +95,18 @@ ifeq ($(arch), miyabi-g)
   NETCDF = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5
 endif
 
+# Miyabi CPU node of the University of Tokyo
+ifeq ($(arch), miyabi-c)
+
+  FC = module purge; module load intel impi netcdf hdf5 netcdf-fortran; mpiifort
+  FFLAGS = -axSAPPHIRERAPIDS,CORE-AVX512 -qopenmp -ipo -O2 -qopt-report=2 -cpp
+  NCLIB = 
+  NCINC = 
+  NETCDF = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5
+endif
+
+
+
 ###
 ### Obsolete systems
 ###

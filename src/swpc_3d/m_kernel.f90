@@ -68,9 +68,9 @@ contains
 
         call pwatch__off("kernel__setup")
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc enter data copyin(c1, c2, d1, d2)
-        #endif
+#endif
 
     end subroutine kernel__setup
 
@@ -86,18 +86,18 @@ contains
         call pwatch__on("kernel__update_vel")
 
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
         !$acc pcopyin(bx, by, bz, Sxx, Syy, Szz, Syz, Sxz, Sxy, Vx, Vy, Vz, kfs_top, kfs_bot, kob_top, kob_bot)
         !$acc loop independent collapse(3) 
-        #else
+#else
         !$omp parallel &
         !$omp private( d3Sx3, d3Sy3, d3Sz3 ) &
         !$omp private( i, j, k) &
         !$omp private(re40x, re41x, re40y, re41y, re40z, re41z, isign)
         !$omp do &
         !$omp schedule(static,1)
-        #endif
+#endif
         do j = jbeg_k, jend_k
             do i = ibeg_k, iend_k
                 do k = kbeg_k, kend_k
@@ -129,13 +129,13 @@ contains
                 end do
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end do nowait
         !$omp end parallel
         !$omp barrier
-        #endif 
+#endif 
          
         call pwatch__off("kernel__update_vel")
 
@@ -157,13 +157,13 @@ contains
 
         call pwatch__on("kernel__update_stress")
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
         !$acc present(Vx, Vy, Vz,  Sxx, Syy, Szz, Rxx, Ryy, Rzz, &
         !$acc         mu, lam, taup, taus, c1, c2, d1, d2, &
         !$acc         kfs_top, kfs_bot, kob_top, kob_bot)
         !$acc loop independent collapse(3)
-        #else
+#else
         !$omp parallel  &
         !$omp private( dxVx, dyVy, dzVz ) &
         !$omp private( mu2, lam2mu ) &
@@ -174,7 +174,7 @@ contains
         !$omp private( i, j, k, m )
         !$omp do &
         !$omp schedule(static,1)
-        #endif
+#endif
         do j = jbeg_k, jend_k
             do i = ibeg_k, iend_k
 
@@ -217,9 +217,9 @@ contains
                     Ryy_n = 0.0
                     Rzz_n = 0.0
 
-                    #ifdef _OPENACC
+#ifdef _OPENACC
                     !$acc loop seq reduction(+:Rxx_n,Ryy_n,Rzz_n)
-                    #endif
+#endif
                     do m=1, nm
                       Rxx(m,k,i,j) = c1(m) * Rxx(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dyVy_dzVz) * dt
                       Ryy(m,k,i,j) = c1(m) * Ryy(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dzVz) * dt
@@ -241,20 +241,20 @@ contains
                 end do
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end do nowait
         !$omp end parallel
-        #endif 
+#endif 
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, Sxy, Sxz, Syz, Rxy, Rxz, Ryz, &
         !$acc         muxy, muxz, muyz, taus, c1, c2, d1, d2, &
         !$acc         kfs_top, kfs_bot, kob_top, kob_bot)
         !$acc loop independent collapse(3)
-        #else
+#else
         !$omp parallel &
         !$omp private( dxVy_dyVx, dxVz_dzVx, dyVz_dzVy ) &
         !$omp private( taus1, taus_plus1 ) &
@@ -263,7 +263,7 @@ contains
         !$omp private( i, j, k, m )
         !$omp do  &
         !$omp schedule(static,1)
-        #endif
+#endif
         do j = jbeg_k, jend_k
             do i = ibeg_k, iend_k
 
@@ -297,9 +297,9 @@ contains
                     Ryz_n = 0.0
                     Rxz_n = 0.0
                     Rxy_n = 0.0
-                    #ifdef _OPENACC
+#ifdef _OPENACC
                     !$acc loop seq reduction(+:Rxy_n,Ryz_n,Rxz_n)
-                    #endif
+#endif
                     do m = 1, nm
                         Ryz(m,k,i,j) = c1(m) * Ryz(m,k,i,j) - c2(m) * muyz(k,i,j) * taus1 * dyVz_dzVy * dt
                         Rxz(m,k,i,j) = c1(m) * Rxz(m,k,i,j) - c2(m) * muxz(k,i,j) * taus1 * dxVz_dzVx * dt
@@ -319,13 +319,13 @@ contains
                 end do
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end do nowait
         !$omp end parallel
         !$omp barrier
-        #endif
+#endif
 
         call pwatch__off("kernel__update_stress")
 

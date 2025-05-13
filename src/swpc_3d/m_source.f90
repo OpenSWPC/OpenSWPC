@@ -789,12 +789,12 @@ contains
         call pwatch__on("source__stressglut")
 
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
-        !$acc pcopyin(stftype, n_stfprm, mo, srcprm, isrc, jsrc, ksrc, &
+        !$acc present(stftype, n_stfprm, mo, srcprm, isrc, jsrc, ksrc, &
         !$acc         Sxx, Syy, Szz, Sxy, Sxz, Syz, mxx, myy, mzz, mxy, mxz, myz)
         !$acc loop seq
-        #endif
+#endif
         do i = 1, nsrc
 
             stime = momentrate(tbeg + (it-0.5) * dt , stftype, n_stfprm, srcprm(:, i))
@@ -824,9 +824,9 @@ contains
             Syz(kk-1,ii  ,jj-1) = Syz(kk-1,ii  ,jj-1) - myz(i) * sdrop / 4
 
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #endif
+#endif
 
         call pwatch__off("source__stressglut")
 
@@ -846,11 +846,11 @@ contains
         call pwatch__on("source__bodyforce")
 
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
-        !$acc pcopyin(Vx, Vy, Vz, isrc, jsrc, ksrc, srcprm, fx, fy, fz, bx, by, bz, n_stfprm, stftype)
+        !$acc present(Vx, Vy, Vz, isrc, jsrc, ksrc, srcprm, fx, fy, fz, bx, by, bz, n_stfprm, stftype)
         !$acc loop seq
-        #endif
+#endif
         do i = 1, nsrc
 
             !! t= nt2(it,tbeg,dt) + dt/2
@@ -868,9 +868,9 @@ contains
             Vz(kk-1,ii  ,jj  ) = Vz(kk-1,ii  ,jj  ) + bz(kk-1,ii  ,jj  ) * fz(i) * stime * dt_dxyz / 2
 
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #endif
+#endif
 
         call pwatch__off("source__bodyforce")
     end subroutine source__bodyforce

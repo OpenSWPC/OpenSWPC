@@ -3,7 +3,7 @@ module m_absorb_p
 
     !! Absorbing Boundary Condition: ADE-CFS PML based on Zhang and Shen
     !!
-    !! #### PML region definition
+    !!#### PML region definition
     !!
     !! ```text
     !!  +-----+--------------------------+-----+
@@ -135,13 +135,13 @@ contains
         !! Horizontal zero-derivative boundary (for plane wave mode)
         if (pw_mode) then
             if (idx == 0) then
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
                 !$acc loop independent collapse(2)
-                #else
+#else
                 !$omp parallel private(j,k)
                 !$omp do schedule(dynamic)
-                #endif
+#endif
                 do j = jbeg, jend
                     do k = 1, nz
                         Sxx(k,0,j) = 2 * Sxx(k,1,j) - Sxx(k,2,j)
@@ -151,25 +151,25 @@ contains
                         Sxz(k,0,j) = 2 * Sxz(k,1,j) - Sxz(k,2,j)
                         Sxy(k,0,j) = 2 * Sxy(k,1,j) - Sxy(k,2,j)
                     end do
-                    #ifdef _OPENACC
-                    #endif
+   #ifdef _OPENACC
+   #endif
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end do nowait
                 !$omp end parallel
-                #endif
+#endif
             end if
 
             if (idx == nproc_x - 1) then
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
                 !$acc loop independent collapse(2)
-                #else
+#else
                 !$omp parallel private(j,k)
                 !$omp do schedule(dynamic)
-                #endif
+#endif
                 do j = jbeg, jend
                     do k = 1, nz
                         Sxx(k,nx+1,j) = 2 * Sxx(k,nx,j) - Sxx(k,nx-1,j)
@@ -180,22 +180,22 @@ contains
                         Sxy(k,nx+1,j) = 2 * Sxy(k,nx,j) - Sxy(k,nx-1,j)
                     end do
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end do nowait
                 !$omp end parallel
-                #endif
+#endif
             end if
 
             if (idy == 0) then
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
                 !$acc loop independent collapse(2)
-                #else
+#else
                 !$omp parallel private(i,k)
                 !$omp do schedule(dynamic)
-                #endif
+#endif
                 do i = ibeg, iend
                     do k = 1, nz
                         Sxx(k, i, 0) = 2 * Sxx(k, i, 1) - Sxx(k, i, 2)
@@ -206,22 +206,22 @@ contains
                         Sxy(k, i, 0) = 2 * Sxy(k, i, 1) - Sxy(k, i, 2)
                     end do
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end do nowait
                 !$omp end parallel
-                #endif
+#endif
             end if
 
             if (idy == nproc_y - 1) then
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
                 !$acc loop independent collapse(2)
-                #else
+#else
                 !$omp parallel private(i,k)
                 !$omp do schedule(dynamic)
-                #endif
+#endif
                 do i = ibeg, iend
                     do k = 1, nz
                         Sxx(k,i,ny+1) = 2 * Sxx(k,i,ny) - Sxx(k,i,ny-1)
@@ -232,40 +232,40 @@ contains
                         Sxy(k,i,ny+1) = 2 * Sxy(k,i,ny) - Sxy(k,i,ny-1)
                     end do
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end do nowait
                 !$omp end parallel
-                #endif
+#endif
             end if
-            #ifndef _OPENACC
+#ifndef _OPENACC
             !$omp barrier
-            #endif
+#endif
         end if
 
         !! time-marching
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
         !$acc         axSxx, aySxy, azSxz, axSxy, aySyy, azSyz, axSxz, aySyz, azSzz, &
         !$acc         bx, by, bz, gxc, gxe, gyc, gye, gzc, gze, kbeg_a)
         !$acc loop independent collapse(2)
-        #else
+#else
         !$omp parallel &
         !$omp private( dxSxx, dySyy, dzSzz, dySyz, dzSyz, dxSxz, dzSxz, dxSxy ,dySxy ) &
         !$omp private( i, j, k )
         !$omp do &
         !$omp schedule(dynamic)
-        #endif
+#endif
         do j = jbeg, jend
             do i = ibeg, iend
 
                 !! update velocity
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc loop vector independent
-                #endif
+#endif
                 do k = kbeg_a(i, j), kend
 
                     dxSxx = (Sxx(k  ,i+1,j) - Sxx(k  ,i  ,j  )) * r20x
@@ -305,13 +305,13 @@ contains
                 end do
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end do nowait
         !$omp end parallel
         !$omp barrier
-        #endif 
+#endif 
 
     end subroutine absorb_p__update_vel
 
@@ -328,13 +328,13 @@ contains
         !! Horizontal zero-derivative boundary (for plane wave mode)
         if (pw_mode) then
             if (idx == 0) then
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels present(Vx, Vy, Vz) 
                 !$acc loop independent collapse(2)
-                #else
+#else
                 !$omp parallel private(j,k)
                 !$omp do schedule(dynamic)
-                #endif
+#endif
                 do j = jbeg, jend
                     do k = 1, nz
                         Vx(k, 0, j) = 2 * Vx(k, 1, j) - Vx(k, 2, j)
@@ -342,22 +342,22 @@ contains
                         Vz(k, 0, j) = 2 * Vz(k, 1, j) - Vz(k, 2, j)
                     end do
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end do nowait
                 !$omp end parallel
-                #endif
+#endif
             end if
 
             if (idx == nproc_x - 1) then
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels present(Vx, Vy, Vz) 
                 !$acc loop independent collapse(2)
-                #else
+#else
                 !$omp parallel private(j,k)
                 !$omp do schedule(dynamic)
-                #endif
+#endif
                 do j = jbeg, jend
                     do k = 1, nz
                         Vx(k, nx + 1, j) = 2 * Vx(k, nx, j) - Vx(k, nx - 1, j)
@@ -365,22 +365,22 @@ contains
                         Vz(k, nx + 1, j) = 2 * Vz(k, nx, j) - Vz(k, nx - 1, j)
                     end do
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end do nowait
                 !$omp end parallel
-                #endif
+#endif
             end if
 
             if (idy == 0) then
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels present(Vx, Vy, Vz)
                 !$acc loop independent collapse(2)
-                #else
+#else
                 !$omp parallel private(i,k)
                 !$omp do schedule(dynamic)
-                #endif
+#endif
                 do i = ibeg, iend
                     do k = 1, nz
                         Vx(k, i, 0) = 2 * Vx(k, i, 1) - Vx(k, i, 2)
@@ -388,22 +388,22 @@ contains
                         Vz(k, i, 0) = 2 * Vz(k, i, 1) - Vz(k, i, 2)
                     end do
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end do nowait
                 !$omp end parallel
-                #endif
+#endif
             end if
 
             if (idy == nproc_y - 1) then
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels present(Vx, Vy, Vz) 
                 !$acc loop independent collapse(2)
-                #else
+#else
                 !$omp parallel private(i,k)
                 !$omp do schedule(dynamic)
-                #endif
+#endif
                 do i = ibeg, iend
                     do k = 1, nz
                         Vx(k, i, ny + 1) = 2 * Vx(k, i, ny) - Vx(k, i, ny - 1)
@@ -411,27 +411,27 @@ contains
                         Vz(k, i, ny + 1) = 2 * Vz(k, i, ny) - Vz(k, i, ny - 1)
                     end do
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end do nowait
                 !$omp end parallel
-                #endif
+#endif
             end if
-            #ifndef _OPENACC
+#ifndef _OPENACC
             !$omp barrier
-            #endif 
+#endif 
         end if
 
         !! Time-marching
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
         !$acc         axVx, ayVx, azVx, axVy, ayVy, azVy, axVz, ayVz, azVz, &
         !$acc         lam, mu, muyz, muxz, muxy, gxc, gxe, gyc, gye, gzc, gze, kbeg_a)
         !$acc loop independent collapse(2)
-        #else
+#else
         !$omp parallel &
         !$omp private( dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz ) &
         !$omp private( lam2mu_R, lam_R ) &
@@ -439,15 +439,15 @@ contains
         !$omp private( i, j, k )
         !$omp do &
         !$omp schedule(dynamic)
-        #endif
+#endif
         do j = jbeg, jend
 
             do i = ibeg, iend
 
                 !! Update Normal Stress
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc loop vector independent
-                #endif                
+#endif                
                 do k = kbeg_a(i, j), kend
 
                     dxVx = (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x
@@ -472,9 +472,9 @@ contains
                 end do
 
                 !! Update Shear Stress
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc loop vector independent
-                #endif                
+#endif                
                 do k = kbeg_a(i, j), kend
 
                     dxVy = (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x
@@ -505,13 +505,13 @@ contains
 
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end do nowait
         !$omp end parallel
         !$omp barrier
-        #endif 
+#endif 
 
     end subroutine absorb_p__update_stress
 

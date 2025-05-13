@@ -126,7 +126,7 @@ contains
         call readini(io_prm, 'ntdec_s', ntdec_s, 10)
         call readini(io_prm, 'snp_format', snp_format, 'native')
 
-        !! snapshot size #2013-0440
+        !! snapshot size#2013-0440
         nxs = (nx + (idec / 2)) / idec
         nys = (ny + (jdec / 2)) / jdec
         nzs = (nz + (kdec / 2)) / kdec
@@ -993,13 +993,13 @@ contains
 
 
             if (ibeg <= i .and. i <= iend) then
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels &
                 !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, i0_yz)
                 !$acc loop independent collapse(2)
-                #else
+#else
                 !$omp parallel do private( i, j, k, kk, jj, div, rot_x, rot_y ,rot_z)
-                #endif
+#endif
                 do jj = js0, js1
                     do kk = ks0, ks1
 
@@ -1031,11 +1031,11 @@ contains
 
                     end do
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end parallel do
-                #endif
+#endif
             end if
 
             if (snp_format == 'native') then
@@ -1088,13 +1088,13 @@ contains
 
             if (jbeg <= j .and. j <= jend) then
 
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels &
                 !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, j0_xz)
                 !$acc loop independent collapse(2)
-                #else
+#else
                 !$omp parallel do private( ii, kk, i, j, k, div, rot_x, rot_y, rot_z)
-                #endif
+#endif
                 do ii = is0, is1
                     do kk = ks0, ks1
                         k = kk * kdec - kdec / 2
@@ -1125,11 +1125,11 @@ contains
 
                     end do
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end parallel do
-                #endif
+#endif
             end if
 
             if (snp_format == 'native') then
@@ -1178,13 +1178,13 @@ contains
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc kernels &
             !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, k0_xy)
             !$acc loop independent collapse(2)
-            #else
+#else
             !$omp parallel do private( ii, jj, i, j, k, div, rot_x, rot_y, rot_z)
-            #endif
+#endif
             do jj = js0, js1
                 do ii = is0, is1
                     i = ii * idec - idec / 2
@@ -1215,11 +1215,11 @@ contains
 
                 end do
             end do
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc end kernels
-            #else
+#else
             !$omp end parallel do
-            #endif
+#endif
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nxs, nys, xy_ps%ionode, xy_ps%io, buf(:, :, 1))
@@ -1269,13 +1269,13 @@ contains
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc kernels &
             !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, kfs)
             !$acc loop independent collapse(2)
-            #else
+#else
             !$omp parallel do private( ii, jj, i, j, k, div, rot_x, rot_y, rot_z)
-            #endif
+#endif
             do jj = js0, js1
                 do ii = is0, is1
                     j = jj * jdec - jdec / 2
@@ -1305,11 +1305,11 @@ contains
                     buf(ii, jj, 4) = rot_z * UC * M0 * 1e-3
                 end do
             end do
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc end kernels
-            #else
+#else
             !$omp end parallel do
-            #endif
+#endif
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nxs, nys, fs_ps%ionode, fs_ps%io, buf(:, :, 1))
@@ -1359,13 +1359,13 @@ contains
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc kernels &
             !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, kob)
             !$acc loop independent collapse(2)
-            #else
+#else
             !$omp parallel do private( ii, jj, i, j, k, div, rot_x, rot_y, rot_z )
-            #endif            
+#endif            
             do jj = js0, js1
                 do ii = is0, is1
                     j = jj * jdec - jdec / 2
@@ -1396,11 +1396,11 @@ contains
 
                 end do
             end do
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc end kernels
-            #else
+#else
             !$omp end parallel do
-            #endif
+#endif
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nxs, nys, ob_ps%ionode, ob_ps%io, buf(:, :, 1))
@@ -1453,13 +1453,13 @@ contains
             buf = 0.0
             if (ibeg <= i .and. i <= iend) then
 
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels &
                 !$acc pcopyin(Vx, Vy, Vz, buf)
                 !$acc loop independent collapse(2)
-                #else
+#else
                 !$omp parallel do private( jj, kk, k, j, i )
-                #endif
+#endif
                 do jj = js0, js1
                     do kk = ks0, ks1
                         i = i0_yz
@@ -1472,11 +1472,11 @@ contains
 
                     end do
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end parallel do
-                #endif
+#endif
 
             end if
 
@@ -1530,13 +1530,13 @@ contains
             buf = 0.0
             if (jbeg <= j .and. j <= jend) then
 
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels &
                 !$acc pcopyin(Vx, Vy, Vz, buf)
                 !$acc loop independent collapse(2)
-                #else
+#else
                 !$omp parallel do private( ii, kk, i, k, j )
-                #endif
+#endif
                 do ii = is0, is1
                     do kk = ks0, ks1
                         i = ii * idec - idec / 2
@@ -1549,11 +1549,11 @@ contains
 
                     end do
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end parallel do
-                #endif
+#endif
 
             end if
 
@@ -1598,13 +1598,13 @@ contains
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc kernels &
             !$acc pcopyin(Vx, Vy, Vz, buf)
             !$acc loop independent collapse(2)
-            #else
+#else
             !$omp parallel do private( ii, jj, i, j, k )
-            #endif
+#endif
             do jj = js0, js1
                 do ii = is0, is1
                     i = ii * idec - idec / 2
@@ -1617,11 +1617,11 @@ contains
 
                 end do
             end do
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc end kernels
-            #else
+#else
             !$omp end parallel do
-            #endif
+#endif
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nxs, nys, xy_v%ionode, xy_v%io, buf(:, :, 1))
@@ -1664,13 +1664,13 @@ contains
             !$acc enter data copyin(buf)
         end if
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
         !$acc pcopyin(Vx, Vy, Vz, buf, kfs)
         !$acc loop independent collapse(2)
-        #else
+#else
         !$omp parallel do private( ii, jj, i, j, k )
-        #endif
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 j = jj * jdec - jdec / 2
@@ -1683,18 +1683,18 @@ contains
 
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end parallel do
-        #endif
+#endif
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels pcopyin(buf, max_fs_v)
         !$acc loop independent collapse(2)
-        #else
+#else
         !$omp parallel do private(ii,jj)
-        #endif
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 max_fs_v(ii, jj, 1) = max(max_fs_v(ii, jj, 1), abs(buf(ii, jj, 3)))
@@ -1702,11 +1702,11 @@ contains
                 max_fs_v(ii, jj, 3) = sqrt(max_fs_v(ii, jj, 1)**2 + max_fs_v(ii, jj, 2)**2)
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end parallel do
-        #endif
+#endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
@@ -1751,13 +1751,13 @@ contains
             !$acc enter data copyin(buf)
         end if
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
         !$acc pcopyin(Vx, Vy, Vz, buf, kob)
         !$acc loop independent collapse(2)
-        #else
+#else
         !$omp parallel do private( ii, jj, i, j, k )
-        #endif
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 j = jj * jdec - jdec / 2
@@ -1770,18 +1770,18 @@ contains
 
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end parallel do
-        #endif
+#endif
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels pcopyin(buf, max_ob_v)
         !$acc loop independent collapse(2)
-        #else
+#else
         !$omp parallel do private(ii,jj)
-        #endif
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 max_ob_v(ii, jj, 1) = max(max_ob_v(ii, jj, 1), abs(buf(ii, jj, 3)))
@@ -1789,11 +1789,11 @@ contains
                 max_ob_v(ii, jj, 3) = sqrt(max_ob_v(ii, jj, 1)**2 + max_ob_v(ii, jj, 2)**2)
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end parallel do
-        #endif
+#endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
@@ -1837,13 +1837,13 @@ contains
 
         if (ibeg <= i .and. i <= iend) then
 
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc kernels &
             !$acc pcopyin(Vx, Vy, Vz, buf_yz_u)
             !$acc loop independent collapse(2)
-            #else            
+#else            
             !$omp parallel do private( jj, kk, k, i, j )
-            #endif
+#endif
             do jj = js0, js1
                 do kk = ks0, ks1
                     i = i0_yz
@@ -1856,11 +1856,11 @@ contains
 
                 end do
             end do
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc end kernels
-            #else
+#else
             !$omp end parallel do
-            #endif
+#endif
 
         end if
 
@@ -1905,13 +1905,13 @@ contains
 
 
         if (jbeg <= j .and. j <= jend) then
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc kernels &
             !$acc pcopyin(Vx, Vy, Vz, buf_xz_u)
             !$acc loop independent collapse(2)
-            #else            
+#else            
             !$omp parallel do private( ii, kk, k, i, j )
-            #endif
+#endif
             do ii = is0, is1
                 do kk = ks0, ks1
                     k = kk * kdec - kdec / 2
@@ -1924,11 +1924,11 @@ contains
 
                 end do
             end do
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc end kernels
-            #else
+#else
             !$omp end parallel do
-            #endif
+#endif
 
         end if
 
@@ -1970,13 +1970,13 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
         !$acc pcopyin(Vx, Vy, Vz, buf_xy_u)
         !$acc loop independent collapse(2)
-        #else            
+#else            
         !$omp parallel do private( jj, ii, k, i, j )
-        #endif
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 j = jj * jdec - jdec / 2
@@ -1989,11 +1989,11 @@ contains
 
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end parallel do
-        #endif
+#endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
@@ -2034,13 +2034,13 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
         !$acc pcopyin(Vx, Vy, Vz, buf_fs_u, kfs)
         !$acc loop independent collapse(2)
-        #else            
+#else            
         !$omp parallel do private( jj, ii, k, i, j )
-        #endif
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 j = jj * jdec - jdec / 2
@@ -2053,18 +2053,18 @@ contains
 
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end parallel do
-        #endif
+#endif
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels pcopyin(buf_fs_u, max_fs_u)
         !$acc loop independent collapse(2)
-        #else
+#else
         !$omp parallel do private(ii,jj)
-        #endif
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 max_fs_u(ii, jj, 1) = max(max_fs_u(ii, jj, 1), abs(buf_fs_u(ii, jj, 3)))
@@ -2072,11 +2072,11 @@ contains
                 max_fs_u(ii, jj, 3) = sqrt(max_fs_u(ii, jj, 1)**2 + max_fs_u(ii, jj, 2)**2)
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end parallel do
-        #endif
+#endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
             if (snp_format == 'native') then
@@ -2115,13 +2115,13 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
         !$acc pcopyin(Vx, Vy, Vz, buf_ob_u, kob)
         !$acc loop independent collapse(2)
-        #else            
+#else            
         !$omp parallel do private( jj, ii, k, i, j )
-        #endif
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 j = jj * jdec - jdec / 2
@@ -2134,18 +2134,18 @@ contains
 
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end parallel do
-        #endif
+#endif
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels pcopyin(buf_ob_u, max_ob_u)
         !$acc loop independent collapse(2)
-        #else
+#else
         !$omp parallel do private(ii,jj)
-        #endif
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 max_ob_u(ii, jj, 1) = max(max_ob_u(ii, jj, 1), abs(buf_ob_u(ii, jj, 3)))
@@ -2153,11 +2153,11 @@ contains
                 max_ob_u(ii, jj, 3) = sqrt(max_ob_u(ii, jj, 1)**2 + max_ob_u(ii, jj, 2)**2)
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end parallel do
-        #endif
+#endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
             if (snp_format == 'native') then
@@ -2361,12 +2361,12 @@ contains
         integer :: i, j, k, idx
 
         idx = 1
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels present(buf3d, buf1d)
         !$acc loop independent collapse(3) 
-        #else
+#else
         !$omp parallel do private(i, j, k, idx)
-        #endif
+#endif
         do k=1, n3
             do j=1, n2
                 do i=1, n1
@@ -2375,11 +2375,11 @@ contains
                 end do
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end parallel do
-        #endif
+#endif
 
     end subroutine pack_3D
 

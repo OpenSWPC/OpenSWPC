@@ -432,36 +432,36 @@ contains
 
         if (sw_wav_u) then
 
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc kernels &
             !$acc pcopyin(Vx, Vy, Vz, ux, uy, uz, ist, jst, kst)
             !$acc loop independent
-            #else
+#else
             !$omp parallel do private(n,i,j,k)
-            #endif
+#endif
             do n = 1, nst
                 i = ist(n); j = jst(n); k = kst(n)
                 ux(n) = ux(n) + real(Vx(k, i, j) + Vx(k, i - 1, j)) * 0.5 * dt
                 uy(n) = uy(n) + real(Vy(k, i, j) + Vy(k, i, j - 1)) * 0.5 * dt
                 uz(n) = uz(n) - real(Vz(k, i, j) + Vz(k - 1, i, j)) * 0.5 * dt ! positive upward
             end do
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc end kernels
-            #else
+#else
             !$omp end parallel do
-            #endif
+#endif
 
         end if
 
         if (sw_wav_strain) then
 
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc kernels &
             !$acc pcopyin(Vx, Vy, Vz, exx, eyy, ezz, eyz, exz, exy, ist, jst, kst)
             !$acc loop independent
-            #else
+#else
             !$omp parallel do private(n, i, j, k, dxVx, dyVy, dzVz, dyVz, dzVy, dxVz, dzVx, dxVy, dyVx)
-            #endif
+#endif
             do n = 1, nst
                 i = ist(n); j = jst(n); k = kst(n)
 
@@ -507,11 +507,11 @@ contains
                 exy(n) = exy(n) + real(dxVy + dyVx) / 2.0 * dt
 
             end do
-            #ifdef _OPENACC
+#ifdef _OPENACC
             !$acc end kernels
-            #else
+#else
             !$omp end parallel do
-            #endif
+#endif
 
         end if
 
@@ -520,58 +520,58 @@ contains
             itw = (it - 1) / ntdec_w + 1
             if (sw_wav_v) then
 
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels &
                 !$acc pcopyin(Vx, Vy, Vz, wav_vel, ist, jst, kst)
                 !$acc loop independent
-                #else
+#else
                 !$omp parallel do private(n,i,j,k)
-                #endif
+#endif
                 do n = 1, nst
                     i = ist(n); j = jst(n); k = kst(n)
                     wav_vel(itw, 1, n) = real(Vx(k, i, j) + Vx(k, i - 1, j)) / 2.0 * M0 * UC * 1e9
                     wav_vel(itw, 2, n) = real(Vy(k, i, j) + Vy(k, i, j - 1)) / 2.0 * M0 * UC * 1e9
                     wav_vel(itw, 3, n) = -real(Vz(k, i, j) + Vz(k - 1, i, j)) / 2.0 * M0 * UC * 1e9
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end parallel do
-                #endif
+#endif
 
             end if
 
             if (sw_wav_u) then
 
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels &
                 !$acc pcopyin(ux, uy, uz, wav_disp)
                 !$acc loop independent
-                #else
+#else
                 !$omp parallel do private(n)
-                #endif
+#endif
                 do n = 1, nst
                     wav_disp(itw, 1, n) = real(ux(n)) * M0 * UC * 1e9
                     wav_disp(itw, 2, n) = real(uy(n)) * M0 * UC * 1e9
                     wav_disp(itw, 3, n) = real(uz(n)) * M0 * UC * 1e9
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end parallel do
-                #endif
+#endif
     
             end if
 
             if (sw_wav_stress) then
 
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels &
                 !$acc pcopyin(ist, jst, kst, Sxx, Syy, Szz, Syz, Sxz, Sxy, wav_stress)
                 !$acc loop independent
-                #else
+#else
                 !$omp parallel do private(n, i, j, k)
-                #endif
+#endif
                 do n = 1, nst
                     i = ist(n); j = jst(n); k = kst(n)
                     wav_stress(itw, 1, n) = real(Sxx(k, i, j)) * M0 * UC * 1e6
@@ -584,23 +584,23 @@ contains
                     wav_stress(itw, 6, n) = real(Sxy(k, i, j) + Sxy(k, i, j - 1) &
                                                  + Sxy(k, i - 1, j) + Sxy(k, i - 1, j - 1)) / 4.0 * M0 * UC * 1e6
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end parallel do
-                #endif
+#endif
 
             end if
 
             if (sw_wav_strain) then
 
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc kernels &
                 !$acc pcopyin(exx, eyy, ezz, eyz, exz, exy, wav_strain)
                 !$acc loop independent
-                #else
+#else
                 !$omp parallel do private(n)
-                #endif
+#endif
                 do n = 1, nst
                     wav_strain(itw, 1, n) = exx(n) * M0 * UC * 1e-3
                     wav_strain(itw, 2, n) = eyy(n) * M0 * UC * 1e-3
@@ -609,11 +609,11 @@ contains
                     wav_strain(itw, 5, n) = exz(n) * M0 * UC * 1e-3
                     wav_strain(itw, 6, n) = exy(n) * M0 * UC * 1e-3
                 end do
-                #ifdef _OPENACC
+#ifdef _OPENACC
                 !$acc end kernels
-                #else
+#else
                 !$omp end parallel do
-                #endif 
+#endif 
 
             end if
 

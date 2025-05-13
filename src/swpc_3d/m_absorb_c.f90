@@ -30,7 +30,7 @@ contains
         !!
         !! set Cerjan's sponge function for x(i), y(j) and z(k) directions
         !!
-        !! #### Note
+        !!#### Note
         !! 2013-00446
 
         integer, intent(in) :: io_prm
@@ -103,10 +103,10 @@ contains
         !! dummy
         io2 = io_prm
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc enter data &
         !$acc copyin(gx_c, gx_b, gy_c, gy_b, gz_c, gz_b)
-        #endif
+#endif
 
     end subroutine absorb_c__setup
 
@@ -115,13 +115,13 @@ contains
         integer :: i, j, k
         real(SP) :: gcc
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
         !$acc pcopyin(Sxx, Syy, Szz, gx_c, gy_c, gz_c)
         !$acc loop independent collapse(3)
-        #else
+#else
         !$omp parallel do schedule(dynamic) private( i, j, k, gcc )
-        #endif
+#endif
         do j = jbeg, jend
             do i = ibeg, iend
                 do k = kbeg, kend_k
@@ -134,20 +134,20 @@ contains
                 end do
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end parallel do
-        #endif
+#endif
 
         
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
         !$acc pcopyin(Syz, Sxz, Sxy, gx_c, gx_b, gy_c, gy_b, gz_c, gz_b)
         !$acc loop independent collapse(3)
-        #else
+#else
         !$omp parallel do schedule(dynamic) private( i, j, k, gcc )
-        #endif
+#endif
         do j = jbeg, jend
             do i = ibeg, iend
                 do k = kbeg, kend_k
@@ -159,11 +159,11 @@ contains
                 end do
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end parallel do
-        #endif
+#endif
 
     end subroutine absorb_c__update_stress
 
@@ -171,13 +171,13 @@ contains
 
         integer :: i, j, k
 
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc kernels &
         !$acc pcopyin(Vx, Vy, Vz, gx_c, gx_b, gy_c, gy_b, gz_c, gz_b)
         !$acc loop independent collapse(3)
-        #else
+#else
         !$omp parallel do schedule(dynamic) private(i,j,k)
-        #endif
+#endif
         do j = jbeg, jend
             do i = ibeg, iend
                 do k = kbeg, kend
@@ -189,11 +189,11 @@ contains
                 end do
             end do
         end do
-        #ifdef _OPENACC
+#ifdef _OPENACC
         !$acc end kernels
-        #else
+#else
         !$omp end parallel do
-        #endif
+#endif
 
     end subroutine absorb_c__update_vel
 
