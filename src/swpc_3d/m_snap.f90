@@ -995,7 +995,7 @@ contains
             if (ibeg <= i .and. i <= iend) then
 #ifdef _OPENACC
                 !$acc kernels &
-                !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, i0_yz)
+                !$acc present(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, i0_yz)
                 !$acc loop independent collapse(2)
 #else
                 !$omp parallel do private( i, j, k, kk, jj, div, rot_x, rot_y ,rot_z)
@@ -1090,7 +1090,7 @@ contains
 
 #ifdef _OPENACC
                 !$acc kernels &
-                !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, j0_xz)
+                !$acc present(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, j0_xz)
                 !$acc loop independent collapse(2)
 #else
                 !$omp parallel do private( ii, kk, i, j, k, div, rot_x, rot_y, rot_z)
@@ -1527,7 +1527,6 @@ contains
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            buf = 0.0
             if (jbeg <= j .and. j <= jend) then
 
 #ifdef _OPENACC
@@ -1907,7 +1906,7 @@ contains
         if (jbeg <= j .and. j <= jend) then
 #ifdef _OPENACC
             !$acc kernels &
-            !$acc pcopyin(Vx, Vy, Vz, buf_xz_u)
+            !$acc present(Vx, Vy, Vz, buf_xz_u)
             !$acc loop independent collapse(2)
 #else            
             !$omp parallel do private( ii, kk, k, i, j )

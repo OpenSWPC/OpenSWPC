@@ -158,7 +158,7 @@ contains
         !! time-marching
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vy, Sxy, Syz, axSxy, azSyz, rho, gxc, gzc)
+        !$acc present(Vy, Sxy, Syz, axSxy, azSyz, rho, gxc, gzc, kbeg_a)
         !$acc loop independent
 #else
         !$omp parallel &
@@ -295,7 +295,7 @@ contains
         !! Time-marching
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vy, Sxy, Syz, gxc, gxe, gzc, gze, axVy, azVy)
+        !$acc present(Vy, Sxy, Syz, gxc, gxe, gzc, gze, axVy, azVy, mu, kbeg_a)
         !$acc loop independent
 #else
         !$omp parallel &

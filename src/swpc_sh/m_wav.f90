@@ -128,6 +128,9 @@ contains
         r41x = 1.0_MP / 24.0_MP / dx
         r41z = 1.0_MP / 24.0_MP / dz
 
+        !$acc enter data &
+        !$acc copyin(wav_vel, wav_disp, wav_stress, wav_strain, ist, kst)
+
         call pwatch__off('wav__setup')
 
     end subroutine wav__setup
@@ -149,28 +152,43 @@ contains
         if (it == 1) then
             if (sw_wav_u) then
                 allocate (uy(nst), source=0.0)
+                !$acc enter data copyin(uy)
             end if
 
             if (sw_wav_strain) then
                 allocate (exy(nst), source=0.0)
                 allocate (eyz(nst), source=0.0)
+                !$acc enter data copyin(exy, eyz)
             end if
         end if
 
         if (sw_wav_u) then
 
+#ifdef _OPENACC
+            !$acc kernels present(Vy, uy, ist, kst)            
+            !$acc loop independent
+#else
             !$omp parallel do private(n,i,k)
+#endif
             do n = 1, nst
                 i = ist(n); k = kst(n)
                 uy(n) = uy(n) + real(Vy(k, i)) * dt
             end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
             !$omp end parallel do
-
+#endif
         end if
 
         if (sw_wav_strain) then
 
+#ifdef _OPENACC
+            !$acc kernels present(Vy, eyz, exy, ist, kst)
+            !$acc loop independent
+#else
             !$omp parallel do private(n, i, k, dxVy, dzVy)
+#endif
             do n = 1, nst
                 i = ist(n); k = kst(n)
 
@@ -184,7 +202,11 @@ contains
                 exy(n) = exy(n) + real(dxVy) * 0.5 * dt
 
             end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else            
             !$omp end parallel do
+#endif
         end if
 
         if (mod(it - 1, ntdec_w) == 0) then
@@ -192,45 +214,80 @@ contains
             itw = (it - 1) / ntdec_w + 1
             if (sw_wav_v) then
 
+#ifdef _OPENACC
+                !$acc kernels present(Vy, wav_vel, ist, kst)
+                !$acc loop independent
+#else
                 !$omp parallel do private(n,i,k)
+#endif
                 do n = 1, nst
                     i = ist(n); k = kst(n)
                     wav_vel(itw, n) = real(Vy(k, i)) * M0 * UC * 1e9
                 end do
+#ifdef _OPENACC
+                !$acc end kernels
+#else
                 !$omp end parallel do
-
+#endif
             end if
 
             if (sw_wav_u) then
 
+
+#ifdef _OPENACC
+                !$acc kernels present(uy, wav_disp)
+                !$acc loop independent
+#else
                 !$omp parallel do private(n)
+#endif
                 do n = 1, nst
                     wav_disp(itw, n) = uy(n) * M0 * UC * 1e9
                 end do
+#ifdef _OPENACC
+                !$acc end kernels
+#else
                 !$omp end parallel do
+#endif
 
             end if
 
             if (sw_wav_stress) then
-
+#ifdef _OPENACC
+                !$acc kernels present(Syz, Sxy, wav_stress, ist, kst)
+                !$acc loop independent
+#else
                 !$omp parallel do private(n, i, k)
+#endif
                 do n = 1, nst
                     i = ist(n); k = kst(n)
                     wav_stress(itw, 1, n) = real(Syz(k, i) + Syz(k - 1, i)) * 0.5 * M0 * UC * 1e6
                     wav_stress(itw, 2, n) = real(Sxy(k, i) + Sxy(k, i - 1)) * 0.5 * M0 * UC * 1e6
                 end do
+#ifdef _OPENACC
+                !$acc end kernels
+#else
                 !$omp end parallel do
+#endif
 
             end if
 
             if (sw_wav_strain) then
 
+#ifdef _OPENACC
+                !$acc kernels present(eyz, exy, wav_strain)
+                !$acc loop independent
+#else
                 !$omp parallel do private(n)
+#endif
                 do n = 1, nst
                     wav_strain(itw, 1, n) = real(eyz(n)) * M0 * UC * 1e-3
                     wav_strain(itw, 2, n) = real(exy(n)) * M0 * UC * 1e-3
                 end do
+#ifdef _OPENACC
+                !$acc end kernels
+#else
                 !$omp end parallel do
+#endif
 
             end if
 
@@ -258,6 +315,11 @@ contains
             call pwatch__off("wav__write")
             return
         end if
+
+        !$acc update self(wav_vel   )
+        !$acc update self(wav_disp  )
+        !$acc update self(wav_stress)
+        !$acc update self(wav_strain)
 
         if (wav_format == 'sac') then
 

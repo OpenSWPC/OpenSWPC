@@ -136,6 +136,8 @@ contains
         allocate (buf_u(nxs, nzs))
         buf_u(:, :) = 0.0
 
+        !$acc enter data copyin(buf_u)
+
         call pwatch__off("snap__setup")
 
     end subroutine snap__setup
@@ -421,11 +423,19 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nzs), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nzs), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if ((mod(it - 1, ntdec_s) == 0) .or. (it > nt)) then
-            buf(:, :) = 0.0
+
+#ifdef _OPENACC
+            !$acc kernels present(Vy, buf)            
+            !$acc loop independent
+#else
             !$omp parallel do private(ii,kk,i,k)
+#endif
             do ii = is0, is1
                 do kk = ks0, ks1
                     k = kk * kdec - kdec / 2
@@ -435,26 +445,35 @@ contains
 
                 end do
             end do
-            !$omp end parallel do
+#ifdef _OPENACC
+                !$acc end kernels
+#else
+                !$omp end parallel do
+#endif
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nxs, nzs, xz_v%ionode, xz_v%io, buf)
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nzs), rbuf(nxs * nzs))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xz_v%ionode) call wbuf_nc(xz_v, 1, nxs, nzs, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf(:, :), (/nxs * nzs/))
+                    call pack_2d(nxs, nzs, buf, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nzs, mpi_real, mpi_sum, xz_v%ionode, mpi_comm_world, req, err)
+
                     it0 = it ! remember
                 end if
             end if
         end if
 
     end subroutine wbuf_xz_v
+
 
     subroutine wbuf_xz_u(it)
         integer :: it
@@ -466,7 +485,12 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
+#ifdef _OPENACC
+        !$acc kernels present(Vy, buf_u) 
+        !$acc loop independent collapse(2)
+#else
         !$omp parallel do private(ii, kk, i, k)
+#endif
         do ii = is0, is1
             do kk = ks0, ks1
                 k = kk * kdec - kdec / 2
@@ -476,7 +500,11 @@ contains
 
             end do
         end do
-        !$omp end parallel do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
+            !$omp end parallel do
+#endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
@@ -485,13 +513,17 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nzs), rbuf(nxs * nzs))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xz_u%ionode) call wbuf_nc(xz_u, 1, nxs, nzs, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf_u(:, :), (/nxs * nzs/))
+                    call pack_2d(nxs, nzs, buf_u, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nzs, mpi_real, mpi_sum, xz_u%ionode, mpi_comm_world, req, err)
+
                     it0 = it ! remember
                 end if
 
@@ -576,4 +608,30 @@ contains
 
     end subroutine nc_chk
 
+    subroutine pack_2d(nx, nz, buf2d, buf1d)
+        integer, intent(in) :: nx, nz
+        real(SP), intent(in) :: buf2d(nx,nz)
+        real(SP), intent(out) :: buf1d(nx*nz)
+        integer :: i, k, idx
+        idx = 1
+
+#ifdef _OPENACC
+        !$acc kernels present(buf2d, buf1d)
+        !$acc loop independent collapse(2)
+#else
+        !$omp parallel do private(i,k,idx)
+#endif
+        do k=1, nz
+            do i=1, nx
+                idx = (k-1) * nx + i
+                buf1d(idx) = buf2d(i,k)
+            end do
+        end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
+        !$omp end parallel do
+#endif 
+
+    end subroutine pack_2d    
 end module m_snap

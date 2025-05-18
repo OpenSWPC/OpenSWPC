@@ -66,11 +66,9 @@ contains
             end do
         end if
 
-        call pwatch__off("kernel__setup")
-
-#ifdef _OPENACC
         !$acc enter data copyin(c1, c2, d1, d2)
-#endif
+
+        call pwatch__off("kernel__setup")
 
     end subroutine kernel__setup
 
@@ -88,7 +86,7 @@ contains
 
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc pcopyin(bx, by, bz, Sxx, Syy, Szz, Syz, Sxz, Sxy, Vx, Vy, Vz, kfs_top, kfs_bot, kob_top, kob_bot)
+        !$acc present(bx, by, bz, Sxx, Syy, Szz, Syz, Sxz, Sxy, Vx, Vy, Vz, kfs_top, kfs_bot, kob_top, kob_bot)
         !$acc loop independent collapse(3) 
 #else
         !$omp parallel &
@@ -217,9 +215,7 @@ contains
                     Ryy_n = 0.0
                     Rzz_n = 0.0
 
-#ifdef _OPENACC
                     !$acc loop seq reduction(+:Rxx_n,Ryy_n,Rzz_n)
-#endif
                     do m=1, nm
                       Rxx(m,k,i,j) = c1(m) * Rxx(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dyVy_dzVz) * dt
                       Ryy(m,k,i,j) = c1(m) * Ryy(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dzVz) * dt
@@ -297,9 +293,7 @@ contains
                     Ryz_n = 0.0
                     Rxz_n = 0.0
                     Rxy_n = 0.0
-#ifdef _OPENACC
                     !$acc loop seq reduction(+:Rxy_n,Ryz_n,Rxz_n)
-#endif
                     do m = 1, nm
                         Ryz(m,k,i,j) = c1(m) * Ryz(m,k,i,j) - c2(m) * muyz(k,i,j) * taus1 * dyVz_dzVy * dt
                         Rxz(m,k,i,j) = c1(m) * Rxz(m,k,i,j) - c2(m) * muxz(k,i,j) * taus1 * dxVz_dzVx * dt
@@ -384,3 +378,4 @@ contains
     end subroutine memory_allocate
 
 end module m_kernel
+                                                                     

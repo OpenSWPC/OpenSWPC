@@ -161,7 +161,7 @@ contains
 
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Sxx, Szz, Sxz, Vx, Vz, rho, axSxx, azSxz, axSxz, azSzz, gxc, gxe, gzc, gze)
+        !$acc present(Sxx, Szz, Sxz, Vx, Vz, rho, axSxx, azSxz, axSxz, azSzz, gxc, gxe, gzc, gze, kbeg_a)
 #else
         !$omp parallel &
         !$omp private( dxSxx, dzSzz, dxSxz, dzSxz ) &
@@ -330,7 +330,7 @@ contains
         !! Time-marching
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vx, Vz, Sxx, Szz, axVx, azVz, azVx, axVz, gxc, gxe, gzc, gze)
+        !$acc present(Vx, Vz, Sxx, Szz, Sxz, axVx, azVz, azVx, axVz, gxc, gxe, gzc, gze, mu, lam, kbeg_a)
         !$acc loop independent
 #else
         !$omp parallel &

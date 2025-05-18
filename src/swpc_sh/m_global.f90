@@ -12,6 +12,9 @@ module m_global
     use m_daytim
     use m_readini
     use mpi
+#ifdef _OPENACC
+    use openacc
+#endif 
 
     implicit none
     private
@@ -178,6 +181,15 @@ contains
         zend = zbeg + nz * real(dz)
         tend = tbeg + nt * dt
 
+#ifdef _OPENACC
+        block
+            integer :: ngpus
+            ngpus = acc_get_num_devices(acc_device_nvidia)
+            call acc_set_device_num(mod(myid, ngpus), acc_device_nvidia)
+        end block
+#endif                
+
+
         call pwatch__off("global__setup") ! measure from here
 
     end subroutine global__setup
@@ -285,6 +297,10 @@ contains
             kend_k = nz - na
         end if
 
+        !$acc enter data copyin(&
+        !$acc sbuf_ip, sbuf_im, rbuf_ip, rbuf_im, itbl)
+
+
         call pwatch__off("global__setup2") ! measure from here
 
     end subroutine global__setup2
@@ -293,7 +309,7 @@ contains
 
         ! Data buffring & communication for velocity vector ( 2013-0420, 2013-0421)
 
-        integer :: err
+        integer :: err, k
         integer :: istatus(mpi_status_size, 4)
         integer :: req(4)
 
@@ -301,18 +317,35 @@ contains
 
         call pwatch__on("global__comm_vel")
 
+        !$acc host_data use_device(rbuf_ip, rbuf_im)
         call mpi_irecv(rbuf_ip, 2 * nz, mpi_precision, itbl(idx + 1), 1, mpi_comm_world, req(1), err)
         call mpi_irecv(rbuf_im, 1 * nz, mpi_precision, itbl(idx - 1), 2, mpi_comm_world, req(2), err)
+        !$acc end host_data
 
-        sbuf_ip(1:nz) = reshape(Vy(1:nz, iend:iend), (/nz/))
+        !$acc kernels present(Vy, sbuf_ip, sbuf_im)
+        !$acc loop independent
+        do k=1, nz
+            sbuf_ip(k) = Vy(k, iend)
+            sbuf_im(k) = Vy(k, ibeg)
+            sbuf_im(nz+k) = Vy(k, ibeg+1)
+        end do
+        !$acc end kernels
+
+        !$acc host_data use_device(sbuf_ip, sbuf_im)
         call mpi_isend(sbuf_ip, 1 * nz, mpi_precision, itbl(idx + 1), 2, mpi_comm_world, req(3), err)
-        sbuf_im(1:2 * nz) = reshape(Vy(1:nz, ibeg:ibeg + 1), (/2 * nz/))
         call mpi_isend(sbuf_im, 2 * nz, mpi_precision, itbl(idx - 1), 1, mpi_comm_world, req(4), err)
+        !$acc end host_data
 
         call mpi_waitall(4, req, istatus, err)
 
-        Vy(1:nz, iend + 1:iend + 2) = reshape(rbuf_ip(1:2 * nz), (/nz, 2/))
-        Vy(1:nz, ibeg - 1:ibeg - 1) = reshape(rbuf_im(1:nz), (/nz, 1/))
+        !$acc kernels present(Vy, rbuf_ip, rbuf_im)
+        !$acc loop independent
+        do k=1, nz
+            Vy(k,iend+1) = rbuf_ip(k)
+            Vy(k,iend+2) = rbuf_ip(nz+k)
+            Vy(k,ibeg-1) = rbuf_im(k)
+        end do
+        !$acc end kernels
 
         call pwatch__off("global__comm_vel")
 
@@ -322,7 +355,7 @@ contains
 
         ! Data buffring & communication for stress tensor
 
-        integer :: err
+        integer :: err, k
         integer :: istatus(mpi_status_size, 4)
         integer :: req(4)
 
@@ -330,20 +363,36 @@ contains
 
         call pwatch__on("global__comm_stress")
 
+        !$acc host_data use_device(rbuf_ip, rbuf_im)
         call mpi_irecv(rbuf_ip, 1 * nz, mpi_precision, itbl(idx + 1), 3, mpi_comm_world, req(1), err)
         call mpi_irecv(rbuf_im, 2 * nz, mpi_precision, itbl(idx - 1), 4, mpi_comm_world, req(2), err)
+        !$acc end host_data
 
-        sbuf_ip(1:2 * nz) = reshape(Sxy(1:nz, iend - 1:iend), (/2 * nz/))
+        !$acc kernels present(Sxy, sbuf_ip, sbuf_im)
+        !$acc loop independent
+        do k=1, nz
+            sbuf_ip(k) = Sxy(k,iend-1)
+            sbuf_ip(nz+k) = Sxy(k,iend)
+            sbuf_im(k) = Sxy(k,ibeg)
+        end do
+        !$acc end kernels
+
+        !$acc host_data use_device(sbuf_ip, sbuf_im)
         call mpi_isend(sbuf_ip, 2 * nz, mpi_precision, itbl(idx + 1), 4, mpi_comm_world, req(3), err)
-
-        sbuf_im(1:nz) = reshape(Sxy(1:nz, ibeg:ibeg), (/nz/))
         call mpi_isend(sbuf_im, 1 * nz, mpi_precision, itbl(idx - 1), 3, mpi_comm_world, req(4), err)
+        !$acc end host_data
 
         call mpi_waitall(4, req, istatus, err)
 
         ! Resore the data
-        Sxy(kbeg:kend, iend + 1:iend + 1) = reshape(rbuf_ip(1:nz), (/nz, 1/))
-        Sxy(kbeg:kend, ibeg - 2:ibeg - 1) = reshape(rbuf_im(1:2 * nz), (/nz, 2/))
+        !$acc kernels present(Sxy, rbuf_ip, rbuf_im)
+        !$acc loop independent
+        do k=1, nz
+            Sxy(k,iend+1) = rbuf_ip(k)
+            Sxy(k,ibeg-2) = rbuf_ip(nz+k)
+            Sxy(k,ibeg-1) = rbuf_ip(2*nz+k)
+        end do
+        !$acc end kernels
 
         call pwatch__off("global__comm_stress")
 
