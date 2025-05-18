@@ -99,6 +99,8 @@ contains
 
         idum = io_prm
 
+        !$acc enter data copyin(axVy, azVy, axSxy, azSyz, gxc, gxe, gzc, gze)
+
     end subroutine absorb_p__setup
 
     subroutine absorb_p__update_vel
@@ -106,75 +108,96 @@ contains
         !! Update velocity component in PML layer
 
         integer :: i, k
-        real(SP) :: gxc0(4), gzc0(4)
         real(SP) :: by
-        real(MP) :: dzSyz(kbeg:kend), dxSxy(kbeg:kend)
+        real(MP) :: dzSyz, dxSxy
 
         !! Horizontal zero-derivative boundary (for plane wave mode)
         if (pw_mode) then
             if (idx == 0) then
+#ifdef _OPENACC
+                !$acc kernels present(Syz, Sxy)                
+                !$acc loop independent
+#else
                 !$omp parallel private(k)
                 !$omp do schedule(dynamic)
+#endif
                 do k = kbeg_a(1), kend
                     Syz(k, 0) = 2 * Syz(k, 1) - Syz(k, 2)
                     Sxy(k, 0) = 2 * Sxy(k, 1) - Sxy(k, 2)
                 end do
+#ifdef _OPENACC
+                !$acc end kernels
+#else
                 !$omp end do nowait
                 !$omp end parallel
+#endif
             end if
 
             if (idx == nproc_x - 1) then
+#ifdef _OPENACC
+                !$acc kernels present(Sxy, Syz)
+                !$acc loop independent
+#else
                 !$omp parallel private(k)
                 !$omp do schedule(dynamic)
+#endif
                 do k = kbeg_a(nx), kend
                     Syz(k, nx + 1) = 2 * Syz(k, nx) - Syz(k, nx - 1)
                     Sxy(k, nx + 1) = 2 * Sxy(k, nx) - Sxy(k, nx - 1)
                 end do
+#ifdef _OPENACC
+                !$acc end kernels
+#else
                 !$omp end do nowait
                 !$omp end parallel
+#endif
             end if
         end if
 
+        
         !! time-marching
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(Vy, Sxy, Syz, axSxy, azSyz, rho, gxc, gzc)
+        !$acc loop independent
+#else
         !$omp parallel &
-        !$omp private( gxc0, gzc0, dzSyz, dxSxy, by, i, k )
+        !$omp private( dzSyz, dxSxy, by, i, k )
         !$omp do schedule(dynamic)
+#endif
         do i = ibeg, iend
 
-            gxc0(1:4) = gxc(1:4, i)
-
-            !! Derivatives
+#ifdef _OPENACC
+            !$acc loop vector independent
+#endif
             do k = kbeg_a(i), kend
 
-                dzSyz(k) = (Syz(k, i) - Syz(k - 1, i)) * r20z
-                dxSxy(k) = (Sxy(k, i) - Sxy(k, i - 1)) * r20x
+                dzSyz = (Syz(k,i) - Syz(k-1,i)) * r20z
+                dxSxy = (Sxy(k,i) - Sxy(k,i-1)) * r20x
 
-            end do
+                by = 1.0 / rho(k,i)
 
-            !! update velocity
-            do k = kbeg_a(i), kend
+                Vy(k,i) = Vy(k,i) &
+                        + by * (gxc(1,i) * dxSxy      + gzc(1,i) * dzSyz &
+                              + gxc(2,i) * axSxy(k,i) + gzc(2,i) * azSyz(k,i)) * dt
 
-                gzc0(1:4) = gzc(1:4, k)
-
-                by = 1.0 / rho(k, i)
-
-                Vy(k, i) = Vy(k, i) &
-                           + by * (gxc0(1) * dxSxy(k) + gzc0(1) * dzSyz(k) &
-                                   + gxc0(2) * axSxy(k, i) + gzc0(2) * azSyz(k, i)) * dt
-
-                axSxy(k, i) = gxc0(3) * axSxy(k, i) + gxc0(4) * dxSxy(k) * dt
-                azSyz(k, i) = gzc0(3) * azSyz(k, i) + gzc0(4) * dzSyz(k) * dt
+                axSxy(k,i) = gxc(3,i) * axSxy(k,i) + gxc(4,i) * dxSxy * dt
+                azSyz(k,i) = gzc(3,k) * azSyz(k,i) + gzc(4,k) * dzSyz * dt
 
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end do nowait
         !$omp end parallel
+#endif
 
         ! if( fullspace_mode ) then
         !   ! $omp parallel &
         !   ! $omp private( gxc0, gzc0, dzSyz, dxSxy, by, i, k )
         !   ! $omp do schedule(dynamic)
-        !   do i=ibeg_k, iend_k
+        !   do i=ibeg_k,iend_k
 
         !     gxc0(1:4) = gxc(1:4,i)
 
@@ -223,77 +246,96 @@ contains
     subroutine absorb_p__update_stress
 
         integer :: i, k
-        real(SP) :: gxe0(4), gze0(4)
         real(SP) :: nnn, pnn, npn
         real(SP) :: muxy, muyz
         real(SP) :: epsl = epsilon(1.0)
-        real(MP) :: dxVy(kbeg:kend), dzVy(kbeg:kend)
+        real(MP) :: dxVy, dzVy
 
         !! Horizontal zero-derivative boundary (for plane wave mode)
         if (pw_mode) then
             if (idx == 0) then
+#ifdef _OPENACC
+                !$acc kernels present(Vy)
+                !$acc loop independent
+#else
                 !$omp parallel private(k)
                 !$omp do schedule(dynamic)
+#endif
                 do k = kbeg_a(1), kend
-                    Vy(k, 0) = 2 * Vy(k, 1) - Vy(k, 2)
+                    Vy(k,0) = 2 * Vy(k,1) - Vy(k,2)
                 end do
+#ifdef _OPENACC
+                !$acc end kernels
+#else
                 !$omp end do nowait
                 !$omp end parallel
+#endif
             end if
 
             if (idx == nproc_x - 1) then
+#ifdef _OPENACC
+                !$acc kernels present(Vy)
+                !$acc loop independent
+#else
                 !$omp parallel private(k)
                 !$omp do schedule(dynamic)
+#endif
                 do k = kbeg_a(nx), kend
-                    Vy(k, nx + 1) = 2 * Vy(k, nx) - Vy(k, nx - 1)
+                    Vy(k,nx+1) = 2 * Vy(k,nx) - Vy(k,nx-1)
                 end do
+#ifdef _OPENACC
+                !$acc end kernels
+#else
                 !$omp end do nowait
                 !$omp end parallel
+#endif
             end if
         end if
 
         !! Time-marching
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(Vy, Sxy, Syz, gxc, gxe, gzc, gze, axVy, azVy)
+        !$acc loop independent
+#else
         !$omp parallel &
-        !$omp private(i, k, gxe0, gze0, dxVy, dzVy, nnn, pnn, npn, muxy, muyz )
+        !$omp private(i, k, dxVy, dzVy, nnn, pnn, npn, muxy, muyz )
         !$omp do schedule(dynamic)
+#endif
         do i = ibeg, iend
 
-            gxe0(1:4) = gxe(1:4, i)
-
+            !$acc loop vector independent
             do k = kbeg_a(i), kend
 
-                dxVy(k) = (Vy(k, i + 1) - Vy(k, i)) * r20x
-                dzVy(k) = (Vy(k + 1, i) - Vy(k, i)) * r20z
+                dxVy = (Vy(k,i+1) - Vy(k,i)) * r20x
+                dzVy = (Vy(k+1,i) - Vy(k,i)) * r20z
 
-            end do
-
-            !! Update Shear Stress
-            do k = kbeg_a(i), kend
-
-                gze0(1:4) = gze(1:4, k)
-
-                nnn = mu(k, i)
-                pnn = mu(k + 1, i)
-                npn = mu(k, i + 1)
+                nnn = mu(k  ,i  )
+                pnn = mu(k+1,i  )
+                npn = mu(k  ,i+1)
                 muxy = 2 * nnn * npn / (nnn + npn + epsl)
                 muyz = 2 * nnn * pnn / (nnn + pnn + epsl)
 
-                axVy(k, i) = gxe0(3) * axVy(k, i) + gxe0(4) * dxVy(k) * dt
-                azVy(k, i) = gze0(3) * azVy(k, i) + gze0(4) * dzVy(k) * dt
+                axVy(k,i) = gxe(3,i) * axVy(k,i) + gxe(4,i) * dxVy * dt
+                azVy(k,i) = gze(3,k) * azVy(k,i) + gze(4,k) * dzVy * dt
 
-                Syz(k, i) = Syz(k, i) + muyz * (gze0(1) * dzVy(k) + gze0(2) * azVy(k, i)) * dt
-                Sxy(k, i) = Sxy(k, i) + muxy * (gxe0(1) * dxVy(k) + gxe0(2) * axVy(k, i)) * dt
+                Syz(k,i) = Syz(k,i) + muyz * (gze(1,k) * dzVy + gze(2,k) * azVy(k,i)) * dt
+                Sxy(k,i) = Sxy(k,i) + muxy * (gxe(1,i) * dxVy + gxe(2,i) * axVy(k,i)) * dt
 
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end do nowait
         !$omp end parallel
+#endif
 
         ! if( fullspace_mode ) then
         !   ! $omp parallel &
         !   ! $omp private(i, k, gxe0, gze0, dxVy, dzVy, nnn, pnn, npn, muxy, muyz )
         !   ! $omp do schedule(dynamic)
-        !   do i=ibeg_k, iend_k
+        !   do i=ibeg_k,iend_k
 
         !     gxe0(1:4) = gxe(1:4,i)
 

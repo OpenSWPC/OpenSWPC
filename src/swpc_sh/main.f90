@@ -78,6 +78,19 @@ program SWPC_SH
 
     close (io_prm)
 
+    !$acc enter data copyin(&
+    !$acc Vy(kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc Syz(kbeg_m:kend_m, ibeg_m:iend_m), Sxy(kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc Ryz(kbeg_m:kend_m, ibeg_m:iend_m), Rxy(kbeg_m:kend_m, ibeg_m:iend_m),  &
+    !$acc rho(kbeg_m:kend_m, ibeg_m:iend_m),  &
+    !$acc lam(kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc mu(kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc taus(kbeg_m:kend_m, ibeg_m:iend_m), ts(1:nm), &
+    !$acc kfs(ibeg_m:iend_m), kob(ibeg_m:iend_m), &
+    !$acc kfs_top(ibeg_m:iend_m), kfs_bot(ibeg_m:iend_m), &
+    !$acc kob_top(ibeg_m:iend_m), kob_bot(ibeg_m:iend_m), &
+    !$acc bddep(ibeg_m:iend_m, 0:NBD), kbeg_a(ibeg_m:iend_m))
+
     !! mainloop
     do it = 1, nt
 

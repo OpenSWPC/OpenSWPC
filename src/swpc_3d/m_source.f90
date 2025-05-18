@@ -854,7 +854,7 @@ contains
         do i = 1, nsrc
 
             !! t= nt2(it,tbeg,dt) + dt/2
-            stime = momentrate(tbeg + it * dt , stftype, n_stfprm, srcprm(:, i))
+            stime = momentrate(tbeg + it * dt , stftype, n_stfprm, srcprm(:,i))
 
             ii = isrc(i)
             jj = jsrc(i)

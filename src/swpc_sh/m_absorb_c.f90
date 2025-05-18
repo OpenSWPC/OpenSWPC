@@ -83,20 +83,35 @@ contains
         !! dummy
         io0 = io_prm
 
+#ifdef _OPENACC
+        !$acc enter data &
+        !$acc copyin(gx_c, gx_b, gz_c, gz_b)
+#endif
+
     end subroutine absorb_c__setup
 
     subroutine absorb_c__update_stress
 
         integer :: i, k
 
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(Syz, Sxy, gx_c, gx_b, gz_c, gz_b)
+        !$acc loop independent collapse(2)
+#else          
         !$omp parallel do private(i,k)
+#endif
         do i = ibeg, iend
             do k = kbeg, kend
                 Syz(k, i) = Syz(k, i) * gx_c(i) * gz_b(k)
                 Sxy(k, i) = Sxy(k, i) * gx_b(i) * gz_c(k)
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end parallel do
+#endif
 
     end subroutine absorb_c__update_stress
 
@@ -104,13 +119,23 @@ contains
 
         integer :: i, k
 
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(Vy, gx_c, gz_c)
+        !$acc loop independent collapse(2)
+#else        
         !$omp parallel do private(i,k)
+#endif
         do i = ibeg, iend
             do k = kbeg, kend
                 Vy(k, i) = Vy(k, i) * gx_c(i) * gz_c(k)
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end parallel do
+#endif
 
     end subroutine absorb_c__update_vel
 

@@ -117,7 +117,7 @@ contains
 
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc pcopyin(Sxx, Syy, Szz, gx_c, gy_c, gz_c)
+        !$acc present(Sxx, Syy, Szz, gx_c, gy_c, gz_c)
         !$acc loop independent collapse(3)
 #else
         !$omp parallel do schedule(dynamic) private( i, j, k, gcc )

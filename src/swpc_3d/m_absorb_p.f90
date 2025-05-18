@@ -151,8 +151,6 @@ contains
                         Sxz(k,0,j) = 2 * Sxz(k,1,j) - Sxz(k,2,j)
                         Sxy(k,0,j) = 2 * Sxy(k,1,j) - Sxy(k,2,j)
                     end do
-   #ifdef _OPENACC
-   #endif
                 end do
 #ifdef _OPENACC
                 !$acc end kernels
@@ -262,10 +260,7 @@ contains
         do j = jbeg, jend
             do i = ibeg, iend
 
-                !! update velocity
-#ifdef _OPENACC
                 !$acc loop vector independent
-#endif
                 do k = kbeg_a(i, j), kend
 
                     dxSxx = (Sxx(k  ,i+1,j) - Sxx(k  ,i  ,j  )) * r20x
@@ -444,10 +439,7 @@ contains
 
             do i = ibeg, iend
 
-                !! Update Normal Stress
-#ifdef _OPENACC
                 !$acc loop vector independent
-#endif                
                 do k = kbeg_a(i, j), kend
 
                     dxVx = (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x
@@ -471,10 +463,7 @@ contains
 
                 end do
 
-                !! Update Shear Stress
-#ifdef _OPENACC
                 !$acc loop vector independent
-#endif                
                 do k = kbeg_a(i, j), kend
 
                     dxVy = (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x
