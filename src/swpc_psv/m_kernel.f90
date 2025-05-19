@@ -67,6 +67,8 @@ contains
 
         end if
 
+        !$acc enter data copyin(c1, c2, d1, d2)
+
         call pwatch__off("kernel__setup")
 
     end subroutine kernel__setup
@@ -83,6 +85,11 @@ contains
 
         call pwatch__on("kernel__update_vel")
 
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(Sxx, Szz, Sxz, Vx, Vz, rho, kfs_top, kfs_bot, kob_top, kob_bot)
+        !$acc loop independent collapse(2)
+#else
         !$omp parallel &
         !$omp private(dxSxx, dzSzz, dxSxz, dzSxz) &
         !$omp private(i,k) &
@@ -90,6 +97,7 @@ contains
         !$omp private(bx, bz)
         !$omp do &
         !$omp schedule(static,1)
+#endif
         do i = ibeg_k, iend_k
             do k = kbeg_k, kend_k
 
@@ -116,10 +124,13 @@ contains
 
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else        
         !$omp end do nowait
         !$omp end parallel
-
         !$omp barrier
+#endif
 
         call pwatch__off("kernel__update_vel")
 
@@ -145,6 +156,12 @@ contains
 
         call pwatch__on("kernel__update_stress")
 
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(Vx, Vz, Sxx, Szz, Rxx, Rzz, c1, c2, d1, d2, taup, taus, &
+        !$acc         kfs_top, kfs_bot, kob_top, kob_bot, lam, mu)
+        !$acc loop independent collapse(2)
+#else
         !$omp parallel  &
         !$omp private( dxVx, dxVz ) &
         !$omp private( mu2, lam2mu ) &
@@ -156,6 +173,7 @@ contains
         !$omp private( i, k, m )
         !$omp do &
         !$omp schedule(static,1)
+#endif
         do i = ibeg_k, iend_k
             !ocl unroll('full')
             !ocl swp
@@ -189,6 +207,7 @@ contains
                 Rzz_n = 0.0
 
                 !! Crank-Nicolson Method for avoiding stiff solution
+                !$acc loop seq reduction(+:Rxx_n,Rzz_n)
                 do m = 1, nm
                     Rxx(m, k, i) = c1(m) * Rxx(m, k, i) - c2(m) * f_Rxx * dt
                     Rzz(m, k, i) = c1(m) * Rzz(m, k, i) - c2(m) * f_Rzz * dt
@@ -205,9 +224,19 @@ contains
 
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else        
         !$omp end do nowait
         !$omp end parallel
+#endif
 
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(Vx, Vz, Sxz, Rxz, c1, c2, d1, d2, taus, &
+        !$acc         kfs_top, kfs_bot, kob_top, kob_bot, mu)
+        !$acc loop independent collapse(2)
+#else
         !$omp parallel  &
         !$omp private( dxVz, dzVx ) &
         !$omp private( taus1, nnn, pnn, npn, ppn, mu_xz, taup_plus1, taus_plus1 ) &
@@ -218,6 +247,7 @@ contains
         !$omp private( i, k, m )
         !$omp do &
         !$omp schedule(static,1)
+#endif
         do i = ibeg_k, iend_k
             !ocl unroll('full')
             !ocl swp
@@ -250,6 +280,7 @@ contains
                 Rxz_n = 0.0
 
                 !! Crank-Nicolson Method for avoiding stiff solution
+                !$acc loop seq reduction(+:Rxz_n)
                 do m = 1, nm
                     Rxz(m, k, i) = c1(m) * Rxz(m, k, i) - c2(m) * f_Rxz * dt
                     Rxz_n = Rxz_n + d1(m) * Rxz(m,k,i)
@@ -262,10 +293,14 @@ contains
 
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end do nowait
         !$omp end parallel        
-
         !$omp barrier
+#endif
+
         call pwatch__off("kernel__update_stress")
 
     end subroutine kernel__update_stress
@@ -276,12 +311,15 @@ contains
         real(SP), intent(out) :: xmax, zmax
         integer :: i
 
+        !$acc kernels present(Vx, Vz, kob) copyout(xmax, zmax)
         xmax = 0.0
         zmax = 0.0
+        !$acc loop reduction(max:xmax,zmax)
         do i = ibeg_k, iend_k
             xmax = max(xmax, abs(real(vx(kob(i) + 1, i))))
             zmax = max(zmax, abs(real(vz(kob(i) + 1, i))))
         end do
+        !$acc end kernels
 
     end subroutine kernel__vmax
 

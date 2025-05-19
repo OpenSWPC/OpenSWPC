@@ -74,8 +74,21 @@ program SWPC_SH
     call absorb__setup(io_prm)
     call snap__setup(io_prm)
     call wav__setup(io_prm)
-    call report__setup(io_prm)
 
+    !$acc enter data copyin(&
+    !$acc Vy(kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc Syz(kbeg_m:kend_m, ibeg_m:iend_m), Sxy(kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc Ryz(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), Rxy(1:nm, kbeg_m:kend_m, ibeg_m:iend_m),  &
+    !$acc rho(kbeg_m:kend_m, ibeg_m:iend_m),  &
+    !$acc lam(kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc mu(kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc taus(kbeg_m:kend_m, ibeg_m:iend_m), ts(1:nm), &
+    !$acc kfs(ibeg_m:iend_m), kob(ibeg_m:iend_m), &
+    !$acc kfs_top(ibeg_m:iend_m), kfs_bot(ibeg_m:iend_m), &
+    !$acc kob_top(ibeg_m:iend_m), kob_bot(ibeg_m:iend_m), &
+    !$acc bddep(ibeg_m:iend_m, 0:NBD), kbeg_a(ibeg_m:iend_m))
+
+    call report__setup(io_prm)
     close (io_prm)
 
     !! mainloop
@@ -83,20 +96,21 @@ program SWPC_SH
 
         call report__progress(it)
 
-        call snap__write(it)
         call wav__store(it)
+        call snap__write(it)
 
         call kernel__update_stress()
-
         call absorb__update_stress()
+
         call source__stressglut(it)
 
         call global__comm_stress()
 
         call kernel__update_vel()
+        call absorb__update_vel()
+
         call source__bodyforce(it)
 
-        call absorb__update_vel()
         call global__comm_vel()
 
     end do

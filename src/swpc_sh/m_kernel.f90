@@ -68,6 +68,8 @@ contains
 
         end if
 
+        !$acc enter data copyin(c1, c2, d1, d2)
+
         call pwatch__off("kernel__setup")
 
     end subroutine kernel__setup
@@ -84,12 +86,17 @@ contains
 
         call pwatch__on("kernel__update_vel")
 
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(rho, Vy, Sxy, Syz, kfs_top, kfs_bot, kob_top, kob_bot)        
+        !$acc loop independent collapse(2)
+#else
         !$omp parallel &
         !$omp private(dzSyz, dxSxy, i, k, by, isign, re40x, re41x, re40z, re41z)
         !$omp do &
         !$omp schedule(static,1)
+#endif
         do i = ibeg_k, iend_k
-
             do k = kbeg_k, kend_k
 
                 isign = sign(1, max((k - kfs_top(i)) * (kfs_bot(i) - k), &
@@ -109,10 +116,13 @@ contains
 
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else        
         !$omp end do nowait
         !$omp end parallel
-
         !$omp barrier
+#endif
 
         call pwatch__off("kernel__update_vel")
 
@@ -135,6 +145,12 @@ contains
 
         call pwatch__on("kernel__update_stress")
 
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(Vy, mu, Syz, Sxy, Ryz, Rxy, c1, c2, d1, d2, taus, &
+        !$acc         kfs_top, kfs_bot, kob_top, kob_bot)        
+        !$acc loop independent collapse(2)
+#else
         !$omp parallel  &
         !$omp private( dxVy, dzVy, nnn, pnn, npn, mu_yz, mu_xy ) &
         !$omp private( taus1, taus_plus1, f_Ryz, f_Rxy,  Ryz_n, Rxy_n ) &
@@ -142,6 +158,7 @@ contains
         !$omp private( i, k, m)
         !$omp do &
         !$omp schedule(static,1)
+#endif
         do i = ibeg_k, iend_k
 
             !ocl unroll('full')
@@ -175,13 +192,13 @@ contains
                 Rxy_n = 0.0
 
                 !! Crank-Nicolson Method for avoiding stiff solution
+                !$acc loop seq reduction(+:Ryz_n,Rxy_n)
                 do m = 1, nm
                     Ryz(m, k, i) = c1(m) * Ryz(m, k, i) - c2(m) * f_Ryz * dt
                     Rxy(m, k, i) = c1(m) * Rxy(m, k, i) - c2(m) * f_Rxy * dt
                     Ryz_n = Ryz_n + d1(m) * Ryz(m,k,i)
                     Rxy_n = Rxy_n + d1(m) * Rxy(m,k,i)
                 end do
-
 
                 !! update stress components
                 taus_plus1 = 1 + taus1 * (1 + d2)
@@ -191,10 +208,13 @@ contains
 
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else        
         !$omp end do nowait
         !$omp end parallel
-
         !$omp barrier
+#endif
 
         call pwatch__off("kernel__update_stress")
 
@@ -207,11 +227,14 @@ contains
         real(SP), intent(out) :: ymax
         integer :: i
 
+        !$acc kernels present(Vy, kob) copyout(ymax)
         ymax = 0.0
+        !$acc loop reduction(max:ymax)
         do i = ibeg_k, iend_k
             ymax = max(ymax, abs(real(vy(kob(i) + 1, i))))
         end do
-
+        !$acc end kernels
+        
     end subroutine kernel__vmax
 
     subroutine memory_allocate

@@ -77,6 +77,20 @@ program swpc_psv
 
     close (io_prm)
 
+    !$acc enter data copyin(&
+    !$acc Vx(kbeg_m:kend_m, ibeg_m:iend_m), Vz(kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc Sxx(kbeg_m:kend_m, ibeg_m:iend_m), Szz(kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc Sxz(kbeg_m:kend_m, ibeg_m:iend_m), Rxx(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc Rzz(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), Rxz(1:nm, kbeg_m:kend_m, ibeg_m:iend_m),  &
+    !$acc rho(kbeg_m:kend_m, ibeg_m:iend_m),  &
+    !$acc lam(kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc mu(kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc taup(kbeg_m:kend_m, ibeg_m:iend_m), taus(kbeg_m:kend_m, ibeg_m:iend_m), ts(1:nm), &
+    !$acc kfs(ibeg_m:iend_m), kob(ibeg_m:iend_m), &
+    !$acc kfs_top(ibeg_m:iend_m), kfs_bot(ibeg_m:iend_m), &
+    !$acc kob_top(ibeg_m:iend_m), kob_bot(ibeg_m:iend_m), &
+    !$acc bddep(ibeg_m:iend_m, 0:NBD), kbeg_a(ibeg_m:iend_m))
+
     !! mainloop
     do it = 1, nt
 

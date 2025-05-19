@@ -380,6 +380,8 @@ contains
             end do
         end do
 
+        !$acc enter data copyin(ig, jg, kg, gf)
+
         call pwatch__off('green__setup')
 
     end subroutine green__setup
@@ -413,11 +415,13 @@ contains
             allocate (dzUx(ng), source=0.0)
             allocate (dzUy(ng), source=0.0)
             allocate (dzUz(ng), source=0.0)
+            !$acc enter data copyin(dxUx, dxUy, dxUz, dyUx, dyUy, dyUz, dzUx, dzUy, dzUz)
 
             if (green_bforce) then
                 allocate (Ux(ng), source=0.0)
                 allocate (Uy(ng), source=0.0)
                 allocate (Uz(ng), source=0.0)
+                !$acc enter data copyin(Ux, Uy, Uz)
             end if
 
             if (green_cmp == 'z') then
@@ -428,6 +432,8 @@ contains
 
         end if
 
+        !$acc kernels present(Vx, Vy, Vz, dxUx, dxUy, dxUz, dyUx, dyUy, dyUz, dzUx, dzUy, dzUz, Ux, Uy, Uz, ig, jg, kg)
+        !$acc loop independent
         do i = 1, ng
             ii = ig(i)
             jj = jg(i)
@@ -491,31 +497,35 @@ contains
             end if
 
         end do
+        !$acc end kernels
 
         if (mod(it - 1, ntdec_w) == 0) then
 
             itw = (it - 1) / ntdec_w + 1
 
+            !$acc kernels present(dxUx, dxUy, dxUz, dyUx, dyUy, dyUz, dzUx, dzUy, dzUz, Ux, Uy, Uz, ig, jg, kg, gf)
+            !$acc loop independent
             do i = 1, ng
 
                 ii = ig(i)
                 jj = jg(i)
                 kk = kg(i)
 
-                gf(itw, (i - 1) * ncmp + 1) = dxUx(i) * UC_DERIV * 1e9 ! m/s -> nm/s
-                gf(itw, (i - 1) * ncmp + 2) = dyUy(i) * UC_DERIV * 1e9 ! m/s -> nm/s
-                gf(itw, (i - 1) * ncmp + 3) = dzUz(i) * UC_DERIV * 1e9 ! m/s -> nm/s
-                gf(itw, (i - 1) * ncmp + 4) = (dyUz(i) + dzUy(i)) * UC_DERIV * 1e9 ! m/s -> nm/s
-                gf(itw, (i - 1) * ncmp + 5) = (dxUz(i) + dzUx(i)) * UC_DERIV * 1e9 ! m/s -> nm/s
-                gf(itw, (i - 1) * ncmp + 6) = (dxUy(i) + dyUx(i)) * UC_DERIV * 1e9 ! m/s -> nm/s
+                gf(itw, (i-1)*ncmp+1) = dxUx(i) * UC_DERIV * 1e9 ! m/s -> nm/s
+                gf(itw, (i-1)*ncmp+2) = dyUy(i) * UC_DERIV * 1e9 ! m/s -> nm/s
+                gf(itw, (i-1)*ncmp+3) = dzUz(i) * UC_DERIV * 1e9 ! m/s -> nm/s
+                gf(itw, (i-1)*ncmp+4) = (dyUz(i) + dzUy(i)) * UC_DERIV * 1e9 ! m/s -> nm/s
+                gf(itw, (i-1)*ncmp+5) = (dxUz(i) + dzUx(i)) * UC_DERIV * 1e9 ! m/s -> nm/s
+                gf(itw, (i-1)*ncmp+6) = (dxUy(i) + dyUx(i)) * UC_DERIV * 1e9 ! m/s -> nm/s
 
                 if (green_bforce) then
-                    gf(itw, (i - 1) * ncmp + 7) = ux(i) * UC_BF * 1e9 ! m -> nm
-                    gf(itw, (i - 1) * ncmp + 8) = uy(i) * UC_BF * 1e9 ! m -> nm
-                    gf(itw, (i - 1) * ncmp + 9) = uz(i) * UC_BF * 1e9 ! m -> nm
+                    gf(itw, (i-1)*ncmp+7) = ux(i) * UC_BF * 1e9 ! m -> nm
+                    gf(itw, (i-1)*ncmp+8) = uy(i) * UC_BF * 1e9 ! m -> nm
+                    gf(itw, (i-1)*ncmp+9) = uz(i) * UC_BF * 1e9 ! m -> nm
                 end if
 
             end do
+            !$acc end kernels
 
         end if
 
@@ -533,6 +543,8 @@ contains
         if (.not. green_mode) return
 
         call pwatch__on('green__export')
+
+        !$acc update self(gf)
 
         !! Make positive upward for z-component
         if (green_cmp == 'z') then
@@ -598,28 +610,22 @@ contains
         end if
 
         !! velocity needs half-grid shift in time
-        t = n2t(it, tbeg, dt) + dt / 2.0
 
-        select case (trim(stftype))
-        case ('boxcar'); stf = boxcar(t, green_tbeg, green_trise)
-        case ('triangle'); stf = triangle(t, green_tbeg, green_trise)
-        case ('herrmann'); stf = herrmann(t, green_tbeg, green_trise)
-        case ('kupper'); stf = kupper(t, green_tbeg, green_trise)
-        case ('cosine'); stf = cosine(t, green_tbeg, green_trise)
-        case default; stf = kupper(t, green_tbeg, green_trise)
-        end select
+        !$acc kernels present(Vx, Vy, Vz, bx, by, bz, stftype)
+        stf = momentrate(tbeg + it * dt, stftype, 2, (/green_tbeg, green_trise/))
 
         fx = fx1 * dt_dxyz * stf
         fy = fy1 * dt_dxyz * stf
         fz = fz1 * dt_dxyz * stf
 
         !! Reciprocal density must be avaraged for keeping accuracy
-        Vx(ksrc, isrc, jsrc) = Vx(ksrc, isrc, jsrc) + bx(ksrc, isrc, jsrc) * fx / 2
-        Vx(ksrc, isrc - 1, jsrc) = Vx(ksrc, isrc - 1, jsrc) + bx(ksrc, isrc - 1, jsrc) * fx / 2
-        Vy(ksrc, isrc, jsrc) = Vy(ksrc, isrc, jsrc) + by(ksrc, isrc, jsrc) * fy / 2
-        Vy(ksrc, isrc, jsrc - 1) = Vy(ksrc, isrc, jsrc - 1) + by(ksrc, isrc, jsrc - 1) * fy / 2
-        Vz(ksrc, isrc, jsrc) = Vz(ksrc, isrc, jsrc) + bz(ksrc, isrc, jsrc) * fz / 2
-        Vz(ksrc - 1, isrc, jsrc) = Vz(ksrc - 1, isrc, jsrc) + bz(ksrc - 1, isrc, jsrc) * fz / 2
+        Vx(ksrc  ,isrc  ,jsrc  ) = Vx(ksrc  ,isrc  ,jsrc  ) + bx(ksrc  ,isrc  ,jsrc  ) * fx / 2
+        Vx(ksrc  ,isrc-1,jsrc  ) = Vx(ksrc  ,isrc-1,jsrc  ) + bx(ksrc  ,isrc-1,jsrc  ) * fx / 2
+        Vy(ksrc  ,isrc  ,jsrc  ) = Vy(ksrc  ,isrc  ,jsrc  ) + by(ksrc  ,isrc  ,jsrc  ) * fy / 2
+        Vy(ksrc  ,isrc  ,jsrc-1) = Vy(ksrc  ,isrc  ,jsrc-1) + by(ksrc  ,isrc  ,jsrc-1) * fy / 2
+        Vz(ksrc  ,isrc  ,jsrc  ) = Vz(ksrc  ,isrc  ,jsrc  ) + bz(ksrc  ,isrc  ,jsrc  ) * fz / 2
+        Vz(ksrc-1,isrc  ,jsrc  ) = Vz(ksrc-1,isrc  ,jsrc  ) + bz(ksrc-1,isrc  ,jsrc  ) * fz / 2
+        !$acc end kernels
 
         call pwatch__off('green__source')
 

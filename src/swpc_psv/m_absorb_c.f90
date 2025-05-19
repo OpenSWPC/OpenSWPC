@@ -87,6 +87,11 @@ contains
         !! do nothing with io_prm
         io0 = io_prm
 
+#ifdef _OPENACC
+        !$acc enter data &
+        !$acc copyin(gx_c, gx_b, gz_c, gz_b)
+#endif
+
     end subroutine absorb_c__setup
 
     subroutine absorb_c__update_stress
@@ -94,8 +99,14 @@ contains
         integer :: i, k
         real(SP) :: gc, gb
 
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(Sxx, Szz, Sxz, gx_c, gx_b, gz_c, gz_b)
+        !$acc loop independent collapse(2)
+#else        
         !$omp parallel private(i,k,gc,gb)
         !$omp do schedule(dynamic)
+#endif
         do i = ibeg, iend
             do k = kbeg, kend
                 gc = gx_c(i) * gz_c(k)
@@ -105,8 +116,12 @@ contains
                 Sxz(k, i) = Sxz(k, i) * gb
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end do
         !$omp end parallel
+#endif
 
     end subroutine absorb_c__update_stress
 
@@ -114,16 +129,26 @@ contains
 
         integer :: i, k
 
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(Vx, Vz, gx_c, gx_b, gz_c, gz_b)
+        !$acc loop independent collapse(2)
+#else
         !$omp parallel private(i,k)
         !$omp do schedule(dynamic)
+#endif
         do i = ibeg, iend
             do k = kbeg, kend
                 Vx(k, i) = Vx(k, i) * gx_b(i) * gz_c(k)
                 Vz(k, i) = Vz(k, i) * gx_c(i) * gz_b(k)
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end do
         !$omp end parallel
+#endif
 
     end subroutine absorb_c__update_vel
 

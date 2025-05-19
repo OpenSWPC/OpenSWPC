@@ -81,8 +81,8 @@ module m_snap
     character(6) :: snp_format ! native or netcdf
 
     ! displacement snapshot buffer
-    real(SP), allocatable :: buf_yz_u(:, :, :), buf_xz_u(:, :, :), buf_xy_u(:, :, :), buf_fs_u(:, :, :), buf_ob_u(:, :, :)
-    real(SP), allocatable :: max_ob_v(:, :, :), max_ob_u(:, :, :), max_fs_v(:, :, :), max_fs_u(:, :, :)
+    real(SP), allocatable :: buf_yz_u(:,:,:), buf_xz_u(:,:,:), buf_xy_u(:,:,:), buf_fs_u(:,:,:), buf_ob_u(:,:,:)
+    real(SP), allocatable :: max_ob_v(:,:,:), max_ob_u(:,:,:), max_fs_v(:,:,:), max_fs_u(:,:,:)
 
     ! cross-section data MPI communicator
     integer :: mpi_comm_xz, mpi_comm_yz
@@ -126,7 +126,7 @@ contains
         call readini(io_prm, 'ntdec_s', ntdec_s, 10)
         call readini(io_prm, 'snp_format', snp_format, 'native')
 
-        !! snapshot size #2013-0440
+        !! snapshot size#2013-0440
         nxs = (nx + (idec / 2)) / idec
         nys = (ny + (jdec / 2)) / jdec
         nzs = (nz + (kdec / 2)) / kdec
@@ -312,6 +312,9 @@ contains
         allocate (max_fs_v(nxs, nys, 3), source=0.0)
         allocate (max_fs_u(nxs, nys, 3), source=0.0)
 
+        !$acc enter data copyin(buf_yz_u, buf_xz_u, buf_xy_u, buf_fs_u, buf_ob_u, &
+        !$acc                   max_ob_v, max_ob_u, max_fs_v, max_fs_u, i0_yz, j0_xz, k0_xy)
+
         call mpi_barrier(mpi_comm_world, err)
 
         call pwatch__off("snap__setup")
@@ -460,7 +463,7 @@ contains
 
                 ii = i * idec - idec / 2
                 jj = j * jdec - jdec / 2
-        !! topography data
+                !! topography data
                 buf(i, j, 1) = -bddep(ii, jj, 0) * 1000 ! positive upward, in unit of [m]
 
             end do
@@ -904,37 +907,6 @@ contains
 
     end subroutine write_reduce_array2d_r
 
-    subroutine divrot(k, i, j, div, rot)
-
-        !! Calculate divergence and abs(rotation) of velocity vector at given location (k,i,j) by 2nd order FDM
-
-        integer, intent(in)  :: k, i, j
-        real(SP), intent(out) :: div, rot(3)
-
-        real(SP) :: dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz
-
-        dxVx = real((Vx(k, i, j) - Vx(k, i - 1, j)) * r20x)
-        dxVy = real((Vy(k, i + 1, j) - Vy(k, i, j)) * r20x)
-        dxVz = real((Vz(k, i + 1, j) - Vz(k, i, j)) * r20x)
-        dyVx = real((Vx(k, i, j + 1) - Vx(k, i, j)) * r20y)
-        dyVy = real((Vy(k, i, j) - Vy(k, i, j - 1)) * r20y)
-        dyVz = real((Vz(k, i, j + 1) - Vz(k, i, j)) * r20y)
-        dzVx = real((Vx(k + 1, i, j) - Vx(k, i, j)) * r20z)
-        dzVy = real((Vy(k + 1, i, j) - Vy(k, i, j)) * r20z)
-        dzVz = real((Vz(k, i, j) - Vz(k - 1, i, j)) * r20z)
-
-        div = dxVx + dyVy + dzVz
-        rot(1) = dyVz - dzVy  ! x
-        rot(2) = dzVx - dxVz  ! y
-        rot(3) = dxVy - dyVx  ! z
-
-        !! masking
-        div = div * lam(k, i, j) / abs(lam(k, i, j) + epsilon(1.0))
-        rot(1) = rot(1) * muyz(k, i, j) / abs(muyz(k, i, j) + epsilon(1.0))
-        rot(2) = rot(2) * muxz(k, i, j) / abs(muxz(k, i, j) + epsilon(1.0))
-        rot(3) = rot(3) * muxy(k, i, j) / abs(muxy(k, i, j) + epsilon(1.0))
-
-    end subroutine divrot
 
     subroutine snap__write(it)
 
@@ -944,11 +916,11 @@ contains
 
         call pwatch__on("snap__write")
 
-        if (yz_ps%sw) call wbuf_yz_ps(it)
         if (xz_ps%sw) call wbuf_xz_ps(it)
         if (xy_ps%sw) call wbuf_xy_ps(it)
         if (fs_ps%sw) call wbuf_fs_ps(it)
         if (ob_ps%sw) call wbuf_ob_ps(it)
+        if (yz_ps%sw) call wbuf_yz_ps(it)
 
         if (yz_v%sw) call wbuf_yz_v(it)
         if (xz_v%sw) call wbuf_xz_v(it)
@@ -966,68 +938,6 @@ contains
 
     end subroutine snap__write
 
-    subroutine wbuf_yz_ps(it)
-
-        integer, intent(in) :: it
-        integer :: i, j, k
-        integer :: jj, kk
-        real(SP) :: div, rot(3)
-        real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
-        integer, save :: req
-        integer, save :: it0
-        integer :: stat(mpi_status_size)
-        integer :: err
-
-        if (idx /= idx_yz) return
-
-        if (.not. allocated(buf)) allocate (buf(nys, nzs, 4), source=0.0)
-
-        if ((mod(it - 1, ntdec_s) == 0) .or. (it > nt)) then
-
-            i = i0_yz
-
-            if (ibeg <= i .and. i <= iend) then
-                !$omp parallel do private( k, j, kk, jj, div, rot )
-                do jj = js0, js1
-                    do kk = ks0, ks1
-                        k = kk * kdec - kdec / 2
-                        j = jj * jdec - jdec / 2
-
-                        call divrot(k, i, j, div, rot)
-
-                        !! dx, dy, dz have km unit. correction for 1e3 factor.
-                        buf(jj, kk, 1) = div * UC * M0 * 1e-3
-                        buf(jj, kk, 2) = rot(1) * UC * M0 * 1e-3
-                        buf(jj, kk, 3) = rot(2) * UC * M0 * 1e-3
-                        buf(jj, kk, 4) = rot(3) * UC * M0 * 1e-3
-
-                    end do
-                end do
-                !$omp end parallel do
-            end if
-
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 1))
-                call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 2))
-                call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 3))
-                call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 4))
-            else
-                if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nys * nzs * 4), rbuf(nys * nzs * 4))
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == yz_ps%ionode) call wbuf_nc(yz_ps, 4, nys, nzs, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf(:, :, :), (/nys * nzs * 4/))
-                    call mpi_ireduce(sbuf, rbuf, nys * nzs * 4, mpi_real, mpi_sum, yz_ps%ionode_local, mpi_comm_yz, req, err)
-                    it0 = it ! remember
-                end if
-            end if
-
-        end if
-
-    end subroutine wbuf_yz_ps
 
     subroutine wbuf_nc(hdr, nvar, nx1, nx2, it0, rbuf)
 
@@ -1055,17 +965,112 @@ contains
             call nc_chk(nf90_redef(hdr%io))
             call nc_chk(nf90_put_att(hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)))
             call nc_chk(nf90_enddef(hdr%io))
-            call nc_chk(nf90_sync(hdr%io))
+            !call nc_chk(nf90_sync(hdr%io))
         end do
 
-    end subroutine wbuf_nc
+    end subroutine wbuf_nc    
+
+    subroutine wbuf_yz_ps(it)
+
+        integer, intent(in) :: it
+        integer :: i, j, k, l
+        integer :: jj, kk
+        real(SP) :: div, rot_x, rot_y, rot_z
+        real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
+        integer, save :: req
+        integer, save :: it0
+        integer :: stat(mpi_status_size)
+        integer :: err
+
+        if (idx /= idx_yz) return
+
+        if (.not. allocated(buf)) then
+            allocate (buf(nys, nzs, 4), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
+
+        if ((mod(it - 1, ntdec_s) == 0) .or. (it > nt)) then
+
+
+            if (ibeg <= i .and. i <= iend) then
+#ifdef _OPENACC
+                !$acc kernels &
+                !$acc present(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, i0_yz)
+                !$acc loop independent collapse(2)
+#else
+                !$omp parallel do private( i, j, k, kk, jj, div, rot_x, rot_y ,rot_z)
+#endif
+                do jj = js0, js1
+                    do kk = ks0, ks1
+
+                        k = kk * kdec - kdec / 2
+                        j = jj * jdec - jdec / 2
+                        i = i0_yz
+
+                        div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
+                                    + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
+                                    + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
+                        rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
+                                    - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
+                        rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
+                                    - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
+                        rot_z = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
+                                    - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
+                
+                        !! masking
+                        div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                        rot_x = rot_x * muyz(k,i,j) / abs(muyz(k,i,j) + epsilon(1.0))
+                        rot_y = rot_y * muxz(k,i,j) / abs(muxz(k,i,j) + epsilon(1.0))
+                        rot_z = rot_z * muxy(k,i,j) / abs(muxy(k,i,j) + epsilon(1.0))
+    
+                        !! dx, dy, dz have km unit. correction for 1e3 factor.
+                        buf(jj,kk,1) = div   * UC * M0 * 1e-3
+                        buf(jj,kk,2) = rot_x * UC * M0 * 1e-3
+                        buf(jj,kk,3) = rot_y * UC * M0 * 1e-3
+                        buf(jj,kk,4) = rot_z * UC * M0 * 1e-3
+
+                    end do
+                end do
+#ifdef _OPENACC
+                !$acc end kernels
+#else
+                !$omp end parallel do
+#endif
+            end if
+
+            if (snp_format == 'native') then
+                call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 1))
+                call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 2))
+                call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 3))
+                call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 4))
+            else
+                if (.not. allocated(sbuf)) then
+                    allocate (sbuf(nys * nzs * 4), rbuf(nys * nzs * 4))
+                    !$acc enter data copyin(sbuf)
+                else
+                    call mpi_wait(req, stat, err)
+                    if (myid == yz_ps%ionode) call wbuf_nc(yz_ps, 4, nys, nzs, it0, rbuf)
+                end if
+                if (it <= nt) then ! except for the last call
+                    call pack_3d(nys, nzs, 4, buf, sbuf)
+
+                    !$acc update self(sbuf)
+                    call mpi_ireduce(sbuf, rbuf, nys * nzs * 4, mpi_real, mpi_sum, yz_ps%ionode_local, mpi_comm_yz, req, err)
+
+                    it0 = it ! remember
+                end if
+            end if
+
+        end if
+
+    end subroutine wbuf_yz_ps
 
     subroutine wbuf_xz_ps(it)
 
         integer, intent(in) :: it
-        integer :: i, j, k
         integer :: ii, kk
-        real(SP) :: div, rot(3)
+        integer :: i, j, k, l
+        real(SP) :: div, rot_x, rot_y, rot_z
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
         integer, save :: req
         integer, save :: it0
@@ -1074,29 +1079,57 @@ contains
 
         if (idy /= idy_xz) return
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nzs, 4), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nzs, 4), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            j = j0_xz
-
             if (jbeg <= j .and. j <= jend) then
-                !$omp parallel do private( ii, kk, i, k, div, rot )
+
+#ifdef _OPENACC
+                !$acc kernels &
+                !$acc present(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, j0_xz)
+                !$acc loop independent collapse(2)
+#else
+                !$omp parallel do private( ii, kk, i, j, k, div, rot_x, rot_y, rot_z)
+#endif
                 do ii = is0, is1
                     do kk = ks0, ks1
                         k = kk * kdec - kdec / 2
                         i = ii * idec - idec / 2
+                        j = j0_xz
 
-                        call divrot(k, i, j, div, rot)
+                        div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
+                                    + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
+                                    + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
+                        rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
+                                    - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
+                        rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
+                                    - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
+                        rot_z = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
+                                    - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
+
+                        !! masking
+                        div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                        rot_x = rot_x * muyz(k,i,j) / abs(muyz(k,i,j) + epsilon(1.0))
+                        rot_y = rot_y * muxz(k,i,j) / abs(muxz(k,i,j) + epsilon(1.0))
+                        rot_z = rot_z * muxy(k,i,j) / abs(muxy(k,i,j) + epsilon(1.0))                                
+                                                    
                         !! dx, dy, dz have km unit. correction for 1e3 factor.
-                        buf(ii, kk, 1) = div * UC * M0 * 1e-3
-                        buf(ii, kk, 2) = rot(1) * UC * M0 * 1e-3
-                        buf(ii, kk, 3) = rot(2) * UC * M0 * 1e-3
-                        buf(ii, kk, 4) = rot(3) * UC * M0 * 1e-3
+                        buf(ii, kk, 1) = div   * UC * M0 * 1e-3
+                        buf(ii, kk, 2) = rot_x * UC * M0 * 1e-3
+                        buf(ii, kk, 3) = rot_y * UC * M0 * 1e-3
+                        buf(ii, kk, 4) = rot_z * UC * M0 * 1e-3
 
                     end do
                 end do
+#ifdef _OPENACC
+                !$acc end kernels
+#else
                 !$omp end parallel do
+#endif
             end if
 
             if (snp_format == 'native') then
@@ -1108,18 +1141,20 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nzs * 4), rbuf(nxs * nzs * 4))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
-                    if (myid == xz_ps%ionode) call wbuf_nc(xz_ps, 4, nxs, nzs, it0, rbuf)
+                    if (myid == xz_ps%ionode)  call wbuf_nc(xz_ps, 4, nxs, nzs, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf(:, :, :), (/nxs * nzs * 4/))
+                    call pack_3d(nxs, nzs, 4, buf, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nzs * 4, mpi_real, mpi_sum, xz_ps%ionode_local, mpi_comm_xz, req, err)
+
                     it0 = it ! remember
                 end if
-
             end if
-
         end if
 
     end subroutine wbuf_xz_ps
@@ -1127,37 +1162,64 @@ contains
     subroutine wbuf_xy_ps(it)
 
         integer, intent(in) :: it
-        integer :: i, j, k
+        integer :: i, j, k, l
         integer :: ii, jj
-        real(SP) :: div, rot(3)
+        real(SP) :: div, rot_x, rot_y, rot_z
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
         integer, save :: req
         integer, save :: it0
         integer :: stat(mpi_status_size)
         integer :: err
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nys, 4), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nys, 4), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            k = k0_xy
-            !$omp parallel do private( ii, jj, i, j, div, rot )
+#ifdef _OPENACC
+            !$acc kernels &
+            !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, k0_xy)
+            !$acc loop independent collapse(2)
+#else
+            !$omp parallel do private( ii, jj, i, j, k, div, rot_x, rot_y, rot_z)
+#endif
             do jj = js0, js1
                 do ii = is0, is1
-                    j = jj * jdec - jdec / 2
                     i = ii * idec - idec / 2
+                    j = jj * jdec - jdec / 2
+                    k = k0_xy
 
-                    call divrot(k, i, j, div, rot)
+                    div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
+                                + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
+                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
+                    rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
+                                - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
+                    rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
+                                - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
+                    rot_z = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
+                                - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
+
+                    !! masking
+                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                    rot_x = rot_x * muyz(k,i,j) / abs(muyz(k,i,j) + epsilon(1.0))
+                    rot_y = rot_y * muxz(k,i,j) / abs(muxz(k,i,j) + epsilon(1.0))
+                    rot_z = rot_z * muxy(k,i,j) / abs(muxy(k,i,j) + epsilon(1.0))                                
 
                     !! dx, dy, dz have km unit. correction for 1e3 factor.
-                    buf(ii, jj, 1) = div * UC * M0 * 1e-3
-                    buf(ii, jj, 2) = rot(1) * UC * M0 * 1e-3
-                    buf(ii, jj, 3) = rot(2) * UC * M0 * 1e-3
-                    buf(ii, jj, 4) = rot(3) * UC * M0 * 1e-3
+                    buf(ii, jj, 1) = div   * UC * M0 * 1e-3
+                    buf(ii, jj, 2) = rot_x * UC * M0 * 1e-3
+                    buf(ii, jj, 3) = rot_y * UC * M0 * 1e-3
+                    buf(ii, jj, 4) = rot_z * UC * M0 * 1e-3
 
                 end do
             end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
             !$omp end parallel do
+#endif
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nxs, nys, xy_ps%ionode, xy_ps%io, buf(:, :, 1))
@@ -1168,13 +1230,17 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 4), rbuf(nxs * nys * 4))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xy_ps%ionode) call wbuf_nc(xy_ps, 4, nxs, nys, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf(:, :, :), (/nxs * nys * 4/))
+                    call pack_3d(nxs, nys, 4, buf, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 4, mpi_real, mpi_sum, xy_ps%ionode, mpi_comm_world, req, err)
+
                     it0 = it ! remember
                 end if
 
@@ -1189,34 +1255,61 @@ contains
         integer, intent(in) :: it
         integer :: i, j, k
         integer :: ii, jj
-        real(SP) :: div, rot(3)
+        real(SP) :: div, rot_x, rot_y, rot_z
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
         integer, save :: req
         integer, save :: it0
         integer :: stat(mpi_status_size)
         integer :: err
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nys, 4), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nys, 4), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            !$omp parallel do private( ii, jj, i, j, k, div, rot )
+#ifdef _OPENACC
+            !$acc kernels &
+            !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, kfs)
+            !$acc loop independent collapse(2)
+#else
+            !$omp parallel do private( ii, jj, i, j, k, div, rot_x, rot_y, rot_z)
+#endif
             do jj = js0, js1
                 do ii = is0, is1
                     j = jj * jdec - jdec / 2
                     i = ii * idec - idec / 2
                     k = kfs(i, j) + 1        !! to calculate derivatives in depth, to assure amplitude exist at detpth
 
-                    call divrot(k, i, j, div, rot)
-
+                    div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
+                                + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
+                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
+                    rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
+                                - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
+                    rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
+                                - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
+                    rot_z = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
+                                - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
+            
+                    !! masking
+                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                    rot_x = rot_x * muyz(k,i,j) / abs(muyz(k,i,j) + epsilon(1.0))
+                    rot_y = rot_y * muxz(k,i,j) / abs(muxz(k,i,j) + epsilon(1.0))
+                    rot_z = rot_z * muxy(k,i,j) / abs(muxy(k,i,j) + epsilon(1.0))
+                                        
                     !! dx, dy, dz have km unit. correction for 1e3 factor.
-                    buf(ii, jj, 1) = div * UC * M0 * 1e-3
-                    buf(ii, jj, 2) = rot(1) * UC * M0 * 1e-3
-                    buf(ii, jj, 3) = rot(2) * UC * M0 * 1e-3
-                    buf(ii, jj, 4) = rot(3) * UC * M0 * 1e-3
+                    buf(ii, jj, 1) = div   * UC * M0 * 1e-3
+                    buf(ii, jj, 2) = rot_x * UC * M0 * 1e-3
+                    buf(ii, jj, 3) = rot_y * UC * M0 * 1e-3
+                    buf(ii, jj, 4) = rot_z * UC * M0 * 1e-3
                 end do
             end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
             !$omp end parallel do
+#endif
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nxs, nys, fs_ps%ionode, fs_ps%io, buf(:, :, 1))
@@ -1227,13 +1320,17 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 4), rbuf(nxs * nys * 4))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == fs_ps%ionode) call wbuf_nc(fs_ps, 4, nxs, nys, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf(:, :, :), (/nxs * nys * 4/))
+                    call pack_3d(nxs, nys, 4, buf, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 4, mpi_real, mpi_sum, fs_ps%ionode, mpi_comm_world, req, err)
+
                     it0 = it ! remember
                 end if
 
@@ -1248,35 +1345,62 @@ contains
         integer, intent(in) :: it
         integer :: i, j, k
         integer :: ii, jj
-        real(SP) :: div, rot(3)
+        real(SP) :: div, rot_x, rot_y, rot_z
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
         integer, save :: req
         integer, save :: it0
         integer :: stat(mpi_status_size)
         integer :: err
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nys, 4), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nys, 4), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            !$omp parallel do private( ii, jj, i, j, k, div, rot )
+#ifdef _OPENACC
+            !$acc kernels &
+            !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, kob)
+            !$acc loop independent collapse(2)
+#else
+            !$omp parallel do private( ii, jj, i, j, k, div, rot_x, rot_y, rot_z )
+#endif            
             do jj = js0, js1
                 do ii = is0, is1
                     j = jj * jdec - jdec / 2
                     i = ii * idec - idec / 2
                     k = kob(i, j) + 1        !! to calculate derivatives in depth, to assure amplitude exist at detpth
 
-                    call divrot(k, i, j, div, rot)
+                    div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
+                                + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
+                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
+                    rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
+                                - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
+                    rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
+                                - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
+                    rot_z = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
+                                - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
+            
+                    !! masking
+                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                    rot_x = rot_x * muyz(k,i,j) / abs(muyz(k,i,j) + epsilon(1.0))
+                    rot_y = rot_y * muxz(k,i,j) / abs(muxz(k,i,j) + epsilon(1.0))
+                    rot_z = rot_z * muxy(k,i,j) / abs(muxy(k,i,j) + epsilon(1.0))                    
 
                     !! dx, dy, dz have km unit. correction for 1e3 factor.
-                    buf(ii, jj, 1) = div * UC * M0 * 1e-3
-                    buf(ii, jj, 2) = rot(1) * UC * M0 * 1e-3
-                    buf(ii, jj, 3) = rot(2) * UC * M0 * 1e-3
-                    buf(ii, jj, 4) = rot(3) * UC * M0 * 1e-3
+                    buf(ii,jj,1) = div   * UC * M0 * 1e-3
+                    buf(ii,jj,2) = rot_x * UC * M0 * 1e-3
+                    buf(ii,jj,3) = rot_y * UC * M0 * 1e-3
+                    buf(ii,jj,4) = rot_z * UC * M0 * 1e-3
 
                 end do
             end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
             !$omp end parallel do
+#endif
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nxs, nys, ob_ps%ionode, ob_ps%io, buf(:, :, 1))
@@ -1287,13 +1411,17 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 4), rbuf(nxs * nys * 4))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == ob_ps%ionode) call wbuf_nc(ob_ps, 4, nxs, nys, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf(:, :, :), (/nxs * nys * 4/))
+                    call pack_3d(nxs, nys, 4, buf, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 4, mpi_real, mpi_sum, ob_ps%ionode, mpi_comm_world, req, err)
+
                     it0 = it ! remember
                 end if
             end if
@@ -1314,19 +1442,29 @@ contains
 
         if (idx /= idx_yz) return
 
-        if (.not. allocated(buf)) allocate (buf(nys, nzs, 3), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nys, nzs, 3), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            i = i0_yz
 
             buf = 0.0
             if (ibeg <= i .and. i <= iend) then
-                !$omp parallel do private( jj, kk, k, j )
+
+#ifdef _OPENACC
+                !$acc kernels &
+                !$acc pcopyin(Vx, Vy, Vz, buf)
+                !$acc loop independent collapse(2)
+#else
+                !$omp parallel do private( jj, kk, k, j, i )
+#endif
                 do jj = js0, js1
                     do kk = ks0, ks1
-                        k = kk * kdec - kdec / 2
+                        i = i0_yz
                         j = jj * jdec - jdec / 2
+                        k = kk * kdec - kdec / 2
 
                         buf(jj, kk, 1) = Vx(k, i, j) * UC * M0
                         buf(jj, kk, 2) = Vy(k, i, j) * UC * M0
@@ -1334,7 +1472,11 @@ contains
 
                     end do
                 end do
+#ifdef _OPENACC
+                !$acc end kernels
+#else
                 !$omp end parallel do
+#endif
 
             end if
 
@@ -1346,13 +1488,17 @@ contains
 
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nys * nzs * 3), rbuf(nys * nzs * 3))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == yz_v%ionode) call wbuf_nc(yz_v, 3, nys, nzs, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf(:, :, :), (/nys * nzs * 3/))
+                    call pack_3d(nys, nzs, 3, buf, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nys * nzs * 3, mpi_real, mpi_sum, yz_v%ionode_local, mpi_comm_yz, req, err)
+
                     it0 = it ! remember
                 end if
             end if
@@ -1374,18 +1520,27 @@ contains
 
         if (idy /= idy_xz) return
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nzs, 3), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nzs, 3), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
-            j = j0_xz
 
-            buf = 0.0
             if (jbeg <= j .and. j <= jend) then
-                !$omp parallel do private( ii, kk, i, k )
+
+#ifdef _OPENACC
+                !$acc kernels &
+                !$acc pcopyin(Vx, Vy, Vz, buf)
+                !$acc loop independent collapse(2)
+#else
+                !$omp parallel do private( ii, kk, i, k, j )
+#endif
                 do ii = is0, is1
                     do kk = ks0, ks1
-                        k = kk * kdec - kdec / 2
                         i = ii * idec - idec / 2
+                        j = j0_xz
+                        k = kk * kdec - kdec / 2
 
                         buf(ii, kk, 1) = Vx(k, i, j) * UC * M0
                         buf(ii, kk, 2) = Vy(k, i, j) * UC * M0
@@ -1393,7 +1548,11 @@ contains
 
                     end do
                 end do
+#ifdef _OPENACC
+                !$acc end kernels
+#else
                 !$omp end parallel do
+#endif
 
             end if
 
@@ -1404,13 +1563,17 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nzs * 3), rbuf(nxs * nzs * 3))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xz_v%ionode) call wbuf_nc(xz_v, 3, nxs, nzs, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf(:, :, :), (/nxs * nzs * 3/))
+                    call pack_3d(nxs, nzs, 3, buf, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nzs * 3, mpi_real, mpi_sum, xz_v%ionode_local, mpi_comm_xz, req, err)
+                    
                     it0 = it ! remember
                 end if
             end if
@@ -1427,16 +1590,25 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nys, 3), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nys, 3), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
-            k = k0_xy
 
-            !$omp parallel do private( ii, jj, i, j )
+#ifdef _OPENACC
+            !$acc kernels &
+            !$acc pcopyin(Vx, Vy, Vz, buf)
+            !$acc loop independent collapse(2)
+#else
+            !$omp parallel do private( ii, jj, i, j, k )
+#endif
             do jj = js0, js1
                 do ii = is0, is1
-                    j = jj * jdec - jdec / 2
                     i = ii * idec - idec / 2
+                    j = jj * jdec - jdec / 2
+                    k = k0_xy
 
                     buf(ii, jj, 1) = Vx(k, i, j) * UC * M0
                     buf(ii, jj, 2) = Vy(k, i, j) * UC * M0
@@ -1444,7 +1616,11 @@ contains
 
                 end do
             end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
             !$omp end parallel do
+#endif
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nxs, nys, xy_v%ionode, xy_v%io, buf(:, :, 1))
@@ -1453,13 +1629,17 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xy_v%ionode) call wbuf_nc(xy_v, 3, nxs, nys, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf(:, :, :), (/nxs * nys * 3/))
+                    call pack_3d(nxs, nys, 3, buf, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, xy_v%ionode, mpi_comm_world, req, err)
+
                     it0 = it ! remember
                 end if
             end if
@@ -1478,9 +1658,18 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nys, 3), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nys, 3), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc pcopyin(Vx, Vy, Vz, buf, kfs)
+        !$acc loop independent collapse(2)
+#else
         !$omp parallel do private( ii, jj, i, j, k )
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 j = jj * jdec - jdec / 2
@@ -1493,9 +1682,18 @@ contains
 
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end parallel do
+#endif
 
+#ifdef _OPENACC
+        !$acc kernels pcopyin(buf, max_fs_v)
+        !$acc loop independent collapse(2)
+#else
         !$omp parallel do private(ii,jj)
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 max_fs_v(ii, jj, 1) = max(max_fs_v(ii, jj, 1), abs(buf(ii, jj, 3)))
@@ -1503,7 +1701,11 @@ contains
                 max_fs_v(ii, jj, 3) = sqrt(max_fs_v(ii, jj, 1)**2 + max_fs_v(ii, jj, 2)**2)
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end parallel do
+#endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
@@ -1514,13 +1716,17 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == fs_v%ionode) call wbuf_nc(fs_v, 3, nxs, nys, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf(:, :, :), (/nxs * nys * 3/))
+                    call pack_3d(nxs, nys, 3, buf, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, fs_v%ionode, mpi_comm_world, req, err)
+
                     it0 = it ! remember
                 end if
             end if
@@ -1539,9 +1745,18 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        if (.not. allocated(buf)) allocate (buf(nxs, nys, 3), source=0.0)
+        if (.not. allocated(buf)) then
+            allocate (buf(nxs, nys, 3), source=0.0)
+            !$acc enter data copyin(buf)
+        end if
 
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc pcopyin(Vx, Vy, Vz, buf, kob)
+        !$acc loop independent collapse(2)
+#else
         !$omp parallel do private( ii, jj, i, j, k )
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 j = jj * jdec - jdec / 2
@@ -1554,9 +1769,18 @@ contains
 
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end parallel do
+#endif
 
+#ifdef _OPENACC
+        !$acc kernels pcopyin(buf, max_ob_v)
+        !$acc loop independent collapse(2)
+#else
         !$omp parallel do private(ii,jj)
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 max_ob_v(ii, jj, 1) = max(max_ob_v(ii, jj, 1), abs(buf(ii, jj, 3)))
@@ -1564,7 +1788,11 @@ contains
                 max_ob_v(ii, jj, 3) = sqrt(max_ob_v(ii, jj, 1)**2 + max_ob_v(ii, jj, 2)**2)
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end parallel do
+#endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
@@ -1575,13 +1803,17 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == ob_v%ionode) call wbuf_nc(ob_v, 3, nxs, nys, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf(:, :, :), (/nxs * nys * 3/))
+                    call pack_3d(nxs, nys, 3, buf, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, ob_v%ionode, mpi_comm_world, req, err)
+
                     it0 = it ! remember
                 end if
             end if
@@ -1601,12 +1833,19 @@ contains
 
         if (idx /= idx_yz) return
 
-        i = i0_yz
 
         if (ibeg <= i .and. i <= iend) then
-            !$omp parallel do private( jj, kk, k, j )
+
+#ifdef _OPENACC
+            !$acc kernels &
+            !$acc pcopyin(Vx, Vy, Vz, buf_yz_u)
+            !$acc loop independent collapse(2)
+#else            
+            !$omp parallel do private( jj, kk, k, i, j )
+#endif
             do jj = js0, js1
                 do kk = ks0, ks1
+                    i = i0_yz
                     k = kk * kdec - kdec / 2
                     j = jj * jdec - jdec / 2
 
@@ -1616,7 +1855,11 @@ contains
 
                 end do
             end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
             !$omp end parallel do
+#endif
 
         end if
 
@@ -1628,13 +1871,17 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nys * nzs * 3), rbuf(nys * nzs * 3))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == yz_u%ionode) call wbuf_nc(yz_u, 3, nys, nzs, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf_yz_u(:, :, :), (/nys * nzs * 3/))
+                    call pack_3d(nys, nzs, 3, buf_yz_u, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nys * nzs * 3, mpi_real, mpi_sum, yz_u%ionode_local, mpi_comm_yz, req, err)
+
                     it0 = it ! remember
                 end if
             end if
@@ -1655,14 +1902,20 @@ contains
 
         if (idy /= idy_xz) return
 
-        j = j0_xz
 
         if (jbeg <= j .and. j <= jend) then
-            !$omp parallel do private( ii, kk, i, k )
+#ifdef _OPENACC
+            !$acc kernels &
+            !$acc present(Vx, Vy, Vz, buf_xz_u)
+            !$acc loop independent collapse(2)
+#else            
+            !$omp parallel do private( ii, kk, k, i, j )
+#endif
             do ii = is0, is1
                 do kk = ks0, ks1
                     k = kk * kdec - kdec / 2
                     i = ii * idec - idec / 2
+                    j = j0_xz
 
                     buf_xz_u(ii, kk, 1) = buf_xz_u(ii, kk, 1) + Vx(k, i, j) * UC * M0 * dt
                     buf_xz_u(ii, kk, 2) = buf_xz_u(ii, kk, 2) + Vy(k, i, j) * UC * M0 * dt
@@ -1670,7 +1923,11 @@ contains
 
                 end do
             end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
             !$omp end parallel do
+#endif
 
         end if
 
@@ -1683,13 +1940,17 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nzs * 3), rbuf(nxs * nzs * 3))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xz_u%ionode) call wbuf_nc(xz_u, 3, nxs, nzs, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf_xz_u(:, :, :), (/nxs * nzs * 3/))
+                    call pack_3d(nxs, nzs, 3, buf_xz_u, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nzs * 3, mpi_real, mpi_sum, xz_u%ionode_local, mpi_comm_xz, req, err)
+
                     it0 = it ! remember
                 end if
             end if
@@ -1708,13 +1969,18 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        k = k0_xy
-
-        !$omp parallel do private( ii, jj, i, j )
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc pcopyin(Vx, Vy, Vz, buf_xy_u)
+        !$acc loop independent collapse(2)
+#else            
+        !$omp parallel do private( jj, ii, k, i, j )
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 j = jj * jdec - jdec / 2
                 i = ii * idec - idec / 2
+                k = k0_xy
 
                 buf_xy_u(ii, jj, 1) = buf_xy_u(ii, jj, 1) + Vx(k, i, j) * UC * M0 * dt
                 buf_xy_u(ii, jj, 2) = buf_xy_u(ii, jj, 2) + Vy(k, i, j) * UC * M0 * dt
@@ -1722,7 +1988,11 @@ contains
 
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end parallel do
+#endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
@@ -1733,13 +2003,17 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == xy_u%ionode) call wbuf_nc(xy_u, 3, nxs, nys, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf_xy_u(:, :, :), (/nxs * nys * 3/))
+                    call pack_3d(nxs, nys, 3, buf_xy_u, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, xy_u%ionode, mpi_comm_world, req, err)
+
                     it0 = it ! remember
                 end if
             end if
@@ -1759,7 +2033,13 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        !$omp parallel do private( ii, jj, i, j, k )
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc pcopyin(Vx, Vy, Vz, buf_fs_u, kfs)
+        !$acc loop independent collapse(2)
+#else            
+        !$omp parallel do private( jj, ii, k, i, j )
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 j = jj * jdec - jdec / 2
@@ -1772,9 +2052,18 @@ contains
 
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end parallel do
+#endif
 
+#ifdef _OPENACC
+        !$acc kernels pcopyin(buf_fs_u, max_fs_u)
+        !$acc loop independent collapse(2)
+#else
         !$omp parallel do private(ii,jj)
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 max_fs_u(ii, jj, 1) = max(max_fs_u(ii, jj, 1), abs(buf_fs_u(ii, jj, 3)))
@@ -1782,7 +2071,11 @@ contains
                 max_fs_u(ii, jj, 3) = sqrt(max_fs_u(ii, jj, 1)**2 + max_fs_u(ii, jj, 2)**2)
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end parallel do
+#endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
             if (snp_format == 'native') then
@@ -1792,13 +2085,17 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == fs_u%ionode) call wbuf_nc(fs_u, 3, nxs, nys, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf_fs_u(:, :, :), (/nxs * nys * 3/))
+                    call pack_3d(nxs, nys, 3, buf_fs_u, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, fs_u%ionode, mpi_comm_world, req, err)
+
                     it0 = it ! remember
                 end if
             end if
@@ -1817,7 +2114,13 @@ contains
         integer :: stat(mpi_status_size)
         integer :: err
 
-        !$omp parallel do private( ii, jj, i, j, k )
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc pcopyin(Vx, Vy, Vz, buf_ob_u, kob)
+        !$acc loop independent collapse(2)
+#else            
+        !$omp parallel do private( jj, ii, k, i, j )
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 j = jj * jdec - jdec / 2
@@ -1830,9 +2133,18 @@ contains
 
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end parallel do
+#endif
 
+#ifdef _OPENACC
+        !$acc kernels pcopyin(buf_ob_u, max_ob_u)
+        !$acc loop independent collapse(2)
+#else
         !$omp parallel do private(ii,jj)
+#endif
         do jj = js0, js1
             do ii = is0, is1
                 max_ob_u(ii, jj, 1) = max(max_ob_u(ii, jj, 1), abs(buf_ob_u(ii, jj, 3)))
@@ -1840,7 +2152,11 @@ contains
                 max_ob_u(ii, jj, 3) = sqrt(max_ob_u(ii, jj, 1)**2 + max_ob_u(ii, jj, 2)**2)
             end do
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
         !$omp end parallel do
+#endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
             if (snp_format == 'native') then
@@ -1850,13 +2166,17 @@ contains
             else
                 if (.not. allocated(sbuf)) then
                     allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
                     if (myid == ob_u%ionode) call wbuf_nc(ob_u, 3, nxs, nys, it0, rbuf)
                 end if
                 if (it <= nt) then ! except for the last call
-                    sbuf = reshape(buf_ob_u(:, :, :), (/nxs * nys * 3/))
+                    call pack_3d(nxs, nys, 3, buf_ob_u, sbuf)
+
+                    !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, ob_u%ionode, mpi_comm_world, req, err)
+
                     it0 = it ! remember
                 end if
             end if
@@ -1930,12 +2250,14 @@ contains
             if (xz_v%sw .and. myid == xz_v%ionode) call close_nc(xz_v)
             if (xy_v%sw .and. myid == xy_v%ionode) call close_nc(xy_v)
             if (fs_v%sw) then
+                !$acc update self (max_fs_v)
                 call output__put_maxval(fs_v, max_fs_v)
                 if (myid == fs_v%ionode) then
                     call close_nc(fs_v)
                 end if
             end if
             if (ob_v%sw) then
+                !$acc update self (max_ob_v)
                 call output__put_maxval(ob_v, max_ob_v)
                 if (myid == ob_v%ionode) then
                     call close_nc(ob_v)
@@ -1946,12 +2268,14 @@ contains
             if (xz_u%sw .and. myid == xz_u%ionode) call close_nc(xz_u)
             if (xy_u%sw .and. myid == xy_u%ionode) call close_nc(xy_u)
             if (fs_u%sw) then
+                !$acc update self (max_fs_u)
                 call output__put_maxval(fs_u, max_fs_u)
                 if (myid == fs_u%ionode) then
                     call close_nc(fs_u)
                 end if
             end if
             if (ob_u%sw) then
+                !$acc update self (max_ob_u)
                 call output__put_maxval(ob_u, max_ob_u)
                 if (myid == ob_u%ionode) then
                     call close_nc(ob_u)
@@ -2027,6 +2351,36 @@ contains
         if (err /= NF90_NOERR) write (error_unit, *) NF90_STRERROR(err)
 
     end subroutine nc_chk
+
+    subroutine pack_3D(n1, n2, n3, buf3d, buf1d)
+
+        integer,  intent(in)  :: n1, n2, n3
+        real(SP), intent(in)  :: buf3d(n1,n2,n3)
+        real(SP), intent(out) :: buf1d(n1*n2*n3)
+        integer :: i, j, k, idx
+
+        idx = 1
+#ifdef _OPENACC
+        !$acc kernels present(buf3d, buf1d)
+        !$acc loop independent collapse(3) 
+#else
+        !$omp parallel do private(i, j, k, idx)
+#endif
+        do k=1, n3
+            do j=1, n2
+                do i=1, n1
+                    idx = (k-1) * n1 * n2 + (j-1) * n1 + i
+                    buf1d(idx) = buf3d(i,j,k)
+                end do
+            end do
+        end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else
+        !$omp end parallel do
+#endif
+
+    end subroutine pack_3D
 
 end module m_snap
 

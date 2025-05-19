@@ -267,6 +267,8 @@ contains
         !! common grid-related value for stress drip calculation
         dt_dxz = dt / (dx * dz)
 
+        !$acc enter data copyin(stftype, n_stfprm, mo, srcprm, isrc, ksrc, mxx, mzz, mxz)
+
         call pwatch__off("source__setup")
 
     end subroutine source__setup
@@ -573,7 +575,6 @@ contains
 
         integer, intent(in) :: it !< time grid number
 
-        real(SP) :: t
         integer  :: ii, kk
         real(MP) :: sdrop
         integer  :: i
@@ -583,25 +584,30 @@ contains
 
         call pwatch__on("source__stressglut")
 
-        t = n2t(it, tbeg, dt)
-
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(stftype, n_stfprm, mo, srcprm, isrc, ksrc, Sxx, Szz, Sxz, mxx, mzz, mxz)
+        !$acc loop seq
+#endif
         do i = 1, nsrc
 
-            stime = source__momentrate(t, stftype, n_stfprm, srcprm(:, i))
+            stime = momentrate(tbeg + (it-0.5) * dt, stftype, n_stfprm, srcprm(:,i))
             sdrop = mo(i) * stime * dt_dxz
 
             ii = isrc(i)
             kk = ksrc(i)
 
-            Sxx(kk, ii) = Sxx(kk, ii) - mxx(i) * sdrop
-            Szz(kk, ii) = Szz(kk, ii) - mzz(i) * sdrop
-
-            Sxz(kk, ii) = Sxz(kk, ii) - mxz(i) * sdrop / 4
-            Sxz(kk - 1, ii) = Sxz(kk - 1, ii) - mxz(i) * sdrop / 4
-            Sxz(kk, ii - 1) = Sxz(kk, ii - 1) - mxz(i) * sdrop / 4
-            Sxz(kk - 1, ii - 1) = Sxz(kk - 1, ii - 1) - mxz(i) * sdrop / 4
+            Sxx(kk  ,ii  ) = Sxx(kk  ,ii  ) - mxx(i) * sdrop
+            Szz(kk  ,ii  ) = Szz(kk  ,ii  ) - mzz(i) * sdrop
+            Sxz(kk  ,ii  ) = Sxz(kk  ,ii  ) - mxz(i) * sdrop / 4
+            Sxz(kk-1,ii  ) = Sxz(kk-1,ii  ) - mxz(i) * sdrop / 4
+            Sxz(kk  ,ii-1) = Sxz(kk  ,ii-1) - mxz(i) * sdrop / 4
+            Sxz(kk-1,ii-1) = Sxz(kk-1,ii-1) - mxz(i) * sdrop / 4
 
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#endif
 
         call pwatch__off("source__stressglut")
 
@@ -613,61 +619,39 @@ contains
 
         integer, intent(in) :: it !< time grid number
 
-        real(SP) :: t
         integer  :: ii, kk
         integer  :: i
         real(MP) :: stime
-
         if (.not. bf_mode) return
 
         call pwatch__on("source__bodyforce")
 
-        t = n2t(it, tbeg, dt) + dt / 2
-
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(stftype, n_stfprm, mo, srcprm, isrc, ksrc, Vx, Vz, rho, fx, fz)
+        !$acc loop seq
+#endif
         do i = 1, nsrc
-
-            stime = source__momentrate(t, stftype, n_stfprm, srcprm(:, i))
+            
+            !! t= nt2(it,tbeg,dt) + dt/2
+            stime = momentrate(tbeg + it * dt, stftype, n_stfprm, srcprm(:, i))
 
             ii = isrc(i)
             kk = ksrc(i)
 
-            Vx(kk, ii) = Vx(kk, ii) + fx(i) * stime * dt_dxz / 2
-            Vx(kk, ii - 1) = Vx(kk, ii - 1) + fx(i) * stime * dt_dxz / 2
-            Vz(kk, ii) = Vz(kk, ii) + fz(i) * stime * dt_dxz / 2
-            Vz(kk - 1, ii) = Vz(kk - 1, ii) + fz(i) * stime * dt_dxz / 2
+            Vx(kk  ,ii  ) = Vx(kk  ,ii  ) + fx(i) / rho(kk,ii) * stime * dt_dxz / 2
+            Vx(kk  ,ii-1) = Vx(kk  ,ii-1) + fx(i) / rho(kk,ii) * stime * dt_dxz / 2
+            Vz(kk  ,ii  ) = Vz(kk  ,ii  ) + fz(i) / rho(kk,ii) * stime * dt_dxz / 2
+            Vz(kk-1,ii  ) = Vz(kk-1,ii  ) + fz(i) / rho(kk,ii) * stime * dt_dxz / 2
 
         end do
+#ifdef _OPENACC
+        !$acc end kernels
+#endif
 
         call pwatch__off("source__bodyforce")
 
     end subroutine source__bodyforce
-
-    real(SP) function source__momentrate(t, stftype, nprm, srcprm)
-
-        !! returns number of source grids
-
-        real(SP), intent(in) :: t
-        character(*), intent(in) :: stftype
-        integer, intent(in) :: nprm
-        real(SP), intent(in) :: srcprm(1:nprm)
-
-        real(SP) :: tbeg
-        real(SP) :: trise
-
-        tbeg = srcprm(1)
-        trise = srcprm(2)
-
-        select case (trim(stftype))
-        case ('boxcar'); source__momentrate = boxcar(t, tbeg, trise)
-        case ('triangle'); source__momentrate = triangle(t, tbeg, trise)
-        case ('herrmann'); source__momentrate = herrmann(t, tbeg, trise)
-        case ('kupper'); source__momentrate = kupper(t, tbeg, trise)
-        case ('cosine'); source__momentrate = cosine(t, tbeg, trise)
-        case ('texp'); source__momentrate = texp(t, tbeg, trise)
-        case default; source__momentrate = kupper(t, tbeg, trise)
-        end select
-
-    end function source__momentrate
 
     subroutine pw_setup(io_prm)
 
@@ -726,10 +710,10 @@ contains
                     z1 = z0 + dz / 2.
 
                     !! source time function evaluated along rotated zeta value at staggered grid points
-                    stf_ii = source__momentrate(sd * sf * x0 + cd * z0, stftype, 2, (/0., pw_zlen/))
-                    stf_vx = source__momentrate(sd * sf * x1 + cd * z0 + dt / 2.*vp, stftype, 2, (/0., pw_zlen/))
-                    stf_vz = source__momentrate(sd * sf * x0 + cd * z1 + dt / 2.*vp, stftype, 2, (/0., pw_zlen/))
-                    stf_xz = source__momentrate(sd * sf * x1 + cd * z1, stftype, 2, (/0., pw_zlen/))
+                    stf_ii = momentrate(sd * sf * x0 + cd * z0, stftype, 2, (/0., pw_zlen/))
+                    stf_vx = momentrate(sd * sf * x1 + cd * z0 + dt / 2.*vp, stftype, 2, (/0., pw_zlen/))
+                    stf_vz = momentrate(sd * sf * x0 + cd * z1 + dt / 2.*vp, stftype, 2, (/0., pw_zlen/))
+                    stf_xz = momentrate(sd * sf * x1 + cd * z1, stftype, 2, (/0., pw_zlen/))
 
                     la0 = lam(k, i)
                     mu0 = mu(k, i)
@@ -760,10 +744,10 @@ contains
                     mu0 = mu(k, i)
 
                     !! source time function evaluated along rotated zeta value at staggered grid points
-                    stf_ii = source__momentrate(sd * sf * x0 + cd * z0, stftype, 2, (/0., pw_zlen/))
-                    stf_vx = source__momentrate(sd * sf * x1 + cd * z0 + dt / 2.*vs, stftype, 2, (/0., pw_zlen/))
-                    stf_vz = source__momentrate(sd * sf * x0 + cd * z1 + dt / 2.*vs, stftype, 2, (/0., pw_zlen/))
-                    stf_xz = source__momentrate(sd * sf * x1 + cd * z1, stftype, 2, (/0., pw_zlen/))
+                    stf_ii = momentrate(sd * sf * x0 + cd * z0, stftype, 2, (/0., pw_zlen/))
+                    stf_vx = momentrate(sd * sf * x1 + cd * z0 + dt / 2.*vs, stftype, 2, (/0., pw_zlen/))
+                    stf_vz = momentrate(sd * sf * x0 + cd * z1 + dt / 2.*vs, stftype, 2, (/0., pw_zlen/))
+                    stf_xz = momentrate(sd * sf * x1 + cd * z1, stftype, 2, (/0., pw_zlen/))
 
                     vx(k, i) = (cl * cf + sl * cd * sf) * stf_vx
                     vz(k, i) = -sl * sd * stf_vz
