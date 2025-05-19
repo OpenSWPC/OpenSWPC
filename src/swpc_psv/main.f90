@@ -80,8 +80,8 @@ program swpc_psv
     !$acc enter data copyin(&
     !$acc Vx(kbeg_m:kend_m, ibeg_m:iend_m), Vz(kbeg_m:kend_m, ibeg_m:iend_m), &
     !$acc Sxx(kbeg_m:kend_m, ibeg_m:iend_m), Szz(kbeg_m:kend_m, ibeg_m:iend_m), &
-    !$acc Sxz(kbeg_m:kend_m, ibeg_m:iend_m), Rxx(kbeg_m:kend_m, ibeg_m:iend_m), &
-    !$acc Rzz(kbeg_m:kend_m, ibeg_m:iend_m), Rxz(kbeg_m:kend_m, ibeg_m:iend_m),  &
+    !$acc Sxz(kbeg_m:kend_m, ibeg_m:iend_m), Rxx(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), &
+    !$acc Rzz(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), Rxz(1:nm, kbeg_m:kend_m, ibeg_m:iend_m),  &
     !$acc rho(kbeg_m:kend_m, ibeg_m:iend_m),  &
     !$acc lam(kbeg_m:kend_m, ibeg_m:iend_m), &
     !$acc mu(kbeg_m:kend_m, ibeg_m:iend_m), &

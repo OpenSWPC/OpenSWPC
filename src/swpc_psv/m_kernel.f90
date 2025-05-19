@@ -67,7 +67,7 @@ contains
 
         end if
 
-        !$acc enter data copyin(c1, c2, c1, d2)
+        !$acc enter data copyin(c1, c2, d1, d2)
 
         call pwatch__off("kernel__setup")
 

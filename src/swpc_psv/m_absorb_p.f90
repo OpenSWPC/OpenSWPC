@@ -98,7 +98,7 @@ contains
         allocate (azSzz(kbeg_min:kend, ibeg:iend), source=0.0)
         idum = io_prm
 
-        !$acc enter data copyin(axVx, azVx, axVz, azVz, axSxx, azSxz, axSxz, azSxz, &
+        !$acc enter data copyin(axVx, azVx, axVz, azVz, axSxx, azSxz, axSxz, azSzz, &
         !$acc gxc, gxe, gzc, gze)
 
     end subroutine absorb_p__setup

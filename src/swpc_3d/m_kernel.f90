@@ -378,4 +378,3 @@ contains
     end subroutine memory_allocate
 
 end module m_kernel
-                                                                     

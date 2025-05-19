@@ -76,9 +76,6 @@ program swpc_3d
     call snap__setup(io_prm)
     call wav__setup(io_prm)
     call green__setup(io_prm)
-    call report__setup(io_prm)
-
-    close (io_prm)
 
     !$acc enter data copyin(&
     !$acc       Vx (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
@@ -121,6 +118,8 @@ program swpc_3d
     !$acc       bddep(ibeg_m:iend_m, jbeg_m:jend_m, 0:NBD), &
     !$acc       kbeg_a(ibeg_m:iend_m, jbeg_m:jend_m))
 
+    call report__setup(io_prm)
+    close (io_prm)
 
     !! mainloop
     do it = 1, nt

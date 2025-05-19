@@ -370,7 +370,7 @@ contains
 
         ! Data buffring & communication for stress tensor
 
-        integer :: err
+        integer :: err, k
         integer :: istatus(mpi_status_size, 4)
         integer :: req(4)
 
@@ -378,24 +378,42 @@ contains
 
         call pwatch__on("global__comm_stress")
 
+        !$acc host_data use_device(rbuf_ip, rbuf_im)
         call mpi_irecv(rbuf_ip, 3 * nz, mpi_precision, itbl(idx + 1), 3, mpi_comm_world, req(1), err)
         call mpi_irecv(rbuf_im, 3 * nz, mpi_precision, itbl(idx - 1), 4, mpi_comm_world, req(2), err)
+        !$acc end host_data
 
-        sbuf_ip(1:nz) = reshape(Sxx(1:nz, iend:iend), (/nz/))
-        sbuf_ip(nz + 1:3 * nz) = reshape(Sxz(1:nz, iend - 1:iend), (/2 * nz/))
+        !$acc kernels present(Sxx, Sxz, sbuf_ip, sbuf_im)
+        !$acc loop independent
+        do k=1, nz
+            sbuf_ip(     k) = Sxx(k,iend)
+            sbuf_ip(  nz+k) = Sxz(k,iend-1)
+            sbuf_ip(2*nz+k) = Sxz(k,iend)
+            sbuf_im(     k) = Sxx(k,ibeg)
+            sbuf_im(  nz+k) = Sxx(k,ibeg+1)
+            sbuf_im(2*nz+k) = Sxz(k,ibeg)
+        end do
+        !$acc end kernels
+
+        !$acc host_data use_device(sbuf_ip, sbuf_im)
         call mpi_isend(sbuf_ip, 3 * nz, mpi_precision, itbl(idx + 1), 4, mpi_comm_world, req(3), err)
-
-        sbuf_im(1:2 * nz) = reshape(Sxx(1:nz, ibeg:ibeg + 1), (/2 * nz/))
-        sbuf_im(2 * nz + 1:3 * nz) = reshape(Sxz(1:nz, ibeg:ibeg), (/nz/))
         call mpi_isend(sbuf_im, 3 * nz, mpi_precision, itbl(idx - 1), 3, mpi_comm_world, req(4), err)
-
+        !$acc end host_data
+        
         call mpi_waitall(4, req, istatus, err)
 
         ! Resore the data
-        Sxx(1:nz, ibeg - 1:ibeg - 1) = reshape(rbuf_im(1:nz), (/nz, 1/))
-        Sxz(1:nz, ibeg - 2:ibeg - 1) = reshape(rbuf_im(nz + 1:3 * nz), (/nz, 2/))
-        Sxx(1:nz, iend + 1:iend + 2) = reshape(rbuf_ip(1:2 * nz), (/nz, 2/))
-        Sxz(1:nz, iend + 1:iend + 1) = reshape(rbuf_ip(2 * nz + 1:3 * nz), (/nz, 1/))
+        !$acc kernels present(Sxx, Sxz, rbuf_im, rbuf_ip)
+        !$acc loop independent
+        do k=1, nz
+            Sxx(k,ibeg-1) = rbuf_im(k)
+            Sxz(k,ibeg-2) = rbuf_im(nz+k)
+            Sxz(k,ibeg-1) = rbuf_im(2*nz+k)
+            Sxx(k,iend+1) = rbuf_ip(k)
+            Sxx(k,iend+2) = rbuf_ip(nz+k)
+            Sxz(k,iend+1) = rbuf_ip(2*nz+k)
+        end do
+        !$acc end kernels
 
         call pwatch__off("global__comm_stress")
 
