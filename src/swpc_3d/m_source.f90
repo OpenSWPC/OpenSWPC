@@ -65,6 +65,7 @@ contains
 
         !! Check other modes
         call readini(io_prm, 'pw_mode', pw_mode, .false.)
+        call readini(io_prm, 'green_mode', green_mode, .false.)
         call readini(io_prm, 'bf_mode', bf_mode, .false.)
         call assert(.not. (pw_mode .and. green_mode))
 
@@ -80,7 +81,7 @@ contains
         end if
 
         !! Green's Function Mode
-        if (green_mode) then
+        if( green_mode ) then
             if (.not. benchmark_mode) then
                 nsrc = 0
                 pw_mode = .false.
