@@ -307,7 +307,7 @@ contains
 
 
         !$acc enter data copyin(stftype, n_stfprm, mo, srcprm, isrc, jsrc, ksrc, &
-        !$acc                   mxx, myy, mzz, mxy, mxz, myz)
+        !$acc                   mxx, myy, mzz, mxy, mxz, myz, fx, fy, fz)
 
         call pwatch__off("source__setup")
 
@@ -785,8 +785,7 @@ contains
         real(SP) :: stime
         real(SP) :: vxm, vym, vzm
 
-        if (bf_mode) return
-
+        if ( bf_mode .or. green_mode ) return
         call pwatch__on("source__stressglut")
 
 
@@ -794,7 +793,7 @@ contains
         !$acc kernels &
         !$acc present(stftype, n_stfprm, mo, srcprm, isrc, jsrc, ksrc, &
         !$acc         Sxx, Syy, Szz, Sxy, Sxz, Syz, mxx, myy, mzz, mxy, mxz, myz)
-        !$acc loop seq
+        !$acc loop
 #endif
         do i = 1, nsrc
 
@@ -805,23 +804,38 @@ contains
             jj = jsrc(i)
             kk = ksrc(i)
 
+            !$acc atomic            
             Sxx(kk  ,ii  ,jj  ) = Sxx(kk  ,ii  ,jj  ) - mxx(i) * sdrop
+            !$acc atomic            
             Syy(kk  ,ii  ,jj  ) = Syy(kk  ,ii  ,jj  ) - myy(i) * sdrop
+            !$acc atomic            
             Szz(kk  ,ii  ,jj  ) = Szz(kk  ,ii  ,jj  ) - mzz(i) * sdrop
 
+            !$acc atomic            
             Sxy(kk  ,ii,  jj  ) = Sxy(kk  ,ii  ,jj  ) - mxy(i) * sdrop / 4
+            !$acc atomic            
             Sxy(kk  ,ii,  jj-1) = Sxy(kk  ,ii  ,jj-1) - mxy(i) * sdrop / 4
+            !$acc atomic            
             Sxy(kk  ,ii-1,jj  ) = Sxy(kk  ,ii-1,jj  ) - mxy(i) * sdrop / 4
+            !$acc atomic            
             Sxy(kk  ,ii-1,jj-1) = Sxy(kk  ,ii-1,jj-1) - mxy(i) * sdrop / 4
 
+            !$acc atomic            
             Sxz(kk  ,ii,  jj  ) = Sxz(kk  ,ii  ,jj  ) - mxz(i) * sdrop / 4
+            !$acc atomic            
             Sxz(kk-1,ii,  jj  ) = Sxz(kk-1,ii  ,jj  ) - mxz(i) * sdrop / 4
+            !$acc atomic            
             Sxz(kk  ,ii-1,jj  ) = Sxz(kk  ,ii-1,jj  ) - mxz(i) * sdrop / 4
+            !$acc atomic            
             Sxz(kk-1,ii-1,jj  ) = Sxz(kk-1,ii-1,jj  ) - mxz(i) * sdrop / 4
 
+            !$acc atomic            
             Syz(kk  ,ii  ,jj  ) = Syz(kk  ,ii  ,jj  ) - myz(i) * sdrop / 4
+            !$acc atomic            
             Syz(kk-1,ii  ,jj  ) = Syz(kk-1,ii  ,jj  ) - myz(i) * sdrop / 4
+            !$acc atomic            
             Syz(kk  ,ii  ,jj-1) = Syz(kk  ,ii  ,jj-1) - myz(i) * sdrop / 4
+            !$acc atomic            
             Syz(kk-1,ii  ,jj-1) = Syz(kk-1,ii  ,jj-1) - myz(i) * sdrop / 4
 
         end do
@@ -850,7 +864,7 @@ contains
 #ifdef _OPENACC
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, isrc, jsrc, ksrc, srcprm, fx, fy, fz, bx, by, bz, n_stfprm, stftype)
-        !$acc loop seq
+        !$acc loop
 #endif
         do i = 1, nsrc
 
@@ -861,11 +875,17 @@ contains
             jj = jsrc(i)
             kk = ksrc(i)
 
+            !$acc atomic            
             Vx(kk  ,ii  ,jj  ) = Vx(kk  ,ii  ,jj  ) + bx(kk  ,ii  ,jj  ) * fx(i) * stime * dt_dxyz / 2
+            !$acc atomic            
             Vx(kk  ,ii-1,jj  ) = Vx(kk  ,ii-1,jj  ) + bx(kk  ,ii-1,jj  ) * fx(i) * stime * dt_dxyz / 2
+            !$acc atomic            
             Vy(kk  ,ii  ,jj  ) = Vy(kk  ,ii  ,jj  ) + by(kk  ,ii  ,jj  ) * fy(i) * stime * dt_dxyz / 2
+            !$acc atomic            
             Vy(kk  ,ii  ,jj-1) = Vy(kk  ,ii  ,jj-1) + by(kk  ,ii  ,jj-1) * fy(i) * stime * dt_dxyz / 2
+            !$acc atomic            
             Vz(kk  ,ii  ,jj  ) = Vz(kk  ,ii  ,jj  ) + bz(kk  ,ii  ,jj  ) * fz(i) * stime * dt_dxyz / 2
+            !$acc atomic            
             Vz(kk-1,ii  ,jj  ) = Vz(kk-1,ii  ,jj  ) + bz(kk-1,ii  ,jj  ) * fz(i) * stime * dt_dxyz / 2
 
         end do

@@ -397,7 +397,7 @@ contains
             end do
         end do
 
-        !$acc enter data copyin(ig, jg, kg, gf)
+        !$acc enter data copyin(ig, jg, kg, gf, stftype)
 
         call pwatch__off('green__setup')
 
