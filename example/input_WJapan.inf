@@ -202,7 +202,7 @@
   green_bforce     = .false.          !! also calc. body force Green's function
   green_maxdist    = 550.             !! horizontal limit of source grid
   green_fmt        = 'llz'            !! list file format: 'xyz' or 'llz'
-  fn_glst          = 'example/green.lst'   !! Green's function grid point list
+  fn_glst          = 'example/green/green.lst'  !! GF grid point list
 
   !! ----------------------------------------------------------------------- !!
   !! MISC
