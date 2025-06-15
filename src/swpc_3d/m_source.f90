@@ -799,7 +799,7 @@ contains
 
             stime = momentrate(tbeg + (it-0.5) * dt , stftype, n_stfprm, srcprm(:, i))
             sdrop = mo(i) * stime * dt_dxyz
-
+            
             ii = isrc(i)
             jj = jsrc(i)
             kk = ksrc(i)
@@ -855,6 +855,7 @@ contains
 
         integer :: i, ii, jj, kk
         real(SP) :: t, stime
+        real(SP) :: bx, by, bz
 
         if (.not. bf_mode) return
 
@@ -863,7 +864,7 @@ contains
 
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vx, Vy, Vz, isrc, jsrc, ksrc, srcprm, fx, fy, fz, bx, by, bz, n_stfprm, stftype)
+        !$acc present(Vx, Vy, Vz, isrc, jsrc, ksrc, srcprm, fx, fy, fz, n_stfprm, stftype)
         !$acc loop
 #endif
         do i = 1, nsrc
@@ -876,17 +877,17 @@ contains
             kk = ksrc(i)
 
             !$acc atomic            
-            Vx(kk  ,ii  ,jj  ) = Vx(kk  ,ii  ,jj  ) + bx(kk  ,ii  ,jj  ) * fx(i) * stime * dt_dxyz / 2
+            Vx(kk  ,ii  ,jj  ) = Vx(kk  ,ii  ,jj  ) + (2.0 / (rho(kk,ii,jj) + rho(kk,ii+1,jj))) * fx(i) * stime * dt_dxyz / 2
             !$acc atomic            
-            Vx(kk  ,ii-1,jj  ) = Vx(kk  ,ii-1,jj  ) + bx(kk  ,ii-1,jj  ) * fx(i) * stime * dt_dxyz / 2
+            Vx(kk  ,ii-1,jj  ) = Vx(kk  ,ii-1,jj  ) + (2.0 / (rho(kk,ii,jj) + rho(kk,ii-1,jj))) * fx(i) * stime * dt_dxyz / 2
             !$acc atomic            
-            Vy(kk  ,ii  ,jj  ) = Vy(kk  ,ii  ,jj  ) + by(kk  ,ii  ,jj  ) * fy(i) * stime * dt_dxyz / 2
+            Vy(kk  ,ii  ,jj  ) = Vy(kk  ,ii  ,jj  ) + (2.0 / (rho(kk,ii,jj) + rho(kk,ii,jj+1))) * fy(i) * stime * dt_dxyz / 2
             !$acc atomic            
-            Vy(kk  ,ii  ,jj-1) = Vy(kk  ,ii  ,jj-1) + by(kk  ,ii  ,jj-1) * fy(i) * stime * dt_dxyz / 2
+            Vy(kk  ,ii  ,jj-1) = Vy(kk  ,ii  ,jj-1) + (2.0 / (rho(kk,ii,jj) + rho(kk,ii,jj-1))) * fy(i) * stime * dt_dxyz / 2
             !$acc atomic            
-            Vz(kk  ,ii  ,jj  ) = Vz(kk  ,ii  ,jj  ) + bz(kk  ,ii  ,jj  ) * fz(i) * stime * dt_dxyz / 2
+            Vz(kk  ,ii  ,jj  ) = Vz(kk  ,ii  ,jj  ) + (2.0 / (rho(kk,ii,jj) + rho(kk+1,ii,jj))) * fz(i) * stime * dt_dxyz / 2
             !$acc atomic            
-            Vz(kk-1,ii  ,jj  ) = Vz(kk-1,ii  ,jj  ) + bz(kk-1,ii  ,jj  ) * fz(i) * stime * dt_dxyz / 2
+            Vz(kk-1,ii  ,jj  ) = Vz(kk-1,ii  ,jj  ) + (2.0 / (rho(kk,ii,jj) + rho(kk-1,ii,jj))) * fz(i) * stime * dt_dxyz / 2
 
         end do
 #ifdef _OPENACC

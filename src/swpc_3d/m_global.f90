@@ -37,8 +37,6 @@ module m_global
     real(SP), allocatable, public :: Rxx(:,:,:,:), Ryy(:,:,:,:), Rzz(:,:,:,:)  !< memory variables: normal components
     real(SP), allocatable, public :: Ryz(:,:,:,:), Rxz(:,:,:,:), Rxy(:,:,:,:)  !< memory variables: shear  components
     real(SP), allocatable, public :: rho(:,:,:), lam(:,:,:), mu(:,:,:)         !< density and relaxed moduli
-    real(SP), allocatable, public :: bx(:,:,:), by(:,:,:), bz(:,:,:)           !< inverse density (buoyancy) at velocity grids
-    real(SP), allocatable, public :: muyz(:,:,:), muxz(:,:,:), muxy(:,:,:)     !< averaged rigidity at shear stress compoments
     real(SP), allocatable, public :: taup(:,:,:), taus(:,:,:)                  !< creep/relax time ratio based on tau-method
     real(SP), allocatable, public :: ts(:)                                     !< relaxation time of visco-elastic medium
 

@@ -96,14 +96,8 @@ program swpc_3d
     
     !$acc enter data copyin(&    
     !$acc       rho (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
-    !$acc       bx  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), & 
-    !$acc       by  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), & 
-    !$acc       bz  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), & 
     !$acc       lam (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
     !$acc       mu  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), & 
-    !$acc       muyz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
-    !$acc       muxz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
-    !$acc       muxy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
     !$acc       taup(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
     !$acc       taus(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &   
     !$acc       ts(nm) )

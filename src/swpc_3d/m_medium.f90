@@ -221,9 +221,6 @@ contains
             call stabilize_absorber()
         end if
 
-        !! Store grid-boundary averaged medium for staggered grid locations
-        call averaged_medium()
-
         !! initialized flag
         init = .true.
 
@@ -429,41 +426,6 @@ contains
 
         end subroutine velocity_minmax
 
-        subroutine averaged_medium
-
-            real(SP) :: nnn, pnn, npn, ppn, nnp, npp, pnp
-            real(SP) :: epsl = epsilon(1.0)
-            integer  :: i, j, k
-
-            !$omp parallel do private( nnn,pnn,npn,ppn,nnp,npp,pnp, i,j,k )
-            do j = jbeg, jend
-                do i = ibeg, iend
-                    do k = kbeg, kend
-                        bx(k, i, j) = 2.0 / (rho(k, i, j) + rho(k, i + 1, j))
-                        by(k, i, j) = 2.0 / (rho(k, i, j) + rho(k, i, j + 1))
-                        bz(k, i, j) = 2.0 / (rho(k, i, j) + rho(k + 1, i, j))
-
-                        nnn = mu(k, i, j)
-                        pnn = mu(k + 1, i, j)
-                        npn = mu(k, i + 1, j)
-                        ppn = mu(k + 1, i + 1, j)
-                        nnp = mu(k, i, j + 1)
-                        npp = mu(k, i + 1, j + 1)
-                        pnp = mu(k + 1, i, j + 1)
-
-                        muxz(k, i, j) = 4 * nnn * pnn * npn * ppn &
-                                        / (nnn * pnn * npn + nnn * pnn * ppn + nnn * npn * ppn + pnn * npn * ppn + epsl)
-                        muxy(k, i, j) = 4 * nnn * npn * nnp * npp &
-                                        / (nnn * npn * nnp + nnn * npn * npp + nnn * nnp * npp + npn * nnp * npp + epsl)
-                        muyz(k, i, j) = 4 * nnn * pnn * nnp * pnp &
-                                        / (nnn * pnn * nnp + nnn * pnn * pnp + nnn * nnp * pnp + pnn * nnp * pnp + epsl)
-                    end do
-                end do
-            end do
-            !$omp end parallel do
-
-        end subroutine averaged_medium
-
     end subroutine medium__setup
 
     logical function medium__initialized()
@@ -477,14 +439,8 @@ contains
     subroutine allocate_memory()
 
         allocate (rho (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
-        allocate (bx  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
-        allocate (by  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
-        allocate (bz  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
         allocate (lam (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
         allocate (mu  (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
-        allocate (muyz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
-        allocate (muxz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
-        allocate (muxy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
         allocate (taup(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
         allocate (taus(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
         allocate (kfs(ibeg_m:iend_m, jbeg_m:jend_m))

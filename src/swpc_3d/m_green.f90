@@ -628,7 +628,7 @@ contains
 
         !! velocity needs half-grid shift in time
 
-        !$acc kernels present(Vx, Vy, Vz, bx, by, bz, stftype)
+        !$acc kernels present(Vx, Vy, Vz, stftype)
         stf = momentrate(tbeg + it * dt, stftype, 2, (/green_tbeg, green_trise/))
 
         fx = fx1 * dt_dxyz * stf
@@ -636,12 +636,12 @@ contains
         fz = fz1 * dt_dxyz * stf
 
         !! Reciprocal density must be avaraged for keeping accuracy
-        Vx(ksrc  ,isrc  ,jsrc  ) = Vx(ksrc  ,isrc  ,jsrc  ) + bx(ksrc  ,isrc  ,jsrc  ) * fx / 2
-        Vx(ksrc  ,isrc-1,jsrc  ) = Vx(ksrc  ,isrc-1,jsrc  ) + bx(ksrc  ,isrc-1,jsrc  ) * fx / 2
-        Vy(ksrc  ,isrc  ,jsrc  ) = Vy(ksrc  ,isrc  ,jsrc  ) + by(ksrc  ,isrc  ,jsrc  ) * fy / 2
-        Vy(ksrc  ,isrc  ,jsrc-1) = Vy(ksrc  ,isrc  ,jsrc-1) + by(ksrc  ,isrc  ,jsrc-1) * fy / 2
-        Vz(ksrc  ,isrc  ,jsrc  ) = Vz(ksrc  ,isrc  ,jsrc  ) + bz(ksrc  ,isrc  ,jsrc  ) * fz / 2
-        Vz(ksrc-1,isrc  ,jsrc  ) = Vz(ksrc-1,isrc  ,jsrc  ) + bz(ksrc-1,isrc  ,jsrc  ) * fz / 2
+        Vx(ksrc  ,isrc  ,jsrc  ) = Vx(ksrc  ,isrc  ,jsrc  ) + (2.0 / (rho(ksrc,isrc,jsrc) + rho(ksrc,isrc+1,jsrc))) * fx / 2
+        Vx(ksrc  ,isrc-1,jsrc  ) = Vx(ksrc  ,isrc-1,jsrc  ) + (2.0 / (rho(ksrc,isrc,jsrc) + rho(ksrc,isrc-1,jsrc))) * fx / 2
+        Vy(ksrc  ,isrc  ,jsrc  ) = Vy(ksrc  ,isrc  ,jsrc  ) + (2.0 / (rho(ksrc,isrc,jsrc) + rho(ksrc,isrc,jsrc+1))) * fy / 2
+        Vy(ksrc  ,isrc  ,jsrc-1) = Vy(ksrc  ,isrc  ,jsrc-1) + (2.0 / (rho(ksrc,isrc,jsrc) + rho(ksrc,isrc,jsrc-1))) * fy / 2
+        Vz(ksrc  ,isrc  ,jsrc  ) = Vz(ksrc  ,isrc  ,jsrc  ) + (2.0 / (rho(ksrc,isrc,jsrc) + rho(ksrc+1,isrc,jsrc))) * fz / 2
+        Vz(ksrc-1,isrc  ,jsrc  ) = Vz(ksrc-1,isrc  ,jsrc  ) + (2.0 / (rho(ksrc,isrc,jsrc) + rho(ksrc-1,isrc,jsrc)))  * fz / 2
         !$acc end kernels
 
         call pwatch__off('green__source')

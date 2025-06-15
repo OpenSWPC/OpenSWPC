@@ -995,7 +995,7 @@ contains
             if (ibeg <= i .and. i <= iend) then
 #ifdef _OPENACC
                 !$acc kernels &
-                !$acc present(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, i0_yz)
+                !$acc present(Vx, Vy, Vz, mu, lam, buf, i0_yz, Sxy, Syz, Sxz)
                 !$acc loop independent collapse(2)
 #else
                 !$omp parallel do private( i, j, k, kk, jj, div, rot_x, rot_y ,rot_z)
@@ -1019,9 +1019,9 @@ contains
                 
                         !! masking
                         div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
-                        rot_x = rot_x * muyz(k,i,j) / abs(muyz(k,i,j) + epsilon(1.0))
-                        rot_y = rot_y * muxz(k,i,j) / abs(muxz(k,i,j) + epsilon(1.0))
-                        rot_z = rot_z * muxy(k,i,j) / abs(muxy(k,i,j) + epsilon(1.0))
+                        rot_x = rot_x * abs(Syz(k,i,j)) / abs(Syz(k,i,j) + epsilon(1.0))
+                        rot_y = rot_y * abs(Sxz(k,i,j)) / abs(Sxz(k,i,j) + epsilon(1.0))
+                        rot_z = rot_z * abs(Sxy(k,i,j)) / abs(Sxy(k,i,j) + epsilon(1.0))
     
                         !! dx, dy, dz have km unit. correction for 1e3 factor.
                         buf(jj,kk,1) = div   * UC * M0 * 1e-3
@@ -1090,7 +1090,7 @@ contains
 
 #ifdef _OPENACC
                 !$acc kernels &
-                !$acc present(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, j0_xz)
+                !$acc present(Vx, Vy, Vz, Sxz, Syz, Sxy, lam, buf, j0_xz)
                 !$acc loop independent collapse(2)
 #else
                 !$omp parallel do private( ii, kk, i, j, k, div, rot_x, rot_y, rot_z)
@@ -1113,9 +1113,9 @@ contains
 
                         !! masking
                         div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
-                        rot_x = rot_x * muyz(k,i,j) / abs(muyz(k,i,j) + epsilon(1.0))
-                        rot_y = rot_y * muxz(k,i,j) / abs(muxz(k,i,j) + epsilon(1.0))
-                        rot_z = rot_z * muxy(k,i,j) / abs(muxy(k,i,j) + epsilon(1.0))                                
+                        rot_x = rot_x * abs(Syz(k,i,j)) / abs(Syz(k,i,j) + epsilon(1.0))
+                        rot_y = rot_y * abs(Sxz(k,i,j)) / abs(Sxz(k,i,j) + epsilon(1.0))
+                        rot_z = rot_z * abs(Sxy(k,i,j)) / abs(Sxy(k,i,j) + epsilon(1.0))
                                                     
                         !! dx, dy, dz have km unit. correction for 1e3 factor.
                         buf(ii, kk, 1) = div   * UC * M0 * 1e-3
@@ -1180,7 +1180,7 @@ contains
 
 #ifdef _OPENACC
             !$acc kernels &
-            !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, k0_xy)
+            !$acc pcopyin(Vx, Vy, Vz, Sxy, Syz, Sxz, lam, buf, k0_xy)
             !$acc loop independent collapse(2)
 #else
             !$omp parallel do private( ii, jj, i, j, k, div, rot_x, rot_y, rot_z)
@@ -1203,9 +1203,9 @@ contains
 
                     !! masking
                     div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
-                    rot_x = rot_x * muyz(k,i,j) / abs(muyz(k,i,j) + epsilon(1.0))
-                    rot_y = rot_y * muxz(k,i,j) / abs(muxz(k,i,j) + epsilon(1.0))
-                    rot_z = rot_z * muxy(k,i,j) / abs(muxy(k,i,j) + epsilon(1.0))                                
+                    rot_x = rot_x * abs(Syz(k,i,j)) / abs(Syz(k,i,j) + epsilon(1.0))
+                    rot_y = rot_y * abs(Sxz(k,i,j)) / abs(Sxz(k,i,j) + epsilon(1.0))
+                    rot_z = rot_z * abs(Sxy(k,i,j)) / abs(Sxy(k,i,j) + epsilon(1.0))
 
                     !! dx, dy, dz have km unit. correction for 1e3 factor.
                     buf(ii, jj, 1) = div   * UC * M0 * 1e-3
@@ -1271,7 +1271,7 @@ contains
 
 #ifdef _OPENACC
             !$acc kernels &
-            !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, kfs)
+            !$acc pcopyin(Vx, Vy, Vz, Syz, Sxz, Sxy, lam, buf, kfs)
             !$acc loop independent collapse(2)
 #else
             !$omp parallel do private( ii, jj, i, j, k, div, rot_x, rot_y, rot_z)
@@ -1294,9 +1294,9 @@ contains
             
                     !! masking
                     div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
-                    rot_x = rot_x * muyz(k,i,j) / abs(muyz(k,i,j) + epsilon(1.0))
-                    rot_y = rot_y * muxz(k,i,j) / abs(muxz(k,i,j) + epsilon(1.0))
-                    rot_z = rot_z * muxy(k,i,j) / abs(muxy(k,i,j) + epsilon(1.0))
+                    rot_x = rot_x * abs(Syz(k,i,j)) / abs(Syz(k,i,j) + epsilon(1.0))
+                    rot_y = rot_y * abs(Sxz(k,i,j)) / abs(Sxz(k,i,j) + epsilon(1.0))
+                    rot_z = rot_z * abs(Sxy(k,i,j)) / abs(Sxy(k,i,j) + epsilon(1.0))
                                         
                     !! dx, dy, dz have km unit. correction for 1e3 factor.
                     buf(ii, jj, 1) = div   * UC * M0 * 1e-3
@@ -1361,7 +1361,7 @@ contains
 
 #ifdef _OPENACC
             !$acc kernels &
-            !$acc pcopyin(Vx, Vy, Vz, muyz, muxz, muxy, lam, buf, kob)
+            !$acc pcopyin(Vx, Vy, Vz, Syz, Sxz, Sxy, lam, buf, kob)
             !$acc loop independent collapse(2)
 #else
             !$omp parallel do private( ii, jj, i, j, k, div, rot_x, rot_y, rot_z )
@@ -1384,9 +1384,9 @@ contains
             
                     !! masking
                     div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
-                    rot_x = rot_x * muyz(k,i,j) / abs(muyz(k,i,j) + epsilon(1.0))
-                    rot_y = rot_y * muxz(k,i,j) / abs(muxz(k,i,j) + epsilon(1.0))
-                    rot_z = rot_z * muxy(k,i,j) / abs(muxy(k,i,j) + epsilon(1.0))                    
+                    rot_x = rot_x * abs(Syz(k,i,j)) / abs(Syz(k,i,j) + epsilon(1.0))
+                    rot_y = rot_y * abs(Sxz(k,i,j)) / abs(Sxz(k,i,j) + epsilon(1.0))
+                    rot_z = rot_z * abs(Sxy(k,i,j)) / abs(Sxy(k,i,j) + epsilon(1.0))
 
                     !! dx, dy, dz have km unit. correction for 1e3 factor.
                     buf(ii,jj,1) = div   * UC * M0 * 1e-3

@@ -86,7 +86,7 @@ contains
 
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(bx, by, bz, Sxx, Syy, Szz, Syz, Sxz, Sxy, Vx, Vy, Vz, kfs_top, kfs_bot, kob_top, kob_bot)
+        !$acc present(rho, Sxx, Syy, Szz, Syz, Sxz, Sxy, Vx, Vy, Vz, kfs_top, kfs_bot, kob_top, kob_bot)
         !$acc loop independent collapse(3) 
 #else
         !$omp parallel &
@@ -120,9 +120,9 @@ contains
                           + (Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)) * re40y - (Syz(k  ,i  ,j+1) - Syz(k  ,i  ,j-2)) * re41y &
                           + (Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )) * re40z - (Szz(k+2,i  ,j  ) - Szz(k-1,i  ,j  )) * re41z
 
-                    Vx(k, i, j) = Vx(k, i, j) + bx(k, i, j) * d3Sx3 * dt
-                    Vy(k, i, j) = Vy(k, i, j) + by(k, i, j) * d3Sy3 * dt
-                    Vz(k, i, j) = Vz(k, i, j) + bz(k, i, j) * d3Sz3 * dt
+                    Vx(k,i,j) = Vx(k,i,j) + 2.0 / (rho(k,i,j) + rho(k,i+1,j)) * d3Sx3 * dt
+                    Vy(k,i,j) = Vy(k,i,j) + 2.0 / (rho(k,i,j) + rho(k,i,j+1)) * d3Sy3 * dt
+                    Vz(k,i,j) = Vz(k,i,j) + 2.0 / (rho(k,i,j) + rho(k+1,i,j)) * d3Sz3 * dt
 
                 end do
             end do
@@ -152,12 +152,15 @@ contains
         real(MP) :: dxVy_dyVx, dxVz_dzVx, dyVz_dzVy
         integer  :: isign
         real(MP) :: re40x, re41x, re40y, re41y, re40z, re41z
+        real(SP) :: muxz, muyz, muxy, epsl
 
         call pwatch__on("kernel__update_stress")
 
+        epsl = epsilon(1.0)
+
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vx, Vy, Vz,  Sxx, Syy, Szz, Rxx, Ryy, Rzz, &
+        !$acc present(Vx, Vy, Vz, Sxx, Syy, Szz, Rxx, Ryy, Rzz, &
         !$acc         mu, lam, taup, taus, c1, c2, d1, d2, &
         !$acc         kfs_top, kfs_bot, kob_top, kob_bot)
         !$acc loop independent collapse(3)
@@ -197,11 +200,11 @@ contains
                     dzVz = (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * re40z - (Vz(k+1,i  ,j  ) - Vz(k-2,i  ,j  )) * re41z
 
                     !! medium copy
-                    mu2 = 2 * mu(k, i, j)
-                    lam2mu = lam(k, i, j) + mu2
+                    mu2 = 2 * mu(k,i,j)
+                    lam2mu = lam(k,i,j) + mu2
 
-                    taup1 = taup(k, i, j)
-                    taus1 = taus(k, i, j)
+                    taup1 = taup(k,i,j)
+                    taus1 = taus(k,i,j)
 
                     !! update memory variables
 
@@ -246,13 +249,13 @@ contains
 
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vx, Vy, Vz, Sxy, Sxz, Syz, Rxy, Rxz, Ryz, &
-        !$acc         muxy, muxz, muyz, taus, c1, c2, d1, d2, &
+        !$acc present(Vx, Vy, Vz, Sxy, Sxz, Syz, Rxy, Rxz, Ryz, mu, &
+        !$acc         c1, c2, d1, d2, &
         !$acc         kfs_top, kfs_bot, kob_top, kob_bot)
         !$acc loop independent collapse(3)
 #else
         !$omp parallel &
-        !$omp private( dxVy_dyVx, dxVz_dzVx, dyVz_dzVy ) &
+        !$omp private( dxVy_dyVx, dxVz_dzVx, dyVz_dzVy, muyz, muxz, muxy) &
         !$omp private( taus1, taus_plus1 ) &
         !$omp private( Ryz_n, Rxz_n, Rxy_n ) &
         !$omp private( re40x, re41x, re40y, re41y, re40z, re41z, isign) &
@@ -286,6 +289,25 @@ contains
                     dyVz_dzVy = (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * re40y - (Vz(k  ,i  ,j+2) - Vz(k  ,i  ,j-1)) * re41y &
                               + (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * re40z - (Vy(k+2,i  ,j  ) - Vy(k-1,i  ,j  )) * re41z
 
+                              
+                    muxz = 4 * mu(k  ,i  ,j  ) * mu(k+1,i  ,j  ) * mu(k  ,i+1,j  ) * mu(k+1,i+1,j  ) &
+                           / ( mu(k  ,i  ,j  ) * mu(k+1,i  ,j  ) * mu(k  ,i+1,j  ) &
+                             + mu(k  ,i  ,j  ) * mu(k+1,i  ,j  ) * mu(k+1,i+1,j  ) &
+                             + mu(k  ,i  ,j  ) * mu(k  ,i+1,j  ) * mu(k+1,i+1,j  ) &
+                             + mu(k+1,i  ,j  ) * mu(k  ,i+1,j  ) * mu(k+1,i+1,j  ) + epsl)
+
+                    muxy = 4 * mu(k  ,i  ,j  ) * mu(k  ,i+1,j  ) * mu(k  ,i  ,j+1) * mu(k  ,i+1,j+1) &
+                           / ( mu(k  ,i  ,j  ) * mu(k  ,i+1,j  ) * mu(k  ,i  ,j+1) &
+                             + mu(k  ,i  ,j  ) * mu(k  ,i+1,j  ) * mu(k  ,i+1,j+1) &
+                             + mu(k  ,i  ,j  ) * mu(k  ,i  ,j+1) * mu(k  ,i+1,j+1) &
+                             + mu(k  ,i+1,j  ) * mu(k  ,i  ,j+1) * mu(k  ,i+1,j+1) + epsl)
+
+                    muyz = 4 * mu(k  ,i  ,j  ) * mu(k+1,i  ,j  ) * mu(k  ,i  ,j+1) * mu(k+1,i  ,j+1) &
+                           / ( mu(k  ,i  ,j  ) * mu(k+1,i  ,j  ) * mu(k  ,i  ,j+1) &
+                             + mu(k  ,i  ,j  ) * mu(k+1,i  ,j  ) * mu(k+1,i  ,j+1) &
+                             + mu(k  ,i  ,j  ) * mu(k  ,i  ,j+1) * mu(k+1,i  ,j+1) &
+                             + mu(k+1,i  ,j  ) * mu(k  ,i  ,j+1) * mu(k+1,i  ,j+1) + epsl)
+
                     !! medium copy
                     taus1 = taus(k, i, j)
 
@@ -295,9 +317,9 @@ contains
                     Rxy_n = 0.0
                     !$acc loop seq reduction(+:Rxy_n,Ryz_n,Rxz_n)
                     do m = 1, nm
-                        Ryz(m,k,i,j) = c1(m) * Ryz(m,k,i,j) - c2(m) * muyz(k,i,j) * taus1 * dyVz_dzVy * dt
-                        Rxz(m,k,i,j) = c1(m) * Rxz(m,k,i,j) - c2(m) * muxz(k,i,j) * taus1 * dxVz_dzVx * dt
-                        Rxy(m,k,i,j) = c1(m) * Rxy(m,k,i,j) - c2(m) * muxy(k,i,j) * taus1 * dxVy_dyVx * dt
+                        Ryz(m,k,i,j) = c1(m) * Ryz(m,k,i,j) - c2(m) * muyz * taus1 * dyVz_dzVy * dt
+                        Rxz(m,k,i,j) = c1(m) * Rxz(m,k,i,j) - c2(m) * muxz * taus1 * dxVz_dzVx * dt
+                        Rxy(m,k,i,j) = c1(m) * Rxy(m,k,i,j) - c2(m) * muxy * taus1 * dxVy_dyVx * dt
                         Ryz_n = Ryz_n + d1(m) * Ryz(m,k,i,j)
                         Rxz_n = Rxz_n + d1(m) * Rxz(m,k,i,j)
                         Rxy_n = Rxy_n + d1(m) * Rxy(m,k,i,j)
@@ -306,9 +328,9 @@ contains
                     !! update stress components
                     taus_plus1 = 1 + taus1 * (1 + d2)
 
-                    Syz (k,i,j) = Syz (k,i,j) + (muyz(k,i,j) * taus_plus1 * dyVz_dzVy + Ryz_n) * dt
-                    Sxz (k,i,j) = Sxz (k,i,j) + (muxz(k,i,j) * taus_plus1 * dxVz_dzVx + Rxz_n) * dt
-                    Sxy (k,i,j) = Sxy (k,i,j) + (muxy(k,i,j) * taus_plus1 * dxVy_dyVx + Rxy_n) * dt
+                    Syz(k,i,j) = Syz(k,i,j) + (muyz * taus_plus1 * dyVz_dzVy + Ryz_n) * dt
+                    Sxz(k,i,j) = Sxz(k,i,j) + (muxz * taus_plus1 * dxVz_dzVx + Rxz_n) * dt
+                    Sxy(k,i,j) = Sxy(k,i,j) + (muxy * taus_plus1 * dxVy_dyVx + Rxy_n) * dt
                               
                 end do
             end do
