@@ -19,8 +19,8 @@
   !! Model/Grid Size and Area
   !!
 
-  nproc_x          = 12               !! parallelization in x-dir
-  nproc_y          = 8                !! parallelization in y-dir
+  nproc_x          = 8               !! parallelization in x-dir
+  nproc_y          = 6                !! parallelization in y-dir
   nx               = 2000             !! total grid number in x-dir
   ny               = 2560             !! total grid number in y-dir
   nz               = 500              !! total grid number in z-dir
@@ -202,7 +202,7 @@
   green_bforce     = .false.          !! also calc. body force Green's function
   green_maxdist    = 550.             !! horizontal limit of source grid
   green_fmt        = 'llz'            !! list file format: 'xyz' or 'llz'
-  fn_glst          = 'example/green.lst'   !! Green's function grid point list
+  fn_glst          = 'example/green/green.lst'  !! GF grid point list
 
   !! ----------------------------------------------------------------------- !!
   !! MISC
