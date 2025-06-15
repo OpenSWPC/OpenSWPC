@@ -125,6 +125,7 @@ program swpc_3d
     do it = 1, nt
         call report__progress(it)
 
+        call green__store(it)
         call wav__store(it)
         call snap__write(it)
 
@@ -138,8 +139,8 @@ program swpc_3d
         call absorb__update_vel()
 
         call source__bodyforce(it)
-        call green__source(it)
 
+        call green__source(it)
         call global__comm_vel()
     end do
 

@@ -90,6 +90,7 @@ contains
         character(256) :: abuf
         real(SP)       :: evlo1, evla1
         character(256) :: command
+        integer        :: src_node0, src_node1
 
         if (benchmark_mode) then
             green_mode = .false.
@@ -154,17 +155,35 @@ contains
         dt_dxyz = real(dt / (dx * dy * dz))
 
         !! initialize with unrealistic value
-        evlo1 = -12345.0
-        evla1 = -12345.0
-        call wav__stquery(green_stnm, is_src, isrc, jsrc, ksrc, xsrc, ysrc, zsrc, evlo1, evla1)
+!        evlo1 = -12345.0
+ !       evla1 = -12345.0
+        call wav__stquery(green_stnm, is_src, isrc, jsrc, ksrc, xsrc, ysrc, zsrc, evlo0, evla0)
 
         !! Confirm if the computational domain contains the source
         call mpi_allreduce(is_src, src_somewhere, 1, MPI_LOGICAL, MPI_LOR, mpi_comm_world, ierr)
         call assert(src_somewhere)
 
-        !! Distribute evlo & evla. Stored to evlo0 and evla0
-        call mpi_allreduce(evlo1, evlo0, 1, MPI_REAL, MPI_MAX, mpi_comm_world, ierr)
-        call mpi_allreduce(evla1, evla0, 1, MPI_REAL, MPI_MAX, mpi_comm_world, ierr)
+        !! source node
+        if(is_src) then
+            src_node0 = myid
+        else
+            src_node0 = -9999
+        end if
+        call mpi_allreduce(src_node0, src_node1, 1, mpi_integer, mpi_max, mpi_comm_world, ierr)
+
+        !! Distribute source location information
+        call mpi_bcast(evlo0, 1, mpi_real, src_node1, mpi_comm_world, ierr)
+        call mpi_bcast(evla0, 1, mpi_real, src_node1, mpi_comm_world, ierr)
+        call mpi_bcast(xsrc, 1, mpi_real, src_node1, mpi_comm_world, ierr)
+        call mpi_bcast(ysrc, 1, mpi_real, src_node1, mpi_comm_world, ierr)
+        call mpi_bcast(zsrc, 1, mpi_real, src_node1, mpi_comm_world, ierr)
+        call mpi_bcast(isrc, 1, mpi_integer, src_node1, mpi_comm_world, ierr)
+        call mpi_bcast(jsrc, 1, mpi_integer, src_node1, mpi_comm_world, ierr)
+        call mpi_bcast(ksrc, 1, mpi_integer, src_node1, mpi_comm_world, ierr)
+
+        !! Redefine is_src
+        is_src = ( ibeg <= isrc .and. isrc <= iend + 1 ) .and. (jbeg <= jsrc .and. jsrc <= jend + 1) &
+                 .and. (kbeg <= ksrc .and. ksrc <= kend )
 
         !! Read Green's function location table
         open (newunit=io, file=trim(fn_glst), action='read', status='old', iostat=ierr)
@@ -304,7 +323,6 @@ contains
         do i = 1, ng
 
             write (cid8, '(I8.8)') gid(i)
-
             do j = 1, ncmp
                 k = (i - 1) * ncmp + j
 
@@ -376,11 +394,10 @@ contains
                 sh(k)%user6 = clon !< coordinate
                 sh(k)%user7 = clat !< coordinate
                 sh(k)%user8 = phi  !< coordinate
-
             end do
         end do
 
-        !$acc enter data copyin(ig, jg, kg, gf)
+        !$acc enter data copyin(ig, jg, kg, gf, stftype)
 
         call pwatch__off('green__setup')
 

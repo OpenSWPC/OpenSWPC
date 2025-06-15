@@ -63,16 +63,6 @@ contains
 
         call pwatch__on('wav__setup')
 
-        call readini(io_prm, 'green_mode', green_mode, .false.)
-        if (green_mode) then
-            sw_wav_v = .false.
-            sw_wav_u = .false.
-            sw_wav_stress = .false.
-            sw_wav_strain = .false.
-            nst = 0
-            return
-        end if
-
         call readini(io_prm, 'ntdec_w', ntdec_w, 10)
         call readini(io_prm, 'sw_wav_v', sw_wav_v, .false.)
         call readini(io_prm, 'sw_wav_u', sw_wav_u, .false.)
@@ -83,11 +73,18 @@ contains
         call readini(io_prm, 'fn_stloc', fn_stloc, '')
         call readini(io_prm, 'ntdec_w_prg', ntdec_w_prg, 0)
 
-        if (.not. (sw_wav_v .or. sw_wav_u .or. sw_wav_stress .or. sw_wav_strain)) then
+        call readini(io_prm, 'green_mode', green_mode, .false.)
+        if (green_mode) then
+            sw_wav_v = .false.
+            sw_wav_u = .false.
+            sw_wav_stress = .false.
+            sw_wav_strain = .false.
+        else if (.not. (sw_wav_v .or. sw_wav_u .or. sw_wav_stress .or. sw_wav_strain)) then
             nst = 0
             call pwatch__off('wav__setup')
             return
         end if
+
 
         ntw = floor(real(nt - 1) / real(ntdec_w) + 1.0)
 
