@@ -601,7 +601,7 @@ contains
                     if (hdr%datatype == "ps") then
 
                         ! wave
-                        div = amp(1, i, j)
+                        div = abs(amp(1, i, j))
                         rot = sqrt(sum(amp(2:hdr%nsnp, i, j)**2)) ! include psv and 3D
 
                         img(1, ii, jj) = cmed(1, i, j) - int(255 * rot) / 4

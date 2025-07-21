@@ -131,6 +131,7 @@ contains
         real(MP) :: dxSxx, dySxy, dzSxz
         real(MP) :: dxSxy, dySyy, dzSyz
         real(MP) :: dxSxz, dySyz, dzSzz
+        real(SP) :: bx, by, bz
 
         !! Horizontal zero-derivative boundary (for plane wave mode)
         if (pw_mode) then
@@ -248,11 +249,11 @@ contains
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
         !$acc         axSxx, aySxy, azSxz, axSxy, aySyy, azSyz, axSxz, aySyz, azSzz, &
-        !$acc         bx, by, bz, gxc, gxe, gyc, gye, gzc, gze, kbeg_a)
+        !$acc         gxc, gxe, gyc, gye, gzc, gze, kbeg_a)
         !$acc loop independent collapse(2)
 #else
         !$omp parallel &
-        !$omp private( dxSxx, dySyy, dzSzz, dySyz, dzSyz, dxSxz, dzSxz, dxSxy ,dySxy ) &
+        !$omp private( dxSxx, dySyy, dzSzz, dySyz, dzSyz, dxSxz, dzSxz, dxSxy ,dySxy, bx, by, bz ) &
         !$omp private( i, j, k )
         !$omp do &
         !$omp schedule(dynamic)
@@ -273,16 +274,21 @@ contains
                     dxSxy = (Sxy(k  ,i  ,j) - Sxy(k  ,i-1,j  )) * r20x
                     dySxy = (Sxy(k  ,i  ,j) - Sxy(k  ,i  ,j-1)) * r20y
 
+                    bx = 2.0 / (rho(k,i,j) + rho(k,i+1,j))
+                    by = 2.0 / (rho(k,i,j) + rho(k,i,j+1))
+                    bz = 2.0 / (rho(k,i,j) + rho(k+1,i,j))
+
+
                     !! Velocity Updates
-                    Vx(k,i,j) = Vx(k,i,j) + bx(k,i,j) &
+                    Vx(k,i,j) = Vx(k,i,j) + bx &
                               * real(gxe(1,i) * dxSxx + gyc(1,j) * dySxy + gzc(1,k) * dzSxz &
                                    + gxe(2,i) * axSxx(k,i,j) + gyc(2,j) * aySxy(k,i,j) + gzc(2,k) * azSxz(k,i,j)) * dt
 
-                    Vy(k,i,j) = Vy(k,i,j) + by(k,i,j) &
+                    Vy(k,i,j) = Vy(k,i,j) + by &
                               * real(gxc(1,i) * dxSxy + gye(1,j) * dySyy + gzc(1,k) * dzSyz &
                                    + gxc(2,i) * axSxy(k,i,j) + gye(2,j) * aySyy(k,i,j) + gzc(2,k) * azSyz(k,i,j)) * dt
 
-                    Vz(k,i,j) = Vz(k,i,j) + bz(k,i,j) &
+                    Vz(k,i,j) = Vz(k,i,j) + bz &
                               * real(gxc(1,i) * dxSxz + gyc(1,j) * dySyz + gze(1,k) * dzSzz &
                                    + gxc(2,i) * axSxz(k,i,j) + gyc(2,j) * aySyz(k,i,j) + gze(2,k) * azSzz(k,i,j)) * dt
 
@@ -319,6 +325,8 @@ contains
         real(MP) :: dxVx, dyVx, dzVx
         real(MP) :: dxVy, dyVy, dzVy
         real(MP) :: dxVz, dyVz, dzVz
+        real(SP) :: muxz, muyz, muxy, epsl
+
 
         !! Horizontal zero-derivative boundary (for plane wave mode)
         if (pw_mode) then
@@ -420,15 +428,17 @@ contains
 
         !! Time-marching
 
+        epsl = epsilon(1.0)
+
 #ifdef _OPENACC
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
         !$acc         axVx, ayVx, azVx, axVy, ayVy, azVy, axVz, ayVz, azVz, &
-        !$acc         lam, mu, muyz, muxz, muxy, gxc, gxe, gyc, gye, gzc, gze, kbeg_a)
+        !$acc         lam, mu, gxc, gxe, gyc, gye, gzc, gze, kbeg_a)
         !$acc loop independent collapse(2)
 #else
         !$omp parallel &
-        !$omp private( dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz ) &
+        !$omp private( dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz, muyz, muxz, muxy) &
         !$omp private( lam2mu_R, lam_R ) &
         !$omp private( dxVx_ade, dyVy_ade, dzVz_ade ) &
         !$omp private( i, j, k )
@@ -473,15 +483,31 @@ contains
                     dzVx = (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z
                     dzVy = (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z
 
+                    muxz = 4 * mu(k  ,i  ,j  ) * mu(k+1,i  ,j  ) * mu(k  ,i+1,j  ) * mu(k+1,i+1,j  ) &
+                           / ( mu(k  ,i  ,j  ) * mu(k+1,i  ,j  ) * mu(k  ,i+1,j  ) &
+                             + mu(k  ,i  ,j  ) * mu(k+1,i  ,j  ) * mu(k+1,i+1,j  ) &
+                             + mu(k  ,i  ,j  ) * mu(k  ,i+1,j  ) * mu(k+1,i+1,j  ) &
+                             + mu(k+1,i  ,j  ) * mu(k  ,i+1,j  ) * mu(k+1,i+1,j  ) + epsl)
 
-                    Syz(k,i,j) = Syz(k,i,j) + muyz(k,i,j) * (gye(1,j) * dyVz + gze(1,k) * dzVy &
-                                                                   + gye(2,j) * ayVz(k,i,j) + gze(2,k) * azVy(k,i,j)) * dt
+                    muxy = 4 * mu(k  ,i  ,j  ) * mu(k  ,i+1,j  ) * mu(k  ,i  ,j+1) * mu(k  ,i+1,j+1) &
+                           / ( mu(k  ,i  ,j  ) * mu(k  ,i+1,j  ) * mu(k  ,i  ,j+1) &
+                             + mu(k  ,i  ,j  ) * mu(k  ,i+1,j  ) * mu(k  ,i+1,j+1) &
+                             + mu(k  ,i  ,j  ) * mu(k  ,i  ,j+1) * mu(k  ,i+1,j+1) &
+                             + mu(k  ,i+1,j  ) * mu(k  ,i  ,j+1) * mu(k  ,i+1,j+1) + epsl)
 
-                    Sxz(k,i,j) = Sxz(k,i,j) + muxz(k,i,j) * (gxe(1,i) * dxVz + gze(1,k) * dzVx &
-                                                                   + gxe(2,i) * axVz(k,i,j) + gze(2,k) * azVx(k,i,j)) * dt
+                    muyz = 4 * mu(k  ,i  ,j  ) * mu(k+1,i  ,j  ) * mu(k  ,i  ,j+1) * mu(k+1,i  ,j+1) &
+                           / ( mu(k  ,i  ,j  ) * mu(k+1,i  ,j  ) * mu(k  ,i  ,j+1) &
+                             + mu(k  ,i  ,j  ) * mu(k+1,i  ,j  ) * mu(k+1,i  ,j+1) &
+                             + mu(k  ,i  ,j  ) * mu(k  ,i  ,j+1) * mu(k+1,i  ,j+1) &
+                             + mu(k+1,i  ,j  ) * mu(k  ,i  ,j+1) * mu(k+1,i  ,j+1) + epsl)
 
-                    Sxy(k,i,j) = Sxy(k,i,j) + muxy(k,i,j) * (gxe(1,i) * dxVy + gye(1,j) * dyVx &
-                                                                   + gxe(2,i) * axVy(k,i,j) + gye(2,j) * ayVx(k,i,j)) * dt
+
+                    Syz(k,i,j) = Syz(k,i,j) + muyz * (gye(1,j) * dyVz + gze(1,k) * dzVy &
+                                                            + gye(2,j) * ayVz(k,i,j) + gze(2,k) * azVy(k,i,j)) * dt
+                    Sxz(k,i,j) = Sxz(k,i,j) + muxz * (gxe(1,i) * dxVz + gze(1,k) * dzVx &
+                                                            + gxe(2,i) * axVz(k,i,j) + gze(2,k) * azVx(k,i,j)) * dt
+                    Sxy(k,i,j) = Sxy(k,i,j) + muxy * (gxe(1,i) * dxVy + gye(1,j) * dyVx &
+                                                            + gxe(2,i) * axVy(k,i,j) + gye(2,j) * ayVx(k,i,j)) * dt
 
                     ayVx(k,i,j) = gye(3,j) * ayVx(k,i,j) + gye(4,j) * real(dyVx) * dt
                     azVx(k,i,j) = gze(3,k) * azVx(k,i,j) + gze(4,k) * real(dzVx) * dt
