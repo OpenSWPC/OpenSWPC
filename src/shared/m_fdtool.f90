@@ -170,10 +170,10 @@ contains
         rn_abc = real(nx) * real(ny) * real(nz) - real(nx - 2 * nxp) * real(ny - 2 * nyp) * real(nz - na)
 
         ! byte per mesh
-        b_med = 11 * SP     ! rho, lam, mu, taup, taus, muyz, muxz, muyz, bx, by, bz
-        b_vel = 3 * DP      ! Vx, Vy, Vz
+        b_med = 5 * SP         ! rho, lam, mu, taup, taus
+        b_vel = 3 * DP         ! Vx, Vy, Vz
         b_stress = 6 * DP      ! Sxx, Syy, Szz, Syz, Sxz, Sxy
-        b_mem = 6 * nm * SP ! Rij
+        b_mem = 6 * nm * SP    ! Rij
 
         b_abc = 18 * SP
 
@@ -220,7 +220,7 @@ contains
         b_stress = 2 * DP
         b_mem = 2 * nm * SP
 
-        b_abc = 2 * DP
+        b_abc = 4 * SP
 
         ba_com = (b_med + b_vel + b_stress) * rn_com
         ba_int = (b_mem) * rn_int
@@ -266,7 +266,7 @@ contains
         b_stress = 4 * DP
         b_mem = 4 * nm * SP
 
-        b_abc = 4 * DP
+        b_abc = 8 * SP
 
         ba_com = (b_med + b_vel + b_stress) * rn_com
         ba_int = (b_mem) * rn_int
