@@ -517,7 +517,10 @@ contains
         end if
 
         !! medium
-        allocate (sbuf(nys * nzs), rbuf1(nys * nzs), rbuf2(nys * nzs), rbuf3(nys * nzs))
+        allocate(sbuf(nys * nzs),  source=0.0)
+        allocate(rbuf1(nys * nzs), source=0.0) 
+        allocate(rbuf2(nys * nzs), source=0.0) 
+        allocate(rbuf3(nys * nzs), source=0.0)
         sbuf = reshape(buf(:, :, 1), shape(sbuf))
         call mpi_reduce(sbuf, rbuf1, nys * nzs, MPI_REAL, MPI_SUM, hdr%ionode_local, mpi_comm_yz, err)
         sbuf = reshape(buf(:, :, 2), shape(sbuf))
@@ -571,9 +574,7 @@ contains
 
         end if
 
-        allocate (buf(nxs, nzs, 3))
-
-        buf = 0.0
+        allocate (buf(nxs, nzs, 3), source=0.0)
 
         jj = j0_xz
 
@@ -593,7 +594,10 @@ contains
         end if
 
         !! medium
-        allocate (sbuf(nxs * nzs), rbuf1(nxs * nzs), rbuf2(nxs * nzs), rbuf3(nxs * nzs))
+        allocate(sbuf(nxs * nzs), source=0.0)
+        allocate(rbuf1(nxs * nzs),source=0.0) 
+        allocate(rbuf2(nxs * nzs),source=0.0) 
+        allocate(rbuf3(nxs * nzs),source=0.0)
         sbuf = reshape(buf(:, :, 1), shape(sbuf))
         call mpi_reduce(sbuf, rbuf1, nxs * nzs, MPI_REAL, MPI_SUM, hdr%ionode_local, mpi_comm_xz, err)
         sbuf = reshape(buf(:, :, 2), shape(sbuf))
@@ -765,9 +769,7 @@ contains
 
         end if
 
-        allocate (buf(nxs, nys, 6))
-
-        buf = 0.0
+        allocate (buf(nxs, nys, 6), source=0.0)
 
         do j = js0, js1
             do i = is0, is1
@@ -794,8 +796,14 @@ contains
         end do
 
         !! medium
-        allocate (sbuf(nxs * nys), rbuf1(nxs * nys), rbuf2(nxs * nys), rbuf3(nxs * nys))
-        allocate (rbuf4(nxs * nys), rbuf5(nxs * nys), rbuf6(nxs * nys))
+        allocate(sbuf (nxs * nys), source=0.0)
+        allocate(rbuf1(nxs * nys), source=0.0)
+        allocate(rbuf2(nxs * nys), source=0.0)
+        allocate(rbuf3(nxs * nys), source=0.0)
+        allocate(rbuf4(nxs * nys), source=0.0)
+        allocate(rbuf5(nxs * nys), source=0.0)
+        allocate(rbuf6(nxs * nys), source=0.0)
+
         sbuf = reshape(buf(:, :, 1), shape(sbuf))
         call mpi_reduce(sbuf, rbuf1, nxs * nys, MPI_REAL, MPI_SUM, hdr%ionode, mpi_comm_world, err)
         sbuf = reshape(buf(:, :, 2), shape(sbuf))
@@ -991,52 +999,49 @@ contains
 
         if ((mod(it - 1, ntdec_s) == 0) .or. (it > nt)) then
 
-
-            if (ibeg <= i .and. i <= iend) then
 #ifdef _OPENACC
-                !$acc kernels &
-                !$acc present(Vx, Vy, Vz, mu, lam, buf, i0_yz, Sxy, Syz, Sxz)
-                !$acc loop independent collapse(2)
+            !$acc kernels &
+            !$acc present(Vx, Vy, Vz, mu, lam, buf, i0_yz, Sxy, Syz, Sxz)
+            !$acc loop independent collapse(2)
 #else
-                !$omp parallel do private( i, j, k, kk, jj, div, rot_x, rot_y ,rot_z)
+            !$omp parallel do private( i, j, k, kk, jj, div, rot_x, rot_y ,rot_z)
 #endif
-                do jj = js0, js1
-                    do kk = ks0, ks1
+            do jj = js0, js1
+                do kk = ks0, ks1
 
-                        k = kk * kdec - kdec / 2
-                        j = jj * jdec - jdec / 2
-                        i = i0_yz
+                    k = kk * kdec - kdec / 2
+                    j = jj * jdec - jdec / 2
+                    i = i0_yz
 
-                        div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
-                                    + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
-                                    + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
-                        rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
-                                    - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
-                        rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
-                                    - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
-                        rot_z = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
-                                    - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
-                
-                        !! masking
-                        div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
-                        rot_x = rot_x * abs(Syz(k,i,j)) / abs(Syz(k,i,j) + epsilon(1.0))
-                        rot_y = rot_y * abs(Sxz(k,i,j)) / abs(Sxz(k,i,j) + epsilon(1.0))
-                        rot_z = rot_z * abs(Sxy(k,i,j)) / abs(Sxy(k,i,j) + epsilon(1.0))
-    
-                        !! dx, dy, dz have km unit. correction for 1e3 factor.
-                        buf(jj,kk,1) = div   * UC * M0 * 1e-3
-                        buf(jj,kk,2) = rot_x * UC * M0 * 1e-3
-                        buf(jj,kk,3) = rot_y * UC * M0 * 1e-3
-                        buf(jj,kk,4) = rot_z * UC * M0 * 1e-3
+                    div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
+                                + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
+                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
+                    rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
+                                - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
+                    rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
+                                - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
+                    rot_z = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
+                                - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
+            
+                    !! masking
+                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                    rot_x = rot_x * abs(Syz(k,i,j)) / abs(Syz(k,i,j) + epsilon(1.0))
+                    rot_y = rot_y * abs(Sxz(k,i,j)) / abs(Sxz(k,i,j) + epsilon(1.0))
+                    rot_z = rot_z * abs(Sxy(k,i,j)) / abs(Sxy(k,i,j) + epsilon(1.0))
 
-                    end do
+                    !! dx, dy, dz have km unit. correction for 1e3 factor.
+                    buf(jj,kk,1) = div   * UC * M0 * 1e-3
+                    buf(jj,kk,2) = rot_x * UC * M0 * 1e-3
+                    buf(jj,kk,3) = rot_y * UC * M0 * 1e-3
+                    buf(jj,kk,4) = rot_z * UC * M0 * 1e-3
+
                 end do
+            end do
 #ifdef _OPENACC
-                !$acc end kernels
+            !$acc end kernels
 #else
-                !$omp end parallel do
+            !$omp end parallel do
 #endif
-            end if
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 1))
@@ -1045,7 +1050,8 @@ contains
                 call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 4))
             else
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nys * nzs * 4), rbuf(nys * nzs * 4))
+                    allocate( sbuf(nys * nzs * 4), source=0.0 )
+                    allocate( rbuf(nys * nzs * 4), source=0.0 )
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -1086,51 +1092,49 @@ contains
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            if (jbeg <= j .and. j <= jend) then
 
 #ifdef _OPENACC
-                !$acc kernels &
-                !$acc present(Vx, Vy, Vz, Sxz, Syz, Sxy, lam, buf, j0_xz)
-                !$acc loop independent collapse(2)
+            !$acc kernels &
+            !$acc present(Vx, Vy, Vz, Sxz, Syz, Sxy, lam, buf, j0_xz)
+            !$acc loop independent collapse(2)
 #else
-                !$omp parallel do private( ii, kk, i, j, k, div, rot_x, rot_y, rot_z)
+            !$omp parallel do private( ii, kk, i, j, k, div, rot_x, rot_y, rot_z)
 #endif
-                do ii = is0, is1
-                    do kk = ks0, ks1
-                        k = kk * kdec - kdec / 2
-                        i = ii * idec - idec / 2
-                        j = j0_xz
+            do ii = is0, is1
+                do kk = ks0, ks1
+                    k = kk * kdec - kdec / 2
+                    i = ii * idec - idec / 2
+                    j = j0_xz
 
-                        div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
-                                    + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
-                                    + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
-                        rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
-                                    - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
-                        rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
-                                    - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
-                        rot_z = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
-                                    - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
+                    div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
+                                + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
+                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
+                    rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
+                                - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
+                    rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
+                                - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
+                    rot_z = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
+                                - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
 
-                        !! masking
-                        div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
-                        rot_x = rot_x * abs(Syz(k,i,j)) / abs(Syz(k,i,j) + epsilon(1.0))
-                        rot_y = rot_y * abs(Sxz(k,i,j)) / abs(Sxz(k,i,j) + epsilon(1.0))
-                        rot_z = rot_z * abs(Sxy(k,i,j)) / abs(Sxy(k,i,j) + epsilon(1.0))
-                                                    
-                        !! dx, dy, dz have km unit. correction for 1e3 factor.
-                        buf(ii, kk, 1) = div   * UC * M0 * 1e-3
-                        buf(ii, kk, 2) = rot_x * UC * M0 * 1e-3
-                        buf(ii, kk, 3) = rot_y * UC * M0 * 1e-3
-                        buf(ii, kk, 4) = rot_z * UC * M0 * 1e-3
+                    !! masking
+                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                    rot_x = rot_x * abs(Syz(k,i,j)) / abs(Syz(k,i,j) + epsilon(1.0))
+                    rot_y = rot_y * abs(Sxz(k,i,j)) / abs(Sxz(k,i,j) + epsilon(1.0))
+                    rot_z = rot_z * abs(Sxy(k,i,j)) / abs(Sxy(k,i,j) + epsilon(1.0))
+                                                
+                    !! dx, dy, dz have km unit. correction for 1e3 factor.
+                    buf(ii, kk, 1) = div   * UC * M0 * 1e-3
+                    buf(ii, kk, 2) = rot_x * UC * M0 * 1e-3
+                    buf(ii, kk, 3) = rot_y * UC * M0 * 1e-3
+                    buf(ii, kk, 4) = rot_z * UC * M0 * 1e-3
 
-                    end do
                 end do
+            end do
 #ifdef _OPENACC
-                !$acc end kernels
+            !$acc end kernels
 #else
-                !$omp end parallel do
+            !$omp end parallel do
 #endif
-            end if
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nxs, nzs, xz_ps%ionode, xz_ps%io, buf(:, :, 1))
@@ -1140,7 +1144,8 @@ contains
             else
 
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nxs * nzs * 4), rbuf(nxs * nzs * 4))
+                    allocate( sbuf(nxs * nzs * 4), source=0.0)
+                    allocate( rbuf(nxs * nzs * 4), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -1229,7 +1234,8 @@ contains
             else
 
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nxs * nys * 4), rbuf(nxs * nys * 4))
+                    allocate( sbuf(nxs * nys * 4), source=0.0)
+                    allocate( rbuf(nxs * nys * 4), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -1319,7 +1325,8 @@ contains
             else
 
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nxs * nys * 4), rbuf(nxs * nys * 4))
+                    allocate( sbuf(nxs * nys * 4), source=0.0)
+                    allocate( rbuf(nxs * nys * 4), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -1410,7 +1417,8 @@ contains
             else
 
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nxs * nys * 4), rbuf(nxs * nys * 4))
+                    allocate( sbuf(nxs * nys * 4), source=0.0)
+                    allocate( rbuf(nxs * nys * 4), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -1451,34 +1459,31 @@ contains
 
 
             buf = 0.0
-            if (ibeg <= i .and. i <= iend) then
 
 #ifdef _OPENACC
-                !$acc kernels &
-                !$acc pcopyin(Vx, Vy, Vz, buf)
-                !$acc loop independent collapse(2)
+            !$acc kernels &
+            !$acc pcopyin(Vx, Vy, Vz, buf)
+            !$acc loop independent collapse(2)
 #else
-                !$omp parallel do private( jj, kk, k, j, i )
+            !$omp parallel do private( jj, kk, k, j, i )
 #endif
-                do jj = js0, js1
-                    do kk = ks0, ks1
-                        i = i0_yz
-                        j = jj * jdec - jdec / 2
-                        k = kk * kdec - kdec / 2
+            do jj = js0, js1
+                do kk = ks0, ks1
+                    i = i0_yz
+                    j = jj * jdec - jdec / 2
+                    k = kk * kdec - kdec / 2
 
-                        buf(jj, kk, 1) = Vx(k, i, j) * UC * M0
-                        buf(jj, kk, 2) = Vy(k, i, j) * UC * M0
-                        buf(jj, kk, 3) = Vz(k, i, j) * UC * M0
+                    buf(jj, kk, 1) = Vx(k, i, j) * UC * M0
+                    buf(jj, kk, 2) = Vy(k, i, j) * UC * M0
+                    buf(jj, kk, 3) = Vz(k, i, j) * UC * M0
 
-                    end do
                 end do
+            end do
 #ifdef _OPENACC
-                !$acc end kernels
+            !$acc end kernels
 #else
-                !$omp end parallel do
+            !$omp end parallel do
 #endif
-
-            end if
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nys, nzs, yz_v%ionode, yz_v%io, buf(:, :, 1))
@@ -1487,7 +1492,8 @@ contains
             else
 
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nys * nzs * 3), rbuf(nys * nzs * 3))
+                    allocate( sbuf(nys * nzs * 3), source=0.0)
+                    allocate( rbuf(nys * nzs * 3), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -1527,34 +1533,31 @@ contains
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            if (jbeg <= j .and. j <= jend) then
 
 #ifdef _OPENACC
-                !$acc kernels &
-                !$acc pcopyin(Vx, Vy, Vz, buf)
-                !$acc loop independent collapse(2)
+            !$acc kernels &
+            !$acc pcopyin(Vx, Vy, Vz, buf)
+            !$acc loop independent collapse(2)
 #else
-                !$omp parallel do private( ii, kk, i, k, j )
+            !$omp parallel do private( ii, kk, i, k, j )
 #endif
-                do ii = is0, is1
-                    do kk = ks0, ks1
-                        i = ii * idec - idec / 2
-                        j = j0_xz
-                        k = kk * kdec - kdec / 2
+            do ii = is0, is1
+                do kk = ks0, ks1
+                    i = ii * idec - idec / 2
+                    j = j0_xz
+                    k = kk * kdec - kdec / 2
 
-                        buf(ii, kk, 1) = Vx(k, i, j) * UC * M0
-                        buf(ii, kk, 2) = Vy(k, i, j) * UC * M0
-                        buf(ii, kk, 3) = Vz(k, i, j) * UC * M0
+                    buf(ii, kk, 1) = Vx(k, i, j) * UC * M0
+                    buf(ii, kk, 2) = Vy(k, i, j) * UC * M0
+                    buf(ii, kk, 3) = Vz(k, i, j) * UC * M0
 
-                    end do
                 end do
+            end do
 #ifdef _OPENACC
-                !$acc end kernels
+            !$acc end kernels
 #else
-                !$omp end parallel do
+            !$omp end parallel do
 #endif
-
-            end if
 
             if (snp_format == 'native') then
                 call write_reduce_array2d_r(nxs, nzs, xz_v%ionode, xz_v%io, buf(:, :, 1))
@@ -1562,7 +1565,8 @@ contains
                 call write_reduce_array2d_r(nxs, nzs, xz_v%ionode, xz_v%io, buf(:, :, 3))
             else
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nxs * nzs * 3), rbuf(nxs * nzs * 3))
+                    allocate( sbuf(nxs * nzs * 3), source=0.0)
+                    allocate( rbuf(nxs * nzs * 3), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -1628,7 +1632,8 @@ contains
                 call write_reduce_array2d_r(nxs, nys, xy_v%ionode, xy_v%io, buf(:, :, 3))
             else
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    allocate( sbuf(nxs * nys * 3), source=0.0)
+                    allocate( rbuf(nxs * nys * 3), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -1715,7 +1720,8 @@ contains
                 call write_reduce_array2d_r(nxs, nys, fs_v%ionode, fs_v%io, buf(:, :, 3))
             else
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    allocate( sbuf(nxs * nys * 3), source=0.0)
+                    allocate( rbuf(nxs * nys * 3), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -1802,7 +1808,8 @@ contains
                 call write_reduce_array2d_r(nxs, nys, ob_v%ionode, ob_v%io, buf(:, :, 3))
             else
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    allocate( sbuf(nxs * nys * 3), source=0.0)
+                    allocate( rbuf(nxs * nys * 3), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -1834,34 +1841,30 @@ contains
         if (idx /= idx_yz) return
 
 
-        if (ibeg <= i .and. i <= iend) then
-
 #ifdef _OPENACC
-            !$acc kernels &
-            !$acc pcopyin(Vx, Vy, Vz, buf_yz_u)
-            !$acc loop independent collapse(2)
+        !$acc kernels &
+        !$acc pcopyin(Vx, Vy, Vz, buf_yz_u)
+        !$acc loop independent collapse(2)
 #else            
-            !$omp parallel do private( jj, kk, k, i, j )
+        !$omp parallel do private( jj, kk, k, i, j )
 #endif
-            do jj = js0, js1
-                do kk = ks0, ks1
-                    i = i0_yz
-                    k = kk * kdec - kdec / 2
-                    j = jj * jdec - jdec / 2
+        do jj = js0, js1
+            do kk = ks0, ks1
+                i = i0_yz
+                k = kk * kdec - kdec / 2
+                j = jj * jdec - jdec / 2
 
-                    buf_yz_u(jj, kk, 1) = buf_yz_u(jj, kk, 1) + Vx(k, i, j) * UC * M0 * dt
-                    buf_yz_u(jj, kk, 2) = buf_yz_u(jj, kk, 2) + Vy(k, i, j) * UC * M0 * dt
-                    buf_yz_u(jj, kk, 3) = buf_yz_u(jj, kk, 3) + Vz(k, i, j) * UC * M0 * dt
+                buf_yz_u(jj, kk, 1) = buf_yz_u(jj, kk, 1) + Vx(k, i, j) * UC * M0 * dt
+                buf_yz_u(jj, kk, 2) = buf_yz_u(jj, kk, 2) + Vy(k, i, j) * UC * M0 * dt
+                buf_yz_u(jj, kk, 3) = buf_yz_u(jj, kk, 3) + Vz(k, i, j) * UC * M0 * dt
 
-                end do
             end do
+        end do
 #ifdef _OPENACC
-            !$acc end kernels
+        !$acc end kernels
 #else
-            !$omp end parallel do
+        !$omp end parallel do
 #endif
-
-        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
             if (snp_format == 'native') then
@@ -1870,7 +1873,8 @@ contains
                 call write_reduce_array2d_r(nys, nzs, yz_u%ionode, yz_u%io, buf_yz_u(:, :, 3))
             else
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nys * nzs * 3), rbuf(nys * nzs * 3))
+                    allocate(sbuf(nys * nzs * 3), source=0.0)
+                    allocate(rbuf(nys * nzs * 3), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -1902,34 +1906,30 @@ contains
 
         if (idy /= idy_xz) return
 
-
-        if (jbeg <= j .and. j <= jend) then
 #ifdef _OPENACC
-            !$acc kernels &
-            !$acc present(Vx, Vy, Vz, buf_xz_u)
-            !$acc loop independent collapse(2)
+        !$acc kernels &
+        !$acc present(Vx, Vy, Vz, buf_xz_u)
+        !$acc loop independent collapse(2)
 #else            
-            !$omp parallel do private( ii, kk, k, i, j )
+        !$omp parallel do private( ii, kk, k, i, j )
 #endif
-            do ii = is0, is1
-                do kk = ks0, ks1
-                    k = kk * kdec - kdec / 2
-                    i = ii * idec - idec / 2
-                    j = j0_xz
+        do ii = is0, is1
+            do kk = ks0, ks1
+                k = kk * kdec - kdec / 2
+                i = ii * idec - idec / 2
+                j = j0_xz
 
-                    buf_xz_u(ii, kk, 1) = buf_xz_u(ii, kk, 1) + Vx(k, i, j) * UC * M0 * dt
-                    buf_xz_u(ii, kk, 2) = buf_xz_u(ii, kk, 2) + Vy(k, i, j) * UC * M0 * dt
-                    buf_xz_u(ii, kk, 3) = buf_xz_u(ii, kk, 3) + Vz(k, i, j) * UC * M0 * dt
+                buf_xz_u(ii, kk, 1) = buf_xz_u(ii, kk, 1) + Vx(k, i, j) * UC * M0 * dt
+                buf_xz_u(ii, kk, 2) = buf_xz_u(ii, kk, 2) + Vy(k, i, j) * UC * M0 * dt
+                buf_xz_u(ii, kk, 3) = buf_xz_u(ii, kk, 3) + Vz(k, i, j) * UC * M0 * dt
 
-                end do
             end do
+        end do
 #ifdef _OPENACC
-            !$acc end kernels
+        !$acc end kernels
 #else
-            !$omp end parallel do
+        !$omp end parallel do
 #endif
-
-        end if
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
@@ -1939,7 +1939,8 @@ contains
                 call write_reduce_array2d_r(nxs, nzs, xz_u%ionode, xz_u%io, buf_xz_u(:, :, 3))
             else
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nxs * nzs * 3), rbuf(nxs * nzs * 3))
+                    allocate( sbuf(nxs * nzs * 3), source=0.0)
+                    allocate( rbuf(nxs * nzs * 3), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -2002,7 +2003,8 @@ contains
                 call write_reduce_array2d_r(nxs, nys, xy_u%ionode, xy_u%io, buf_xy_u(:, :, 3))
             else
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    allocate( sbuf(nxs * nys * 3), source=0.0)
+                    allocate( rbuf(nxs * nys * 3), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -2084,7 +2086,8 @@ contains
                 call write_reduce_array2d_r(nxs, nys, fs_u%ionode, fs_u%io, buf_fs_u(:, :, 3))
             else
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    allocate( sbuf(nxs * nys * 3), source=0.0)
+                    allocate( rbuf(nxs * nys * 3), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
@@ -2165,7 +2168,8 @@ contains
                 call write_reduce_array2d_r(nxs, nys, ob_u%ionode, ob_u%io, buf_ob_u(:, :, 3))
             else
                 if (.not. allocated(sbuf)) then
-                    allocate (sbuf(nxs * nys * 3), rbuf(nxs * nys * 3))
+                    allocate( sbuf(nxs * nys * 3), source=0.0)
+                    allocate( rbuf(nxs * nys * 3), source=0.0)
                     !$acc enter data copyin(sbuf)
                 else
                     call mpi_wait(req, stat, err)
