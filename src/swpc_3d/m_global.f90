@@ -656,10 +656,13 @@ contains
             if (iproc_x <= nproc_x-mx-1) then
                 ibeg_node = iproc_x*(nx-mx)/nproc_x+1
                 iend_node = (iproc_x+1)*(nx-mx)/nproc_x
-                if (ibeg_node <= i .and. i <= iend_node) then
-                    idx_ij = iproc_x
-                    exit
-                end if
+            else
+                ibeg_node = iproc_x*((nx-mx)/nproc_x+1)-(nproc_x-mx)+1
+                iend_node = (iproc_x+1)*((nx-mx)/nproc_x+1)-(nproc_x-mx)
+            end if
+            if (ibeg_node <= i .and. i <= iend_node) then
+                idx_ij = iproc_x
+                exit
             end if
         end do
 
@@ -667,12 +670,16 @@ contains
             if (iproc_y <= nproc_y-my-1) then
                 jbeg_node = iproc_y*(ny-my)/nproc_y+1
                 jend_node = (iproc_y+1)*(ny-my)/nproc_y
-                if (jbeg_node <= j .and. j <= jend_node) then
-                    idy_ij = iproc_y
-                    exit
-                end if
+            else
+                jbeg_node = iproc_y*((ny-my)/nproc_y+1)-(nproc_y-my)+1
+                jend_node = (iproc_y+1)*((ny-my)/nproc_y+1)-(nproc_y-my)
+            end if
+            if (jbeg_node <= j .and. j <= jend_node) then
+                idy_ij = iproc_y
+                exit
             end if
         end do
+
     end subroutine global__getnode
 end module m_global
 ! ------------------------------------------------------------------------------------------------------------------------------ !!
