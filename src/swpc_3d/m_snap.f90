@@ -61,7 +61,7 @@ module m_snap
 
     end type snp
 
-    type(snp) :: xy_ps, yz_ps, xz_ps, fs_ps, ob_ps, xy_v, yz_v, xz_v, fs_v, ob_v, xy_u, yz_u, xz_u, fs_u, ob_u, vol_v, vol_u
+    type(snp) :: xy_ps, yz_ps, xz_ps, fs_ps, ob_ps, xy_v, yz_v, xz_v, fs_v, ob_v, xy_u, yz_u, xz_u, fs_u, ob_u, vol_v, vol_u, vol_ps
 
     ! switch
     integer   :: ntdec_s                            !< time step decimation factor: Snap and Waves
@@ -131,6 +131,7 @@ contains
         call readini(io_prm, 'snp_format', snp_format, 'native')
         call readini(io_prm, 'vol_v%sw', vol_v%sw, .false.)
         call readini(io_prm, 'vol_u%sw', vol_u%sw, .false.)
+        call readini(io_prm, 'vol_ps%sw', vol_ps%sw, .false.)
 
         !! snapshot size#2013-0440
         nxs = (nx + (idec / 2)) / idec
@@ -183,6 +184,7 @@ contains
         ob_ps%ionode = mod(8, nproc)
         vol_v%ionode = mod(9, nproc)
         vol_u%ionode = mod(10, nproc)
+        vol_ps%ionode = mod(11, nproc)
 
         call global__getnode(1, j0_xz, idum, idy_xz)
         call global__getnode(i0_yz, 1, idx_yz, idum)
@@ -207,7 +209,7 @@ contains
         xy_ps%nsnp = 4; xy_v%nsnp = 3; xy_u%nsnp = 3;
         ob_ps%nsnp = 4; ob_v%nsnp = 3; ob_u%nsnp = 3;
         fs_ps%nsnp = 4; fs_v%nsnp = 3; fs_u%nsnp = 3;
-        ! horizontal medium continas topography, lon & lat
+        ! horizontal medium contains topography, lon & lat
         yz_ps%nmed = 3; yz_v%nmed = 3; yz_u%nmed = 3;
         xz_ps%nmed = 3; xz_v%nmed = 3; xz_u%nmed = 3;
         xy_ps%nmed = 6; xy_v%nmed = 6; xy_u%nmed = 6;
@@ -282,6 +284,14 @@ contains
         vol_u%vname(5)='lambda'; vol_u%vunit(5)='10^9 Pa'
         vol_u%vname(6)='mu';     vol_u%vunit(6)='10^9 Pa'
 
+        ! volumetric P&S amplitude
+        vol_ps%nsnp = 4
+        vol_ps%nmed = 3
+        vol_ps%snaptype  = 'ps'
+        vol_ps%coordinate = '3d'
+        vol_ps%vname(1) = 'div'; vol_ps%vname(2) = 'rot_x'; vol_ps%vname(3) = 'rot_y'; vol_ps%vname(4) = 'rot_z'
+        vol_ps%vunit(1) = '1/s'; vol_ps%vunit(2) = '1/s'; vol_ps%vunit(3) = '1/s'; vol_ps%vunit(4) = '1/s'
+
         !! output settings
         if (snp_format == 'native') then
 
@@ -324,6 +334,7 @@ contains
             if (ob_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.ob.u.nc', ob_u)
             if (vol_v%sw) call newfile_vol_nc(trim(odir)//'/'//trim(title)//'.3d.vol.v.nc', vol_v)
             if (vol_u%sw) call newfile_vol_nc(trim(odir)//'/'//trim(title)//'.3d.vol.u.nc', vol_u)
+            if (vol_ps%sw) call newfile_vol_nc(trim(odir)//'/'//trim(title)//'.3d.vol.ps.nc', vol_ps)
 
         end if
 
@@ -332,6 +343,9 @@ contains
         end if
         if (vol_u%sw .and. myid == 0) then
             write(error_unit,*) 'vol_u%sw requires snp_format = netcdf'
+        end if
+        if (vol_ps%sw .and. myid == 0) then
+            write(error_unit,*) 'vol_ps%sw requires snp_format = netcdf'
         end if
 
         !! for taking derivatives
@@ -345,6 +359,7 @@ contains
         allocate (buf_xy_u(nxs, nys, 3), source=0.0)
         allocate (buf_fs_u(nxs, nys, 3), source=0.0)
         allocate (buf_ob_u(nxs, nys, 3), source=0.0)
+
         ! local volumetric accumulator sized by decimated local block
         allocate (acc_vol_u(is1-is0+1, js1-js0+1, ks1-ks0+1, 3), source=0.0)
 
@@ -985,6 +1000,7 @@ contains
         if (ob_u%sw) call wbuf_ob_u(it)
         if (vol_v%sw) call wbuf_vol_v(it)
         if (vol_u%sw) call wbuf_vol_u(it)
+        if (vol_ps%sw) call wbuf_vol_ps(it)
 
         call pwatch__off("snap__write")
 
@@ -2323,6 +2339,8 @@ contains
             if (vol_v%sw .and. myid == vol_v%ionode) call close_nc(vol_v)
             if (vol_u%sw) call wbuf_vol_u(nt + 1)
             if (vol_u%sw .and. myid == vol_u%ionode) call close_nc(vol_u)
+            if (vol_ps%sw) call wbuf_vol_ps(nt + 1)
+            if (vol_ps%sw .and. myid == vol_ps%ionode) call close_nc(vol_ps)
 
             if (fs_u%sw) then
                 !$acc update self (max_fs_u)
@@ -2463,7 +2481,7 @@ subroutine newfile_vol_nc(fname, hdr)
 
     ! IMPORTANT: all ranks must participate, or ionode will hang in mpi_recv
     call mpi_barrier(mpi_comm_world, err)
-    call wbuf_vol_med_once()
+    call wbuf_vol_med_once_hdr(hdr)
 
 end subroutine newfile_vol_nc
 
@@ -2471,7 +2489,7 @@ end subroutine newfile_vol_nc
 
 subroutine write_nc_header_vol(hdr)
     type(snp), intent(inout) :: hdr
-    integer :: i
+    integer :: i, ntime, m
 
     ! dims
     call nc_chk(nf90_def_dim(hdr%io, 'x', nxs, hdr%did_x1))
@@ -2494,19 +2512,27 @@ subroutine write_nc_header_vol(hdr)
     call nc_chk(nf90_put_att(hdr%io, hdr%vid_t,  'units', 's'))
     call nc_chk(nf90_put_att(hdr%io, hdr%vid_t,  'long_name', 't'))
 
-    ! variable
-    ! Vx,Vy,Vz: x,y,z,t
-     do i = 1, 3
-       call nc_chk(nf90_def_var(hdr%io, trim(hdr%vname(i)), NF90_REAL, &
-            (/hdr%did_x1,hdr%did_x2,hdr%did_x3,hdr%did_t/), hdr%varid(i)))
-       call nc_chk(nf90_put_att(hdr%io, hdr%varid(i), 'units', trim(hdr%vunit(i))))
-     end do
+    ! number of time-dependent variables
+    if (hdr%snaptype == 'ps') then
+        ntime = 4
+    else
+        ntime = 3
+    end if
 
-    ! rho,lambda,mu: x,y,z (NO time)
-    do i = 4, 6
-      call nc_chk(nf90_def_var(hdr%io, trim(hdr%vname(i)), NF90_REAL, &
-           (/hdr%did_x1,hdr%did_x2,hdr%did_x3/), hdr%varid(i)))
-      call nc_chk(nf90_put_att(hdr%io, hdr%varid(i), 'units', trim(hdr%vunit(i))))
+    ! time-dependent variables: x,y,z,t
+    do i = 1, ntime
+        call nc_chk(nf90_def_var(hdr%io, trim(hdr%vname(i)), NF90_REAL, &
+             (/hdr%did_x1,hdr%did_x2,hdr%did_x3,hdr%did_t/), hdr%varid(i)))
+        call nc_chk(nf90_put_att(hdr%io, hdr%varid(i), 'units', trim(hdr%vunit(i))))
+    end do
+
+    ! medium variables (if any): x,y,z (NO time)
+    do m = 1, hdr%nmed
+        i = ntime + m
+        call nc_chk(nf90_def_var(hdr%io, trim(hdr%vname(i)), NF90_REAL, &
+             (/hdr%did_x1,hdr%did_x2,hdr%did_x3/), hdr%varid(i)))
+        call nc_chk(nf90_put_att(hdr%io, hdr%varid(i), 'units', trim(hdr%vunit(i))))
+        hdr%medid(m) = hdr%varid(i)
     end do
 
     ! global attrs (minimal, consistent)
@@ -2724,6 +2750,146 @@ subroutine wbuf_vol_u(it)
     deallocate(sbuf)
 end subroutine wbuf_vol_u
 
+subroutine wbuf_vol_ps(it)
+    integer, intent(in) :: it
+
+    integer :: ii, jj, kk, i, j, k
+    integer :: r, err
+    integer :: hdr_i(6)
+    integer :: nxL, nyL, nzL, nloc
+    integer :: stt(4), cnt(4)
+    real(SP) :: div, rx, ry, rz
+    real(SP), allocatable :: sbuf(:)
+    real(SP), allocatable, save :: gD(:,:,:), gRx(:,:,:), gRy(:,:,:), gRz(:,:,:)
+
+    if (.not. (mod(it - 1, ntdec_s) == 0 .or. (it > nt))) return
+    if (snp_format /= 'netcdf') return
+
+    ! local decimated block size
+    nxL = is1 - is0 + 1
+    nyL = js1 - js0 + 1
+    nzL = ks1 - ks0 + 1
+    nloc = nxL * nyL * nzL
+
+    allocate(sbuf(4 * nloc), source=0.0)
+
+    ! compute PS variables at decimated points and pack: i-fast, then j, then k
+    do kk = ks0, ks1
+        do jj = js0, js1
+            do ii = is0, is1
+                k = kk * kdec - kdec/2
+                j = jj * jdec - jdec/2
+                i = ii * idec - idec/2
+
+                div = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
+                         + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
+                         + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z )
+                rx  = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
+                         - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
+                ry  = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
+                         - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
+                rz  = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
+                         - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
+
+                ! masking
+                div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0_SP))
+                rx  = rx  * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0_SP))
+                ry  = ry  * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0_SP))
+                rz  = rz  * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0_SP))
+
+                r = ( (kk-ks0)*nxL*nyL + (jj-js0)*nxL + (ii-is0) ) + 1
+                sbuf(0*nloc + r) = div * UC * M0 * 1e-3
+                sbuf(1*nloc + r) = rx  * UC * M0 * 1e-3
+                sbuf(2*nloc + r) = ry  * UC * M0 * 1e-3
+                sbuf(3*nloc + r) = rz  * UC * M0 * 1e-3
+            end do
+        end do
+    end do
+
+    if (myid /= vol_ps%ionode) then
+        hdr_i = (/is0,is1, js0,js1, ks0,ks1/)
+        call mpi_send(hdr_i, 6, MPI_INTEGER, vol_ps%ionode, 902, mpi_comm_world, err)
+        call mpi_send(sbuf, 4*nloc, MPI_REAL, vol_ps%ionode, 903, mpi_comm_world, err)
+        deallocate(sbuf)
+        return
+    end if
+
+    ! ionode: allocate globals once
+    if (.not. allocated(gD)) then
+        allocate(gD (nxs,nys,nzs), source=0.0_SP)
+        allocate(gRx(nxs,nys,nzs), source=0.0_SP)
+        allocate(gRy(nxs,nys,nzs), source=0.0_SP)
+        allocate(gRz(nxs,nys,nzs), source=0.0_SP)
+    end if
+
+    gD = 0.0_SP; gRx = 0.0_SP; gRy = 0.0_SP; gRz = 0.0_SP
+
+    call unpack_block4(is0,is1,js0,js1,ks0,ks1, sbuf, gD, gRx, gRy, gRz)
+
+    do r = 0, nproc-1
+        if (r == vol_ps%ionode) cycle
+        call mpi_recv(hdr_i, 6, MPI_INTEGER, r, 902, mpi_comm_world, MPI_STATUS_IGNORE, err)
+        nxL = hdr_i(2) - hdr_i(1) + 1
+        nyL = hdr_i(4) - hdr_i(3) + 1
+        nzL = hdr_i(6) - hdr_i(5) + 1
+        nloc = nxL*nyL*nzL
+
+        deallocate(sbuf)
+        allocate(sbuf(4*nloc), source=0.0)
+        call mpi_recv(sbuf, 4*nloc, MPI_REAL, r, 903, mpi_comm_world, MPI_STATUS_IGNORE, err)
+
+        call unpack_block4(hdr_i(1),hdr_i(2),hdr_i(3),hdr_i(4),hdr_i(5),hdr_i(6), sbuf, gD, gRx, gRy, gRz)
+    end do
+
+    ! write one time-slab to netcdf
+    stt = (/1,1,1, it/ntdec_s + 1/)
+    cnt = (/nxs,nys,nzs, 1/)
+    call nc_chk(nf90_put_var(vol_ps%io, vol_ps%varid(1), gD , start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_ps%io, vol_ps%varid(2), gRx, start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_ps%io, vol_ps%varid(3), gRy, start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_ps%io, vol_ps%varid(4), gRz, start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_ps%io, vol_ps%vid_t, it*dt, start=(/it/ntdec_s + 1/)))
+
+    vol_ps%vmax(1) = max(vol_ps%vmax(1), maxval(gD )); vol_ps%vmin(1) = min(vol_ps%vmin(1), minval(gD ))
+    vol_ps%vmax(2) = max(vol_ps%vmax(2), maxval(gRx)); vol_ps%vmin(2) = min(vol_ps%vmin(2), minval(gRx))
+    vol_ps%vmax(3) = max(vol_ps%vmax(3), maxval(gRy)); vol_ps%vmin(3) = min(vol_ps%vmin(3), minval(gRy))
+    vol_ps%vmax(4) = max(vol_ps%vmax(4), maxval(gRz)); vol_ps%vmin(4) = min(vol_ps%vmin(4), minval(gRz))
+
+    call nc_chk(nf90_redef(vol_ps%io))
+    call nc_chk(nf90_put_att(vol_ps%io, vol_ps%varid(1), 'actual_range', (/vol_ps%vmin(1), vol_ps%vmax(1)/)))
+    call nc_chk(nf90_put_att(vol_ps%io, vol_ps%varid(2), 'actual_range', (/vol_ps%vmin(2), vol_ps%vmax(2)/)))
+    call nc_chk(nf90_put_att(vol_ps%io, vol_ps%varid(3), 'actual_range', (/vol_ps%vmin(3), vol_ps%vmax(3)/)))
+    call nc_chk(nf90_put_att(vol_ps%io, vol_ps%varid(4), 'actual_range', (/vol_ps%vmin(4), vol_ps%vmax(4)/)))
+    call nc_chk(nf90_enddef(vol_ps%io))
+
+    deallocate(sbuf)
+end subroutine wbuf_vol_ps
+
+subroutine unpack_block4(is0L,is1L,js0L,js1L,ks0L,ks1L, sbuf, g1, g2, g3, g4)
+    integer, intent(in) :: is0L,is1L,js0L,js1L,ks0L,ks1L
+    real(SP), intent(in) :: sbuf(:)
+    real(SP), intent(inout) :: g1(nxs,nys,nzs), g2(nxs,nys,nzs), g3(nxs,nys,nzs), g4(nxs,nys,nzs)
+
+    integer :: ii,jj,kk, nxL,nyL,nzL, nloc, r
+
+    nxL = is1L - is0L + 1
+    nyL = js1L - js0L + 1
+    nzL = ks1L - ks0L + 1
+    nloc = nxL*nyL*nzL
+
+    do kk = ks0L, ks1L
+        do jj = js0L, js1L
+            do ii = is0L, is1L
+                r = ( (kk-ks0L)*nxL*nyL + (jj-js0L)*nxL + (ii-is0L) ) + 1
+                g1(ii,jj,kk) = sbuf(0*nloc + r)
+                g2(ii,jj,kk) = sbuf(1*nloc + r)
+                g3(ii,jj,kk) = sbuf(2*nloc + r)
+                g4(ii,jj,kk) = sbuf(3*nloc + r)
+            end do
+        end do
+    end do
+end subroutine unpack_block4
+
 subroutine unpack_block(is0L,is1L,js0L,js1L,ks0L,ks1L, sbuf, gVx, gVy, gVz)
     integer, intent(in) :: is0L,is1L,js0L,js1L,ks0L,ks1L
     real(SP), intent(in) :: sbuf(:)
@@ -2824,10 +2990,10 @@ subroutine wbuf_vol_med_once()
         call unpack_block_med(hdr_i(1),hdr_i(2),hdr_i(3),hdr_i(4),hdr_i(5),hdr_i(6), sbuf, gR, gL, gM)
     end do
 
-    ! write to netcdf once (rho/lambda/mu are varid(4:6) and are x,y,z)
-    call nc_chk(nf90_put_var(vol_v%io, vol_v%varid(4), gR))
-    call nc_chk(nf90_put_var(vol_v%io, vol_v%varid(5), gL))
-    call nc_chk(nf90_put_var(vol_v%io, vol_v%varid(6), gM))
+    ! write to netcdf once (rho/lambda/mu are appended after time vars)
+    call nc_chk(nf90_put_var(vol_v%io, vol_v%varid(vol_v%nsnp+1), gR))
+    call nc_chk(nf90_put_var(vol_v%io, vol_v%varid(vol_v%nsnp+2), gL))
+    call nc_chk(nf90_put_var(vol_v%io, vol_v%varid(vol_v%nsnp+3), gM))
     call nc_chk(nf90_sync(vol_v%io))
 
     deallocate(sbuf)
@@ -2857,5 +3023,76 @@ subroutine unpack_block_med(is0L,is1L,js0L,js1L,ks0L,ks1L, sbuf, gR, gL, gM)
         end do
     end do
 end subroutine unpack_block_med
+
+subroutine wbuf_vol_med_once_hdr(hdr)
+    type(snp), intent(in) :: hdr
+
+    integer :: ii, jj, kk, i, j, k
+    integer :: r, err
+    integer :: hdr_i(6)
+    integer :: nxL, nyL, nzL, nloc
+    real(SP), allocatable :: sbuf(:)
+    real(SP), allocatable, save :: gR(:,:,:), gL(:,:,:), gM(:,:,:)
+
+    if (snp_format /= 'netcdf') return
+
+    nxL = is1 - is0 + 1
+    nyL = js1 - js0 + 1
+    nzL = ks1 - ks0 + 1
+    nloc = nxL * nyL * nzL
+
+    allocate(sbuf(3*nloc), source=0.0_SP)
+
+    do kk = ks0, ks1
+        do jj = js0, js1
+            do ii = is0, is1
+                k = kk * kdec - kdec/2
+                j = jj * jdec - jdec/2
+                i = ii * idec - idec/2
+                r = ( (kk-ks0)*nxL*nyL + (jj-js0)*nxL + (ii-is0) ) + 1
+                sbuf(0*nloc + r) = rho(k,i,j)
+                sbuf(1*nloc + r) = lam(k,i,j)
+                sbuf(2*nloc + r) = mu(k,i,j)
+            end do
+        end do
+    end do
+
+    if (myid /= hdr%ionode) then
+        hdr_i = (/is0,is1, js0,js1, ks0,ks1/)
+        call mpi_send(hdr_i, 6, MPI_INTEGER, hdr%ionode, 910, mpi_comm_world, err)
+        call mpi_send(sbuf, 3*nloc, MPI_REAL,    hdr%ionode, 911, mpi_comm_world, err)
+        deallocate(sbuf)
+        return
+    end if
+
+    if (.not. allocated(gR)) then
+        allocate(gR(nxs,nys,nzs), source=0.0_SP)
+        allocate(gL(nxs,nys,nzs), source=0.0_SP)
+        allocate(gM(nxs,nys,nzs), source=0.0_SP)
+    end if
+
+    gR = 0.0_SP; gL = 0.0_SP; gM = 0.0_SP
+    call unpack_block_med(is0,is1,js0,js1,ks0,ks1, sbuf, gR, gL, gM)
+
+    do r = 0, nproc-1
+        if (r == hdr%ionode) cycle
+        call mpi_recv(hdr_i, 6, MPI_INTEGER, r, 910, mpi_comm_world, MPI_STATUS_IGNORE, err)
+        nxL = hdr_i(2) - hdr_i(1) + 1
+        nyL = hdr_i(4) - hdr_i(3) + 1
+        nzL = hdr_i(6) - hdr_i(5) + 1
+        nloc = nxL*nyL*nzL
+        deallocate(sbuf)
+        allocate(sbuf(3*nloc), source=0.0_SP)
+        call mpi_recv(sbuf, 3*nloc, MPI_REAL, r, 911, mpi_comm_world, MPI_STATUS_IGNORE, err)
+        call unpack_block_med(hdr_i(1),hdr_i(2),hdr_i(3),hdr_i(4),hdr_i(5),hdr_i(6), sbuf, gR, gL, gM)
+    end do
+
+    call nc_chk(nf90_put_var(hdr%io, hdr%varid(hdr%nsnp+1), gR))
+    call nc_chk(nf90_put_var(hdr%io, hdr%varid(hdr%nsnp+2), gL))
+    call nc_chk(nf90_put_var(hdr%io, hdr%varid(hdr%nsnp+3), gM))
+    call nc_chk(nf90_sync(hdr%io))
+
+    deallocate(sbuf)
+end subroutine wbuf_vol_med_once_hdr
 
 end module m_snap
