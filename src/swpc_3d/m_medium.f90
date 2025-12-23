@@ -16,6 +16,7 @@ module m_medium
     use m_vmodel_lhm
     use m_vmodel_lgm
     use m_vmodel_user
+    use m_vmodel_velm
     use m_vmodel_uni_rmed
     use m_vmodel_grd_rmed
     use m_vmodel_lhm_rmed
@@ -97,6 +98,9 @@ contains
                                 rho, lam, mu, taup, taus, bddep)
             case ('lhm')
                 call vmodel_lhm(io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
+                                rho, lam, mu, taup, taus, bddep)
+            case ('velm')
+                call vmodel_velm(io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
                                 rho, lam, mu, taup, taus, bddep)
             case ('uni_rmed')
                 call vmodel_uni_rmed(io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &

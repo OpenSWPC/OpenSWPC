@@ -51,6 +51,8 @@ module m_snap
         !! variables for netcdf mode
         integer :: did_x1, did_x2, did_t ! dimension id for independent vars
         integer :: vid_x1, vid_x2, vid_t ! variable  id for independent vars
+        integer :: did_x3, vid_x3
+
         integer :: varid(10)           ! variable  id for dependent vars
         integer :: medid(10)            ! medium array id
         real    :: vmax(10), vmin(10)  ! max/min of dependent vars
@@ -59,7 +61,7 @@ module m_snap
 
     end type snp
 
-    type(snp) :: xy_ps, yz_ps, xz_ps, fs_ps, ob_ps, xy_v, yz_v, xz_v, fs_v, ob_v, xy_u, yz_u, xz_u, fs_u, ob_u
+    type(snp) :: xy_ps, yz_ps, xz_ps, fs_ps, ob_ps, xy_v, yz_v, xz_v, fs_v, ob_v, xy_u, yz_u, xz_u, fs_u, ob_u, vol_v, vol_u, vol_ps
 
     ! switch
     integer   :: ntdec_s                            !< time step decimation factor: Snap and Waves
@@ -83,6 +85,8 @@ module m_snap
     ! displacement snapshot buffer
     real(SP), allocatable :: buf_yz_u(:,:,:), buf_xz_u(:,:,:), buf_xy_u(:,:,:), buf_fs_u(:,:,:), buf_ob_u(:,:,:)
     real(SP), allocatable :: max_ob_v(:,:,:), max_ob_u(:,:,:), max_fs_v(:,:,:), max_fs_u(:,:,:)
+    ! volumetric displacement accumulator (local decimated block)
+    real(SP), allocatable :: acc_vol_u(:,:,:,:)
 
     ! cross-section data MPI communicator
     integer :: mpi_comm_xz, mpi_comm_yz
@@ -125,6 +129,9 @@ contains
         call readini(io_prm, 'kdec', kdec, 1)
         call readini(io_prm, 'ntdec_s', ntdec_s, 10)
         call readini(io_prm, 'snp_format', snp_format, 'native')
+        call readini(io_prm, 'vol_v%sw', vol_v%sw, .false.)
+        call readini(io_prm, 'vol_u%sw', vol_u%sw, .false.)
+        call readini(io_prm, 'vol_ps%sw', vol_ps%sw, .false.)
 
         !! snapshot size#2013-0440
         nxs = (nx + (idec / 2)) / idec
@@ -175,6 +182,9 @@ contains
         ob_v%ionode = mod(6, nproc)
         ob_u%ionode = mod(7, nproc)
         ob_ps%ionode = mod(8, nproc)
+        vol_v%ionode = mod(9, nproc)
+        vol_u%ionode = mod(10, nproc)
+        vol_ps%ionode = mod(11, nproc)
 
         call global__getnode(1, j0_xz, idum, idy_xz)
         call global__getnode(i0_yz, 1, idx_yz, idum)
@@ -194,22 +204,22 @@ contains
         yz_ps%ionode = itbl(idx_yz, yz_ps%ionode_local)
 
        !! snapshot settings
-        yz_ps%nsnp = 4; yz_v%nsnp = 3; yz_u%nsnp = 3; 
-        xz_ps%nsnp = 4; xz_v%nsnp = 3; xz_u%nsnp = 3; 
-        xy_ps%nsnp = 4; xy_v%nsnp = 3; xy_u%nsnp = 3; 
-        ob_ps%nsnp = 4; ob_v%nsnp = 3; ob_u%nsnp = 3; 
-        fs_ps%nsnp = 4; fs_v%nsnp = 3; fs_u%nsnp = 3; 
-        ! horizontal medium continas topography, lon & lat
-        yz_ps%nmed = 3; yz_v%nmed = 3; yz_u%nmed = 3; 
-        xz_ps%nmed = 3; xz_v%nmed = 3; xz_u%nmed = 3; 
-        xy_ps%nmed = 6; xy_v%nmed = 6; xy_u%nmed = 6; 
-        ob_ps%nmed = 6; ob_v%nmed = 6; ob_u%nmed = 6; 
-        fs_ps%nmed = 6; fs_v%nmed = 6; fs_u%nmed = 6; 
-        yz_ps%snaptype = 'ps'; yz_v%snaptype = 'v3'; yz_u%snaptype = 'u3'; 
-        xz_ps%snaptype = 'ps'; xz_v%snaptype = 'v3'; xz_u%snaptype = 'u3'; 
-        xy_ps%snaptype = 'ps'; xy_v%snaptype = 'v3'; xy_u%snaptype = 'u3'; 
-        ob_ps%snaptype = 'ps'; ob_v%snaptype = 'v3'; ob_u%snaptype = 'u3'; 
-        fs_ps%snaptype = 'ps'; fs_v%snaptype = 'v3'; fs_u%snaptype = 'u3'; 
+        yz_ps%nsnp = 4; yz_v%nsnp = 3; yz_u%nsnp = 3;
+        xz_ps%nsnp = 4; xz_v%nsnp = 3; xz_u%nsnp = 3;
+        xy_ps%nsnp = 4; xy_v%nsnp = 3; xy_u%nsnp = 3;
+        ob_ps%nsnp = 4; ob_v%nsnp = 3; ob_u%nsnp = 3;
+        fs_ps%nsnp = 4; fs_v%nsnp = 3; fs_u%nsnp = 3;
+        ! horizontal medium contains topography, lon & lat
+        yz_ps%nmed = 3; yz_v%nmed = 3; yz_u%nmed = 3;
+        xz_ps%nmed = 3; xz_v%nmed = 3; xz_u%nmed = 3;
+        xy_ps%nmed = 6; xy_v%nmed = 6; xy_u%nmed = 6;
+        ob_ps%nmed = 6; ob_v%nmed = 6; ob_u%nmed = 6;
+        fs_ps%nmed = 6; fs_v%nmed = 6; fs_u%nmed = 6;
+        yz_ps%snaptype = 'ps'; yz_v%snaptype = 'v3'; yz_u%snaptype = 'u3';
+        xz_ps%snaptype = 'ps'; xz_v%snaptype = 'v3'; xz_u%snaptype = 'u3';
+        xy_ps%snaptype = 'ps'; xy_v%snaptype = 'v3'; xy_u%snaptype = 'u3';
+        ob_ps%snaptype = 'ps'; ob_v%snaptype = 'v3'; ob_u%snaptype = 'u3';
+        fs_ps%snaptype = 'ps'; fs_v%snaptype = 'v3'; fs_u%snaptype = 'u3';
         yz_ps%vname(1) = 'div'; yz_ps%vname(2) = 'rot_x'; yz_ps%vname(3) = 'rot_y'; yz_ps%vname(4) = 'rot_z'
         xz_ps%vname(1) = 'div'; xz_ps%vname(2) = 'rot_x'; xz_ps%vname(3) = 'rot_y'; xz_ps%vname(4) = 'rot_z'
         xy_ps%vname(1) = 'div'; xy_ps%vname(2) = 'rot_x'; xy_ps%vname(3) = 'rot_y'; xy_ps%vname(4) = 'rot_z'
@@ -246,11 +256,45 @@ contains
         fs_u%vunit(1) = 'm'; fs_u%vunit(2) = 'm'; fs_u%vunit(3) = 'm'
         ob_u%vunit(1) = 'm'; ob_u%vunit(2) = 'm'; ob_u%vunit(3) = 'm'
 
-        yz_ps%coordinate = 'yz'; yz_v%coordinate = 'yz'; yz_u%coordinate = 'yz'; 
-        xz_ps%coordinate = 'xz'; xz_v%coordinate = 'xz'; xz_u%coordinate = 'xz'; 
-        xy_ps%coordinate = 'xy'; xy_v%coordinate = 'xy'; xy_u%coordinate = 'xy'; 
-        ob_ps%coordinate = 'ob'; ob_v%coordinate = 'ob'; ob_u%coordinate = 'ob'; 
-        fs_ps%coordinate = 'fs'; fs_v%coordinate = 'fs'; fs_u%coordinate = 'fs'; 
+        yz_ps%coordinate = 'yz'; yz_v%coordinate = 'yz'; yz_u%coordinate = 'yz';
+        xz_ps%coordinate = 'xz'; xz_v%coordinate = 'xz'; xz_u%coordinate = 'xz';
+        xy_ps%coordinate = 'xy'; xy_v%coordinate = 'xy'; xy_u%coordinate = 'xy';
+        ob_ps%coordinate = 'ob'; ob_v%coordinate = 'ob'; ob_u%coordinate = 'ob';
+        fs_ps%coordinate = 'fs'; fs_v%coordinate = 'fs'; fs_u%coordinate = 'fs';
+
+        ! volumetric velocity 
+        vol_v%nsnp = 3
+        vol_v%nmed = 3
+        vol_v%snaptype  = 'v3'
+        vol_v%coordinate = '3d'
+        vol_v%vname(1) = 'Vx'; vol_v%vname(2) = 'Vy'; vol_v%vname(3) = 'Vz'
+        vol_v%vunit(1) = 'm/s'; vol_v%vunit(2) = 'm/s'; vol_v%vunit(3) = 'm/s'
+        vol_v%vname(4)='rho';    vol_v%vunit(4)='10^3 kg/cm^3'
+        vol_v%vname(5)='lambda'; vol_v%vunit(5)='10^9 Pa'
+        vol_v%vname(6)='mu';     vol_v%vunit(6)='10^9 Pa'
+
+        ! volumetric displacement
+        vol_u%nsnp = 3
+        vol_u%nmed = 3
+        vol_u%snaptype  = 'u3'
+        vol_u%coordinate = '3d'
+        vol_u%vname(1) = 'Ux'; vol_u%vname(2) = 'Uy'; vol_u%vname(3) = 'Uz'
+        vol_u%vunit(1) = 'm'; vol_u%vunit(2) = 'm'; vol_u%vunit(3) = 'm'
+        vol_u%vname(4)='rho';    vol_u%vunit(4)='10^3 kg/cm^3'
+        vol_u%vname(5)='lambda'; vol_u%vunit(5)='10^9 Pa'
+        vol_u%vname(6)='mu';     vol_u%vunit(6)='10^9 Pa'
+
+        ! volumetric P&S amplitude
+        vol_ps%nsnp = 4
+        vol_ps%nmed = 3
+        vol_ps%snaptype  = 'ps'
+        vol_ps%coordinate = '3d'
+        vol_ps%vname(1) = 'div'; vol_ps%vname(2) = 'rot_x'; vol_ps%vname(3) = 'rot_y'; vol_ps%vname(4) = 'rot_z'
+        vol_ps%vunit(1) = '1/s'; vol_ps%vunit(2) = '1/s'; vol_ps%vunit(3) = '1/s'; vol_ps%vunit(4) = '1/s'
+        vol_ps%vname(5)='rho';    vol_ps%vunit(5)='10^3 kg/cm^3'
+        vol_ps%vname(6)='lambda'; vol_ps%vunit(6)='10^9 Pa'
+        vol_ps%vname(7)='mu';     vol_ps%vunit(7)='10^9 Pa'
+
         !! output settings
         if (snp_format == 'native') then
 
@@ -291,7 +335,22 @@ contains
             if (xy_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.xy.u.nc', xy_u)
             if (fs_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.fs.u.nc', fs_u)
             if (ob_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.ob.u.nc', ob_u)
+            if (vol_v%sw) call newfile_vol_nc(trim(odir)//'/'//trim(title)//'.3d.vol.v.nc', vol_v)
+            if (vol_u%sw) call newfile_vol_nc(trim(odir)//'/'//trim(title)//'.3d.vol.u.nc', vol_u)
+            if (vol_ps%sw) call newfile_vol_nc(trim(odir)//'/'//trim(title)//'.3d.vol.ps.nc', vol_ps)
 
+        end if
+
+        if (snp_format /= 'netcdf') then
+            if (vol_v%sw .and. myid == 0) then
+                write(error_unit,*) 'vol_v%sw requires snp_format = netcdf'
+            end if
+            if (vol_u%sw .and. myid == 0) then
+                write(error_unit,*) 'vol_u%sw requires snp_format = netcdf'
+            end if
+            if (vol_ps%sw .and. myid == 0) then
+                write(error_unit,*) 'vol_ps%sw requires snp_format = netcdf'
+            end if
         end if
 
         !! for taking derivatives
@@ -305,6 +364,9 @@ contains
         allocate (buf_xy_u(nxs, nys, 3), source=0.0)
         allocate (buf_fs_u(nxs, nys, 3), source=0.0)
         allocate (buf_ob_u(nxs, nys, 3), source=0.0)
+
+        ! local volumetric accumulator sized by decimated local block
+        allocate (acc_vol_u(is1-is0+1, js1-js0+1, ks1-ks0+1, 3), source=0.0)
 
         !! maximum amplitude buffers
         allocate (max_ob_v(nxs, nys, 3), source=0.0)
@@ -518,8 +580,8 @@ contains
 
         !! medium
         allocate(sbuf(nys * nzs),  source=0.0)
-        allocate(rbuf1(nys * nzs), source=0.0) 
-        allocate(rbuf2(nys * nzs), source=0.0) 
+        allocate(rbuf1(nys * nzs), source=0.0)
+        allocate(rbuf2(nys * nzs), source=0.0)
         allocate(rbuf3(nys * nzs), source=0.0)
         sbuf = reshape(buf(:, :, 1), shape(sbuf))
         call mpi_reduce(sbuf, rbuf1, nys * nzs, MPI_REAL, MPI_SUM, hdr%ionode_local, mpi_comm_yz, err)
@@ -595,8 +657,8 @@ contains
 
         !! medium
         allocate(sbuf(nxs * nzs), source=0.0)
-        allocate(rbuf1(nxs * nzs),source=0.0) 
-        allocate(rbuf2(nxs * nzs),source=0.0) 
+        allocate(rbuf1(nxs * nzs),source=0.0)
+        allocate(rbuf2(nxs * nzs),source=0.0)
         allocate(rbuf3(nxs * nzs),source=0.0)
         sbuf = reshape(buf(:, :, 1), shape(sbuf))
         call mpi_reduce(sbuf, rbuf1, nxs * nzs, MPI_REAL, MPI_SUM, hdr%ionode_local, mpi_comm_xz, err)
@@ -941,6 +1003,9 @@ contains
         if (xy_u%sw) call wbuf_xy_u(it)
         if (fs_u%sw) call wbuf_fs_u(it)
         if (ob_u%sw) call wbuf_ob_u(it)
+        if (vol_v%sw) call wbuf_vol_v(it)
+        if (vol_u%sw) call wbuf_vol_u(it)
+        if (vol_ps%sw) call wbuf_vol_ps(it)
 
         call pwatch__off("snap__write")
 
@@ -976,7 +1041,7 @@ contains
             !call nc_chk(nf90_sync(hdr%io))
         end do
 
-    end subroutine wbuf_nc    
+    end subroutine wbuf_nc
 
     subroutine wbuf_yz_ps(it)
 
@@ -1015,14 +1080,14 @@ contains
 
                     div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
                                 + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
-                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
+                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z )
                     rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
                                 - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
                     rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
                                 - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
                     rot_z = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
                                 - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
-            
+
                     !! masking
                     div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
                     rot_x = rot_x * abs(Syz(k,i,j)) / abs(Syz(k,i,j) + epsilon(1.0))
@@ -1108,7 +1173,7 @@ contains
 
                     div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
                                 + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
-                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
+                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z )
                     rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
                                 - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
                     rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
@@ -1121,7 +1186,7 @@ contains
                     rot_x = rot_x * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0))
                     rot_y = rot_y * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0))
                     rot_z = rot_z * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0))
-                                                
+
                     !! dx, dy, dz have km unit. correction for 1e3 factor.
                     buf(ii, kk, 1) = div   * UC * M0 * 1e-3
                     buf(ii, kk, 2) = rot_x * UC * M0 * 1e-3
@@ -1198,7 +1263,7 @@ contains
 
                     div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
                                 + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
-                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
+                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z )
                     rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
                                 - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
                     rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
@@ -1290,20 +1355,20 @@ contains
 
                     div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
                                 + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
-                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
+                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z )
                     rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
                                 - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
                     rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
                                 - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
                     rot_z = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
                                 - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
-            
+
                     !! masking
                     div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
                     rot_x = rot_x * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0))
                     rot_y = rot_y * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0))
                     rot_z = rot_z * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0))
-                                        
+
                     !! dx, dy, dz have km unit. correction for 1e3 factor.
                     buf(ii, jj, 1) = div   * UC * M0 * 1e-3
                     buf(ii, jj, 2) = rot_x * UC * M0 * 1e-3
@@ -1372,7 +1437,7 @@ contains
             !$acc loop independent collapse(2)
 #else
             !$omp parallel do private( ii, jj, i, j, k, div, rot_x, rot_y, rot_z )
-#endif            
+#endif
             do jj = js0, js1
                 do ii = is0, is1
                     j = jj * jdec - jdec / 2
@@ -1381,14 +1446,14 @@ contains
 
                     div   = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
                                 + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
-                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z ) 
+                                + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z )
                     rot_x = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
                                 - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
                     rot_y = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
                                 - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
                     rot_z = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
                                 - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
-            
+
                     !! masking
                     div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
                     rot_x = rot_x * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0))
@@ -1577,7 +1642,7 @@ contains
 
                     !$acc update self(sbuf)
                     call mpi_ireduce(sbuf, rbuf, nxs * nzs * 3, mpi_real, mpi_sum, xz_v%ionode_local, mpi_comm_xz, req, err)
-                    
+
                     it0 = it ! remember
                 end if
             end if
@@ -1845,7 +1910,7 @@ contains
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, buf_yz_u)
         !$acc loop independent collapse(2)
-#else            
+#else
         !$omp parallel do private( jj, kk, k, i, j )
 #endif
         do jj = js0, js1
@@ -1910,7 +1975,7 @@ contains
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, buf_xz_u)
         !$acc loop independent collapse(2)
-#else            
+#else
         !$omp parallel do private( ii, kk, k, i, j )
 #endif
         do ii = is0, is1
@@ -1974,7 +2039,7 @@ contains
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, buf_xy_u)
         !$acc loop independent collapse(2)
-#else            
+#else
         !$omp parallel do private( jj, ii, k, i, j )
 #endif
         do jj = js0, js1
@@ -2039,7 +2104,7 @@ contains
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, buf_fs_u, kfs)
         !$acc loop independent collapse(2)
-#else            
+#else
         !$omp parallel do private( jj, ii, k, i, j )
 #endif
         do jj = js0, js1
@@ -2121,7 +2186,7 @@ contains
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, buf_ob_u, kob)
         !$acc loop independent collapse(2)
-#else            
+#else
         !$omp parallel do private( jj, ii, k, i, j )
 #endif
         do jj = js0, js1
@@ -2194,9 +2259,13 @@ contains
         integer :: vid
 
         call nc_chk(nf90_redef(hdr%io))
+
         do vid = 1, hdr%nsnp
+            ! For vol_v: vars 4..6 (rho/lambda/mu) are static; vmin/vmax not tracked -> skip
+            if (hdr%coordinate == '3d' .and. vid >= 4) cycle
             call nc_chk(nf90_put_att(hdr%io, hdr%varid(vid), 'actual_range', (/hdr%vmin(vid), hdr%vmax(vid)/)))
         end do
+
         call nc_chk(nf90_enddef(hdr%io))
         call nc_chk(nf90_sync(hdr%io))
         call nc_chk(nf90_close(hdr%io))
@@ -2271,6 +2340,13 @@ contains
             if (yz_u%sw .and. myid == yz_u%ionode) call close_nc(yz_u)
             if (xz_u%sw .and. myid == xz_u%ionode) call close_nc(xz_u)
             if (xy_u%sw .and. myid == xy_u%ionode) call close_nc(xy_u)
+            if (vol_v%sw) call wbuf_vol_v(nt + 1)
+            if (vol_v%sw .and. myid == vol_v%ionode) call close_nc(vol_v)
+            if (vol_u%sw) call wbuf_vol_u(nt + 1)
+            if (vol_u%sw .and. myid == vol_u%ionode) call close_nc(vol_u)
+            if (vol_ps%sw) call wbuf_vol_ps(nt + 1)
+            if (vol_ps%sw .and. myid == vol_ps%ionode) call close_nc(vol_ps)
+
             if (fs_u%sw) then
                 !$acc update self (max_fs_u)
                 call output__put_maxval(fs_u, max_fs_u)
@@ -2366,7 +2442,7 @@ contains
         idx = 1
 #ifdef _OPENACC
         !$acc kernels present(buf3d, buf1d)
-        !$acc loop independent collapse(3) 
+        !$acc loop independent collapse(3)
 #else
         !$omp parallel do private(i, j, k, idx)
 #endif
@@ -2386,5 +2462,642 @@ contains
 
     end subroutine pack_3D
 
-end module m_snap
+subroutine newfile_vol_nc(fname, hdr)
+    character(*), intent(in)     :: fname
+    type(snp),     intent(inout) :: hdr
+    integer :: err
 
+    if (myid == hdr%ionode) then
+        hdr%vmax = 0.0
+        hdr%vmin = 0.0
+        hdr%na1  = na / idec
+        hdr%na2  = na / jdec
+        hdr%ds1  = idec * dx
+        hdr%ds2  = jdec * dy
+
+        call nc_chk(nf90_create(trim(fname), NF90_CLOBBER, hdr%io))
+        call write_nc_header_vol(hdr)
+        call nc_chk(nf90_enddef(hdr%io))
+
+        call nc_chk(nf90_put_var(hdr%io, hdr%vid_x1, xsnp))
+        call nc_chk(nf90_put_var(hdr%io, hdr%vid_x2, ysnp))
+        call nc_chk(nf90_put_var(hdr%io, hdr%vid_x3, zsnp))
+    end if
+
+    ! IMPORTANT: all ranks must participate, or ionode will hang in mpi_recv
+    call mpi_barrier(mpi_comm_world, err)
+    call wbuf_vol_med_once_hdr(hdr)
+
+end subroutine newfile_vol_nc
+
+
+
+subroutine write_nc_header_vol(hdr)
+    type(snp), intent(inout) :: hdr
+    integer :: i, ntime, m
+
+    ! dims
+    call nc_chk(nf90_def_dim(hdr%io, 'x', nxs, hdr%did_x1))
+    call nc_chk(nf90_def_dim(hdr%io, 'y', nys, hdr%did_x2))
+    call nc_chk(nf90_def_dim(hdr%io, 'z', nzs, hdr%did_x3))
+    call nc_chk(nf90_def_dim(hdr%io, 't', NF90_UNLIMITED, hdr%did_t))
+
+    ! coords
+    call nc_chk(nf90_def_var(hdr%io, 'x', NF90_REAL, hdr%did_x1, hdr%vid_x1))
+    call nc_chk(nf90_def_var(hdr%io, 'y', NF90_REAL, hdr%did_x2, hdr%vid_x2))
+    call nc_chk(nf90_def_var(hdr%io, 'z', NF90_REAL, hdr%did_x3, hdr%vid_x3))
+    call nc_chk(nf90_def_var(hdr%io, 't', NF90_REAL, hdr%did_t, hdr%vid_t))
+
+    call nc_chk(nf90_put_att(hdr%io, hdr%vid_x1, 'long_name', 'x'))
+    call nc_chk(nf90_put_att(hdr%io, hdr%vid_x2, 'long_name', 'y'))
+    call nc_chk(nf90_put_att(hdr%io, hdr%vid_x3, 'long_name', 'z'))
+    call nc_chk(nf90_put_att(hdr%io, hdr%vid_x1, 'units', 'km'))
+    call nc_chk(nf90_put_att(hdr%io, hdr%vid_x2, 'units', 'km'))
+    call nc_chk(nf90_put_att(hdr%io, hdr%vid_x3, 'units', 'km'))
+    call nc_chk(nf90_put_att(hdr%io, hdr%vid_t,  'units', 's'))
+    call nc_chk(nf90_put_att(hdr%io, hdr%vid_t,  'long_name', 't'))
+
+    ! number of time-dependent variables
+    if (hdr%snaptype == 'ps') then
+        ntime = 4
+    else
+        ntime = 3
+    end if
+
+    ! time-dependent variables: x,y,z,t
+    do i = 1, ntime
+        call nc_chk(nf90_def_var(hdr%io, trim(hdr%vname(i)), NF90_REAL, &
+             (/hdr%did_x1,hdr%did_x2,hdr%did_x3,hdr%did_t/), hdr%varid(i)))
+        call nc_chk(nf90_put_att(hdr%io, hdr%varid(i), 'units', trim(hdr%vunit(i))))
+    end do
+
+    ! medium variables (if any): x,y,z (NO time)
+    do m = 1, hdr%nmed
+        i = ntime + m
+        call nc_chk(nf90_def_var(hdr%io, trim(hdr%vname(i)), NF90_REAL, &
+             (/hdr%did_x1,hdr%did_x2,hdr%did_x3/), hdr%varid(i)))
+        call nc_chk(nf90_put_att(hdr%io, hdr%varid(i), 'units', trim(hdr%vunit(i))))
+        hdr%medid(m) = hdr%varid(i)
+    end do
+
+    ! global attrs (minimal, consistent)
+    call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'generated_by', 'SWPC'))
+    call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'codetype', CODE_TYPE))
+    call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'hdrver', HEADER_VERSION))
+    call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'title', trim(title)))
+    call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'exedate', exedate))
+    call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'coordinate', '3d'))
+    call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'datatype', hdr%snaptype))
+    call nc_chk(nf90_put_att(hdr%io, NF90_GLOBAL, 'dt', dt * ntdec_s))
+end subroutine write_nc_header_vol
+
+
+
+subroutine wbuf_vol_v(it)
+    integer, intent(in) :: it
+
+    integer :: ii, jj, kk, i, j, k
+    integer :: r, err
+    integer :: hdr_i(6)
+    integer :: nxL, nyL, nzL, nloc
+    integer :: stt(4), cnt(4)
+    real(SP), allocatable :: sbuf(:)
+    real(SP), allocatable, save :: gVx(:,:,:), gVy(:,:,:), gVz(:,:,:)
+
+    if (.not. (mod(it - 1, ntdec_s) == 0 .or. (it > nt))) return
+    if (snp_format /= 'netcdf') return
+
+    ! pack local decimated block: (ii, jj, kk) -> (i, j, k) grid
+    nxL = is1 - is0 + 1
+    nyL = js1 - js0 + 1
+    nzL = ks1 - ks0 + 1
+    nloc = nxL * nyL * nzL
+
+    allocate(sbuf(3 * nloc), source=0.0)
+
+    ! local pack order: i-fast, then j, then k
+    ! index = ((kk-ks0)*nxL*nyL) + ((jj-js0)*nxL) + (ii-is0) + 1
+    do kk = ks0, ks1
+        do jj = js0, js1
+            do ii = is0, is1
+                k = kk * kdec - kdec/2
+                j = jj * jdec - jdec/2
+                i = ii * idec - idec/2
+
+                r = ( (kk-ks0)*nxL*nyL + (jj-js0)*nxL + (ii-is0) ) + 1
+
+                sbuf(0*nloc + r) = Vx(k,i,j) * UC * M0
+                sbuf(1*nloc + r) = Vy(k,i,j) * UC * M0
+                sbuf(2*nloc + r) = Vz(k,i,j) * UC * M0
+            end do
+        end do
+    end do
+
+    if (myid /= vol_v%ionode) then
+        hdr_i = (/is0,is1, js0,js1, ks0,ks1/)
+        call mpi_send(hdr_i, 6, MPI_INTEGER, vol_v%ionode, 900, mpi_comm_world, err)
+        call mpi_send(sbuf, 3*nloc, MPI_REAL, vol_v%ionode, 901, mpi_comm_world, err)
+        deallocate(sbuf)
+        return
+    end if
+
+    ! ionode: allocate globals once
+    if (.not. allocated(gVx)) then
+        allocate(gVx(nxs,nys,nzs), source=0.0_SP)
+        allocate(gVy(nxs,nys,nzs), source=0.0_SP)
+        allocate(gVz(nxs,nys,nzs), source=0.0_SP)
+    end if
+
+    gVx = 0.0_SP; gVy = 0.0_SP; gVz = 0.0_SP
+
+    ! place my own block
+    call unpack_block(is0,is1,js0,js1,ks0,ks1, sbuf, gVx, gVy, gVz)
+
+    ! receive from others
+    do r = 0, nproc-1
+        if (r == vol_v%ionode) cycle
+        call mpi_recv(hdr_i, 6, MPI_INTEGER, r, 900, mpi_comm_world, MPI_STATUS_IGNORE, err)
+        nxL = hdr_i(2) - hdr_i(1) + 1
+        nyL = hdr_i(4) - hdr_i(3) + 1
+        nzL = hdr_i(6) - hdr_i(5) + 1
+        nloc = nxL*nyL*nzL
+
+        deallocate(sbuf)
+        allocate(sbuf(3*nloc), source=0.0)
+        call mpi_recv(sbuf, 3*nloc, MPI_REAL, r, 901, mpi_comm_world, MPI_STATUS_IGNORE, err)
+
+        call unpack_block(hdr_i(1),hdr_i(2),hdr_i(3),hdr_i(4),hdr_i(5),hdr_i(6), sbuf, gVx, gVy, gVz)
+    end do
+
+    ! write one time-slab to netcdf
+    stt = (/1,1,1, it/ntdec_s + 1/)
+    cnt = (/nxs,nys,nzs, 1/)
+    call nc_chk(nf90_put_var(vol_v%io, vol_v%varid(1), gVx, start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_v%io, vol_v%varid(2), gVy, start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_v%io, vol_v%varid(3), gVz, start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_v%io, vol_v%vid_t, it*dt, start=(/it/ntdec_s + 1/)))
+
+    vol_v%vmax(1) = max(vol_v%vmax(1), maxval(gVx)); vol_v%vmin(1) = min(vol_v%vmin(1), minval(gVx))
+    vol_v%vmax(2) = max(vol_v%vmax(2), maxval(gVy)); vol_v%vmin(2) = min(vol_v%vmin(2), minval(gVy))
+    vol_v%vmax(3) = max(vol_v%vmax(3), maxval(gVz)); vol_v%vmin(3) = min(vol_v%vmin(3), minval(gVz))
+
+    call nc_chk(nf90_redef(vol_v%io))
+    call nc_chk(nf90_put_att(vol_v%io, vol_v%varid(1), 'actual_range', (/vol_v%vmin(1), vol_v%vmax(1)/)))
+    call nc_chk(nf90_put_att(vol_v%io, vol_v%varid(2), 'actual_range', (/vol_v%vmin(2), vol_v%vmax(2)/)))
+    call nc_chk(nf90_put_att(vol_v%io, vol_v%varid(3), 'actual_range', (/vol_v%vmin(3), vol_v%vmax(3)/)))
+    call nc_chk(nf90_enddef(vol_v%io))
+
+    deallocate(sbuf)
+end subroutine wbuf_vol_v
+
+subroutine wbuf_vol_u(it)
+    integer, intent(in) :: it
+
+    integer :: ii, jj, kk, i, j, k
+    integer :: r, err
+    integer :: hdr_i(6)
+    integer :: nxL, nyL, nzL, nloc
+    integer :: stt(4), cnt(4)
+    real(SP), allocatable :: sbuf(:)
+    real(SP), allocatable, save :: gUx(:,:,:), gUy(:,:,:), gUz(:,:,:)
+
+    if (.not. (mod(it - 1, ntdec_s) == 0 .or. (it > nt))) return
+    if (snp_format /= 'netcdf') return
+
+    ! accumulate local decimated block displacement from velocity
+    nxL = is1 - is0 + 1
+    nyL = js1 - js0 + 1
+    nzL = ks1 - ks0 + 1
+    nloc = nxL * nyL * nzL
+
+    allocate(sbuf(3 * nloc), source=0.0)
+
+    ! update accumulator: integrate velocity to displacement
+    do kk = ks0, ks1
+        do jj = js0, js1
+            do ii = is0, is1
+                k = kk * kdec - kdec/2
+                j = jj * jdec - jdec/2
+                i = ii * idec - idec/2
+                acc_vol_u(ii-is0+1, jj-js0+1, kk-ks0+1, 1) = acc_vol_u(ii-is0+1, jj-js0+1, kk-ks0+1, 1) + Vx(k,i,j) * UC * M0 * dt
+                acc_vol_u(ii-is0+1, jj-js0+1, kk-ks0+1, 2) = acc_vol_u(ii-is0+1, jj-js0+1, kk-ks0+1, 2) + Vy(k,i,j) * UC * M0 * dt
+                acc_vol_u(ii-is0+1, jj-js0+1, kk-ks0+1, 3) = acc_vol_u(ii-is0+1, jj-js0+1, kk-ks0+1, 3) + Vz(k,i,j) * UC * M0 * dt
+            end do
+        end do
+    end do
+
+    ! local pack order: i-fast, then j, then k from accumulator
+    do kk = ks0, ks1
+        do jj = js0, js1
+            do ii = is0, is1
+                r = ( (kk-ks0)*nxL*nyL + (jj-js0)*nxL + (ii-is0) ) + 1
+                sbuf(0*nloc + r) = acc_vol_u(ii-is0+1, jj-js0+1, kk-ks0+1, 1)
+                sbuf(1*nloc + r) = acc_vol_u(ii-is0+1, jj-js0+1, kk-ks0+1, 2)
+                sbuf(2*nloc + r) = acc_vol_u(ii-is0+1, jj-js0+1, kk-ks0+1, 3)
+            end do
+        end do
+    end do
+
+    if (myid /= vol_u%ionode) then
+        hdr_i = (/is0,is1, js0,js1, ks0,ks1/)
+        call mpi_send(hdr_i, 6, MPI_INTEGER, vol_u%ionode, 900, mpi_comm_world, err)
+        call mpi_send(sbuf, 3*nloc, MPI_REAL, vol_u%ionode, 901, mpi_comm_world, err)
+        deallocate(sbuf)
+        return
+    end if
+
+    ! ionode: allocate globals once
+    if (.not. allocated(gUx)) then
+        allocate(gUx(nxs,nys,nzs), source=0.0_SP)
+        allocate(gUy(nxs,nys,nzs), source=0.0_SP)
+        allocate(gUz(nxs,nys,nzs), source=0.0_SP)
+    end if
+
+    gUx = 0.0_SP; gUy = 0.0_SP; gUz = 0.0_SP
+
+    ! place my own block
+    call unpack_block(is0,is1,js0,js1,ks0,ks1, sbuf, gUx, gUy, gUz)
+
+    ! receive from others
+    do r = 0, nproc-1
+        if (r == vol_u%ionode) cycle
+        call mpi_recv(hdr_i, 6, MPI_INTEGER, r, 900, mpi_comm_world, MPI_STATUS_IGNORE, err)
+        nxL = hdr_i(2) - hdr_i(1) + 1
+        nyL = hdr_i(4) - hdr_i(3) + 1
+        nzL = hdr_i(6) - hdr_i(5) + 1
+        nloc = nxL*nyL*nzL
+
+        deallocate(sbuf)
+        allocate(sbuf(3*nloc), source=0.0)
+        call mpi_recv(sbuf, 3*nloc, MPI_REAL, r, 901, mpi_comm_world, MPI_STATUS_IGNORE, err)
+
+        call unpack_block(hdr_i(1),hdr_i(2),hdr_i(3),hdr_i(4),hdr_i(5),hdr_i(6), sbuf, gUx, gUy, gUz)
+    end do
+
+    ! write one time-slab to netcdf
+    stt = (/1,1,1, it/ntdec_s + 1/)
+    cnt = (/nxs,nys,nzs, 1/)
+    call nc_chk(nf90_put_var(vol_u%io, vol_u%varid(1), gUx, start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_u%io, vol_u%varid(2), gUy, start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_u%io, vol_u%varid(3), gUz, start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_u%io, vol_u%vid_t, it*dt, start=(/it/ntdec_s + 1/)))
+
+    vol_u%vmax(1) = max(vol_u%vmax(1), maxval(gUx)); vol_u%vmin(1) = min(vol_u%vmin(1), minval(gUx))
+    vol_u%vmax(2) = max(vol_u%vmax(2), maxval(gUy)); vol_u%vmin(2) = min(vol_u%vmin(2), minval(gUy))
+    vol_u%vmax(3) = max(vol_u%vmax(3), maxval(gUz)); vol_u%vmin(3) = min(vol_u%vmin(3), minval(gUz))
+
+    call nc_chk(nf90_redef(vol_u%io))
+    call nc_chk(nf90_put_att(vol_u%io, vol_u%varid(1), 'actual_range', (/vol_u%vmin(1), vol_u%vmax(1)/)))
+    call nc_chk(nf90_put_att(vol_u%io, vol_u%varid(2), 'actual_range', (/vol_u%vmin(2), vol_u%vmax(2)/)))
+    call nc_chk(nf90_put_att(vol_u%io, vol_u%varid(3), 'actual_range', (/vol_u%vmin(3), vol_u%vmax(3)/)))
+    call nc_chk(nf90_enddef(vol_u%io))
+
+    deallocate(sbuf)
+end subroutine wbuf_vol_u
+
+subroutine wbuf_vol_ps(it)
+    integer, intent(in) :: it
+
+    integer :: ii, jj, kk, i, j, k
+    integer :: r, err
+    integer :: hdr_i(6)
+    integer :: nxL, nyL, nzL, nloc
+    integer :: stt(4), cnt(4)
+    real(SP) :: div, rx, ry, rz
+    real(SP), allocatable :: sbuf(:)
+    real(SP), allocatable, save :: gD(:,:,:), gRx(:,:,:), gRy(:,:,:), gRz(:,:,:)
+
+    if (.not. (mod(it - 1, ntdec_s) == 0 .or. (it > nt))) return
+    if (snp_format /= 'netcdf') return
+
+    ! local decimated block size
+    nxL = is1 - is0 + 1
+    nyL = js1 - js0 + 1
+    nzL = ks1 - ks0 + 1
+    nloc = nxL * nyL * nzL
+
+    allocate(sbuf(4 * nloc), source=0.0)
+
+    ! compute PS variables at decimated points and pack: i-fast, then j, then k
+    do kk = ks0, ks1
+        do jj = js0, js1
+            do ii = is0, is1
+                k = kk * kdec - kdec/2
+                j = jj * jdec - jdec/2
+                i = ii * idec - idec/2
+
+                div = real( (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x &
+                         + (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y &
+                         + (Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )) * r20z )
+                rx  = real( (Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )) * r20y &
+                         - (Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )) * r20z )
+                ry  = real( (Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )) * r20z &
+                         - (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x )
+                rz  = real( (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x &
+                         - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
+
+                ! masking
+                div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0_SP))
+                rx  = rx  * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0_SP))
+                ry  = ry  * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0_SP))
+                rz  = rz  * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0_SP))
+
+                r = ( (kk-ks0)*nxL*nyL + (jj-js0)*nxL + (ii-is0) ) + 1
+                sbuf(0*nloc + r) = div * UC * M0 * 1e-3
+                sbuf(1*nloc + r) = rx  * UC * M0 * 1e-3
+                sbuf(2*nloc + r) = ry  * UC * M0 * 1e-3
+                sbuf(3*nloc + r) = rz  * UC * M0 * 1e-3
+            end do
+        end do
+    end do
+
+    if (myid /= vol_ps%ionode) then
+        hdr_i = (/is0,is1, js0,js1, ks0,ks1/)
+        call mpi_send(hdr_i, 6, MPI_INTEGER, vol_ps%ionode, 902, mpi_comm_world, err)
+        call mpi_send(sbuf, 4*nloc, MPI_REAL, vol_ps%ionode, 903, mpi_comm_world, err)
+        deallocate(sbuf)
+        return
+    end if
+
+    ! ionode: allocate globals once
+    if (.not. allocated(gD)) then
+        allocate(gD (nxs,nys,nzs), source=0.0_SP)
+        allocate(gRx(nxs,nys,nzs), source=0.0_SP)
+        allocate(gRy(nxs,nys,nzs), source=0.0_SP)
+        allocate(gRz(nxs,nys,nzs), source=0.0_SP)
+    end if
+
+    gD = 0.0_SP; gRx = 0.0_SP; gRy = 0.0_SP; gRz = 0.0_SP
+
+    call unpack_block4(is0,is1,js0,js1,ks0,ks1, sbuf, gD, gRx, gRy, gRz)
+
+    do r = 0, nproc-1
+        if (r == vol_ps%ionode) cycle
+        call mpi_recv(hdr_i, 6, MPI_INTEGER, r, 902, mpi_comm_world, MPI_STATUS_IGNORE, err)
+        nxL = hdr_i(2) - hdr_i(1) + 1
+        nyL = hdr_i(4) - hdr_i(3) + 1
+        nzL = hdr_i(6) - hdr_i(5) + 1
+        nloc = nxL*nyL*nzL
+
+        deallocate(sbuf)
+        allocate(sbuf(4*nloc), source=0.0)
+        call mpi_recv(sbuf, 4*nloc, MPI_REAL, r, 903, mpi_comm_world, MPI_STATUS_IGNORE, err)
+
+        call unpack_block4(hdr_i(1),hdr_i(2),hdr_i(3),hdr_i(4),hdr_i(5),hdr_i(6), sbuf, gD, gRx, gRy, gRz)
+    end do
+
+    ! write one time-slab to netcdf
+    stt = (/1,1,1, it/ntdec_s + 1/)
+    cnt = (/nxs,nys,nzs, 1/)
+    call nc_chk(nf90_put_var(vol_ps%io, vol_ps%varid(1), gD , start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_ps%io, vol_ps%varid(2), gRx, start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_ps%io, vol_ps%varid(3), gRy, start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_ps%io, vol_ps%varid(4), gRz, start=stt, count=cnt))
+    call nc_chk(nf90_put_var(vol_ps%io, vol_ps%vid_t, it*dt, start=(/it/ntdec_s + 1/)))
+
+    vol_ps%vmax(1) = max(vol_ps%vmax(1), maxval(gD )); vol_ps%vmin(1) = min(vol_ps%vmin(1), minval(gD ))
+    vol_ps%vmax(2) = max(vol_ps%vmax(2), maxval(gRx)); vol_ps%vmin(2) = min(vol_ps%vmin(2), minval(gRx))
+    vol_ps%vmax(3) = max(vol_ps%vmax(3), maxval(gRy)); vol_ps%vmin(3) = min(vol_ps%vmin(3), minval(gRy))
+    vol_ps%vmax(4) = max(vol_ps%vmax(4), maxval(gRz)); vol_ps%vmin(4) = min(vol_ps%vmin(4), minval(gRz))
+
+    call nc_chk(nf90_redef(vol_ps%io))
+    call nc_chk(nf90_put_att(vol_ps%io, vol_ps%varid(1), 'actual_range', (/vol_ps%vmin(1), vol_ps%vmax(1)/)))
+    call nc_chk(nf90_put_att(vol_ps%io, vol_ps%varid(2), 'actual_range', (/vol_ps%vmin(2), vol_ps%vmax(2)/)))
+    call nc_chk(nf90_put_att(vol_ps%io, vol_ps%varid(3), 'actual_range', (/vol_ps%vmin(3), vol_ps%vmax(3)/)))
+    call nc_chk(nf90_put_att(vol_ps%io, vol_ps%varid(4), 'actual_range', (/vol_ps%vmin(4), vol_ps%vmax(4)/)))
+    call nc_chk(nf90_enddef(vol_ps%io))
+
+    deallocate(sbuf)
+end subroutine wbuf_vol_ps
+
+subroutine unpack_block4(is0L,is1L,js0L,js1L,ks0L,ks1L, sbuf, g1, g2, g3, g4)
+    integer, intent(in) :: is0L,is1L,js0L,js1L,ks0L,ks1L
+    real(SP), intent(in) :: sbuf(:)
+    real(SP), intent(inout) :: g1(nxs,nys,nzs), g2(nxs,nys,nzs), g3(nxs,nys,nzs), g4(nxs,nys,nzs)
+
+    integer :: ii,jj,kk, nxL,nyL,nzL, nloc, r
+
+    nxL = is1L - is0L + 1
+    nyL = js1L - js0L + 1
+    nzL = ks1L - ks0L + 1
+    nloc = nxL*nyL*nzL
+
+    do kk = ks0L, ks1L
+        do jj = js0L, js1L
+            do ii = is0L, is1L
+                r = ( (kk-ks0L)*nxL*nyL + (jj-js0L)*nxL + (ii-is0L) ) + 1
+                g1(ii,jj,kk) = sbuf(0*nloc + r)
+                g2(ii,jj,kk) = sbuf(1*nloc + r)
+                g3(ii,jj,kk) = sbuf(2*nloc + r)
+                g4(ii,jj,kk) = sbuf(3*nloc + r)
+            end do
+        end do
+    end do
+end subroutine unpack_block4
+
+subroutine unpack_block(is0L,is1L,js0L,js1L,ks0L,ks1L, sbuf, gVx, gVy, gVz)
+    integer, intent(in) :: is0L,is1L,js0L,js1L,ks0L,ks1L
+    real(SP), intent(in) :: sbuf(:)
+    real(SP), intent(inout) :: gVx(nxs,nys,nzs), gVy(nxs,nys,nzs), gVz(nxs,nys,nzs)
+
+    integer :: ii,jj,kk, nxL,nyL,nzL, nloc, r
+
+    nxL = is1L - is0L + 1
+    nyL = js1L - js0L + 1
+    nzL = ks1L - ks0L + 1
+    nloc = nxL*nyL*nzL
+
+    do kk = ks0L, ks1L
+        do jj = js0L, js1L
+            do ii = is0L, is1L
+                r = ( (kk-ks0L)*nxL*nyL + (jj-js0L)*nxL + (ii-is0L) ) + 1
+                gVx(ii,jj,kk) = sbuf(0*nloc + r)
+                gVy(ii,jj,kk) = sbuf(1*nloc + r)
+                gVz(ii,jj,kk) = sbuf(2*nloc + r)
+            end do
+        end do
+    end do
+end subroutine unpack_block
+
+subroutine wbuf_vol_med_once()
+    integer :: ii, jj, kk, i, j, k
+    integer :: r, err
+    integer :: hdr_i(6)
+    integer :: nxL, nyL, nzL, nloc
+    real(SP), allocatable :: sbuf(:)
+    real(SP), allocatable, save :: gR(:,:,:), gL(:,:,:), gM(:,:,:)
+
+    if (snp_format /= 'netcdf') return
+    if (.not. vol_v%sw) return
+
+    ! local decimated block size in snapshot-index space (ii,jj,kk)
+    nxL = is1 - is0 + 1
+    nyL = js1 - js0 + 1
+    nzL = ks1 - ks0 + 1
+    nloc = nxL * nyL * nzL
+
+    allocate(sbuf(3*nloc), source=0.0_SP)
+
+    ! pack local rho/lam/mu at decimated points (i-fast, then j, then k)
+    do kk = ks0, ks1
+        do jj = js0, js1
+            do ii = is0, is1
+                k = kk * kdec - kdec/2
+                j = jj * jdec - jdec/2
+                i = ii * idec - idec/2
+
+                r = ( (kk-ks0)*nxL*nyL + (jj-js0)*nxL + (ii-is0) ) + 1
+
+                sbuf(0*nloc + r) = rho(k,i,j)
+                sbuf(1*nloc + r) = lam(k,i,j)
+                sbuf(2*nloc + r) = mu(k,i,j)
+            end do
+        end do
+    end do
+
+    ! non-ionode: send to ionode and return
+    if (myid /= vol_v%ionode) then
+        hdr_i = (/is0,is1, js0,js1, ks0,ks1/)
+        call mpi_send(hdr_i, 6, MPI_INTEGER, vol_v%ionode, 910, mpi_comm_world, err)
+        call mpi_send(sbuf, 3*nloc, MPI_REAL,    vol_v%ionode, 911, mpi_comm_world, err)
+        deallocate(sbuf)
+        return
+    end if
+
+    ! ionode: allocate global arrays once
+    if (.not. allocated(gR)) then
+        allocate(gR(nxs,nys,nzs), source=0.0_SP)
+        allocate(gL(nxs,nys,nzs), source=0.0_SP)
+        allocate(gM(nxs,nys,nzs), source=0.0_SP)
+    end if
+
+    gR = 0.0_SP; gL = 0.0_SP; gM = 0.0_SP
+
+    ! place my own block
+    call unpack_block_med(is0,is1,js0,js1,ks0,ks1, sbuf, gR, gL, gM)
+
+    ! receive from others
+    do r = 0, nproc-1
+        if (r == vol_v%ionode) cycle
+
+        call mpi_recv(hdr_i, 6, MPI_INTEGER, r, 910, mpi_comm_world, MPI_STATUS_IGNORE, err)
+
+        nxL = hdr_i(2) - hdr_i(1) + 1
+        nyL = hdr_i(4) - hdr_i(3) + 1
+        nzL = hdr_i(6) - hdr_i(5) + 1
+        nloc = nxL*nyL*nzL
+
+        deallocate(sbuf)
+        allocate(sbuf(3*nloc), source=0.0_SP)
+
+        call mpi_recv(sbuf, 3*nloc, MPI_REAL, r, 911, mpi_comm_world, MPI_STATUS_IGNORE, err)
+
+        call unpack_block_med(hdr_i(1),hdr_i(2),hdr_i(3),hdr_i(4),hdr_i(5),hdr_i(6), sbuf, gR, gL, gM)
+    end do
+
+    ! write to netcdf once (rho/lambda/mu are appended after time vars)
+    call nc_chk(nf90_put_var(vol_v%io, vol_v%varid(vol_v%nsnp+1), gR))
+    call nc_chk(nf90_put_var(vol_v%io, vol_v%varid(vol_v%nsnp+2), gL))
+    call nc_chk(nf90_put_var(vol_v%io, vol_v%varid(vol_v%nsnp+3), gM))
+    call nc_chk(nf90_sync(vol_v%io))
+
+    deallocate(sbuf)
+end subroutine wbuf_vol_med_once
+
+
+subroutine unpack_block_med(is0L,is1L,js0L,js1L,ks0L,ks1L, sbuf, gR, gL, gM)
+    integer, intent(in) :: is0L,is1L,js0L,js1L,ks0L,ks1L
+    real(SP), intent(in) :: sbuf(:)
+    real(SP), intent(inout) :: gR(nxs,nys,nzs), gL(nxs,nys,nzs), gM(nxs,nys,nzs)
+
+    integer :: ii,jj,kk, nxL,nyL,nzL, nloc, r
+
+    nxL = is1L - is0L + 1
+    nyL = js1L - js0L + 1
+    nzL = ks1L - ks0L + 1
+    nloc = nxL*nyL*nzL
+
+    do kk = ks0L, ks1L
+        do jj = js0L, js1L
+            do ii = is0L, is1L
+                r = ( (kk-ks0L)*nxL*nyL + (jj-js0L)*nxL + (ii-is0L) ) + 1
+                gR(ii,jj,kk) = sbuf(0*nloc + r)
+                gL(ii,jj,kk) = sbuf(1*nloc + r)
+                gM(ii,jj,kk) = sbuf(2*nloc + r)
+            end do
+        end do
+    end do
+end subroutine unpack_block_med
+
+subroutine wbuf_vol_med_once_hdr(hdr)
+    type(snp), intent(in) :: hdr
+
+    integer :: ii, jj, kk, i, j, k
+    integer :: r, err
+    integer :: hdr_i(6)
+    integer :: nxL, nyL, nzL, nloc
+    real(SP), allocatable :: sbuf(:)
+    real(SP), allocatable, save :: gR(:,:,:), gL(:,:,:), gM(:,:,:)
+
+    if (snp_format /= 'netcdf') return
+
+    nxL = is1 - is0 + 1
+    nyL = js1 - js0 + 1
+    nzL = ks1 - ks0 + 1
+    nloc = nxL * nyL * nzL
+
+    allocate(sbuf(3*nloc), source=0.0_SP)
+
+    do kk = ks0, ks1
+        do jj = js0, js1
+            do ii = is0, is1
+                k = kk * kdec - kdec/2
+                j = jj * jdec - jdec/2
+                i = ii * idec - idec/2
+                r = ( (kk-ks0)*nxL*nyL + (jj-js0)*nxL + (ii-is0) ) + 1
+                sbuf(0*nloc + r) = rho(k,i,j)
+                sbuf(1*nloc + r) = lam(k,i,j)
+                sbuf(2*nloc + r) = mu(k,i,j)
+            end do
+        end do
+    end do
+
+    if (myid /= hdr%ionode) then
+        hdr_i = (/is0,is1, js0,js1, ks0,ks1/)
+        call mpi_send(hdr_i, 6, MPI_INTEGER, hdr%ionode, 910, mpi_comm_world, err)
+        call mpi_send(sbuf, 3*nloc, MPI_REAL,    hdr%ionode, 911, mpi_comm_world, err)
+        deallocate(sbuf)
+        return
+    end if
+
+    if (.not. allocated(gR)) then
+        allocate(gR(nxs,nys,nzs), source=0.0_SP)
+        allocate(gL(nxs,nys,nzs), source=0.0_SP)
+        allocate(gM(nxs,nys,nzs), source=0.0_SP)
+    end if
+
+    gR = 0.0_SP; gL = 0.0_SP; gM = 0.0_SP
+    call unpack_block_med(is0,is1,js0,js1,ks0,ks1, sbuf, gR, gL, gM)
+
+    do r = 0, nproc-1
+        if (r == hdr%ionode) cycle
+        call mpi_recv(hdr_i, 6, MPI_INTEGER, r, 910, mpi_comm_world, MPI_STATUS_IGNORE, err)
+        nxL = hdr_i(2) - hdr_i(1) + 1
+        nyL = hdr_i(4) - hdr_i(3) + 1
+        nzL = hdr_i(6) - hdr_i(5) + 1
+        nloc = nxL*nyL*nzL
+        deallocate(sbuf)
+        allocate(sbuf(3*nloc), source=0.0_SP)
+        call mpi_recv(sbuf, 3*nloc, MPI_REAL, r, 911, mpi_comm_world, MPI_STATUS_IGNORE, err)
+        call unpack_block_med(hdr_i(1),hdr_i(2),hdr_i(3),hdr_i(4),hdr_i(5),hdr_i(6), sbuf, gR, gL, gM)
+    end do
+
+    call nc_chk(nf90_put_var(hdr%io, hdr%varid(hdr%nsnp+1), gR))
+    call nc_chk(nf90_put_var(hdr%io, hdr%varid(hdr%nsnp+2), gL))
+    call nc_chk(nf90_put_var(hdr%io, hdr%varid(hdr%nsnp+3), gM))
+    call nc_chk(nf90_sync(hdr%io))
+
+    deallocate(sbuf)
+end subroutine wbuf_vol_med_once_hdr
+
+end module m_snap

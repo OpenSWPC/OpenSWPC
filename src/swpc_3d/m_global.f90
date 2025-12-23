@@ -32,6 +32,7 @@ module m_global
     integer, parameter, public :: NBD = 9                                      !< Number of boundary depths to be memorized
 
     real(MP), allocatable, public :: Vx(:,:,:), Vy(:,:,:), Vz(:,:,:)           !< velocity components
+    real(MP), allocatable, public :: Ux3(:,:,:), Uy3(:,:,:), Uz3(:,:,:)           !< displacement components
     real(MP), allocatable, public :: Sxx(:,:,:), Syy(:,:,:), Szz(:,:,:)        !< normal stress components
     real(MP), allocatable, public :: Syz(:,:,:), Sxz(:,:,:), Sxy(:,:,:)        !< shear  stress components
     real(SP), allocatable, public :: Rxx(:,:,:,:), Ryy(:,:,:,:), Rzz(:,:,:,:)  !< memory variables: normal components
