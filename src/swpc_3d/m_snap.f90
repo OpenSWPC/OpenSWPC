@@ -263,8 +263,8 @@ contains
         fs_ps%coordinate = 'fs'; fs_v%coordinate = 'fs'; fs_u%coordinate = 'fs';
 
         ! volumetric velocity 
-        vol_v%nsnp = 6
-        vol_v%nmed = 0
+        vol_v%nsnp = 3
+        vol_v%nmed = 3
         vol_v%snaptype  = 'v3'
         vol_v%coordinate = '3d'
         vol_v%vname(1) = 'Vx'; vol_v%vname(2) = 'Vy'; vol_v%vname(3) = 'Vz'
@@ -274,8 +274,8 @@ contains
         vol_v%vname(6)='mu';     vol_v%vunit(6)='10^9 Pa'
 
         ! volumetric displacement
-        vol_u%nsnp = 6
-        vol_u%nmed = 0
+        vol_u%nsnp = 3
+        vol_u%nmed = 3
         vol_u%snaptype  = 'u3'
         vol_u%coordinate = '3d'
         vol_u%vname(1) = 'Ux'; vol_u%vname(2) = 'Uy'; vol_u%vname(3) = 'Uz'
@@ -291,6 +291,9 @@ contains
         vol_ps%coordinate = '3d'
         vol_ps%vname(1) = 'div'; vol_ps%vname(2) = 'rot_x'; vol_ps%vname(3) = 'rot_y'; vol_ps%vname(4) = 'rot_z'
         vol_ps%vunit(1) = '1/s'; vol_ps%vunit(2) = '1/s'; vol_ps%vunit(3) = '1/s'; vol_ps%vunit(4) = '1/s'
+        vol_ps%vname(5)='rho';    vol_ps%vunit(5)='10^3 kg/cm^3'
+        vol_ps%vname(6)='lambda'; vol_ps%vunit(6)='10^9 Pa'
+        vol_ps%vname(7)='mu';     vol_ps%vunit(7)='10^9 Pa'
 
         !! output settings
         if (snp_format == 'native') then
@@ -338,14 +341,16 @@ contains
 
         end if
 
-        if (vol_v%sw .and. myid == 0) then
-            write(error_unit,*) 'vol_v%sw requires snp_format = netcdf'
-        end if
-        if (vol_u%sw .and. myid == 0) then
-            write(error_unit,*) 'vol_u%sw requires snp_format = netcdf'
-        end if
-        if (vol_ps%sw .and. myid == 0) then
-            write(error_unit,*) 'vol_ps%sw requires snp_format = netcdf'
+        if (snp_format /= 'netcdf') then
+            if (vol_v%sw .and. myid == 0) then
+                write(error_unit,*) 'vol_v%sw requires snp_format = netcdf'
+            end if
+            if (vol_u%sw .and. myid == 0) then
+                write(error_unit,*) 'vol_u%sw requires snp_format = netcdf'
+            end if
+            if (vol_ps%sw .and. myid == 0) then
+                write(error_unit,*) 'vol_ps%sw requires snp_format = netcdf'
+            end if
         end if
 
         !! for taking derivatives
