@@ -245,7 +245,7 @@ contains
             do i = ibeg, iend
 
                 kfs_top(i) = max(minval(kfs(i - 2:i + 3)) - 2, kbeg)
-                kfs_top(i) = min(maxval(kfs(i - 2:i + 3)) + 2, kend)
+                kfs_bot(i) = min(maxval(kfs(i - 2:i + 3)) + 2, kend)
 
                 kob_top(i) = max(minval(kob(i - 2:i + 3)) - 2, kbeg)
                 kob_bot(i) = min(maxval(kob(i - 2:i + 3)) + 2, kend)
