@@ -148,10 +148,10 @@ contains
         real(SP), intent(out) :: memsize_all  !! total memory size in GB
         real(SP), intent(out) :: memsize_node !! average in-node memory size in GB
 
-        real(SP) :: rn_int, rn_abc
+        real(SP) :: rn_mem, rn_abc
         real(SP) :: b_med, b_vel, b_stress, b_mem, b_abc
         integer :: nproc
-        real(SP) :: ba_int, ba_abc, ba_com
+        real(SP) :: ba_mem, ba_abc, ba_com
         integer :: nxpm, nypm, nzpm, nxp, nyp
         real(SP) :: rn_com
 
@@ -166,8 +166,8 @@ contains
 
         ! mesh number ( in real, for avoiding integer overflow )
         rn_com = real(nxpm * nproc_x) * real(nypm * nproc_y) * nzpm
-        rn_int = real(nx - 2 * na) * real(ny - 2 * na) * real(nz - na)
-        rn_abc = real(nx) * real(ny) * real(nz) - real(nx - 2 * nxp) * real(ny - 2 * nyp) * real(nz - na)
+        rn_abc = real(nx) * real(ny) * real(nz)
+        rn_mem = real(nx) * real(ny) * real(nz) 
 
         ! byte per mesh
         b_med = 5 * SP         ! rho, lam, mu, taup, taus
@@ -178,10 +178,10 @@ contains
         b_abc = 18 * SP
 
         ba_com = (b_med + b_vel + b_stress) * rn_com
-        ba_int = (b_mem) * rn_int
+        ba_mem = (b_mem) * rn_mem
         ba_abc = (b_abc) * rn_abc
 
-        memsize_all = (ba_com + ba_int + ba_abc) / (1024.)**3
+        memsize_all = (ba_com + ba_mem + ba_abc) / (1024.)**3
         memsize_node = memsize_all / nproc
 
     end subroutine memory_size_3d
@@ -198,9 +198,9 @@ contains
         real(SP), intent(out) :: memsize_all  !! total memory size in GB
         real(SP), intent(out) :: memsize_node !! average in-node memory size in GB
 
-        real(SP) :: rn_int, rn_abc
+        real(SP) :: rn_mem, rn_abc
         real(SP) :: b_med, b_vel, b_stress, b_mem, b_abc
-        real(SP) :: ba_int, ba_abc, ba_com
+        real(SP) :: ba_mem, ba_abc, ba_com
         integer  :: nxpm, nzpm, nxp
         real(SP) :: rn_com
 
@@ -211,8 +211,8 @@ contains
 
         !! mesh number ( in real, for avoiding integer overflow )
         rn_com = real(nxpm * nproc) * nzpm
-        rn_int = real(nx - 2 * na) * real(nz - na)
-        rn_abc = real(nx) * real(nz) - real(nx - 2 * nxp) * real(nz - na)
+        rn_mem = real(nx) * real(nz)
+        rn_abc = real(nx) * real(nz)
 
         !! byte per mesh
         b_med = 5 * SP
@@ -223,10 +223,10 @@ contains
         b_abc = 4 * SP
 
         ba_com = (b_med + b_vel + b_stress) * rn_com
-        ba_int = (b_mem) * rn_int
+        ba_mem = (b_mem) * rn_mem
         ba_abc = (b_abc) * rn_abc
 
-        memsize_all = (ba_com + ba_int + ba_abc) / (1024.)**3
+        memsize_all = (ba_com + ba_mem + ba_abc) / (1024.)**3
         memsize_node = memsize_all / nproc
 
     end subroutine memory_size_sh
@@ -244,9 +244,9 @@ contains
         real(SP), intent(out) :: memsize_all  !! total memory size in GB
         real(SP), intent(out) :: memsize_node !! average in-node memory size in GB
 
-        real(SP) :: rn_int, rn_abc
+        real(SP) :: rn_mem, rn_abc
         real(SP) :: b_med, b_vel, b_stress, b_mem, b_abc
-        real(SP) :: ba_int, ba_abc, ba_com
+        real(SP) :: ba_mem, ba_abc, ba_com
         integer  :: nxpm, nzpm, nxp
         real(SP) :: rn_com
 
@@ -257,8 +257,8 @@ contains
 
         ! mesh number ( in real, for avoiding integer overflow )
         rn_com = real(nxpm * nproc) * nzpm
-        rn_int = real(nx - 2 * na) * real(nz - na)
-        rn_abc = real(nx) * real(nz) - real(nx - 2 * nxp) * real(nz - na)
+        rn_mem = real(nx) * real(nz)
+        rn_abc = real(nx) * real(nz) 
 
         ! byte per mesh
         b_med = 5 * SP
@@ -269,10 +269,10 @@ contains
         b_abc = 8 * SP
 
         ba_com = (b_med + b_vel + b_stress) * rn_com
-        ba_int = (b_mem) * rn_int
+        ba_mem = (b_mem) * rn_mem
         ba_abc = (b_abc) * rn_abc
 
-        memsize_all = (ba_com + ba_int + ba_abc) / (1024.)**3
+        memsize_all = (ba_com + ba_mem + ba_abc) / (1024.)**3
         memsize_node = memsize_all / nproc
 
     end subroutine memory_size_psv
