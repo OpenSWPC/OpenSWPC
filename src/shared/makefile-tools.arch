@@ -83,6 +83,16 @@ ifeq ($(arch), miyabi-g)
   NETCDF = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5
 endif
 
+# NVIDIA dgx-spark
+ifeq ($(arch), dgx-spark)
+  FC      = nvfortran
+  FFLAGS  = -fast -Minfo=all -Mconcur -cpp -mp 
+  NCLIB   = -L/opt/netcdf-nv/lib \
+            -Wl,-rpath,/opt/netcdf-nv/lib
+  NCINC   = -I/opt/netcdf-nv/include
+  NETCDF  = -lnetcdff -lnetcdf
+endif
+
 
 ### 
 ### Obsolete systems

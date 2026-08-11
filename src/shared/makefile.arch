@@ -106,6 +106,17 @@ ifeq ($(arch), miyabi-c)
 endif
 
 
+# NVIDIA dgx-spark
+ifeq ($(arch), dgx-spark)
+  FC      = mpifort
+  FFLAGS  = -fast -Minfo=all -acc -cpp -mp \
+            -gpu=cc121,mem:unified
+  NCLIB   = -L/opt/netcdf-nv/lib \
+            -Wl,-rpath,/opt/netcdf-nv/lib
+  NCINC   = -I/opt/netcdf-nv/include
+  NETCDF  = -lnetcdff -lnetcdf
+endif
+
 
 ###
 ### Obsolete systems
