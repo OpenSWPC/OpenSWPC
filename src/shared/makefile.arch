@@ -88,11 +88,11 @@ endif
 
 # Miyabi GPU supercomputer of the University of Tokyo
 ifeq ($(arch), miyabi-g)
-  FC = module purge; module load nvidia nv-hpcx netcdf hdf5 netcdf-fortran; mpifort
-  FFLAGS = -fast -Minfo=all -acc -cpp -gpu=cc90 -mp
-  NCLIB = 
-  NCINC = -I /work/opt/local/aarch64/apps/nvidia/24.9/netcdf-fortran/4.6.1/include
-  NETCDF = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5
+  FC := module purge; module load nvidia nv-hpcx netcdf hdf5 netcdf-fortran; mpifort
+  FFLAGS := -fast -Minfo=all -acc -cpp -gpu=cc90 -mp
+  NCLIB := 
+  NCINC := -I$(shell module purge; module load nvidia netcdf-fortran; nf-config --includedir)
+  NETCDF := $(shell module purge; module load nvidia netcdf-fortran; nf-config --flibs)
 endif
 
 # Miyabi CPU node of the University of Tokyo
@@ -111,10 +111,9 @@ ifeq ($(arch), dgx-spark)
   FC      = mpifort
   FFLAGS  = -fast -Minfo=all -acc -cpp -mp \
             -gpu=cc121,mem:unified
-  NCLIB   = -L/opt/netcdf-nv/lib \
-            -Wl,-rpath,/opt/netcdf-nv/lib
-  NCINC   = -I/opt/netcdf-nv/include
-  NETCDF  = -lnetcdff -lnetcdf
+  NCLIB   = -Wl,-rpath,$(shell nf-config --prefix)/lib
+  NCINC   = -I$(shell nf-config --includedir)
+  NETCDF  = $(shell nf-config --flibs)
 endif
 
 
