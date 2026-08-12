@@ -1024,10 +1024,10 @@ contains
                                 - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
             
                     !! masking
-                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
-                    rot_x = rot_x * abs(Syz(k,i,j)) / abs(Syz(k,i,j) + epsilon(1.0))
-                    rot_y = rot_y * abs(Sxz(k,i,j)) / abs(Sxz(k,i,j) + epsilon(1.0))
-                    rot_z = rot_z * abs(Sxy(k,i,j)) / abs(Sxy(k,i,j) + epsilon(1.0))
+                    div = div * lam(k,i,j) / (abs(lam(k,i,j)) + epsilon(1.0))
+                    rot_x = rot_x * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0))
+                    rot_y = rot_y * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0))
+                    rot_z = rot_z * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0))
 
                     !! dx, dy, dz have km unit. correction for 1e3 factor.
                     buf(jj,kk,1) = div   * UC * M0 * 1e-3
@@ -1117,7 +1117,7 @@ contains
                                 - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
 
                     !! masking
-                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                    div = div * lam(k,i,j) / (abs(lam(k,i,j)) + epsilon(1.0))
                     rot_x = rot_x * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0))
                     rot_y = rot_y * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0))
                     rot_z = rot_z * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0))
@@ -1207,7 +1207,7 @@ contains
                                 - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
 
                     !! masking
-                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                    div = div * lam(k,i,j) / (abs(lam(k,i,j)) + epsilon(1.0))
                     rot_x = rot_x * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0))
                     rot_y = rot_y * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0))
                     rot_z = rot_z * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0))
@@ -1299,7 +1299,7 @@ contains
                                 - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
             
                     !! masking
-                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                    div = div * lam(k,i,j) / (abs(lam(k,i,j)) + epsilon(1.0))
                     rot_x = rot_x * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0))
                     rot_y = rot_y * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0))
                     rot_z = rot_z * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0))
@@ -1390,7 +1390,7 @@ contains
                                 - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
             
                     !! masking
-                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                    div = div * lam(k,i,j) / (abs(lam(k,i,j)) + epsilon(1.0))
                     rot_x = rot_x * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0))
                     rot_y = rot_y * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0))
                     rot_z = rot_z * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0))

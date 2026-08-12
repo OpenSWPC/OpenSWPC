@@ -477,7 +477,7 @@ contains
                            nnn * npn * ppn + pnn * npn * ppn + epsilon(1.0))
 
                     div = div * lam(k, i) / (abs(lam(k, i)) + epsilon(1.0))
-                    rot = rot * mu_xz / abs(mu_xz + epsilon(1.0))
+                    rot = rot * mu_xz / (abs(mu_xz) + epsilon(1.0))
 
                     buf(ii, kk, 1) = div
                     buf(ii, kk, 2) = rot
