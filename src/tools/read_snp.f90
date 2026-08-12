@@ -40,9 +40,7 @@ program read_snp
     call getopt('-version', is_opt2)
     if (is_opt1 .or. is_opt2) call version__display('read_snp')
 
-  !!
-  !! Check Input File
-  !!
+    !! Check Input File
     if (command_argument_count() == 0) then
         call usage_exit()
     end if
@@ -107,7 +105,7 @@ contains
         write (error_unit, *)
         write (error_unit, '(A)') ' read_snp.x -i snapshot [-h] '
         write (error_unit, '(A)') '      [-ppm|-bmp] [-pall] [-mul var | -mul1 var -mul2 var ...] '
-        write (error_unit, '(A)') '      [-abs] [-bin|-asc] [-skip n] [-lpf ng] [-notim]'
+        write (error_unit, '(A)') '      [-abs] [-bin|-asc] [-skip n] [-lpf ng] [-notim] [-color legacy|cud]'
         write (error_unit, *)
         write (error_unit, '(A)') '  -h: display header information to terminal output'
         write (error_unit, '(A)') '  -bmp: output bmp-formatted snapshot figures'
@@ -121,6 +119,7 @@ contains
         write (error_unit, '(A)') '  -skip n: skip first n snapshots for export'
         write (error_unit, '(A)') '  -notim: do not plot elapsed time on the snapshort figures'
         write (error_unit, '(A)') '  -lpf ng: apply spatial low-pass filter with corner grid-width of ng before figure output' 
+        write (error_unit, '(A)') '  -color mode: color scheme for wavefield; legacy (default) or cud (color universal design)'
         write (error_unit, *)
 
         stop
@@ -359,6 +358,9 @@ contains
         integer :: start(3), count(3)
         logical :: no_timemark
         character(3) :: codetype
+        character(8) :: color_mode ! legacy/cud
+        integer, parameter :: CUD_SUB1(3) = (/ 16, 61, 163/)
+        integer, parameter :: CUD_SUB2(3) = (/101, 45,  13/)
         !--
 
         !! Memory allocation
@@ -427,6 +429,15 @@ contains
             is_transpose = .true.
         else
             is_transpose = .false.
+        end if
+
+        !! color mode
+        call getopt('color', is_exist, color_mode, 'legacy')
+
+        if( trim(color_mode) /= 'legacy' .and. trim(color_mode) /= 'cud' ) then
+            write(error_unit, '(A)') 'WARNING [read_snp]: unknown color scheme ' &
+                // trim(color_mode) // ' was specified. Use legacy mode instead. '
+            color_mode = 'legacy'
         end if
 
         !! Medium structure
