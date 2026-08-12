@@ -3,7 +3,7 @@ program read_snp
 
     !! Read snap files from output of swpc, and export to figure
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -40,9 +40,7 @@ program read_snp
     call getopt('-version', is_opt2)
     if (is_opt1 .or. is_opt2) call version__display('read_snp')
 
-  !!
-  !! Check Input File
-  !!
+    !! Check Input File
     if (command_argument_count() == 0) then
         call usage_exit()
     end if
@@ -107,7 +105,8 @@ contains
         write (error_unit, *)
         write (error_unit, '(A)') ' read_snp.x -i snapshot [-h] '
         write (error_unit, '(A)') '      [-ppm|-bmp] [-pall] [-mul var | -mul1 var -mul2 var ...] '
-        write (error_unit, '(A)') '      [-abs] [-bin|-asc] [-skip n] [-lpf ng] [-notim]'
+        write (error_unit, '(A)') '      [-abs] [-bin|-asc] [-skip n] [-lpf ng] [-notim] '
+        write (error_unit, '(A)') '      [-color legacy|cud] [-bgsat n]'
         write (error_unit, *)
         write (error_unit, '(A)') '  -h: display header information to terminal output'
         write (error_unit, '(A)') '  -bmp: output bmp-formatted snapshot figures'
@@ -121,6 +120,8 @@ contains
         write (error_unit, '(A)') '  -skip n: skip first n snapshots for export'
         write (error_unit, '(A)') '  -notim: do not plot elapsed time on the snapshort figures'
         write (error_unit, '(A)') '  -lpf ng: apply spatial low-pass filter with corner grid-width of ng before figure output' 
+        write (error_unit, '(A)') '  -color mode: color scheme for wavefield; legacy (default) or cud (color universal design)'
+        write (error_unit, '(A)') '  -bgsat n: background color saturation (0=grayscale, 100=original; default=100)'
         write (error_unit, *)
 
         stop
@@ -359,6 +360,14 @@ contains
         integer :: start(3), count(3)
         logical :: no_timemark
         character(3) :: codetype
+        character(8) :: color_mode ! legacy/cud
+!        integer, parameter :: CUD_SUB1(3) = (/  0, 35, 180/)
+!        integer, parameter :: CUD_SUB2(3) = (/130, 20,  0/)
+        integer, parameter :: CUD_SUB1(3) = (/  25, 96, 255 /)
+        integer, parameter :: CUD_SUB2(3) = (/ 169, 75,  22 /)        
+        integer :: bgsat ! background color saturation
+        integer :: gray
+        real :: sat
         !--
 
         !! Memory allocation
@@ -427,6 +436,22 @@ contains
             is_transpose = .true.
         else
             is_transpose = .false.
+        end if
+
+        !! color mode
+        call getopt('color', is_exist, color_mode, 'legacy')
+
+        if( trim(color_mode) /= 'legacy' .and. trim(color_mode) /= 'cud' ) then
+            write(error_unit, '(A)') 'WARNING [read_snp]: unknown color scheme ' &
+                // trim(color_mode) // ' was specified. Use legacy mode instead. '
+            color_mode = 'legacy'
+        end if
+
+        !! background color saturation
+        call getopt('bgsat', is_exist, bgsat, 100)
+        if (bgsat < 0 .or. bgsat > 100) then
+            write(error_unit, '(A)') 'WARNING [read_snp]: -bgsat option must be between 0 and 100. '
+            bgsat = max(0, min(100, bgsat))
         end if
 
         !! Medium structure
@@ -518,6 +543,22 @@ contains
 
         end if
 
+        !! background color saturation
+        if( bgsat < 100 ) then
+            sat = real(bgsat) / 100.
+            do j=1, ny
+                do i=1, nx
+                    ! RGB -> Gray
+                    gray = nint( 0.2126 * cmed(1,i,j) &
+                               + 0.7152 * cmed(2,i,j) &
+                               + 0.0722 * cmed(3,i,j) )
+
+                    ! linear interp. between RGB and Gray
+                    cmed(:,i,j) = nint( (1 - sat) * gray + sat * cmed(:,i,j) )
+                end do 
+            end do
+        end if
+
         allocate (amp(hdr%nsnp, nx, ny))
         if (is_transpose) then
             allocate (img(3, nys, nxs))
@@ -604,9 +645,16 @@ contains
                         div = abs(amp(1, i, j))
                         rot = sqrt(sum(amp(2:hdr%nsnp, i, j)**2)) ! include psv and 3D
 
-                        img(1, ii, jj) = cmed(1, i, j) - int(255 * rot) / 4
-                        img(2, ii, jj) = cmed(2, i, j) - int(255 * div) / 2
-                        img(3, ii, jj) = cmed(3, i, j) - int(255 * (div + rot)) / 3
+                        if (trim(color_mode) == 'cud') then
+                            img(:, ii, jj) = cmed(:, i, j) &
+                                           - int(div * CUD_SUB1(:)) &
+                                           - int(rot * CUD_SUB2(:))
+                        else
+                            !! color_mode = 'legacy' (default)
+                            img(1, ii, jj) = cmed(1, i, j) - int(255 * rot) / 4
+                            img(2, ii, jj) = cmed(2, i, j) - int(255 * div) / 2
+                            img(3, ii, jj) = cmed(3, i, j) - int(255 * (div + rot)) / 3
+                        end if
 
                     else if (hdr%datatype == "v3" .or. hdr%datatype == "u3") then
 
@@ -625,10 +673,16 @@ contains
                             ud = abs(amp(3, i, j))
                             horiz = sqrt(amp(1, i, j)**2 + amp(2, i, j)**2)
 
-                            img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
-                            img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
-                            img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
-
+                            if (trim(color_mode) == 'cud') then
+                                img(:, ii, jj) = cmed(:, i, j) &
+                                            - int(ud    * CUD_SUB1(:)) &
+                                            - int(horiz * CUD_SUB2(:))
+                            else
+                                !! color_mode = 'legacy' (default)
+                                img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
+                                img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
+                                img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
+                            end if
                         end if
 
                     else if (hdr%datatype == "v2" .or. hdr%datatype == "u2") then
@@ -648,10 +702,16 @@ contains
                             ud = abs(amp(2, i, j))
                             horiz = abs(amp(1, i, j))
 
-                            img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
-                            img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
-                            img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
-
+                            if (color_mode == 'cud') then
+                                img(:, ii, jj) = cmed(:, i, j) &
+                                            - int(ud    * CUD_SUB1(:)) &
+                                            - int(horiz * CUD_SUB2(:))
+                            else
+                                !! color_mode = 'legacy' (default)
+                                img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
+                                img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
+                                img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
+                            end if
                         end if
 
                     else if (hdr%datatype == "vy" .or. hdr%datatype == "uy") then
@@ -659,10 +719,16 @@ contains
                         ud = 0
                         horiz = abs(amp(1, i, j))
 
-                        img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
-                        img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
-                        img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
-
+                            if (color_mode == 'cud') then
+                                img(:, ii, jj) = cmed(:, i, j) &
+                                            - int(ud    * CUD_SUB1(:)) &
+                                            - int(horiz * CUD_SUB2(:))
+                            else
+                                !! color_mode = 'legacy' (default)
+                                img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
+                                img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
+                                img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
+                            end if
                     end if
 
                     ! normalize

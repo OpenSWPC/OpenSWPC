@@ -3,7 +3,7 @@ module m_medium
 
     !! Set-up medium velocity/attenuation structure
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -239,7 +239,7 @@ contains
             do i = ibeg, iend
 
                 kfs_top(i) = max(minval(kfs(i - 2:i + 3)) - 2, kbeg)
-                kfs_top(i) = min(maxval(kfs(i - 2:i + 3)) + 2, kend)
+                kfs_bot(i) = min(maxval(kfs(i - 2:i + 3)) + 2, kend)
 
                 kob_top(i) = max(minval(kob(i - 2:i + 3)) - 2, kbeg)
                 kob_bot(i) = min(maxval(kob(i - 2:i + 3)) + 2, kend)
