@@ -16,6 +16,7 @@ module m_medium
     use m_vmodel_lhm
     use m_vmodel_lgm
     use m_vmodel_user
+    use m_vmodel_ggm
     use m_vmodel_uni_rmed
     use m_vmodel_grd_rmed
     use m_vmodel_lhm_rmed
@@ -95,6 +96,9 @@ contains
             case ('grd')
                 call vmodel_grd(io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
                                 rho, lam, mu, taup, taus, bddep)
+            case ('ggm')
+                call vmodel_ggm(io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
+                                rho, lam, mu, taup, taus, bddep)
             case ('lhm')
                 call vmodel_lhm(io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
                                 rho, lam, mu, taup, taus, bddep)
@@ -126,11 +130,11 @@ contains
             !$omp parallel do private(j,k)
             do j = jbeg_m, jend_m
                 do k = kbeg_m, kend_m
-                    rho(k, i, j) = rho(k, na + 1, j)
-                    lam(k, i, j) = lam(k, na + 1, j)
-                    mu(k, i, j) = mu(k, na + 1, j)
-                    taup(k, i, j) = taup(k, na + 1, j)
-                    taus(k, i, j) = taus(k, na + 1, j)
+                    rho (k,i,j) = rho (k,na+1,j)
+                    lam (k,i,j) = lam (k,na+1,j)
+                    mu  (k,i,j) = mu  (k,na+1,j)
+                    taup(k,i,j) = taup(k,na+1,j)
+                    taus(k,i,j) = taus(k,na+1,j)
                 end do
             end do
             !$omp end parallel do
@@ -139,11 +143,11 @@ contains
             !$omp parallel do private(j,k)
             do j = jbeg_m, jend_m
                 do k = kbeg_m, kend_m
-                    rho(k, i, j) = rho(k, nx - na, j)
-                    lam(k, i, j) = lam(k, nx - na, j)
-                    mu(k, i, j) = mu(k, nx - na, j)
-                    taup(k, i, j) = taup(k, nx - na, j)
-                    taus(k, i, j) = taus(k, nx - na, j)
+                    rho (k,i,j) = rho (k,nx-na,j)
+                    lam (k,i,j) = lam (k,nx-na,j)
+                    mu  (k,i,j) = mu  (k,nx-na,j)
+                    taup(k,i,j) = taup(k,nx-na,j)
+                    taus(k,i,j) = taus(k,nx-na,j)
                 end do
             end do
             !$omp end parallel do
