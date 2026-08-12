@@ -52,11 +52,14 @@ endif
 
 ## gfortran, netcdf for M1 Mac (with homebrew)
 ifeq ($(arch),mac-m1)
+arch=apple
+endif
+ifeq ($(arch),apple)
 
   FC      = mpif90
   FFLAGS  = -O2 -ffast-math -fopenmp -cpp -std=f2018 -Werror=line-truncation
-  NCLIB   := -Wl,-rpath,$(shell nf-config --prefix)/lib
-  NCINC   := -I$(shell nf-config --includedir)
+  NCLIB   := -L/opt/homebrew/lib
+  NCINC   := -I/opt/homebrew/include
   NETCDF  := $(shell nf-config --flibs)
 
   ifeq ($(debug),true)

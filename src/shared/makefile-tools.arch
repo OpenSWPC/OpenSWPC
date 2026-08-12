@@ -44,11 +44,14 @@ endif
 
 ## Apple Silicon macOS gfortran and netcdf provided by homebrew
 ifeq ($(arch),mac-m1)
+arch=apple
+endif
+ifeq ($(arch),apple)
 
   FC      = gfortran
   FFLAGS  = -O2 -ffast-math -D_INFO -cpp -std=f2018 
-  NCLIB   := -Wl,-rpath,$(shell nf-config --prefix)/lib
-  NCINC   := -I$(shell nf-config --includedir)
+  NCLIB   := -L/opt/homebrew/lib
+  NCINC   := -I/opt/homebrew/include
   NETCDF  := $(shell nf-config --flibs)
 
   ifeq ($(debug),true)
