@@ -105,7 +105,8 @@ contains
         write (error_unit, *)
         write (error_unit, '(A)') ' read_snp.x -i snapshot [-h] '
         write (error_unit, '(A)') '      [-ppm|-bmp] [-pall] [-mul var | -mul1 var -mul2 var ...] '
-        write (error_unit, '(A)') '      [-abs] [-bin|-asc] [-skip n] [-lpf ng] [-notim] [-color legacy|cud]'
+        write (error_unit, '(A)') '      [-abs] [-bin|-asc] [-skip n] [-lpf ng] [-notim] '
+        write (error_unit, '(A)') '      [-color legacy|cud] [-bgsat n]'
         write (error_unit, *)
         write (error_unit, '(A)') '  -h: display header information to terminal output'
         write (error_unit, '(A)') '  -bmp: output bmp-formatted snapshot figures'
@@ -120,6 +121,7 @@ contains
         write (error_unit, '(A)') '  -notim: do not plot elapsed time on the snapshort figures'
         write (error_unit, '(A)') '  -lpf ng: apply spatial low-pass filter with corner grid-width of ng before figure output' 
         write (error_unit, '(A)') '  -color mode: color scheme for wavefield; legacy (default) or cud (color universal design)'
+        write (error_unit, '(A)') '  -bgsat n: background color saturation (0=grayscale, 100=original; default=100)'
         write (error_unit, *)
 
         stop
@@ -359,8 +361,13 @@ contains
         logical :: no_timemark
         character(3) :: codetype
         character(8) :: color_mode ! legacy/cud
-        integer, parameter :: CUD_SUB1(3) = (/ 16, 61, 163/)
-        integer, parameter :: CUD_SUB2(3) = (/101, 45,  13/)
+!        integer, parameter :: CUD_SUB1(3) = (/  0, 35, 180/)
+!        integer, parameter :: CUD_SUB2(3) = (/130, 20,  0/)
+        integer, parameter :: CUD_SUB1(3) = (/  25, 96, 255 /)
+        integer, parameter :: CUD_SUB2(3) = (/ 169, 75,  22 /)        
+        integer :: bgsat ! background color saturation
+        integer :: gray
+        real :: sat
         !--
 
         !! Memory allocation
@@ -438,6 +445,13 @@ contains
             write(error_unit, '(A)') 'WARNING [read_snp]: unknown color scheme ' &
                 // trim(color_mode) // ' was specified. Use legacy mode instead. '
             color_mode = 'legacy'
+        end if
+
+        !! background color saturation
+        call getopt('bgsat', is_exist, bgsat, 100)
+        if (bgsat < 0 .or. bgsat > 100) then
+            write(error_unit, '(A)') 'WARNING [read_snp]: -bgsat option must be between 0 and 100. '
+            bgsat = max(0, min(100, bgsat))
         end if
 
         !! Medium structure
@@ -527,6 +541,22 @@ contains
             medium_bound(:, 1) = medium_bound(:, 2)
             medium_bound(:, ny) = medium_bound(:, ny - 1)
 
+        end if
+
+        !! background color saturation
+        if( bgsat < 100 ) then
+            sat = real(bgsat) / 100.
+            do j=1, ny
+                do i=1, nx
+                    ! RGB -> Gray
+                    gray = nint( 0.2126 * cmed(1,i,j) &
+                               + 0.7152 * cmed(2,i,j) &
+                               + 0.0722 * cmed(3,i,j) )
+
+                    ! linear interp. between RGB and Gray
+                    cmed(:,i,j) = nint( (1 - sat) * gray + sat * cmed(:,i,j) )
+                end do 
+            end do
         end if
 
         allocate (amp(hdr%nsnp, nx, ny))
