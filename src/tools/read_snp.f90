@@ -615,9 +615,16 @@ contains
                         div = abs(amp(1, i, j))
                         rot = sqrt(sum(amp(2:hdr%nsnp, i, j)**2)) ! include psv and 3D
 
-                        img(1, ii, jj) = cmed(1, i, j) - int(255 * rot) / 4
-                        img(2, ii, jj) = cmed(2, i, j) - int(255 * div) / 2
-                        img(3, ii, jj) = cmed(3, i, j) - int(255 * (div + rot)) / 3
+                        if (trim(color_mode) == 'cud') then
+                            img(:, ii, jj) = cmed(:, i, j) &
+                                           - int(div * CUD_SUB1(:)) &
+                                           - int(rot * CUD_SUB2(:))
+                        else
+                            !! color_mode = 'legacy' (default)
+                            img(1, ii, jj) = cmed(1, i, j) - int(255 * rot) / 4
+                            img(2, ii, jj) = cmed(2, i, j) - int(255 * div) / 2
+                            img(3, ii, jj) = cmed(3, i, j) - int(255 * (div + rot)) / 3
+                        end if
 
                     else if (hdr%datatype == "v3" .or. hdr%datatype == "u3") then
 
@@ -636,10 +643,16 @@ contains
                             ud = abs(amp(3, i, j))
                             horiz = sqrt(amp(1, i, j)**2 + amp(2, i, j)**2)
 
-                            img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
-                            img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
-                            img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
-
+                            if (trim(color_mode) == 'cud') then
+                                img(:, ii, jj) = cmed(:, i, j) &
+                                            - int(ud    * CUD_SUB1(:)) &
+                                            - int(horiz * CUD_SUB2(:))
+                            else
+                                !! color_mode = 'legacy' (default)
+                                img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
+                                img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
+                                img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
+                            end if
                         end if
 
                     else if (hdr%datatype == "v2" .or. hdr%datatype == "u2") then
@@ -659,10 +672,16 @@ contains
                             ud = abs(amp(2, i, j))
                             horiz = abs(amp(1, i, j))
 
-                            img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
-                            img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
-                            img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
-
+                            if (color_mode == 'cud') then
+                                img(:, ii, jj) = cmed(:, i, j) &
+                                            - int(ud    * CUD_SUB1(:)) &
+                                            - int(horiz * CUD_SUB2(:))
+                            else
+                                !! color_mode = 'legacy' (default)
+                                img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
+                                img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
+                                img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
+                            end if
                         end if
 
                     else if (hdr%datatype == "vy" .or. hdr%datatype == "uy") then
@@ -670,10 +689,16 @@ contains
                         ud = 0
                         horiz = abs(amp(1, i, j))
 
-                        img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
-                        img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
-                        img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
-
+                            if (color_mode == 'cud') then
+                                img(:, ii, jj) = cmed(:, i, j) &
+                                            - int(ud    * CUD_SUB1(:)) &
+                                            - int(horiz * CUD_SUB2(:))
+                            else
+                                !! color_mode = 'legacy' (default)
+                                img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
+                                img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
+                                img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
+                            end if
                     end if
 
                     ! normalize
