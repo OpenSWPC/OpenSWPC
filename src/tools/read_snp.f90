@@ -106,7 +106,7 @@ contains
         write (error_unit, '(A)') ' read_snp.x -i snapshot [-h] '
         write (error_unit, '(A)') '      [-ppm|-bmp] [-pall] [-mul var | -mul1 var -mul2 var ...] '
         write (error_unit, '(A)') '      [-abs] [-bin|-asc] [-skip n] [-lpf ng] [-notim] '
-        write (error_unit, '(A)') '      [-color legacy|cud] [-bgsat n]'
+        write (error_unit, '(A)') '      [-color legacy|cud] [-bgsat n] [-q]'
         write (error_unit, *)
         write (error_unit, '(A)') '  -h: display header information to terminal output'
         write (error_unit, '(A)') '  -bmp: output bmp-formatted snapshot figures'
@@ -122,6 +122,7 @@ contains
         write (error_unit, '(A)') '  -lpf ng: apply spatial low-pass filter with corner grid-width of ng before figure output' 
         write (error_unit, '(A)') '  -color mode: color scheme for wavefield; legacy (default) or cud (color universal design)'
         write (error_unit, '(A)') '  -bgsat n: background color saturation (0=grayscale, 100=original; default=100)'
+        write (error_unit, '(A)') '  -q: quiet mode'
         write (error_unit, *)
 
         stop
@@ -368,6 +369,7 @@ contains
         integer :: bgsat ! background color saturation
         integer :: gray
         real :: sat
+        logical :: quiet_mode
         !--
 
         !! Memory allocation
@@ -453,6 +455,9 @@ contains
             write(error_unit, '(A)') 'WARNING [read_snp]: -bgsat option must be between 0 and 100. '
             bgsat = max(0, min(100, bgsat))
         end if
+
+        !! quiet_mode
+        call getopt('q', quiet_mode)
 
         !! Medium structure
         if (snp_type == 'native') then
@@ -620,7 +625,9 @@ contains
                     //trim(hdr%datatype)//'.'&
                     //cit//'.'//typ
 
-            write (error_unit, *) trim(fn_snp)
+            if (.not. quiet_mode) then
+                write (error_unit, *) trim(fn_snp)
+            end if
 
             do i = 1, hdr%nsnp
                 amp(i, :, :) = mul(i) * abs(amp(i, :, :))
