@@ -44,7 +44,7 @@ module m_global
     logical, public :: pw_mode                                                 !< Plane wave mode
     logical, public :: bf_mode                                                 !< Body force soruce mode
     logical, public :: green_mode                                              !< Green's function computaiton with reciprocity
-    !logical, public :: fullspace_mode
+    logical, public :: fullspace_mode
 
     character(80), public :: title                                             !< execution title, used in filename and headers
     integer, public :: exedate                                                 !< date and time by seconds from 1970/1/1 0:0:0
@@ -155,7 +155,7 @@ contains
             clat = 35.7182
             phi = 0.0
             abc_type = 'pml'
-!      fullspace_mode = .false.
+        fullspace_mode = .false.
         else ! or read from file for regular run
             call readini(io_prm, 'dx', dx, 0.5_mp)
             call readini(io_prm, 'dy', dy, 0.5_mp)
@@ -170,7 +170,7 @@ contains
             call readini(io_prm, 'clat', clat, 35.7182)
             call readini(io_prm, 'phi', phi, 0.0)
             call readini(io_prm, 'abc_type', abc_type, 'pml')
-!      call readini( io_prm, 'fullspace_mode', fullspace_mode, .false. )
+            call readini( io_prm, 'fullspace_mode', fullspace_mode, .false. )
 
         end if
 
@@ -354,7 +354,7 @@ contains
 
         if (abc_type == 'pml') then
 
-!      if( fullspace_mode ) kbeg_k = na + 1
+            if( fullspace_mode ) kbeg_k = na + 1
 
             if (iend <= na) then; ibeg_k = iend+1; ! no kernel integration
             else if (ibeg <= na) then; ibeg_k = na+1; ! pertial kernel

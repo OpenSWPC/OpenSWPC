@@ -84,7 +84,7 @@ contains
 
         !! PML region definition
         kbeg_min = minval(kbeg_a(:))
-        ! if( fullspace_mode ) kbeg_min = kbeg
+        if( fullspace_mode ) kbeg_min = kbeg
 
         !! memory allocation
         allocate (axVy(kbeg_min:kend, ibeg:iend))

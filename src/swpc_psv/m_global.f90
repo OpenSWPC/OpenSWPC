@@ -98,8 +98,7 @@ module m_global
     real(MP), private, allocatable :: rbuf_ip(:), rbuf_im(:)             !< mpi recv buffer for x-dir
     integer, private :: mpi_precision
 
-    ! fullspace-mode
-!  logical :: fullspace_mode
+    logical, public :: fullspace_mode
 
     logical, public :: benchmark_mode
     logical, public :: pw_mode   ! plane wave mode
@@ -137,7 +136,7 @@ contains
             clat = 35.7182
             phi = 0.0
             abc_type = 'pml'
-!      fullspace_mode = .false.
+            fullspace_mode = .false.
         else
             call readini(io_prm, 'dx', dx, 0.5_MP)
             call readini(io_prm, 'dz', dz, 0.5_MP)
@@ -150,7 +149,7 @@ contains
             call readini(io_prm, 'clat', clat, 35.7182)
             call readini(io_prm, 'phi', phi, 0.0)
             call readini(io_prm, 'abc_type', abc_type, 'pml')
-!      call readini( io_prm, 'fullspace_mode', fullspace_mode, .false. )
+            call readini( io_prm, 'fullspace_mode', fullspace_mode, .false. )
         end if
 
     end subroutine global__readprm
@@ -287,7 +286,7 @@ contains
 
         if (abc_type == 'pml') then
 
-            ! if( fullspace_mode ) kbeg_k = na+1
+            if( fullspace_mode ) kbeg_k = na+1
 
             if (iend <= na) then ! no kernel integration
                 ibeg_k = iend + 1
