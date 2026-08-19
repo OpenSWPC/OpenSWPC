@@ -187,14 +187,14 @@ contains
     end subroutine memory_size_3d
 
 
-    subroutine memory_size_sh(nproc, nx, nz, nm, na, memsize_all, memsize_node)
+    subroutine memory_size_sh(nproc, nx, nz, nm, nsponge, memsize_all, memsize_node)
         !! Memory-size estimate of FDM simulation
 
         integer, intent(in)  :: nproc
         integer, intent(in)  :: nx
         integer, intent(in)  :: nz
         integer, intent(in)  :: nm
-        integer, intent(in)  :: na
+        integer, intent(in)  :: nsponge
         real(SP), intent(out) :: memsize_all  !! total memory size in GB
         real(SP), intent(out) :: memsize_node !! average in-node memory size in GB
 
@@ -212,7 +212,7 @@ contains
         !! mesh number ( in real, for avoiding integer overflow )
         rn_com = real(nxpm * nproc) * nzpm
         rn_mem = real(nx) * real(nz)
-        rn_abc = real(nx) * real(nz)
+        rn_abc = real(nsponge)
 
         !! byte per mesh
         b_med = 5 * SP
@@ -854,5 +854,5 @@ contains
 
     end subroutine independent_list
 
-    
+   
 end module m_fdtool
