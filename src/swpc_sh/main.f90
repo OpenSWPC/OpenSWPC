@@ -86,7 +86,7 @@ program SWPC_SH
     !$acc kfs(ibeg_m:iend_m), kob(ibeg_m:iend_m), &
     !$acc kfs_top(ibeg_m:iend_m), kfs_bot(ibeg_m:iend_m), &
     !$acc kob_top(ibeg_m:iend_m), kob_bot(ibeg_m:iend_m), &
-    !$acc bddep(ibeg_m:iend_m, 0:NBD), kbeg_a(ibeg_m:iend_m))
+    !$acc bddep(ibeg_m:iend_m, 0:NBD))
 
     call report__setup(io_prm)
     close (io_prm)

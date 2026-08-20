@@ -64,7 +64,6 @@ module m_global
     integer, public               :: kbeg_m, kend_m                  !<  k- memory allocation area
     integer, public               :: ibeg_k, iend_k                  !<  i- kernel integration area without absorption band
     integer, public               :: kbeg_k, kend_k                  !<  k- kernel integration area without absorption band
-    integer, allocatable, public  :: kbeg_a(:)                       !<  absorbing boundary region
     integer, public               :: ipad, kpad                      !<  memory padding size for optimization
     character(16), public         :: abc_type                        !<  cerjan or pml
 
@@ -274,16 +273,6 @@ contains
         end do
         do k = kbeg_m, kend_m
             zc(k) = k2z(k, zbeg, real(dz))
-        end do
-
-        ! Absorbing region definition
-        allocate (kbeg_a(ibeg_m:iend_m))
-        do i = ibeg_m, iend_m
-            if (i <= na .or. nx - na + 1 <= i) then
-                kbeg_a(i) = kbeg
-            else
-                kbeg_a(i) = kend - na + 1
-            end if
         end do
 
         ibeg_k = ibeg
