@@ -96,15 +96,15 @@ contains
         integer :: ibox
 
         !! Horizontal zero-derivative boundary (for plane wave mode)
-        if (pw_mode) call absorb_p__set_stress_boundary()
+        if (pw_mode) call set_stress_boundary()
 
         do ibox=1, 4
-            if(box(ibox)%ncell > 0) call absorb_p__update_vel_core(box(ibox))
+            if(box(ibox)%ncell > 0) call update_vel_core(box(ibox))
         end do
 
     end subroutine absorb_p__update_vel
 
-    subroutine absorb_p__set_stress_boundary()
+    subroutine set_stress_boundary()
 
         integer :: i, k
 
@@ -148,11 +148,11 @@ contains
 #endif
         end if        
 
-    end subroutine absorb_p__set_stress_boundary
+    end subroutine set_stress_boundary
 
-    subroutine absorb_p__update_vel_core(bb)
+    subroutine update_vel_core(bb)
 
-        type(t_box) :: bb
+        type(t_box), intent(in) :: bb
         integer :: p
         integer :: i, k
         real(SP) :: by
@@ -197,23 +197,23 @@ contains
         !$omp end parallel
 #endif        
 
-    end subroutine absorb_p__update_vel_core
+    end subroutine update_vel_core
 
     subroutine absorb_p__update_stress
 
         integer :: ibox
 
         !! Horizontal zero-derivative boundary (for plane wave mode)
-        if (pw_mode) call absorb_p__set_vel_boundary()
+        if (pw_mode) call set_vel_boundary()
 
         do ibox=1, 4
-            if( box(ibox)%ncell > 0 ) call absorb_p__update_stress_core(box(ibox))
+            if( box(ibox)%ncell > 0 ) call update_stress_core(box(ibox))
         end do
 
 
     end subroutine absorb_p__update_stress
 
-    subroutine absorb_p__set_vel_boundary()
+    subroutine set_vel_boundary()
 
         integer :: i, k
 
@@ -254,10 +254,10 @@ contains
             !$omp end parallel
 #endif
         end if        
-    end subroutine absorb_p__set_vel_boundary
+    end subroutine set_vel_boundary
 
 
-    subroutine absorb_p__update_stress_core(bb)
+    subroutine update_stress_core(bb)
 
         type(t_box), intent(in) :: bb
         integer :: i, k

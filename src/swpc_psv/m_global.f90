@@ -70,7 +70,6 @@ module m_global
     integer, public               :: na                                  !< absorber thickness
     integer, public               :: ibeg_k, iend_k                      !< i- kernel integration area without absorption band
     integer, public               :: kbeg_k, kend_k                      !< k- kernel integration area without absorption band
-    integer, allocatable, public  :: kbeg_a(:)
     character(16), public         :: abc_type
 
     character(256), public :: odir
@@ -106,6 +105,18 @@ module m_global
 
     private :: inside_node
     private :: set_mpi_table
+
+    type t_box
+        integer :: ib, ie, nx
+        integer :: kb, ke, nz
+        integer :: ncell
+        integer :: offset
+    end type
+
+    type(t_box), public :: box(4)
+    integer, public :: n_sponge_cell
+
+    public :: t_box    
 
 contains
 
@@ -203,6 +214,7 @@ contains
         integer :: nproc_exe, err
         integer :: mx, proc_x
         character(256) :: command
+        integer :: offset
 
         call pwatch__on("global__setup2") ! measure from here
 
@@ -266,16 +278,6 @@ contains
             zc(k) = k2z(k, zbeg, real(dz))
         end do
 
-        ! PML region definition
-        allocate (kbeg_a(ibeg_m:iend_m))
-        do i = ibeg_m, iend_m
-            if (i <= na .or. nx - na + 1 <= i) then
-                kbeg_a(i) = kbeg
-            else
-                kbeg_a(i) = kend - na + 1
-            end if
-        end do
-
         ! Interior Kernel region
 
         ! initial value
@@ -301,8 +303,29 @@ contains
             kend_k = nz - na
         end if
 
+        if( fullspace_mode ) then
+            offset = 1
+            call set_box(box(1),            ibeg,               na,      kbeg, kend, offset)
+            offset = offset + box(1) % ncell
+            call set_box(box(2),         nx-na+1,             iend,      kbeg, kend, offset)
+            offset = offset + box(2) % ncell
+            call set_box(box(3), max(na+1, ibeg), min(nx-na, iend),      kbeg,   na, offset) 
+            offset = offset + box(3) % ncell
+            call set_box(box(4), max(na+1, ibeg), min(nx-na, iend), kend-na+1, kend, offset)
+        else
+            offset = 1
+            call set_box(box(1),            ibeg,               na,      kbeg,   kend, offset)
+            offset = offset + box(1) % ncell
+            call set_box(box(2),         nx-na+1,             iend,      kbeg,   kend, offset)
+            offset = offset + box(2) % ncell            
+            call set_box(box(3), max(na+1, ibeg), min(nx-na, iend),      kbeg, kbeg-1, offset)
+            offset = offset + box(3) % ncell
+            call set_box(box(4), max(na+1, ibeg), min(nx-na, iend), kend-na+1,   kend, offset) 
+        end if
+        n_sponge_cell = offset + box(4)%ncell - 1        
+
         !$acc enter data copyin(&
-        !$acc sbuf_ip, sbuf_im, rbuf_ip, rbuf_im, itbl)
+        !$acc sbuf_ip, sbuf_im, rbuf_ip, rbuf_im, itbl, box)
 
         call pwatch__off("global__setup2") ! measure from here
 
@@ -452,5 +475,24 @@ contains
         idx = mod(myid, nproc_x)
 
     end subroutine set_mpi_table
+
+    subroutine set_box(box1, ib, ie, kb, ke, offset)
+
+        type(t_box), intent(inout) :: box1
+        integer, intent(in) :: ib, ie
+        integer, intent(in) :: kb, ke
+        integer, intent(in) :: offset
+
+
+        box1 % ib = ib
+        box1 % ie = ie
+        box1 % kb = kb
+        box1 % ke = ke
+        box1 % nx = max(ie - ib + 1, 0)
+        box1 % nz = max(ke - kb + 1, 0)
+        box1 % ncell = box1 % nx * box1 % nz
+        box1 % offset = offset
+
+    end subroutine set_box    
 
 end module m_global
