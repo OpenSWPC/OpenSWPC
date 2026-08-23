@@ -185,8 +185,8 @@ contains
                 by = 1.0 / rho(k,i)
 
                 Vy(k,i) = Vy(k,i) &
-                        + by * (gxc(1,i) * dxSxy    + gzc(1,i) * dzSyz &
-                              + gxc(2,i) * axSxy(p) + gzc(2,i) * azSyz(p)) * dt
+                        + by * (gxc(1,i) * dxSxy    + gzc(1,k) * dzSyz &
+                              + gxc(2,i) * axSxy(p) + gzc(2,k) * azSyz(p)) * dt
 
                 axSxy(p) = gxc(3,i) * axSxy(p) + gxc(4,i) * dxSxy * dt
                 azSyz(p) = gzc(3,k) * azSyz(p) + gzc(4,k) * dzSyz * dt
@@ -303,11 +303,11 @@ contains
                 re40z = rc40z + isign * rd40z
                 re41z = rc41z + isign * rd41z      
 
-!                dxVy = (Vy(k  ,i+1) - Vy(k  ,i  )) * re40x - (Vy(k  ,i+2) - Vy(k  ,i-1)) * re41x
-!                dzVy = (Vy(k+1,i  ) - Vy(k  ,i  )) * re40z - (Vy(k+2,i  ) - Vy(k-1,i  )) * re41z
+                dxVy = (Vy(k  ,i+1) - Vy(k  ,i  )) * re40x - (Vy(k  ,i+2) - Vy(k  ,i-1)) * re41x
+                dzVy = (Vy(k+1,i  ) - Vy(k  ,i  )) * re40z - (Vy(k+2,i  ) - Vy(k-1,i  )) * re41z
 
-                dxVy = (Vy(k  ,i+1) - Vy(k  ,i  )) * r20x
-                dzVy = (Vy(k+1,i  ) - Vy(k  ,i  )) * r20z
+!                dxVy = (Vy(k  ,i+1) - Vy(k  ,i  )) * r20x
+!                dzVy = (Vy(k+1,i  ) - Vy(k  ,i  )) * r20z
 
                 nnn = mu(k  ,i  )
                 pnn = mu(k+1,i  )
@@ -371,9 +371,9 @@ contains
         real(SP) :: R0 !! reflection coefficient
         real(SP) :: d0, a0, b0
         integer, parameter :: pd = 1
-        integer, parameter :: pa = 2
+        integer, parameter :: pa = 1
         integer, parameter :: pb = 2
-        real(SP), parameter :: cp = 6.0 !! assumed P-wave velocity
+        real(SP), parameter :: cp = 3.0 !! assumed S-wave velocity
         real :: d, a, b, xx
 
         R0 = 10**(-(log10(real(na)) - 1) / log10(2.0) - 3.0)
