@@ -178,8 +178,8 @@ contains
                 by = 1.0 / rho(k,i)
 
                 Vy(k,i) = Vy(k,i) &
-                        + by * (gxc(1,i) * dxSxy      + gzc(1,i) * dzSyz &
-                              + gxc(2,i) * axSxy(k,i) + gzc(2,i) * azSyz(k,i)) * dt
+                        + by * (gxc(1,i) * dxSxy      + gzc(1,k) * dzSyz &
+                              + gxc(2,i) * axSxy(k,i) + gzc(2,k) * azSyz(k,i)) * dt
 
                 axSxy(k,i) = gxc(3,i) * axSxy(k,i) + gxc(4,i) * dxSxy * dt
                 azSyz(k,i) = gzc(3,k) * azSyz(k,i) + gzc(4,k) * dzSyz * dt
@@ -316,11 +316,11 @@ contains
                 muxy = 2 * nnn * npn / (nnn + npn + epsl)
                 muyz = 2 * nnn * pnn / (nnn + pnn + epsl)
 
-                axVy(k,i) = gxe(3,i) * axVy(k,i) + gxe(4,i) * dxVy * dt
-                azVy(k,i) = gze(3,k) * azVy(k,i) + gze(4,k) * dzVy * dt
-
                 Syz(k,i) = Syz(k,i) + muyz * (gze(1,k) * dzVy + gze(2,k) * azVy(k,i)) * dt
                 Sxy(k,i) = Sxy(k,i) + muxy * (gxe(1,i) * dxVy + gxe(2,i) * axVy(k,i)) * dt
+
+                axVy(k,i) = gxe(3,i) * axVy(k,i) + gxe(4,i) * dxVy * dt
+                azVy(k,i) = gze(3,k) * azVy(k,i) + gze(4,k) * dzVy * dt
 
             end do
         end do
@@ -395,7 +395,7 @@ contains
         real(SP) :: R0 !! reflection coefficient
         real(SP) :: d0, a0, b0
         integer, parameter :: pd = 1
-        integer, parameter :: pa = 2
+        integer, parameter :: pa = 1
         integer, parameter :: pb = 2
         real(SP), parameter :: cp = 6.0 !! assumed P-wave velocity
         real :: d, a, b, xx
