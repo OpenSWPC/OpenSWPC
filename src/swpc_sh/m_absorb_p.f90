@@ -153,17 +153,13 @@ contains
 #ifdef _OPENACC
         !$acc kernels &
         !$acc present(Vy, Sxy, Syz, axSxy, azSyz, rho, gxc, gzc, bb, kfs_top, kfs_bot, kob_top, kob_bot) 
-        !$acc loop independent
+        !$acc loop independent collapse(2)
 #else
         !$omp parallel &
         !$omp private( dzSyz, dxSxy, by, i, k, p, isign, re40x, re41x, re40z, re41z)
         !$omp do schedule(dynamic)
 #endif
         do i = bb%ib, bb%ie
-
-#ifdef _OPENACC
-            !$acc loop vector independent
-#endif
             do k = bb%kb, bb%ke
 
                 isign = sign(1, max((k - kfs_top(i)) * (kfs_bot(i) - k), &
@@ -364,7 +360,7 @@ contains
 
         real(SP) :: R0 !! reflection coefficient
         real(SP) :: d0, a0, b0
-        integer, parameter :: pd = 1
+        integer, parameter :: pd = 2
         integer, parameter :: pa = 1
         integer, parameter :: pb = 2
         real(SP), parameter :: cp = 3.0 !! assumed S-wave velocity

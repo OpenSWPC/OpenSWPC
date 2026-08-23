@@ -158,14 +158,18 @@ contains
         integer :: i, k
         real(SP) :: bx, bz
         real(MP) :: dxSxx, dzSxz, dxSxz, dzSzz
+        integer :: isign
+        real(MP) :: re40x, re41x, re40z, re41z
 
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Sxx, Szz, Sxz, Vx, Vz, rho, axSxx, azSxz, axSxz, azSzz, gxc, gxe, gzc, gze, bb)
+        !$acc present(Sxx, Szz, Sxz, Vx, Vz, rho, axSxx, azSxz, axSxz, azSzz, &
+        !$acc         gxc, gxe, gzc, gze, bb,  kfs_top, kfs_bot, kob_top, kob_bot)
         !$acc loop independent collapse(2)
 #else
         !$omp parallel &
         !$omp private( dxSxx, dzSzz, dxSxz, dzSxz ) &
+        !$omp private(re40x, re41x, re40z, re41z, isign) &
         !$omp private( i, k, p )
         !$omp do &
         !$omp schedule(dynamic)
@@ -176,10 +180,18 @@ contains
 
                 p = bb%offset + (i-bb%ib) * bb%nz + (k - bb%kb + 1)
 
-                dxSxx = (Sxx(k  ,i+1) - Sxx(k  ,i  )) * r20x
-                dzSzz = (Szz(k+1,i  ) - Szz(k  ,i  )) * r20z
-                dxSxz = (Sxz(k  ,i  ) - Sxz(k  ,i-1)) * r20x
-                dzSxz = (Sxz(k  ,i  ) - Sxz(k-1,i  )) * r20z
+                isign = sign(1, max((k - kfs_top(i)) * (kfs_bot(i) - k), &
+                                    (k - kob_top(i)) * (kob_bot(i) - k)))
+
+                re40x = rc40x + isign * rd40x
+                re41x = rc41x + isign * rd41x
+                re40z = rc40z + isign * rd40z
+                re41z = rc41z + isign * rd41z               
+
+                dxSxx = (Sxx(k  ,i+1) - Sxx(k  ,i  )) * re40x - (Sxx(k  ,i+2) - Sxx(k  ,i-1)) * re41x
+                dzSzz = (Szz(k+1,i  ) - Szz(k  ,i  )) * re40z - (Szz(k+2,i  ) - Szz(k-1,i  )) * re41z
+                dxSxz = (Sxz(k  ,i  ) - Sxz(k  ,i-1)) * re40x - (Sxz(k  ,i+1) - Sxz(k  ,i-2)) * re41x
+                dzSxz = (Sxz(k  ,i  ) - Sxz(k-1,i  )) * re40z - (Sxz(k+1,i  ) - Sxz(k-2,i  )) * re41z
 
                 bx = 2.0 / (rho(k,i) + rho(k,i + 1))
                 bz = 2.0 / (rho(k,i) + rho(k + 1, i))
@@ -294,7 +306,7 @@ contains
         !$acc kernels &
         !$acc present(Vx, Vz, Sxx, Szz, axVx, azVz, gxc, gxe, gzc, gze, mu, lam, bb, &
         !$acc         c1, c2, d1, d2, taup, taus, kfs_top, kfs_bot, kob_top, kob_bot, Rxx, Rzz)
-        !$acc loop independent 
+        !$acc loop independent collapse(2)
 #else
         !$omp parallel &
         !$omp private( dxVx, dxVz) &
@@ -314,9 +326,6 @@ contains
             !ocl unroll('full')
             !ocl swp
             !OCL SWP_IREG_RATE(200)
-#ifdef _OPENACC
-            !$acc loop vector independent       
-#endif
             do k = bb%kb, bb%ke
 
                 p = bb%offset + (i-bb%ib) * bb%nz + (k - bb%kb + 1)
@@ -381,7 +390,7 @@ contains
         !$acc kernels &
         !$acc present(Vx, Vz, Sxz, azVx, axVz, gxc, gxe, gzc, gze, mu, bb, &
         !$acc         c1, c2, d1, d2, taus, kfs_top, kfs_bot, kob_top, kob_bot, Rxz)
-        !$acc loop independent 
+        !$acc loop independent collapse(2)
 #else
         !$omp parallel &
         !$omp private( dzVx, dzVz ) &
@@ -398,9 +407,6 @@ contains
             !ocl unroll('full')
             !ocl swp
             !OCL SWP_IREG_RATE(200)
-#ifdef _OPENACC
-            !$acc loop vector independent       
-#endif
             do k = bb%kb, bb%ke
  
                 p = bb%offset + (i-bb%ib) * bb%nz + (k - bb%kb + 1)
@@ -471,7 +477,7 @@ contains
 
         real(SP) :: R0 !! reflection coefficient
         real(SP) :: d0, a0, b0
-        integer, parameter :: pd = 1
+        integer, parameter :: pd = 2
         integer, parameter :: pa = 1
         integer, parameter :: pb = 2
         real(SP), parameter :: cp = 6.0 !! assumed P-wave velocity
