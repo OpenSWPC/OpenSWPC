@@ -78,7 +78,7 @@ program SWPC_SH
     !$acc enter data copyin(&
     !$acc Vy(kbeg_m:kend_m, ibeg_m:iend_m), &
     !$acc Syz(kbeg_m:kend_m, ibeg_m:iend_m), Sxy(kbeg_m:kend_m, ibeg_m:iend_m), &
-    !$acc Ryz(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), Rxy(1:nm, kbeg_m:kend_m, ibeg_m:iend_m),  &
+    !$acc Ryz(1:nm, kbeg:kend, ibeg:iend), Rxy(1:nm, kbeg:kend, ibeg:iend),  &
     !$acc rho(kbeg_m:kend_m, ibeg_m:iend_m),  &
     !$acc lam(kbeg_m:kend_m, ibeg_m:iend_m), &
     !$acc mu(kbeg_m:kend_m, ibeg_m:iend_m), &

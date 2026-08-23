@@ -28,6 +28,8 @@ module m_absorb_p
     real(SP), allocatable :: axSxz(:), azSzz(:)
 
     real(SP) :: r20x, r20z
+    real(MP) :: rc40x, rc41x, rc40z, rc41z
+    real(MP) :: rd40x, rd41x, rd40z, rd41z
 
 contains
 
@@ -43,6 +45,14 @@ contains
         !! derivative coefficient
         r20x = real(1.0 / dx)
         r20z = real(1.0 / dz)
+        rc40x = 17.0_MP / 16.0_MP / dx
+        rc40z = 17.0_MP / 16.0_MP / dz
+        rc41x =  1.0_MP / 48.0_MP / dx
+        rc41z =  1.0_MP / 48.0_MP / dz
+        rd40x = -1.0_MP / 16.0_MP / dx
+        rd40z = -1.0_MP / 16.0_MP / dz
+        rd41x = -1.0_MP / 48.0_MP / dx
+        rd41z = -1.0_MP / 48.0_MP / dz       
 
         !! damping profile
         allocate (gxc(4, ibeg:iend), gxe(4, ibeg:iend))
@@ -152,6 +162,7 @@ contains
 #ifdef _OPENACC
         !$acc kernels &
         !$acc present(Sxx, Szz, Sxz, Vx, Vz, rho, axSxx, azSxz, axSxz, azSzz, gxc, gxe, gzc, gze, bb)
+        !$acc loop independent collapse(2)
 #else
         !$omp parallel &
         !$omp private( dxSxx, dzSzz, dxSxz, dzSxz ) &
@@ -161,9 +172,6 @@ contains
 #endif
         do i = bb%ib, bb%ie
 
-#ifdef _OPENACC
-            !$acc loop vector independent
-#endif
             do k = bb%kb, bb%ke
 
                 p = bb%offset + (i-bb%ib) * bb%nz + (k - bb%kb + 1)
@@ -267,72 +275,174 @@ contains
 
         type(t_box), intent(in) :: bb
 
-        integer :: i, k, p, p0
-        real(SP) :: lam2mu_R, lam_R
-        real(SP) :: dxVx_ade, dzVz_ade
+        integer :: i, k, p, m
+        real(SP) :: mu2, lam2mu
+        real(SP) :: dxVx_ade, dzVz_ade, dxVz_ade, dzVx_ade
         real(SP) :: nnn, pnn, npn, ppn
-        real(SP) :: muxz
+        real(SP) :: mu_xz
         real(SP) :: epsl = epsilon(1.0)
         real(MP) :: dxVx, dzVx, dxVz, dzVz
+        real(SP) :: taup1, taus1, taup_plus1, taus_plus1
+        real(SP) :: d2v2, dxVx_dzVz, dxVz_dzVx
+        real(SP) :: Rxx_n, Rzz_n, Rxz_n
+        real(SP) :: f_Rxx, f_Rzz, f_Rxz
+        integer :: isign
+        real(MP) :: re40x, re41x, re40z, re41z
 
         !! Time-marching
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vx, Vz, Sxx, Szz, Sxz, axVx, azVz, azVx, axVz, gxc, gxe, gzc, gze, mu, lam, bb)
-        !$acc loop independent
+        !$acc present(Vx, Vz, Sxx, Szz, axVx, azVz, gxc, gxe, gzc, gze, mu, lam, bb, &
+        !$acc         c1, c2, d1, d2, taup, taus, kfs_top, kfs_bot, kob_top, kob_bot, Rxx, Rzz)
+        !$acc loop independent 
 #else
         !$omp parallel &
-        !$omp private( dxVx, dxVz, dzVx, dzVz ) &
-        !$omp private( lam2mu_R, lam_R ) &
-        !$omp private( dxVx_ade, dzVz_ade ) &
-        !$omp private( i,k ) &
-        !$omp private( nnn, pnn, npn, ppn, muxz, p, p0 )
+        !$omp private( dxVx, dxVz) &
+        !$omp private( mu2, lam2mu ) &
+        !$omp private( dxVx_ade, dzVz_ade) &
+        !$omp private( i, k, m, p ) &
+        !$omp private( taup1, taus1, taup_plus1, taus_plus1 ) &
+        !$omp private( d2v2, dxVx_dzVz) &
+        !$omp private( f_Rxx, f_Rzz) &
+        !$omp private( Rxx_n, Rzz_n ) &
+        !$omp private( re40x, re41x, re40z, re41z, isign)
         !$omp do &
         !$omp schedule(dynamic)
 #endif
         do i = bb%ib, bb%ie
 
-            p0 = bb%offset + (i-bb%ib) * bb%nz
-
-            !$acc loop vector independent
+            !ocl unroll('full')
+            !ocl swp
+            !OCL SWP_IREG_RATE(200)
+#ifdef _OPENACC
+            !$acc loop vector independent       
+#endif
             do k = bb%kb, bb%ke
 
-                p = p0 + (k - bb%kb + 1)
+                p = bb%offset + (i-bb%ib) * bb%nz + (k - bb%kb + 1)
 
-                dxVx = (Vx(k  ,i  ) - Vx(k  ,i-1)) * r20x
-                dzVz = (Vz(k  ,i  ) - Vz(k-1,i  )) * r20z
+                isign = sign(1, max((k - kfs_top(i)) * (kfs_bot(i) - k), &
+                                    (k - kob_top(i)) * (kob_bot(i) - k)))
 
-                lam2mu_R = lam(k,i) + 2 * mu(k,i)
-                lam_R = lam2mu_R - 2 * mu(k,i)
+                re40x = rc40x + isign * rd40x
+                re41x = rc41x + isign * rd41x
+                re40z = rc40z + isign * rd40z
+                re41z = rc41z + isign * rd41z               
+
+                dxVx = (Vx(k  ,i  ) - Vx(k  ,i-1)) * re40x - (Vx(k  ,i+1) - Vx(k  ,i-2)) * re41x
+                dzVz = (Vz(k  ,i  ) - Vz(k-1,i  )) * re40z - (Vz(k+1,i  ) - Vz(k-2,i  )) * re41z
+
+                mu2 = 2 * mu(k, i)
+                lam2mu = lam(k, i) + mu2
+
+                taup1 = taup(k, i)
+                taus1 = taus(k, i)
 
                 dxVx_ade = real(gxc(1,i) * dxVx + gxc(2,i) * axVx(p))
                 dzVz_ade = real(gzc(1,k) * dzVz + gzc(2,k) * azVz(p))
 
-                Sxx(k,i) = Sxx(k,i) + (lam2mu_R * dxVx_ade + lam_R * dzVz_ade) * dt
-                Szz(k,i) = Szz(k,i) + (lam2mu_R * dzVz_ade + lam_R * dxVx_ade) * dt
+                d2v2 = dxVx_ade + dzVz_ade
+                dxVx_dzVz = dxVx_ade + dzVz_ade
+
+                f_Rxx = lam2mu * taup1 * d2v2 - mu2 * taus1 * dzVz_ade
+                f_Rzz = lam2mu * taup1 * d2v2 - mu2 * taus1 * dxVx_ade
+
+                Rxx_n = 0.0
+                Rzz_n = 0.0
+
+                !$acc loop seq reduction(+:Rxx_n,Rzz_n)
+                do m = 1, nm
+                    Rxx(m, k, i) = c1(m) * Rxx(m, k, i) - c2(m) * f_Rxx * dt
+                    Rzz(m, k, i) = c1(m) * Rzz(m, k, i) - c2(m) * f_Rzz * dt
+                    Rxx_n = Rxx_n + d1(m) * Rxx(m,k,i)
+                    Rzz_n = Rzz_n + d1(m) * Rzz(m,k,i)
+                end do                
+
+                taup_plus1 = 1 + taup1 * (1 + d2)
+                taus_plus1 = 1 + taus1 * (1 + d2)
+
+                Sxx(k,i) = Sxx(k,i) + (lam2mu * taup_plus1 * d2v2 - mu2 * taus_plus1 * dzVz_ade + Rxx_n) * dt
+                Szz(k,i) = Szz(k,i) + (lam2mu * taup_plus1 * d2v2 - mu2 * taus_plus1 * dxVx_ade + Rzz_n) * dt
 
                 axVx(p) = real(gxc(3,i) * axVx(p) + gxc(4,i) * dxVx * dt)
                 azVz(p) = real(gzc(3,k) * azVz(p) + gzc(4,k) * dzVz * dt)
 
             end do
+        end do
+#ifdef _OPENACC
+        !$acc end kernels
+#else        
+        !$omp end do nowait
+        !$omp end parallel
+#endif
 
-            !$acc loop vector independent
+
+#ifdef _OPENACC
+        !$acc kernels &
+        !$acc present(Vx, Vz, Sxz, azVx, axVz, gxc, gxe, gzc, gze, mu, bb, &
+        !$acc         c1, c2, d1, d2, taus, kfs_top, kfs_bot, kob_top, kob_bot, Rxz)
+        !$acc loop independent 
+#else
+        !$omp parallel &
+        !$omp private( dzVx, dzVz ) &
+        !$omp private( dxVz_ade, dzVx_ade ) &
+        !$omp private( i, k, m, p ) &
+        !$omp private( taus1, taus_plus1, dxVz_dzVx, f_Rxz,  Rxz_n ) &
+        !$omp private( re40x, re41x, re40z, re41z, isign) &
+        !$omp private( nnn, pnn, npn, ppn, mu_xz) 
+        !$omp do &
+        !$omp schedule(dynamic)
+#endif
+        do i = bb%ib, bb%ie
+
+            !ocl unroll('full')
+            !ocl swp
+            !OCL SWP_IREG_RATE(200)
+#ifdef _OPENACC
+            !$acc loop vector independent       
+#endif
             do k = bb%kb, bb%ke
+ 
+                p = bb%offset + (i-bb%ib) * bb%nz + (k - bb%kb + 1)
 
-                p = p0 + (k - bb%kb + 1)
+                isign = sign(1, max((k - kfs_top(i)) * (kfs_bot(i) - k), &
+                                    (k - kob_top(i)) * (kob_bot(i) - k)))
 
-                dzVx = (Vx(k+1,i  ) - Vx(k  ,i  )) * r20z
-                dxVz = (Vz(k  ,i+1) - Vz(k  ,i  )) * r20x
+                re40x = rc40x + isign * rd40x
+                re41x = rc41x + isign * rd41x
+                re40z = rc40z + isign * rd40z
+                re41z = rc41z + isign * rd41z               
+
+                dxVz = (Vz(k  ,i+1) - Vz(k  ,i  )) * re40x - (Vz(k  ,i+2) - Vz(k  ,i-1)) * re41x
+                dzVx = (Vx(k+1,i  ) - Vx(k  ,i  )) * re40z - (Vx(k+2,i  ) - Vx(k-1,i  )) * re41z
+
+                taus1 = taus(k, i)
 
                 nnn = mu(k,i)
                 pnn = mu(k + 1, i)
                 npn = mu(k,i + 1)
                 ppn = mu(k + 1, i + 1)
-                muxz = 4 * nnn * pnn * npn * ppn &
+                mu_xz = 4 * nnn * pnn * npn * ppn &
                      / (nnn * pnn * npn + nnn * pnn * ppn + nnn * npn * ppn + pnn * npn * ppn + epsl)
 
-                Sxz(k,i) = Sxz(k,i) + muxz * (gxe(1,i) * dxVz    + gze(1,k) * dzVx &
-                                            + gxe(2,i) * axVz(p) + gze(2,k) * azVx(p)) * dt
+                dxVz_ade = gxe(1,i) * dxVz + gxe(2,i) * axVz(p)
+                dzVx_ade = gze(1,k) * dzVx + gze(2,k) * azVx(p)
+                dxVz_dzVx = dxVz_ade + dzVx_ade
+
+                f_Rxz = mu_xz * taus1 * dxVz_dzVx
+
+                Rxz_n = 0.0
+
+                !! Crank-Nicolson Method for avoiding stiff solution
+                !$acc loop seq reduction(+:Rxz_n)
+                do m = 1, nm
+                    Rxz(m, k, i) = c1(m) * Rxz(m, k, i) - c2(m) * f_Rxz * dt
+                    Rxz_n = Rxz_n + d1(m) * Rxz(m,k,i)
+                end do
+                
+                taus_plus1 = 1 + taus1 * (1 + d2)
+
+                Sxz(k,i) = Sxz(k,i) + (mu_xz  * taus_plus1 * dxVz_dzVx + Rxz_n) * dt
 
                 azVx(p) = real(gze(3,k) * azVx(p) + gze(4,k) * dzVx * dt)
                 axVz(p) = real(gxe(3,i) * axVz(p) + gxe(4,i) * dxVz * dt)
