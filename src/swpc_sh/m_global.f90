@@ -115,6 +115,9 @@ module m_global
 
     public :: t_box
 
+    real(SP), allocatable, public :: c1(:), c2(:), d1(:)
+    real(SP), public :: d2
+
 contains
 
     subroutine global__readprm(io_prm)
@@ -447,18 +450,19 @@ contains
         type(t_box), intent(inout) :: box1
         integer, intent(in) :: ib, ie
         integer, intent(in) :: kb, ke
-        integer, intent(in) :: offset
+        integer, intent(inout) :: offset
 
 
-        box1 % ib = ib
-        box1 % ie = ie
-        box1 % kb = kb
-        box1 % ke = ke
-        box1 % nx = max(ie - ib + 1, 0)
-        box1 % nz = max(ke - kb + 1, 0)
-        box1 % ncell = box1 % nx * box1 % nz
-        box1 % offset = offset
+        box1%ib = ib
+        box1%ie = ie
+        box1%kb = kb
+        box1%ke = ke
+        box1%nx = max(ie - ib + 1, 0)
+        box1%nz = max(ke - kb + 1, 0)
+        box1%ncell = box1%nx * box1%nz
+        box1%offset = offset
+        offset = offset + box1%ncell
 
-    end subroutine set_box
+    end subroutine set_box    
 
 end module m_global

@@ -108,7 +108,6 @@ program SWPC_SH
 
         call kernel__update_vel()
         call absorb__update_vel()
-
         call source__bodyforce(it)
 
         call global__comm_vel()

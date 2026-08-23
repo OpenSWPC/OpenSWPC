@@ -240,28 +240,34 @@ contains
     subroutine update_stress_core(bb)
 
         type(t_box), intent(in) :: bb
-        integer :: i, k
+        integer :: i, k, m
         real(SP) :: nnn, pnn, npn
-        real(SP) :: muxy, muyz
+        real(SP) :: mu_xy, mu_yz
         real(SP) :: epsl = epsilon(1.0)
         real(MP) :: dxVy, dzVy
-        integer :: p
+        integer :: p, p0
+        real(SP) :: taus1, taus_plus1
+        real(SP) :: Ryz_n, Rxy_n
+        real(SP) :: f_Rxy, f_Ryz
 
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vy, Sxy, Syz, gxc, gxe, gzc, gze, axVy, azVy, mu, bb)
+        !$acc present(Vy, Sxy, Syz, gxc, gxe, gzc, gze, axVy, azVy, mu, bb, Ryz, Rxy, c1, c2, d1, d2, taus)
         !$acc loop independent
 #else
         !$omp parallel &
-        !$omp private(i, k, dxVy, dzVy, nnn, pnn, npn, muxy, muyz, p )
+        !$omp private(i, k, dxVy, dzVy, nnn, pnn, npn, mu_xy, mu_yz, p, p0 ) &
+        !$omp private( taus1, taus_plus1, f_Ryz, f_Rxy,  Ryz_n, Rxy_n ) 
         !$omp do schedule(dynamic)
 #endif
         do i = bb%ib, bb%ie
 
+            p0 = bb%offset + (i-bb%ib) * bb%nz
+
             !$acc loop vector independent
             do k = bb%kb, bb%ke
 
-                p = bb%offset + (i-bb%ib) * bb%nz + (k - bb%kb + 1)
+                p = p0 + (k - bb%kb + 1)
 
                 dxVy = (Vy(k,i+1) - Vy(k,i)) * r20x
                 dzVy = (Vy(k+1,i) - Vy(k,i)) * r20z
@@ -269,14 +275,37 @@ contains
                 nnn = mu(k  ,i  )
                 pnn = mu(k+1,i  )
                 npn = mu(k  ,i+1)
-                muxy = 2 * nnn * npn / (nnn + npn + epsl)
-                muyz = 2 * nnn * pnn / (nnn + pnn + epsl)
+                mu_xy = 2 * nnn * npn / (nnn + npn + epsl)
+                mu_yz = 2 * nnn * pnn / (nnn + pnn + epsl)
 
                 axVy(p) = gxe(3,i) * axVy(p) + gxe(4,i) * dxVy * dt
                 azVy(p) = gze(3,k) * azVy(p) + gze(4,k) * dzVy * dt
 
-                Syz(k,i) = Syz(k,i) + muyz * (gze(1,k) * dzVy + gze(2,k) * azVy(p)) * dt
-                Sxy(k,i) = Sxy(k,i) + muxy * (gxe(1,i) * dxVy + gxe(2,i) * axVy(p)) * dt
+                dzVy = gze(1,k) * dzVy + gze(2,k) * azVy(p)
+                dxVy = gxe(1,i) * dxVy + gxe(2,i) * axVy(p)
+
+                !! update memory variables
+                !! working variables for combinations of velocity derivatives
+                f_Ryz = mu_yz * taus1 * dzVy
+                f_Rxy = mu_xy * taus1 * dxVy
+
+                Ryz_n = 0.0
+                Rxy_n = 0.0
+
+                !! Crank-Nicolson Method for avoiding stiff solution
+                !$acc loop seq reduction(+:Ryz_n,Rxy_n)
+                do m = 1, nm
+                    Ryz(m,k,i) = c1(m) * Ryz(m,k,i) - c2(m) * f_Ryz * dt
+                    Rxy(m,k,i) = c1(m) * Rxy(m,k,i) - c2(m) * f_Rxy * dt
+                    Ryz_n = Ryz_n + d1(m) * Ryz(m,k,i)
+                    Rxy_n = Rxy_n + d1(m) * Rxy(m,k,i)
+                end do
+
+                !! update stress components
+                taus_plus1 = 1 + taus1 * (1 + d2)
+
+                Syz(k,i) = Syz(k,i) + (mu_yz * taus_plus1 * dzVy + Ryz_n) * dt
+                Sxy(k,i) = Sxy(k,i) + (mu_xy * taus_plus1 * dxVy + Rxy_n) * dt
 
             end do
         end do
