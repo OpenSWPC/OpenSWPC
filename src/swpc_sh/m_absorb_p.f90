@@ -179,9 +179,6 @@ contains
 
                 p = bb%offset + (i-bb%ib) * bb%nz + (k - bb%kb + 1)
 
-!                dzSyz = (Syz(k,i) - Syz(k-1,i)) * r20z
-!                dxSxy = (Sxy(k,i) - Sxy(k,i-1)) * r20x
-
                 by = 1.0 / rho(k,i)
 
                 Vy(k,i) = Vy(k,i) &
@@ -267,7 +264,7 @@ contains
         real(SP) :: nnn, pnn, npn
         real(SP) :: mu_xy, mu_yz
         real(SP) :: epsl = epsilon(1.0)
-        real(MP) :: dxVy, dzVy
+        real(MP) :: dxVy, dzVy, dxVy_ade, dzVy_ade
         integer :: p, p0
         real(SP) :: taus1, taus_plus1
         real(SP) :: Ryz_n, Rxy_n
@@ -281,7 +278,7 @@ contains
         !$acc loop independent
 #else
         !$omp parallel &
-        !$omp private(i, k, dxVy, dzVy, nnn, pnn, npn, mu_xy, mu_yz, p, p0 ) &
+        !$omp private(i, k, dxVy, dzVy, dxVy_ade, dzVy_ade, nnn, pnn, npn, mu_xy, mu_yz, p, p0 ) &
         !$omp private( taus1, taus_plus1, f_Ryz, f_Rxy,  Ryz_n, Rxy_n )  &
         !$omp private( re40x, re41x, re40z, re41z, isign) &
         !$omp do schedule(dynamic)
@@ -306,23 +303,20 @@ contains
                 dxVy = (Vy(k  ,i+1) - Vy(k  ,i  )) * re40x - (Vy(k  ,i+2) - Vy(k  ,i-1)) * re41x
                 dzVy = (Vy(k+1,i  ) - Vy(k  ,i  )) * re40z - (Vy(k+2,i  ) - Vy(k-1,i  )) * re41z
 
-!                dxVy = (Vy(k  ,i+1) - Vy(k  ,i  )) * r20x
-!                dzVy = (Vy(k+1,i  ) - Vy(k  ,i  )) * r20z
-
                 nnn = mu(k  ,i  )
                 pnn = mu(k+1,i  )
                 npn = mu(k  ,i+1)
                 mu_xy = 2 * nnn * npn / (nnn + npn + epsl)
                 mu_yz = 2 * nnn * pnn / (nnn + pnn + epsl)
 
-                dzVy = gze(1,k) * dzVy + gze(2,k) * azVy(p)
-                dxVy = gxe(1,i) * dxVy + gxe(2,i) * axVy(p)
+                dzVy_ade = gze(1,k) * dzVy + gze(2,k) * azVy(p)
+                dxVy_ade = gxe(1,i) * dxVy + gxe(2,i) * axVy(p)
 
                 !! update memory variables
                 !! working variables for combinations of velocity derivatives
                 taus1 = taus(k, i)
-                f_Ryz = mu_yz * taus1 * dzVy
-                f_Rxy = mu_xy * taus1 * dxVy
+                f_Ryz = mu_yz * taus1 * dzVy_ade
+                f_Rxy = mu_xy * taus1 * dxVy_ade
 
                 Ryz_n = 0.0
                 Rxy_n = 0.0
@@ -339,8 +333,8 @@ contains
                 !! update stress components
                 taus_plus1 = 1 + taus1 * (1 + d2)
 
-                Syz(k,i) = Syz(k,i) + (mu_yz * taus_plus1 * dzVy + Ryz_n) * dt
-                Sxy(k,i) = Sxy(k,i) + (mu_xy * taus_plus1 * dxVy + Rxy_n) * dt
+                Syz(k,i) = Syz(k,i) + (mu_yz * taus_plus1 * dzVy_ade + Ryz_n) * dt
+                Sxy(k,i) = Sxy(k,i) + (mu_xy * taus_plus1 * dxVy_ade + Rxy_n) * dt
 
                 axVy(p) = gxe(3,i) * axVy(p) + gxe(4,i) * dxVy * dt
                 azVy(p) = gze(3,k) * azVy(p) + gze(4,k) * dzVy * dt
