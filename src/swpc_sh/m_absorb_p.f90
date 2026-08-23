@@ -362,8 +362,8 @@ contains
         real(SP) :: d0, a0, b0
         integer, parameter :: pd = 2
         integer, parameter :: pa = 1
-        integer, parameter :: pb = 2
-        real(SP), parameter :: cp = 3.0 !! assumed S-wave velocity
+        integer, parameter :: pb = 3
+        real(SP), parameter :: cp = 3.5 !! assumed S-wave velocity
         real :: d, a, b, xx
 
         R0 = 10**(-(log10(real(na)) - 1) / log10(2.0) - 3.0)

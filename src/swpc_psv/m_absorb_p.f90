@@ -479,7 +479,7 @@ contains
         real(SP) :: d0, a0, b0
         integer, parameter :: pd = 2
         integer, parameter :: pa = 1
-        integer, parameter :: pb = 2
+        integer, parameter :: pb = 3
         real(SP), parameter :: cp = 6.0 !! assumed P-wave velocity
         real :: d, a, b, xx
 

@@ -131,6 +131,9 @@ module m_global
 
     public :: t_box    
 
+    real(SP), allocatable, public :: c1(:), c2(:), d1(:)
+    real(SP), public :: d2
+
 contains
 
     subroutine global__readprm(io_prm)
