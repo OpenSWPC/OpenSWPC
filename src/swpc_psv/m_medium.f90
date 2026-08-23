@@ -353,21 +353,23 @@ contains
 
         do ibox = 1, 4
             if ( box(ibox) % ncell == 0 ) cycle
-            do k=box(ibox)%kb, box(ibox)%ke
+            do i=box(ibox)%ib, box(ibox)%ie
+                do k=box(ibox)%kb, box(ibox)%ke
 
-                vp = sqrt((lam(k, i) + 2 * mu(k, i)) / rho(k, i))
-                vs = sqrt(mu(k, i) / rho(k, i))
+                    vp = sqrt((lam(k, i) + 2 * mu(k, i)) / rho(k, i))
+                    vs = sqrt(mu(k, i) / rho(k, i))
 
-                ! skip ocean and air
-                if (vs < epsilon(1.0)) cycle
+                    ! skip ocean and air
+                    if (vs < epsilon(1.0)) cycle
 
-                if (vs < vmin_pml) then
-                    vs = vmin_pml
-                    vp = vs * gamma
+                    if (vs < vmin_pml) then
+                        vs = vmin_pml
+                        vp = vs * gamma
 
-                    lam(k, i) = rho(k, i) * (vp**2 - 2 * vs**2)
-                    mu(k, i) = rho(k, i) * (vs**2)
-                end if
+                        lam(k, i) = rho(k, i) * (vp**2 - 2 * vs**2)
+                        mu(k, i) = rho(k, i) * (vs**2)
+                    end if
+                end do
             end do
         end do
 

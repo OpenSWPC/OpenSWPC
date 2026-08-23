@@ -3,26 +3,6 @@ module m_absorb_p
 
     !! Absorbing Boundary Condition: ADE-CFS PML based on Zhang and Shen
     !!
-    !! #### PML region definition
-    !!
-    !! ```text
-    !!  <X-Z cross section>
-    !!  +-----+--------------------------+-----+ 
-    !!  |     |            (3)           |     | 
-    !!  |     +--------------------------+     | 
-    !!  |     |                          |     | 
-    !!  |     |                          |     | 
-    !!  |     |                          |     | 
-    !!  | (1) |     interior region      | (2) | 
-    !!  |     |       (m_kernel)         |     | 
-    !!  |     |                          |     | 
-    !!  |     |                          |     | 
-    !!  |     +--------------------------+     | 
-    !!  |     |            (4)           |     | 
-    !!  +-----+--------------------------+-----+ 
-    !! ```
-    !! (thickness of (3) in k-direction is zero for fullspace_mode = .false. )
-    !!
     !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std

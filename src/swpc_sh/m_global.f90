@@ -295,26 +295,19 @@ contains
             kend_k = nz - na
         end if
 
+        offset = 1
         if( fullspace_mode ) then
-            offset = 1
-            call set_box(box(1),            ibeg,               na,      kbeg, kend, offset)
-            offset = offset + box(1) % ncell
-            call set_box(box(2),         nx-na+1,             iend,      kbeg, kend, offset)
-            offset = offset + box(2) % ncell
-            call set_box(box(3), max(na+1, ibeg), min(nx-na, iend),      kbeg,   na, offset) 
-            offset = offset + box(3) % ncell
-            call set_box(box(4), max(na+1, ibeg), min(nx-na, iend), kend-na+1, kend, offset)
-        else
-            offset = 1
             call set_box(box(1),            ibeg,               na,      kbeg,   kend, offset)
-            offset = offset + box(1) % ncell
             call set_box(box(2),         nx-na+1,             iend,      kbeg,   kend, offset)
-            offset = offset + box(2) % ncell            
+            call set_box(box(3), max(na+1, ibeg), min(nx-na, iend),      kbeg,     na, offset) 
+            call set_box(box(4), max(na+1, ibeg), min(nx-na, iend), kend-na+1,   kend, offset)
+        else
+            call set_box(box(1),            ibeg,               na,      kbeg,   kend, offset)
+            call set_box(box(2),         nx-na+1,             iend,      kbeg,   kend, offset)
             call set_box(box(3), max(na+1, ibeg), min(nx-na, iend),      kbeg, kbeg-1, offset)
-            offset = offset + box(3) % ncell
             call set_box(box(4), max(na+1, ibeg), min(nx-na, iend), kend-na+1,   kend, offset) 
         end if
-        n_sponge_cell = offset + box(4)%ncell - 1
+        n_sponge_cell = offset  - 1   
 
         !$acc enter data copyin(&
         !$acc sbuf_ip, sbuf_im, rbuf_ip, rbuf_im, itbl, box)

@@ -109,8 +109,7 @@ program swpc_3d
     !$acc       kfs_bot(ibeg_m:iend_m, jbeg_m:jend_m), &
     !$acc       kob_top(ibeg_m:iend_m, jbeg_m:jend_m), &
     !$acc       kob_bot(ibeg_m:iend_m, jbeg_m:jend_m), &
-    !$acc       bddep(ibeg_m:iend_m, jbeg_m:jend_m, 0:NBD), &
-    !$acc       kbeg_a(ibeg_m:iend_m, jbeg_m:jend_m))
+    !$acc       bddep(ibeg_m:iend_m, jbeg_m:jend_m, 0:NBD))
 
     call report__setup(io_prm)
     close (io_prm)

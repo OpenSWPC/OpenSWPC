@@ -3,27 +3,6 @@ module m_absorb_p
 
     !! Absorbing Boundary Condition: ADE-CFS PML based on Zhang and Shen
     !!
-    !!#### PML region definition
-    !!
-    !! ```text
-    !!  +-----+--------------------------+-----+
-    !!  |     |                          |     |
-    !!  |     |                          |     |
-    !!  |     |                          |     |
-    !!  |     |                          |     |
-    !!  |     |  interior region         |     |
-    !!  |     |  eveluated by m_kernel   |     |
-    !!  |     |                          |     |
-    !!  |     |                          |     |
-    !!  |     |                          |     |
-    !!  |     +--------------------------+     |
-    !!  |         exterior region              |
-    !!  |         evaluated by m_absorb        |
-    !!  +-----+--------------------------+-----+
-    !!  1      na                        nx-na+1  nx
-    !!  <- na ->
-    !! ```
-    !!
     !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
@@ -40,20 +19,18 @@ module m_absorb_p
     public :: absorb_p__update_stress
     public :: absorb_p__update_vel
 
-    real(SP), allocatable :: gxc(:, :), gxe(:, :) !! damping profile along x at center/edge of voxel
-    real(SP), allocatable :: gyc(:, :), gye(:, :) !! damping profile along y at center/edge of voxel
-    real(SP), allocatable :: gzc(:, :), gze(:, :) !! damping profile along z at center/edge of voxel
+    real(SP), allocatable :: gxc(:,:), gxe(:,:) !! damping profile along x at center/edge of voxel
+    real(SP), allocatable :: gyc(:,:), gye(:,:) !! damping profile along y at center/edge of voxel
+    real(SP), allocatable :: gzc(:,:), gze(:,:) !! damping profile along z at center/edge of voxel
 
-    real(SP), allocatable :: axVx(:, :, :), ayVx(:, :, :), azVx(:, :, :)
-    real(SP), allocatable :: axVy(:, :, :), ayVy(:, :, :), azVy(:, :, :)
-    real(SP), allocatable :: axVz(:, :, :), ayVz(:, :, :), azVz(:, :, :)
-    real(SP), allocatable :: axSxx(:, :, :), aySxy(:, :, :), azSxz(:, :, :)
-    real(SP), allocatable :: axSxy(:, :, :), aySyy(:, :, :), azSyz(:, :, :)
-    real(SP), allocatable :: axSxz(:, :, :), aySyz(:, :, :), azSzz(:, :, :)
+    real(SP), allocatable :: axVx(:), ayVx(:), azVx(:)
+    real(SP), allocatable :: axVy(:), ayVy(:), azVy(:)
+    real(SP), allocatable :: axVz(:), ayVz(:), azVz(:)
+    real(SP), allocatable :: axSxx(:), aySxy(:), azSxz(:)
+    real(SP), allocatable :: axSxy(:), aySyy(:), azSyz(:)
+    real(SP), allocatable :: axSxz(:), aySyz(:), azSzz(:)
 
     real(MP) :: r20x, r20y, r20z
-
-    integer :: kbeg_min
 
 contains
 
@@ -92,28 +69,25 @@ contains
             call damping_profile(zc(k) + real(dz) / 2.0, hz, zbeg, zend, gze(:, k))
         end do
 
-        !! PML region definition
-        kbeg_min = minval(kbeg_a(:, :))
-
         !! memory allocation
-        allocate (axVx(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (ayVx(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (azVx(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (axVy(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (ayVy(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (azVy(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (axVz(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (ayVz(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (azVz(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (axSxx(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (aySxy(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (azSxz(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (axSxy(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (aySyy(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (azSyz(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (axSxz(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (aySyz(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
-        allocate (azSzz(kbeg_min:kend, ibeg:iend, jbeg:jend), source=0.0)
+        allocate (axVx (n_sponge_cell), source=0.0)
+        allocate (ayVx (n_sponge_cell), source=0.0)
+        allocate (azVx (n_sponge_cell), source=0.0)
+        allocate (axVy (n_sponge_cell), source=0.0)
+        allocate (ayVy (n_sponge_cell), source=0.0)
+        allocate (azVy (n_sponge_cell), source=0.0)
+        allocate (axVz (n_sponge_cell), source=0.0)
+        allocate (ayVz (n_sponge_cell), source=0.0)
+        allocate (azVz (n_sponge_cell), source=0.0)
+        allocate (axSxx(n_sponge_cell), source=0.0)
+        allocate (aySxy(n_sponge_cell), source=0.0)
+        allocate (azSxz(n_sponge_cell), source=0.0)
+        allocate (axSxy(n_sponge_cell), source=0.0)
+        allocate (aySyy(n_sponge_cell), source=0.0)
+        allocate (azSyz(n_sponge_cell), source=0.0)
+        allocate (axSxz(n_sponge_cell), source=0.0)
+        allocate (aySyz(n_sponge_cell), source=0.0)
+        allocate (azSzz(n_sponge_cell), source=0.0)
 
         idum = io_prm
 
@@ -123,146 +97,168 @@ contains
 
     end subroutine absorb_p__setup
 
+
     subroutine absorb_p__update_vel
 
-        !! Update velocity component in PML layer
+        integer :: ibox
 
+        if (pw_mode) call set_stress_boundary()
+
+        !! time-marching
+        do ibox = 1, 6
+            if(box(ibox)%ncell > 0) call update_vel_core(box(ibox))
+        end do
+
+    end subroutine absorb_p__update_vel
+
+
+    subroutine set_stress_boundary()
+        !! Horizontal zero-derivative boundary (for plane wave mode)
+
+        integer :: i, j, k
+
+        if (idx == 0) then
+#ifdef _OPENACC
+            !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
+            !$acc loop independent collapse(2)
+#else
+            !$omp parallel private(j,k)
+            !$omp do schedule(dynamic)
+#endif
+            do j = jbeg, jend
+                do k = 1, nz
+                    Sxx(k,0,j) = 2 * Sxx(k,1,j) - Sxx(k,2,j)
+                    Syy(k,0,j) = 2 * Syy(k,1,j) - Syy(k,2,j)
+                    Szz(k,0,j) = 2 * Szz(k,1,j) - Szz(k,2,j)
+                    Syz(k,0,j) = 2 * Syz(k,1,j) - Syz(k,2,j)
+                    Sxz(k,0,j) = 2 * Sxz(k,1,j) - Sxz(k,2,j)
+                    Sxy(k,0,j) = 2 * Sxy(k,1,j) - Sxy(k,2,j)
+                end do
+            end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
+            !$omp end do nowait
+            !$omp end parallel
+#endif
+        end if
+
+        if (idx == nproc_x - 1) then
+#ifdef _OPENACC
+            !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
+            !$acc loop independent collapse(2)
+#else
+            !$omp parallel private(j,k)
+            !$omp do schedule(dynamic)
+#endif
+            do j = jbeg, jend
+                do k = 1, nz
+                    Sxx(k,nx+1,j) = 2 * Sxx(k,nx,j) - Sxx(k,nx-1,j)
+                    Syy(k,nx+1,j) = 2 * Syy(k,nx,j) - Syy(k,nx-1,j)
+                    Szz(k,nx+1,j) = 2 * Szz(k,nx,j) - Szz(k,nx-1,j)
+                    Syz(k,nx+1,j) = 2 * Syz(k,nx,j) - Syz(k,nx-1,j)
+                    Sxz(k,nx+1,j) = 2 * Sxz(k,nx,j) - Sxz(k,nx-1,j)
+                    Sxy(k,nx+1,j) = 2 * Sxy(k,nx,j) - Sxy(k,nx-1,j)
+                end do
+            end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
+            !$omp end do nowait
+            !$omp end parallel
+#endif
+        end if
+
+        if (idy == 0) then
+#ifdef _OPENACC
+            !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
+            !$acc loop independent collapse(2)
+#else
+            !$omp parallel private(i,k)
+            !$omp do schedule(dynamic)
+#endif
+            do i = ibeg, iend
+                do k = 1, nz
+                    Sxx(k, i, 0) = 2 * Sxx(k, i, 1) - Sxx(k, i, 2)
+                    Syy(k, i, 0) = 2 * Syy(k, i, 1) - Syy(k, i, 2)
+                    Szz(k, i, 0) = 2 * Szz(k, i, 1) - Szz(k, i, 2)
+                    Syz(k, i, 0) = 2 * Syz(k, i, 1) - Syz(k, i, 2)
+                    Sxz(k, i, 0) = 2 * Sxz(k, i, 1) - Sxz(k, i, 2)
+                    Sxy(k, i, 0) = 2 * Sxy(k, i, 1) - Sxy(k, i, 2)
+                end do
+            end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
+            !$omp end do nowait
+            !$omp end parallel
+#endif
+        end if
+
+        if (idy == nproc_y - 1) then
+#ifdef _OPENACC
+            !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
+            !$acc loop independent collapse(2)
+#else
+            !$omp parallel private(i,k)
+            !$omp do schedule(dynamic)
+#endif
+            do i = ibeg, iend
+                do k = 1, nz
+                    Sxx(k,i,ny+1) = 2 * Sxx(k,i,ny) - Sxx(k,i,ny-1)
+                    Syy(k,i,ny+1) = 2 * Syy(k,i,ny) - Syy(k,i,ny-1)
+                    Szz(k,i,ny+1) = 2 * Szz(k,i,ny) - Szz(k,i,ny-1)
+                    Syz(k,i,ny+1) = 2 * Syz(k,i,ny) - Syz(k,i,ny-1)
+                    Sxz(k,i,ny+1) = 2 * Sxz(k,i,ny) - Sxz(k,i,ny-1)
+                    Sxy(k,i,ny+1) = 2 * Sxy(k,i,ny) - Sxy(k,i,ny-1)
+                end do
+            end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
+            !$omp end do nowait
+            !$omp end parallel
+#endif
+        end if
+#ifndef _OPENACC
+        !$omp barrier
+#endif
+
+    end subroutine set_stress_boundary
+
+
+    subroutine update_vel_core(bb) 
+
+        type(t_box), intent(in) :: bb
+        integer :: p, p0
         integer :: i, j, k
         real(MP) :: dxSxx, dySxy, dzSxz
         real(MP) :: dxSxy, dySyy, dzSyz
         real(MP) :: dxSxz, dySyz, dzSzz
         real(SP) :: bx, by, bz
 
-        !! Horizontal zero-derivative boundary (for plane wave mode)
-        if (pw_mode) then
-            if (idx == 0) then
-#ifdef _OPENACC
-                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
-                !$acc loop independent collapse(2)
-#else
-                !$omp parallel private(j,k)
-                !$omp do schedule(dynamic)
-#endif
-                do j = jbeg, jend
-                    do k = 1, nz
-                        Sxx(k,0,j) = 2 * Sxx(k,1,j) - Sxx(k,2,j)
-                        Syy(k,0,j) = 2 * Syy(k,1,j) - Syy(k,2,j)
-                        Szz(k,0,j) = 2 * Szz(k,1,j) - Szz(k,2,j)
-                        Syz(k,0,j) = 2 * Syz(k,1,j) - Syz(k,2,j)
-                        Sxz(k,0,j) = 2 * Sxz(k,1,j) - Sxz(k,2,j)
-                        Sxy(k,0,j) = 2 * Sxy(k,1,j) - Sxy(k,2,j)
-                    end do
-                end do
-#ifdef _OPENACC
-                !$acc end kernels
-#else
-                !$omp end do nowait
-                !$omp end parallel
-#endif
-            end if
-
-            if (idx == nproc_x - 1) then
-#ifdef _OPENACC
-                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
-                !$acc loop independent collapse(2)
-#else
-                !$omp parallel private(j,k)
-                !$omp do schedule(dynamic)
-#endif
-                do j = jbeg, jend
-                    do k = 1, nz
-                        Sxx(k,nx+1,j) = 2 * Sxx(k,nx,j) - Sxx(k,nx-1,j)
-                        Syy(k,nx+1,j) = 2 * Syy(k,nx,j) - Syy(k,nx-1,j)
-                        Szz(k,nx+1,j) = 2 * Szz(k,nx,j) - Szz(k,nx-1,j)
-                        Syz(k,nx+1,j) = 2 * Syz(k,nx,j) - Syz(k,nx-1,j)
-                        Sxz(k,nx+1,j) = 2 * Sxz(k,nx,j) - Sxz(k,nx-1,j)
-                        Sxy(k,nx+1,j) = 2 * Sxy(k,nx,j) - Sxy(k,nx-1,j)
-                    end do
-                end do
-#ifdef _OPENACC
-                !$acc end kernels
-#else
-                !$omp end do nowait
-                !$omp end parallel
-#endif
-            end if
-
-            if (idy == 0) then
-#ifdef _OPENACC
-                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
-                !$acc loop independent collapse(2)
-#else
-                !$omp parallel private(i,k)
-                !$omp do schedule(dynamic)
-#endif
-                do i = ibeg, iend
-                    do k = 1, nz
-                        Sxx(k, i, 0) = 2 * Sxx(k, i, 1) - Sxx(k, i, 2)
-                        Syy(k, i, 0) = 2 * Syy(k, i, 1) - Syy(k, i, 2)
-                        Szz(k, i, 0) = 2 * Szz(k, i, 1) - Szz(k, i, 2)
-                        Syz(k, i, 0) = 2 * Syz(k, i, 1) - Syz(k, i, 2)
-                        Sxz(k, i, 0) = 2 * Sxz(k, i, 1) - Sxz(k, i, 2)
-                        Sxy(k, i, 0) = 2 * Sxy(k, i, 1) - Sxy(k, i, 2)
-                    end do
-                end do
-#ifdef _OPENACC
-                !$acc end kernels
-#else
-                !$omp end do nowait
-                !$omp end parallel
-#endif
-            end if
-
-            if (idy == nproc_y - 1) then
-#ifdef _OPENACC
-                !$acc kernels present(Sxx, Syy, Szz, Syz, Sxz, Sxy) 
-                !$acc loop independent collapse(2)
-#else
-                !$omp parallel private(i,k)
-                !$omp do schedule(dynamic)
-#endif
-                do i = ibeg, iend
-                    do k = 1, nz
-                        Sxx(k,i,ny+1) = 2 * Sxx(k,i,ny) - Sxx(k,i,ny-1)
-                        Syy(k,i,ny+1) = 2 * Syy(k,i,ny) - Syy(k,i,ny-1)
-                        Szz(k,i,ny+1) = 2 * Szz(k,i,ny) - Szz(k,i,ny-1)
-                        Syz(k,i,ny+1) = 2 * Syz(k,i,ny) - Syz(k,i,ny-1)
-                        Sxz(k,i,ny+1) = 2 * Sxz(k,i,ny) - Sxz(k,i,ny-1)
-                        Sxy(k,i,ny+1) = 2 * Sxy(k,i,ny) - Sxy(k,i,ny-1)
-                    end do
-                end do
-#ifdef _OPENACC
-                !$acc end kernels
-#else
-                !$omp end do nowait
-                !$omp end parallel
-#endif
-            end if
-#ifndef _OPENACC
-            !$omp barrier
-#endif
-        end if
-
-        !! time-marching
-
 #ifdef _OPENACC
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
         !$acc         axSxx, aySxy, azSxz, axSxy, aySyy, azSyz, axSxz, aySyz, azSzz, &
-        !$acc         gxc, gxe, gyc, gye, gzc, gze, kbeg_a)
+        !$acc         gxc, gxe, gyc, gye, gzc, gze, bb)
         !$acc loop independent collapse(2)
 #else
         !$omp parallel &
         !$omp private( dxSxx, dySyy, dzSzz, dySyz, dzSyz, dxSxz, dzSxz, dxSxy ,dySxy, bx, by, bz ) &
-        !$omp private( i, j, k )
+        !$omp private( i, j, k, p0, p )
         !$omp do &
         !$omp schedule(dynamic)
 #endif
-        do j = jbeg, jend
-            do i = ibeg, iend
+        do j = bb%jb, bb%je
+            do i = bb%ib, bb%ie
+                
+                p0 = bb%offset + (j - bb%jb) * bb%nx * bb%nz + (i-bb%ib) * bb%nz
 
                 !$acc loop vector independent
-                do k = kbeg_a(i, j), kend
+                do k = bb%kb, bb%ke
+
+                    p = p0 + (k - bb%kb + 1)
 
                     dxSxx = (Sxx(k  ,i+1,j) - Sxx(k  ,i  ,j  )) * r20x
                     dySyy = (Syy(k  ,i,j+1) - Syy(k  ,i  ,j  )) * r20y
@@ -281,27 +277,27 @@ contains
 
                     !! Velocity Updates
                     Vx(k,i,j) = Vx(k,i,j) + bx &
-                              * real(gxe(1,i) * dxSxx + gyc(1,j) * dySxy + gzc(1,k) * dzSxz &
-                                   + gxe(2,i) * axSxx(k,i,j) + gyc(2,j) * aySxy(k,i,j) + gzc(2,k) * azSxz(k,i,j)) * dt
+                              * real(gxe(1,i) * dxSxx    + gyc(1,j) * dySxy    + gzc(1,k) * dzSxz &
+                                   + gxe(2,i) * axSxx(p) + gyc(2,j) * aySxy(p) + gzc(2,k) * azSxz(p)) * dt
 
                     Vy(k,i,j) = Vy(k,i,j) + by &
-                              * real(gxc(1,i) * dxSxy + gye(1,j) * dySyy + gzc(1,k) * dzSyz &
-                                   + gxc(2,i) * axSxy(k,i,j) + gye(2,j) * aySyy(k,i,j) + gzc(2,k) * azSyz(k,i,j)) * dt
+                              * real(gxc(1,i) * dxSxy    + gye(1,j) * dySyy    + gzc(1,k) * dzSyz &
+                                   + gxc(2,i) * axSxy(p) + gye(2,j) * aySyy(p) + gzc(2,k) * azSyz(p)) * dt
 
                     Vz(k,i,j) = Vz(k,i,j) + bz &
-                              * real(gxc(1,i) * dxSxz + gyc(1,j) * dySyz + gze(1,k) * dzSzz &
-                                   + gxc(2,i) * axSxz(k,i,j) + gyc(2,j) * aySyz(k,i,j) + gze(2,k) * azSzz(k,i,j)) * dt
+                              * real(gxc(1,i) * dxSxz    + gyc(1,j) * dySyz    + gze(1,k) * dzSzz &
+                                   + gxc(2,i) * axSxz(p) + gyc(2,j) * aySyz(p) + gze(2,k) * azSzz(p)) * dt
 
                     !! ADE updates
-                    axSxx(k,i,j) = gxe(3,i) * axSxx(k,i,j) + gxe(4,i) * real(dxSxx) * dt
-                    aySxy(k,i,j) = gyc(3,j) * aySxy(k,i,j) + gyc(4,j) * real(dySxy) * dt
-                    azSxz(k,i,j) = gzc(3,k) * azSxz(k,i,j) + gzc(4,k) * real(dzSxz) * dt
-                    axSxy(k,i,j) = gxc(3,i) * axSxy(k,i,j) + gxc(4,i) * real(dxSxy) * dt
-                    aySyy(k,i,j) = gye(3,j) * aySyy(k,i,j) + gye(4,j) * real(dySyy) * dt
-                    azSyz(k,i,j) = gzc(3,k) * azSyz(k,i,j) + gzc(4,k) * real(dzSyz) * dt
-                    axSxz(k,i,j) = gxc(3,i) * axSxz(k,i,j) + gxc(4,i) * real(dxSxz) * dt
-                    aySyz(k,i,j) = gyc(3,j) * aySyz(k,i,j) + gyc(4,j) * real(dySyz) * dt
-                    azSzz(k,i,j) = gze(3,k) * azSzz(k,i,j) + gze(4,k) * real(dzSzz) * dt
+                    axSxx(p) = gxe(3,i) * axSxx(p) + gxe(4,i) * real(dxSxx) * dt
+                    aySxy(p) = gyc(3,j) * aySxy(p) + gyc(4,j) * real(dySxy) * dt
+                    azSxz(p) = gzc(3,k) * azSxz(p) + gzc(4,k) * real(dzSxz) * dt
+                    axSxy(p) = gxc(3,i) * axSxy(p) + gxc(4,i) * real(dxSxy) * dt
+                    aySyy(p) = gye(3,j) * aySyy(p) + gye(4,j) * real(dySyy) * dt
+                    azSyz(p) = gzc(3,k) * azSyz(p) + gzc(4,k) * real(dzSyz) * dt
+                    axSxz(p) = gxc(3,i) * axSxz(p) + gxc(4,i) * real(dxSxz) * dt
+                    aySyz(p) = gyc(3,j) * aySyz(p) + gyc(4,j) * real(dySyz) * dt
+                    azSzz(p) = gze(3,k) * azSzz(p) + gze(4,k) * real(dzSzz) * dt
 
                 end do
             end do
@@ -312,145 +308,164 @@ contains
         !$omp end do nowait
         !$omp end parallel
         !$omp barrier
-#endif 
+#endif         
 
-    end subroutine absorb_p__update_vel
+    end subroutine update_vel_core
+
 
     subroutine absorb_p__update_stress
 
+        integer :: ibox
+
+        !! Horizontal zero-derivative boundary (for plane wave mode)
+        if (pw_mode) call set_vel_boundary()
+
+        !! Time-marching
+        do ibox = 1, 6
+            if(box(ibox)%ncell > 0) call update_stress_core(box(ibox))
+        end do
+
+    end subroutine absorb_p__update_stress
+
+    subroutine set_vel_boundary()
+
         integer :: i, j, k
+
+        if (idx == 0) then
+#ifdef _OPENACC
+            !$acc kernels present(Vx, Vy, Vz) 
+            !$acc loop independent collapse(2)
+#else
+            !$omp parallel private(j,k)
+            !$omp do schedule(dynamic)
+#endif
+            do j = jbeg, jend
+                do k = 1, nz
+                    Vx(k, 0, j) = 2 * Vx(k, 1, j) - Vx(k, 2, j)
+                    Vy(k, 0, j) = 2 * Vy(k, 1, j) - Vy(k, 2, j)
+                    Vz(k, 0, j) = 2 * Vz(k, 1, j) - Vz(k, 2, j)
+                end do
+            end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
+            !$omp end do nowait
+            !$omp end parallel
+#endif
+        end if
+
+        if (idx == nproc_x - 1) then
+#ifdef _OPENACC
+            !$acc kernels present(Vx, Vy, Vz) 
+            !$acc loop independent collapse(2)
+#else
+            !$omp parallel private(j,k)
+            !$omp do schedule(dynamic)
+#endif
+            do j = jbeg, jend
+                do k = 1, nz
+                    Vx(k, nx + 1, j) = 2 * Vx(k, nx, j) - Vx(k, nx - 1, j)
+                    Vy(k, nx + 1, j) = 2 * Vy(k, nx, j) - Vy(k, nx - 1, j)
+                    Vz(k, nx + 1, j) = 2 * Vz(k, nx, j) - Vz(k, nx - 1, j)
+                end do
+            end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
+            !$omp end do nowait
+            !$omp end parallel
+#endif
+        end if
+
+        if (idy == 0) then
+#ifdef _OPENACC
+            !$acc kernels present(Vx, Vy, Vz)
+            !$acc loop independent collapse(2)
+#else
+            !$omp parallel private(i,k)
+            !$omp do schedule(dynamic)
+#endif
+            do i = ibeg, iend
+                do k = 1, nz
+                    Vx(k, i, 0) = 2 * Vx(k, i, 1) - Vx(k, i, 2)
+                    Vy(k, i, 0) = 2 * Vy(k, i, 1) - Vy(k, i, 2)
+                    Vz(k, i, 0) = 2 * Vz(k, i, 1) - Vz(k, i, 2)
+                end do
+            end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
+            !$omp end do nowait
+            !$omp end parallel
+#endif
+        end if
+
+        if (idy == nproc_y - 1) then
+#ifdef _OPENACC
+            !$acc kernels present(Vx, Vy, Vz) 
+            !$acc loop independent collapse(2)
+#else
+            !$omp parallel private(i,k)
+            !$omp do schedule(dynamic)
+#endif
+            do i = ibeg, iend
+                do k = 1, nz
+                    Vx(k, i, ny + 1) = 2 * Vx(k, i, ny) - Vx(k, i, ny - 1)
+                    Vy(k, i, ny + 1) = 2 * Vy(k, i, ny) - Vy(k, i, ny - 1)
+                    Vz(k, i, ny + 1) = 2 * Vz(k, i, ny) - Vz(k, i, ny - 1)
+                end do
+            end do
+#ifdef _OPENACC
+            !$acc end kernels
+#else
+            !$omp end do nowait
+            !$omp end parallel
+#endif
+        end if
+#ifndef _OPENACC
+        !$omp barrier
+#endif 
+
+    end subroutine set_vel_boundary
+
+
+    subroutine update_stress_core(bb)
+
+        type(t_box), intent(in) :: bb
+        integer :: i, j, k, p0, p
         real(SP) :: lam2mu_R, lam_R
         real(SP) :: dxVx_ade, dyVy_ade, dzVz_ade
         real(SP) :: gxc0(4), gxe0(4), gyc0(4), gye0(4), gzc0(4), gze0(4)
         real(MP) :: dxVx, dyVx, dzVx
         real(MP) :: dxVy, dyVy, dzVy
         real(MP) :: dxVz, dyVz, dzVz
-        real(SP) :: muxz, muyz, muxy, epsl
-
-
-        !! Horizontal zero-derivative boundary (for plane wave mode)
-        if (pw_mode) then
-            if (idx == 0) then
-#ifdef _OPENACC
-                !$acc kernels present(Vx, Vy, Vz) 
-                !$acc loop independent collapse(2)
-#else
-                !$omp parallel private(j,k)
-                !$omp do schedule(dynamic)
-#endif
-                do j = jbeg, jend
-                    do k = 1, nz
-                        Vx(k, 0, j) = 2 * Vx(k, 1, j) - Vx(k, 2, j)
-                        Vy(k, 0, j) = 2 * Vy(k, 1, j) - Vy(k, 2, j)
-                        Vz(k, 0, j) = 2 * Vz(k, 1, j) - Vz(k, 2, j)
-                    end do
-                end do
-#ifdef _OPENACC
-                !$acc end kernels
-#else
-                !$omp end do nowait
-                !$omp end parallel
-#endif
-            end if
-
-            if (idx == nproc_x - 1) then
-#ifdef _OPENACC
-                !$acc kernels present(Vx, Vy, Vz) 
-                !$acc loop independent collapse(2)
-#else
-                !$omp parallel private(j,k)
-                !$omp do schedule(dynamic)
-#endif
-                do j = jbeg, jend
-                    do k = 1, nz
-                        Vx(k, nx + 1, j) = 2 * Vx(k, nx, j) - Vx(k, nx - 1, j)
-                        Vy(k, nx + 1, j) = 2 * Vy(k, nx, j) - Vy(k, nx - 1, j)
-                        Vz(k, nx + 1, j) = 2 * Vz(k, nx, j) - Vz(k, nx - 1, j)
-                    end do
-                end do
-#ifdef _OPENACC
-                !$acc end kernels
-#else
-                !$omp end do nowait
-                !$omp end parallel
-#endif
-            end if
-
-            if (idy == 0) then
-#ifdef _OPENACC
-                !$acc kernels present(Vx, Vy, Vz)
-                !$acc loop independent collapse(2)
-#else
-                !$omp parallel private(i,k)
-                !$omp do schedule(dynamic)
-#endif
-                do i = ibeg, iend
-                    do k = 1, nz
-                        Vx(k, i, 0) = 2 * Vx(k, i, 1) - Vx(k, i, 2)
-                        Vy(k, i, 0) = 2 * Vy(k, i, 1) - Vy(k, i, 2)
-                        Vz(k, i, 0) = 2 * Vz(k, i, 1) - Vz(k, i, 2)
-                    end do
-                end do
-#ifdef _OPENACC
-                !$acc end kernels
-#else
-                !$omp end do nowait
-                !$omp end parallel
-#endif
-            end if
-
-            if (idy == nproc_y - 1) then
-#ifdef _OPENACC
-                !$acc kernels present(Vx, Vy, Vz) 
-                !$acc loop independent collapse(2)
-#else
-                !$omp parallel private(i,k)
-                !$omp do schedule(dynamic)
-#endif
-                do i = ibeg, iend
-                    do k = 1, nz
-                        Vx(k, i, ny + 1) = 2 * Vx(k, i, ny) - Vx(k, i, ny - 1)
-                        Vy(k, i, ny + 1) = 2 * Vy(k, i, ny) - Vy(k, i, ny - 1)
-                        Vz(k, i, ny + 1) = 2 * Vz(k, i, ny) - Vz(k, i, ny - 1)
-                    end do
-                end do
-#ifdef _OPENACC
-                !$acc end kernels
-#else
-                !$omp end do nowait
-                !$omp end parallel
-#endif
-            end if
-#ifndef _OPENACC
-            !$omp barrier
-#endif 
-        end if
-
-        !! Time-marching
-
-        epsl = epsilon(1.0)
+        real(SP) :: muxz, muyz, muxy
+        real(SP) :: epsl = epsilon(1.0)
 
 #ifdef _OPENACC
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
         !$acc         axVx, ayVx, azVx, axVy, ayVy, azVy, axVz, ayVz, azVz, &
-        !$acc         lam, mu, gxc, gxe, gyc, gye, gzc, gze, kbeg_a)
+        !$acc         lam, mu, gxc, gxe, gyc, gye, gzc, gze, bb)
         !$acc loop independent collapse(2)
 #else
         !$omp parallel &
         !$omp private( dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz, muyz, muxz, muxy) &
         !$omp private( lam2mu_R, lam_R ) &
         !$omp private( dxVx_ade, dyVy_ade, dzVz_ade ) &
-        !$omp private( i, j, k )
+        !$omp private( i, j, k, p0, p )
         !$omp do &
         !$omp schedule(dynamic)
 #endif
-        do j = jbeg, jend
+        do j = bb%jb, bb%je
+            do i = bb%ib, bb%ie
 
-            do i = ibeg, iend
+                p0 = bb%offset + (j - bb%jb) * bb%nx * bb%nz + (i-bb%ib) * bb%nz
 
                 !$acc loop vector independent
-                do k = kbeg_a(i, j), kend
+                do k = bb%kb, bb%ke
+
+                    p = p0 + (k - bb%kb + 1)
 
                     dxVx = (Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )) * r20x
                     dyVy = (Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)) * r20y
@@ -459,22 +474,24 @@ contains
                     lam2mu_R = (lam(k,i,j) + 2 * mu(k,i,j))
                     lam_R = lam2mu_R - 2 * mu(k,i,j)
 
-                    dxVx_ade = gxc(1,i) * real(dxVx) + gxc(2,i) * axVx(k,i,j)
-                    dyVy_ade = gyc(1,j) * real(dyVy) + gyc(2,j) * ayVy(k,i,j)
-                    dzVz_ade = gzc(1,k) * real(dzVz) + gzc(2,k) * azVz(k,i,j)
+                    dxVx_ade = gxc(1,i) * real(dxVx) + gxc(2,i) * axVx(p)
+                    dyVy_ade = gyc(1,j) * real(dyVy) + gyc(2,j) * ayVy(p)
+                    dzVz_ade = gzc(1,k) * real(dzVz) + gzc(2,k) * azVz(p)
 
                     Sxx(k,i,j) = Sxx(k,i,j) + (lam2mu_R * dxVx_ade + lam_R * (dyVy_ade + dzVz_ade)) * dt
                     Syy(k,i,j) = Syy(k,i,j) + (lam2mu_R * dyVy_ade + lam_R * (dxVx_ade + dzVz_ade)) * dt
                     Szz(k,i,j) = Szz(k,i,j) + (lam2mu_R * dzVz_ade + lam_R * (dxVx_ade + dyVy_ade)) * dt
 
-                    axVx(k,i,j) = gxc(3,i) * axVx(k,i,j) + gxc(4,i) * real(dxVx) * dt
-                    ayVy(k,i,j) = gyc(3,j) * ayVy(k,i,j) + gyc(4,j) * real(dyVy) * dt
-                    azVz(k,i,j) = gzc(3,k) * azVz(k,i,j) + gzc(4,k) * real(dzVz) * dt
+                    axVx(p) = gxc(3,i) * axVx(p) + gxc(4,i) * real(dxVx) * dt
+                    ayVy(p) = gyc(3,j) * ayVy(p) + gyc(4,j) * real(dyVy) * dt
+                    azVz(p) = gzc(3,k) * azVz(p) + gzc(4,k) * real(dzVz) * dt
 
                 end do
 
                 !$acc loop vector independent
-                do k = kbeg_a(i, j), kend
+                do k = bb%kb, bb%ke
+
+                    p = p0 + (k - bb%kb + 1)
 
                     dxVy = (Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )) * r20x
                     dxVz = (Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )) * r20x
@@ -502,19 +519,19 @@ contains
                              + mu(k+1,i  ,j  ) * mu(k  ,i  ,j+1) * mu(k+1,i  ,j+1) + epsl)
 
 
-                    Syz(k,i,j) = Syz(k,i,j) + muyz * (gye(1,j) * dyVz + gze(1,k) * dzVy &
-                                                            + gye(2,j) * ayVz(k,i,j) + gze(2,k) * azVy(k,i,j)) * dt
-                    Sxz(k,i,j) = Sxz(k,i,j) + muxz * (gxe(1,i) * dxVz + gze(1,k) * dzVx &
-                                                            + gxe(2,i) * axVz(k,i,j) + gze(2,k) * azVx(k,i,j)) * dt
-                    Sxy(k,i,j) = Sxy(k,i,j) + muxy * (gxe(1,i) * dxVy + gye(1,j) * dyVx &
-                                                            + gxe(2,i) * axVy(k,i,j) + gye(2,j) * ayVx(k,i,j)) * dt
+                    Syz(k,i,j) = Syz(k,i,j) + muyz * (gye(1,j) * dyVz    + gze(1,k) * dzVy &
+                                                    + gye(2,j) * ayVz(p) + gze(2,k) * azVy(p)) * dt
+                    Sxz(k,i,j) = Sxz(k,i,j) + muxz * (gxe(1,i) * dxVz    + gze(1,k) * dzVx &
+                                                    + gxe(2,i) * axVz(p) + gze(2,k) * azVx(p)) * dt
+                    Sxy(k,i,j) = Sxy(k,i,j) + muxy * (gxe(1,i) * dxVy    + gye(1,j) * dyVx &
+                                                    + gxe(2,i) * axVy(p) + gye(2,j) * ayVx(p)) * dt
 
-                    ayVx(k,i,j) = gye(3,j) * ayVx(k,i,j) + gye(4,j) * real(dyVx) * dt
-                    azVx(k,i,j) = gze(3,k) * azVx(k,i,j) + gze(4,k) * real(dzVx) * dt
-                    axVy(k,i,j) = gxe(3,i) * axVy(k,i,j) + gxe(4,i) * real(dxVy) * dt
-                    azVy(k,i,j) = gze(3,k) * azVy(k,i,j) + gze(4,k) * real(dzVy) * dt
-                    axVz(k,i,j) = gxe(3,i) * axVz(k,i,j) + gxe(4,i) * real(dxVz) * dt
-                    ayVz(k,i,j) = gye(3,j) * ayVz(k,i,j) + gye(4,j) * real(dyVz) * dt
+                    ayVx(p) = gye(3,j) * ayVx(p) + gye(4,j) * real(dyVx) * dt
+                    azVx(p) = gze(3,k) * azVx(p) + gze(4,k) * real(dzVx) * dt
+                    axVy(p) = gxe(3,i) * axVy(p) + gxe(4,i) * real(dxVy) * dt
+                    azVy(p) = gze(3,k) * azVy(p) + gze(4,k) * real(dzVy) * dt
+                    axVz(p) = gxe(3,i) * axVz(p) + gxe(4,i) * real(dxVz) * dt
+                    ayVz(p) = gye(3,j) * ayVz(p) + gye(4,j) * real(dyVz) * dt
 
                 end do
 
@@ -526,9 +543,10 @@ contains
         !$omp end do nowait
         !$omp end parallel
         !$omp barrier
-#endif 
+#endif         
 
-    end subroutine absorb_p__update_stress
+    end subroutine update_stress_core
+
 
     subroutine damping_profile(x, H, xbeg0, xend0, g)
 
