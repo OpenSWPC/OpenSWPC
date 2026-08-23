@@ -26,6 +26,8 @@ module m_absorb_p
     real(SP), allocatable :: axSxy(:), azSyz(:)
 
     real(SP) :: r20x, r20z
+    real(MP) :: rc40x, rc41x, rc40z, rc41z
+    real(MP) :: rd40x, rd41x, rd40z, rd41z
 
 contains
 
@@ -41,6 +43,14 @@ contains
         !! derivative coefficient
         r20x = real(1.0 / dx)
         r20z = real(1.0 / dz)
+        rc40x = 17.0_MP / 16.0_MP / dx
+        rc40z = 17.0_MP / 16.0_MP / dz
+        rc41x =  1.0_MP / 48.0_MP / dx
+        rc41z =  1.0_MP / 48.0_MP / dz
+        rd40x = -1.0_MP / 16.0_MP / dx
+        rd40z = -1.0_MP / 16.0_MP / dz
+        rd41x = -1.0_MP / 48.0_MP / dx
+        rd41z = -1.0_MP / 48.0_MP / dz       
 
         !! damping profile
         allocate (gxc(4, ibeg:iend), gxe(4, ibeg:iend))
@@ -137,14 +147,16 @@ contains
         integer :: i, k
         real(SP) :: by
         real(MP) :: dzSyz, dxSxy
+        integer :: isign
+        real(MP) :: re40x, re41x, re40z, re41z
 
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vy, Sxy, Syz, axSxy, azSyz, rho, gxc, gzc, bb)
+        !$acc present(Vy, Sxy, Syz, axSxy, azSyz, rho, gxc, gzc, bb, kfs_top, kfs_bot, kob_top, kob_bot) 
         !$acc loop independent
 #else
         !$omp parallel &
-        !$omp private( dzSyz, dxSxy, by, i, k, p )
+        !$omp private( dzSyz, dxSxy, by, i, k, p, isign, re40x, re41x, re40z, re41z)
         !$omp do schedule(dynamic)
 #endif
         do i = bb%ib, bb%ie
@@ -154,10 +166,21 @@ contains
 #endif
             do k = bb%kb, bb%ke
 
+                isign = sign(1, max((k - kfs_top(i)) * (kfs_bot(i) - k), &
+                                    (k - kob_top(i)) * (kob_bot(i) - k)))
+
+                re40x = rc40x + isign * rd40x
+                re41x = rc41x + isign * rd41x
+                re40z = rc40z + isign * rd40z
+                re41z = rc41z + isign * rd41z               
+
+                dzSyz = (Syz(k, i) - Syz(k-1,i  )) * re40z - (Syz(k+1,i  ) - Syz(k-2,i  )) * re41z
+                dxSxy = (Sxy(k, i) - Sxy(k  ,i-1)) * re40x - (Sxy(k  ,i+1) - Sxy(k  ,i-2)) * re41x                
+
                 p = bb%offset + (i-bb%ib) * bb%nz + (k - bb%kb + 1)
 
-                dzSyz = (Syz(k,i) - Syz(k-1,i)) * r20z
-                dxSxy = (Sxy(k,i) - Sxy(k,i-1)) * r20x
+!                dzSyz = (Syz(k,i) - Syz(k-1,i)) * r20z
+!                dxSxy = (Sxy(k,i) - Sxy(k,i-1)) * r20x
 
                 by = 1.0 / rho(k,i)
 
@@ -249,15 +272,18 @@ contains
         real(SP) :: taus1, taus_plus1
         real(SP) :: Ryz_n, Rxy_n
         real(SP) :: f_Rxy, f_Ryz
+        integer :: isign
+        real(MP) :: re40x, re41x, re40z, re41z
 
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vy, Sxy, Syz, gxc, gxe, gzc, gze, axVy, azVy, mu, bb, Ryz, Rxy, c1, c2, d1, d2, taus)
+        !$acc present(Vy, Sxy, Syz, gxc, gxe, gzc, gze, axVy, azVy, mu, bb, Ryz, Rxy, c1, c2, d1, d2, taus, kob_top, kfs_top, kob_bot, kfs_bot)
         !$acc loop independent
 #else
         !$omp parallel &
         !$omp private(i, k, dxVy, dzVy, nnn, pnn, npn, mu_xy, mu_yz, p, p0 ) &
-        !$omp private( taus1, taus_plus1, f_Ryz, f_Rxy,  Ryz_n, Rxy_n ) 
+        !$omp private( taus1, taus_plus1, f_Ryz, f_Rxy,  Ryz_n, Rxy_n )  &
+        !$omp private( re40x, re41x, re40z, re41z, isign) &
         !$omp do schedule(dynamic)
 #endif
         do i = bb%ib, bb%ie
@@ -269,8 +295,19 @@ contains
 
                 p = p0 + (k - bb%kb + 1)
 
-                dxVy = (Vy(k,i+1) - Vy(k,i)) * r20x
-                dzVy = (Vy(k+1,i) - Vy(k,i)) * r20z
+                isign = sign(1, max((k - kfs_top(i)) * (kfs_bot(i) - k), &
+                                    (k - kob_top(i)) * (kob_bot(i) - k)))
+
+                re40x = rc40x + isign * rd40x
+                re41x = rc41x + isign * rd41x
+                re40z = rc40z + isign * rd40z
+                re41z = rc41z + isign * rd41z      
+
+!                dxVy = (Vy(k  ,i+1) - Vy(k  ,i  )) * re40x - (Vy(k  ,i+2) - Vy(k  ,i-1)) * re41x
+!                dzVy = (Vy(k+1,i  ) - Vy(k  ,i  )) * re40z - (Vy(k+2,i  ) - Vy(k-1,i  )) * re41z
+
+                dxVy = (Vy(k  ,i+1) - Vy(k  ,i  )) * r20x
+                dzVy = (Vy(k+1,i  ) - Vy(k  ,i  )) * r20z
 
                 nnn = mu(k  ,i  )
                 pnn = mu(k+1,i  )
@@ -278,14 +315,12 @@ contains
                 mu_xy = 2 * nnn * npn / (nnn + npn + epsl)
                 mu_yz = 2 * nnn * pnn / (nnn + pnn + epsl)
 
-                axVy(p) = gxe(3,i) * axVy(p) + gxe(4,i) * dxVy * dt
-                azVy(p) = gze(3,k) * azVy(p) + gze(4,k) * dzVy * dt
-
                 dzVy = gze(1,k) * dzVy + gze(2,k) * azVy(p)
                 dxVy = gxe(1,i) * dxVy + gxe(2,i) * axVy(p)
 
                 !! update memory variables
                 !! working variables for combinations of velocity derivatives
+                taus1 = taus(k, i)
                 f_Ryz = mu_yz * taus1 * dzVy
                 f_Rxy = mu_xy * taus1 * dxVy
 
@@ -306,6 +341,9 @@ contains
 
                 Syz(k,i) = Syz(k,i) + (mu_yz * taus_plus1 * dzVy + Ryz_n) * dt
                 Sxy(k,i) = Sxy(k,i) + (mu_xy * taus_plus1 * dxVy + Rxy_n) * dt
+
+                axVy(p) = gxe(3,i) * axVy(p) + gxe(4,i) * dxVy * dt
+                azVy(p) = gze(3,k) * azVy(p) + gze(4,k) * dzVy * dt
 
             end do
         end do
