@@ -94,7 +94,7 @@
   sw_wav_strain    = .false.           !! strain tansor trace
   ntdec_w          = 4                !! time decimation of waveform output
   st_format        = 'll'             !! station format: 'xy' or 'll'
-  fn_stloc         = '${DATASET}/station/hinet.stlst'  !! station location file
+  fn_stloc         = 'dataset/station/hinet.stlst'  !! station location file
   wav_format       = 'sac'            !! 'sac' or 'csf'  ('sac' recommended)
   ntdec_w_prg      = 0                !!  waveform output during computation (0:off)
 
@@ -142,6 +142,7 @@
   abc_type         = 'pml'            !! 'pml' or 'cerjan'
   na               = 20               !! absorbing layer thickness
   stabilize_pml    = .false.           !! avoid low-v layer in PML region 
+  fullspace_mode   = .false.          !! absorbs at top boundary 
 
   !! ----------------------------------------------------------------------- !!
   !! Velocity model
@@ -166,8 +167,8 @@
     !! --------------------------------------------------------------------- !!
     !! For GMT grid file input 'grd' ( requires netcdf library )
     !!
-    dir_grd          = '${DATASET}/vmodel/ejivsm/'    !! directory for grd file
-    fn_grdlst        = '${DATASET}/vmodel/ejivsm.lst' !! grd file list
+    dir_grd          = 'dataset/vmodel/ejivsm/'       !! directory for grd file
+    fn_grdlst        = 'dataset/vmodel/ejivsm.lst'    !! grd file list
     node_grd         = 0                              !! input MPI node
 
     !! --------------------------------------------------------------------- !!
@@ -178,19 +179,10 @@
     !! --------------------------------------------------------------------- !!
     !! For random medium models
     !!
-    dir_rmed         = './in/'             !! location of random medium file
+    dir_rmed         = './dataset/'        !! location of random medium file
     fn_grdlst_rmed   = './example/grd.lst' !! grd file list
     rhomin           = 1.0                 !! minimum density threshold
     fn_rmed0         = 'dummy.ns'          !! vel. purturb. on a uniform media
-
-  !! ----------------------------------------------------------------------- !!
-  !! Checkpoint/Restart
-  !!
-  is_ckp           = .false.          !! perform checkpoint/restart
-  ckpdir           = './out/ckp'      !! output directory
-  ckp_interval     = 1000000          !! interval for checkpoint check（1/cycle）
-  ckp_time         = 1000000.         !! checkpoint time
-  ckp_seq          = .true.           !! sequential output mode
 
   !! ----------------------------------------------------------------------- !!
   !! Reciprocity Green's Function Mode

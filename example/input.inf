@@ -141,7 +141,8 @@
 
   abc_type         = 'pml'            !! 'pml' or 'cerjan'
   na               = 20               !! absorbing layer thickness
-  stabilize_pml    = .false.           !! avoid low-v layer in PML region
+  stabilize_pml    = .false.          !! avoid low-v layer in PML region
+  fullspace_mode   = .false.          !! absorbs at top boundary 
 
   !! ----------------------------------------------------------------------- !!
   !! Velocity model
@@ -152,7 +153,7 @@
   topo_flatten     = .false.          !! Force topography variation to zero (formerly is_flatten)
   munk_profile     = .true.           !! velocity gradient inside the seawater column
   earth_flattening = .false.          !! Earth-flattening tranformation
-  
+
     !! --------------------------------------------------------------------- !!
     !! For uniform velocity model 'uni'
     !!
@@ -166,7 +167,7 @@
     !! --------------------------------------------------------------------- !!
     !! For GMT grid file input 'grd' ( requires netcdf library )
     !!
-    dir_grd          = '${DATASET}/vmodel/ejivsm/'    !! directory for grd file
+    dir_grd          = 'dataset/vmodel/ejivsm/'    !! directory for grd file
     fn_grdlst        = './example/grd.lst'            !! grd file list
     node_grd         = 0                              !! input MPI node
 
@@ -182,15 +183,6 @@
     fn_grdlst_rmed   = './example/grd.lst' !! grd file list
     rhomin           = 1.0                 !! minimum density threshold
     fn_rmed0         = 'dummy.ns'          !! vel. purturb. on a uniform media
-
-  !! ----------------------------------------------------------------------- !!
-  !! Checkpoint/Restart
-  !!
-  is_ckp           = .false.          !! perform checkpoint/restart
-  ckpdir           = './out/ckp'      !! output directory
-  ckp_interval     = 1000000          !! interval for checkpoint check（1/cycle）
-  ckp_time         = 1000000.         !! checkpoint time
-  ckp_seq          = .true.           !! sequential output mode
 
   !! ----------------------------------------------------------------------- !!
   !! Reciprocity Green's Function Mode
