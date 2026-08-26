@@ -178,13 +178,8 @@ contains
                 by = 1.0 / rho(k,i)
 
                 Vy(k,i) = Vy(k,i) &
-<<<<<<< .merge_file_QCMQLR
-                        + by * (gxc(1,i) * dxSxy      + gzc(1,k) * dzSyz &
-                              + gxc(2,i) * axSxy(k,i) + gzc(2,k) * azSyz(k,i)) * dt
-=======
                         + by * (gxc(1,i) * dxSxy    + gzc(1,k) * dzSyz &
                               + gxc(2,i) * axSxy(p) + gzc(2,k) * azSyz(p)) * dt
->>>>>>> .merge_file_rJ9Sjh
 
                 axSxy(p) = gxc(3,i) * axSxy(p) + gxc(4,i) * dxSxy * dt
                 azSyz(p) = gzc(3,k) * azSyz(p) + gzc(4,k) * dzSyz * dt
@@ -331,10 +326,6 @@ contains
                     Rxy_n = Rxy_n + d1(m) * Rxy(m,k,i)
                 end do
 
-<<<<<<< .merge_file_QCMQLR
-                Syz(k,i) = Syz(k,i) + muyz * (gze(1,k) * dzVy + gze(2,k) * azVy(k,i)) * dt
-                Sxy(k,i) = Sxy(k,i) + muxy * (gxe(1,i) * dxVy + gxe(2,i) * axVy(k,i)) * dt
-=======
                 !! update stress components
                 taus_plus1 = 1 + taus1 * (1 + d2)
 
@@ -343,10 +334,9 @@ contains
 
                 axVy(p) = gxe(3,i) * axVy(p) + gxe(4,i) * dxVy * dt
                 azVy(p) = gze(3,k) * azVy(p) + gze(4,k) * dzVy * dt
->>>>>>> .merge_file_rJ9Sjh
 
-                axVy(k,i) = gxe(3,i) * axVy(k,i) + gxe(4,i) * dxVy * dt
-                azVy(k,i) = gze(3,k) * azVy(k,i) + gze(4,k) * dzVy * dt
+                axVy(p) = gxe(3,i) * axVy(p) + gxe(4,i) * dxVy * dt
+                azVy(p) = gze(3,k) * azVy(p) + gze(4,k) * dzVy * dt
 
             end do
         end do
@@ -373,17 +363,10 @@ contains
 
         real(SP) :: R0 !! reflection coefficient
         real(SP) :: d0, a0, b0
-<<<<<<< .merge_file_QCMQLR
-        integer, parameter :: pd = 1
-        integer, parameter :: pa = 1
-        integer, parameter :: pb = 2
-        real(SP), parameter :: cp = 6.0 !! assumed P-wave velocity
-=======
         integer, parameter :: pd = 2
         integer, parameter :: pa = 1
         integer, parameter :: pb = 3
         real(SP), parameter :: cp = 3.5 !! assumed S-wave velocity
->>>>>>> .merge_file_rJ9Sjh
         real :: d, a, b, xx
 
         R0 = 10**(-(log10(real(na)) - 1) / log10(2.0) - 3.0)
