@@ -179,15 +179,7 @@ $(o_wav): $(s_wav) $(o_std) $(o_global) $(o_pwatch) $(o_readini) $(o_geomap) $(o
 	$(FC) $(NCINC) $(NCLIB) $(FFLAGS)  -o $@ $^  $(NETCDF)
 
 clean:
-	/bin/rm -f $(o_std) $(o_pdebug) $(o_system) $(o_fdtool) $(o_global) $(o_kernel) $(o_getopt) $(o_source) $(o_medium) $(o_report) $(o_pwatch) $(o_snap) $(o_absorb) $(o_absorb_p) $(o_absorb_c) $(o_gk) $(o_bicubic) $(o_daytim) $(o_sac) $(o_readini)  $(o_geomap) $(o_vmodel1) $(o_vmodel2) $(o_vmodel3) $(o_green) $(o_rdrmed) $(o_vmodel1r)  $(o_vmodel2r) $(o_vmodel3r) $(o_vmodel0) $(o_seawater) $(o_version) $(o_tar) $(o_vmodel5) ../../bin/swpc_3d.x
-	/bin/rm -f *.mod
-	/bin/rm -f *~
-	/bin/rm -f *.L
-	/bin/rm -f *.lst
-	/bin/rm -f *.if90
-	/bin/rm -f *.i
-
-clean2:
+	/bin/rm -f ../../bin/swpc_3d.x
 	/bin/rm -f *.o
 	/bin/rm -f *.mod
 	/bin/rm -f *~
@@ -195,4 +187,4 @@ clean2:
 	/bin/rm -f *.lst
 	/bin/rm -f *.if90
 	/bin/rm -f *.i
-
+	/bin/rm -f *.i90

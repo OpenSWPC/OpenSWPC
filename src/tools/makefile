@@ -87,4 +87,13 @@ m_tar.o     : m_tar.f90
 	$(FC) $(FFLAGS) -o $@ $^ 
 
 clean:
-	/bin/rm -f *.o *.mod *~ ../../bin/read_snp.x ../../bin/diff_snp.x ../../bin/mapregion.x ../../bin/fdmcond.x ../../bin/qmodel_tau.x ../../bin/grdsnp.x ../../bin/gen_rmed2d.x ../../bin/gen_rmed3d.x ../../bin/ll2xy.x ../../bin/xy2ll.x
+	/bin/rm -f ../../bin/read_snp.x ../../bin/diff_snp.x ../../bin/mapregion.x ../../bin/fdmcond.x ../../bin/qmodel_tau.x ../../bin/grdsnp.x ../../bin/gen_rmed2d.x ../../bin/gen_rmed3d.x ../../bin/ll2xy.x ../../bin/xy2ll.x
+	/bin/rm -f *.o
+	/bin/rm -f *.mod
+	/bin/rm -f *~
+	/bin/rm -f *.L
+	/bin/rm -f *.lst
+	/bin/rm -f *.if90
+	/bin/rm -f *.i
+	/bin/rm -f *.i90
+
