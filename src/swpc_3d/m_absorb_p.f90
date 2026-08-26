@@ -244,7 +244,7 @@ contains
     subroutine update_vel_core(bb) 
 
         type(t_box), intent(in) :: bb
-        integer :: p, p0
+        integer :: p
         integer :: i, j, k
         real(MP) :: dxSxx, dySxy, dzSxz
         real(MP) :: dxSxy, dySyy, dzSyz
@@ -453,13 +453,12 @@ contains
     subroutine update_stress_core(bb)
 
         type(t_box), intent(in) :: bb
-        integer :: i, j, k, p0, p, m, isign
+        integer :: i, j, k, p, m, isign
         real(SP) :: mu2, lam2mu
         real(SP) :: taup1, taus1, taup_plus1, taus_plus1
         real(SP) :: d3v3, dxVx_dyVy, dxVx_dzVz, dyVy_dzVz
         real(SP) :: dxVx_ade, dyVy_ade, dzVz_ade
         real(SP) :: Rxx_n, Ryy_n, Rzz_n, Ryz_n, Rxz_n, Rxy_n
-        real(SP) :: gxc0(4), gxe0(4), gyc0(4), gye0(4), gzc0(4), gze0(4)
         real(SP) :: dxVy_dyVx, dxVz_dzVx, dyVz_dzVy
         real(MP) :: dxVx, dyVx, dzVx
         real(MP) :: dxVy, dyVy, dzVy
@@ -484,8 +483,8 @@ contains
         !$omp private( d3v3, dyVy_dzVz, dxVx_dzVz, dxVx_dyVy ) &
         !$omp private( Rxx_n, Ryy_n, Rzz_n ) &
         !$omp private( re40x, re41x, re40y, re41y, re40z, re41z, isign) &
-        !$omp private( i, j, k, m, p )
-        !$omp private( dxVx_ade, dyVy_ade, dzVz_ade ) &
+        !$omp private( i, j, k, m, p ) &
+        !$omp private( dxVx_ade, dyVy_ade, dzVz_ade ) 
         !$omp do &
         !$omp schedule(dynamic)
 #endif
@@ -576,7 +575,7 @@ contains
         !$omp private( taus1, taus_plus1 ) &
         !$omp private( Ryz_n, Rxz_n, Rxy_n ) &
         !$omp private( re40x, re41x, re40y, re41y, re40z, re41z, isign) &
-        !$omp private( i, j, k, m, p ) &
+        !$omp private( i, j, k, m, p ) 
         !$omp do &
         !$omp schedule(dynamic)
 #endif

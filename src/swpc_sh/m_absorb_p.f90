@@ -276,7 +276,7 @@ contains
         !$omp parallel &
         !$omp private(i, k, dxVy, dzVy, dxVy_ade, dzVy_ade, nnn, pnn, npn, mu_xy, mu_yz, p, p0 ) &
         !$omp private( taus1, taus_plus1, f_Ryz, f_Rxy,  Ryz_n, Rxy_n )  &
-        !$omp private( re40x, re41x, re40z, re41z, isign) &
+        !$omp private( re40x, re41x, re40z, re41z, isign)
         !$omp do schedule(dynamic)
 #endif
         do i = bb%ib, bb%ie
