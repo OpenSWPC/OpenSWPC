@@ -58,70 +58,70 @@ contains
             Cv(:) = 1.0
         end if
 
-        ! if( fullspace_mode ) then
+        if( fullspace_mode ) then
 
-        !   do k=k0, k1
+            do k=k0, k1
 
-        !     vp1 = Cv(k) * vp0
-        !     vs1 = Cv(k) * vs0
-        !     rho1 = Cv(k)**(-5) * rho0
-        !     rho(k,:) = rho1
-        !     mu (k,:) = rho1 * vs1 * vs1
-        !     lam(k,:) = rho1 * ( vp1*vp1 - 2*vs1*vs1 )
-        !     qp (k,:) = qp0
-        !     qs (k,:) = qs0
-        !   end do
-
-        ! else
-        do i = i0, i1
-
-            bd(i, 0) = topo0
-
-            do k = k0, k1
-
-                if (zs(k) > bd(i, 0)) then
-
-            !! elastic medium
-                    vp1 = Cv(k) * vp0
-                    vs1 = Cv(k) * vs0
-                    rho1 = Cv(k)**(-5) * rho0
-
-                    rho(k, i) = rho1
-                    mu(k, i) = rho1 * vs1 * vs1
-                    lam(k, i) = rho1 * (vp1 * vp1 - 2 * vs1 * vs1)
-                    qp(k, i) = qp0
-                    qs(k, i) = qs0
-
-                else if (zs(k) > 0.0) then
-
-            !! ocean column
-            !! Munk's profile is not necessary in SH mode as S-waves do not penetrate to the ocean
-                    vp1 = Cv(k) * 1.5
-                    vs1 = 0.0
-
-                    rho(k, i) = Cv(k)**(-5) * 1.0
-                    mu(k, i) = rho(k, i) * vs1 * vs1
-                    lam(k, i) = rho(k, i) * (vp1 * vp1 - 2 * vs1 * vs1)
-                    qp(k, i) = 1000000.0 ! effectively no attenuation in ocean column
-                    qs(k, i) = 1000000.0
-
-                else
-
-            !! air column
-
-                    vp1 = 0.0
-                    vs1 = 0.0
-
-                    rho(k, i) = 0.001
-                    mu(k, i) = rho(k, i) * vs1 * vs1
-                    lam(k, i) = rho(k, i) * (vp1 * vp1 - 2 * vs1 * vs1)
-                    qp(k, i) = 10.0 ! artificially strong attenuation in air-column
-                    qs(k, i) = 10.0 ! artificially strong attenuation in air-column
-
-                end if
+                vp1 = Cv(k) * vp0
+                vs1 = Cv(k) * vs0
+                rho1 = Cv(k)**(-5) * rho0
+                rho(k,:) = rho1
+                mu (k,:) = rho1 * vs1 * vs1
+                lam(k,:) = rho1 * ( vp1*vp1 - 2*vs1*vs1 )
+                qp (k,:) = qp0
+                qs (k,:) = qs0
             end do
-        end do
-        ! end if
+
+        else
+            do i = i0, i1
+
+                bd(i, 0) = topo0
+
+                do k = k0, k1
+
+                    if (zs(k) > bd(i, 0)) then
+
+                !! elastic medium
+                        vp1 = Cv(k) * vp0
+                        vs1 = Cv(k) * vs0
+                        rho1 = Cv(k)**(-5) * rho0
+
+                        rho(k, i) = rho1
+                        mu(k, i) = rho1 * vs1 * vs1
+                        lam(k, i) = rho1 * (vp1 * vp1 - 2 * vs1 * vs1)
+                        qp(k, i) = qp0
+                        qs(k, i) = qs0
+
+                    else if (zs(k) > 0.0) then
+
+                !! ocean column
+                !! Munk's profile is not necessary in SH mode as S-waves do not penetrate to the ocean
+                        vp1 = Cv(k) * 1.5
+                        vs1 = 0.0
+
+                        rho(k, i) = Cv(k)**(-5) * 1.0
+                        mu(k, i) = rho(k, i) * vs1 * vs1
+                        lam(k, i) = rho(k, i) * (vp1 * vp1 - 2 * vs1 * vs1)
+                        qp(k, i) = 1000000.0 ! effectively no attenuation in ocean column
+                        qs(k, i) = 1000000.0
+
+                    else
+
+                !! air column
+
+                        vp1 = 0.0
+                        vs1 = 0.0
+
+                        rho(k, i) = 0.001
+                        mu(k, i) = rho(k, i) * vs1 * vs1
+                        lam(k, i) = rho(k, i) * (vp1 * vp1 - 2 * vs1 * vs1)
+                        qp(k, i) = 10.0 ! artificially strong attenuation in air-column
+                        qs(k, i) = 10.0 ! artificially strong attenuation in air-column
+
+                    end if
+                end do
+            end do
+        end if
 
         ! dummy value
         bd(:, 1:NBD) = -9999

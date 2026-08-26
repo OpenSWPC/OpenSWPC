@@ -64,7 +64,6 @@ module m_global
     integer, public               :: kbeg_m, kend_m                  !<  k- memory allocation area
     integer, public               :: ibeg_k, iend_k                  !<  i- kernel integration area without absorption band
     integer, public               :: kbeg_k, kend_k                  !<  k- kernel integration area without absorption band
-    integer, allocatable, public  :: kbeg_a(:)                       !<  absorbing boundary region
     integer, public               :: ipad, kpad                      !<  memory padding size for optimization
     character(16), public         :: abc_type                        !<  cerjan or pml
 
@@ -99,11 +98,25 @@ module m_global
     real(MP), allocatable :: rbuf_ip(:), rbuf_im(:)         !<  mpi recv buffer
     integer, private :: mpi_precision
 
-  ! fullspace-mdoe
-!  logical :: fullspace_mode
+    logical, public :: fullspace_mode
 
     private :: inside_node
     private :: set_mpi_table
+
+    type t_box
+        integer :: ib, ie, nx
+        integer :: kb, ke, nz
+        integer :: ncell
+        integer :: offset
+    end type
+
+    type(t_box), public :: box(4)
+    integer, public :: n_sponge_cell
+
+    public :: t_box
+
+    real(SP), allocatable, public :: c1(:), c2(:), d1(:)
+    real(SP), public :: d2
 
 contains
 
@@ -133,7 +146,7 @@ contains
             clat = 35.7182
             phi = 0.0
             abc_type = 'pml'
-!      fullspace_mode = .false.
+        fullspace_mode = .false.
         else
             call readini(io_prm, 'dx', dx, 0.5_MP)
             call readini(io_prm, 'dz', dz, 0.5_MP)
@@ -146,7 +159,7 @@ contains
             call readini(io_prm, 'clat', clat, 35.7182)
             call readini(io_prm, 'phi', phi, 0.0)
             call readini(io_prm, 'abc_type', abc_type, 'pml')
-!      call readini( io_prm, 'fullspace_mode', fullspace_mode, .false.    )
+            call readini( io_prm, 'fullspace_mode', fullspace_mode, .false.    )
         end if
 
     end subroutine global__readprm
@@ -200,6 +213,7 @@ contains
         integer :: err, nproc_exe
         integer :: mx, proc_x
         character(256) :: command
+        integer :: offset
 
         call pwatch__on("global__setup2") ! measure from here
 
@@ -264,23 +278,13 @@ contains
             zc(k) = k2z(k, zbeg, real(dz))
         end do
 
-        ! Absorbing region definition
-        allocate (kbeg_a(ibeg_m:iend_m))
-        do i = ibeg_m, iend_m
-            if (i <= na .or. nx - na + 1 <= i) then
-                kbeg_a(i) = kbeg
-            else
-                kbeg_a(i) = kend - na + 1
-            end if
-        end do
-
         ibeg_k = ibeg
         iend_k = iend
         kbeg_k = kbeg
         kend_k = kend
 
         if (abc_type == 'pml') then
-!      if( fullspace_mode ) kbeg_k = na+1
+            if( fullspace_mode ) kbeg_k = na+1
             if (iend <= na) then ! no kernel integration
                 ibeg_k = iend + 1
             else if (ibeg <= na) then ! pertial kernel
@@ -294,8 +298,22 @@ contains
             kend_k = nz - na
         end if
 
+        offset = 1
+        if( fullspace_mode ) then
+            call set_box(box(1),            ibeg,               na,      kbeg,   kend, offset)
+            call set_box(box(2),         nx-na+1,             iend,      kbeg,   kend, offset)
+            call set_box(box(3), max(na+1, ibeg), min(nx-na, iend),      kbeg,     na, offset) 
+            call set_box(box(4), max(na+1, ibeg), min(nx-na, iend), kend-na+1,   kend, offset)
+        else
+            call set_box(box(1),            ibeg,               na,      kbeg,   kend, offset)
+            call set_box(box(2),         nx-na+1,             iend,      kbeg,   kend, offset)
+            call set_box(box(3), max(na+1, ibeg), min(nx-na, iend),      kbeg, kbeg-1, offset)
+            call set_box(box(4), max(na+1, ibeg), min(nx-na, iend), kend-na+1,   kend, offset) 
+        end if
+        n_sponge_cell = offset  - 1   
+
         !$acc enter data copyin(&
-        !$acc sbuf_ip, sbuf_im, rbuf_ip, rbuf_im, itbl)
+        !$acc sbuf_ip, sbuf_im, rbuf_ip, rbuf_im, itbl, box)
         
         call pwatch__off("global__setup2") ! measure from here
 
@@ -426,5 +444,25 @@ contains
         ! location of this process
         idx = mod(myid, nproc_x)
     end subroutine set_mpi_table
+
+    subroutine set_box(box1, ib, ie, kb, ke, offset)
+
+        type(t_box), intent(inout) :: box1
+        integer, intent(in) :: ib, ie
+        integer, intent(in) :: kb, ke
+        integer, intent(inout) :: offset
+
+
+        box1%ib = ib
+        box1%ie = ie
+        box1%kb = kb
+        box1%ke = ke
+        box1%nx = max(ie - ib + 1, 0)
+        box1%nz = max(ke - kb + 1, 0)
+        box1%ncell = box1%nx * box1%nz
+        box1%offset = offset
+        offset = offset + box1%ncell
+
+    end subroutine set_box    
 
 end module m_global

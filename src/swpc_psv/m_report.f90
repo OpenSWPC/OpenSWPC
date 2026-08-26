@@ -63,7 +63,7 @@ contains
 
         end if
 
-        call memory_size_psv(nproc_x, nx, nz, nm, na, mem_all, mem_node)
+        call memory_size_psv(nproc_x, nx, nz, nm, n_sponge_cell, mem_all, mem_node)
         call fdm_cond_stability(real(dx), 1e10, real(dz), vmax, dt, c)
         call fdm_cond_wavelength(real(dx), -1.0, real(dz), vmin, fmax, r)
 

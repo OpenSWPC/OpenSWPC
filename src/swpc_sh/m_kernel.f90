@@ -21,8 +21,6 @@ module m_kernel
     public :: kernel__update_stress
     public :: kernel__vmax
 
-    real(SP), allocatable :: c1(:), c2(:), d1(:)
-    real(SP) :: d2
     real(MP) :: rc40x, rc41x, rc40z, rc41z
     real(MP) :: rd40x, rd41x, rd40z, rd41z
 
@@ -246,8 +244,8 @@ contains
         allocate (Sxy(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
 
         if (nm > 0) then
-            allocate (Ryz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k), source=0.0)
-            allocate (Rxy(1:nm, kbeg_k:kend_k, ibeg_k:iend_k), source=0.0)
+            allocate (Ryz(1:nm, kbeg:kend, ibeg:iend), source=0.0)
+            allocate (Rxy(1:nm, kbeg:kend, ibeg:iend), source=0.0)
             allocate (c1(1:nm), c2(1:nm), d1(1:nm))
         end if
 

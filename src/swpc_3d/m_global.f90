@@ -44,7 +44,7 @@ module m_global
     logical, public :: pw_mode                                                 !< Plane wave mode
     logical, public :: bf_mode                                                 !< Body force soruce mode
     logical, public :: green_mode                                              !< Green's function computaiton with reciprocity
-    !logical, public :: fullspace_mode
+    logical, public :: fullspace_mode
 
     character(80), public :: title                                             !< execution title, used in filename and headers
     integer, public :: exedate                                                 !< date and time by seconds from 1970/1/1 0:0:0
@@ -83,7 +83,6 @@ module m_global
     integer, public :: ibeg_k, iend_k                                          !< i- kernel integration area w/o absorption band
     integer, public :: jbeg_k, jend_k                                          !< j- kernel integration area w/o absorption band
     integer, public :: kbeg_k, kend_k                                          !< k- kernel integration area w/o absorption band
-    integer, allocatable, public :: kbeg_a(:,:)                                !< k>=kbeg_a(i,j) is in absorber region
     character(16), public :: abc_type
 
     real(SP), public :: M0                                                     !< total moment
@@ -118,6 +117,22 @@ module m_global
 
     private :: inside_node
     private :: set_mpi_table
+
+    type t_box
+        integer :: ib, ie, nx
+        integer :: jb, je, ny
+        integer :: kb, ke, nz
+        integer :: ncell
+        integer :: offset
+    end type
+
+    type(t_box), public :: box(6)
+    integer, public :: n_sponge_cell
+
+    public :: t_box    
+
+    real(SP), allocatable, public :: c1(:), c2(:), d1(:)
+    real(SP), public :: d2
 
 contains
 
@@ -155,7 +170,7 @@ contains
             clat = 35.7182
             phi = 0.0
             abc_type = 'pml'
-!      fullspace_mode = .false.
+        fullspace_mode = .false.
         else ! or read from file for regular run
             call readini(io_prm, 'dx', dx, 0.5_mp)
             call readini(io_prm, 'dy', dy, 0.5_mp)
@@ -170,7 +185,7 @@ contains
             call readini(io_prm, 'clat', clat, 35.7182)
             call readini(io_prm, 'phi', phi, 0.0)
             call readini(io_prm, 'abc_type', abc_type, 'pml')
-!      call readini( io_prm, 'fullspace_mode', fullspace_mode, .false. )
+            call readini( io_prm, 'fullspace_mode', fullspace_mode, .false. )
 
         end if
 
@@ -224,6 +239,7 @@ contains
         integer :: mx, my
         integer :: proc_x, proc_y
         character(256) :: command
+        integer :: offset
 
         call pwatch__on("global__setup2") ! measure from here
 
@@ -312,38 +328,7 @@ contains
             zc(k) = k2z(k, zbeg, real(dz))
         end do
 
-        ! absorbing boundary region                     -+---> i,j(x,y)
-        !                                                 |
-        !  +-----+--------------------------+-----+      |
-        !  |     |                          |     |      v k(z)
-        !  |     |                          |     |
-        !  |     |                          |     |
-        !  |     |                          |     |
-        !  |     |  interior region         |     |
-        !  |     |  eveluated by m_kernel   |     |
-        !  |     |                          |     |
-        !  |     |                          |     |
-        !  |     |                          |     |
-        !  |     +--------------------------+     |
-        !  |         exterior region              |
-        !  |         evaluated by m_absorb        |
-        !  +-----+--------------------------+-----+
-        !  1      na                        nx-na+1  nx
-        !  <- na ->
-
-        allocate (kbeg_a(ibeg_m:iend_m, jbeg_m:jend_m))
-        do j = jbeg_m, jend_m
-            do i = ibeg_m, iend_m
-                if (i <= na .or. nx-na+1 <= i .or. j <= na .or. ny-na+1 <= j) then
-                    kbeg_a(i, j) = kbeg
-                else
-                    kbeg_a(i, j) = kend-na+1
-                end if
-            end do
-        end do
-
         ! Interior Kernel region
-
         ! initial value
         ibeg_k = ibeg
         iend_k = iend
@@ -354,7 +339,7 @@ contains
 
         if (abc_type == 'pml') then
 
-!      if( fullspace_mode ) kbeg_k = na + 1
+            if( fullspace_mode ) kbeg_k = na + 1
 
             if (iend <= na) then; ibeg_k = iend+1; ! no kernel integration
             else if (ibeg <= na) then; ibeg_k = na+1; ! pertial kernel
@@ -375,12 +360,32 @@ contains
 
         end if
 
+        offset = 1
+        if( fullspace_mode ) then
+            call set_box(box(1), ibeg,           iend,            jbeg,           na,              kbeg,      kend,   offset)
+            call set_box(box(2), ibeg,           iend,            ny-na+1,        jend,            kbeg,      kend,   offset)
+            call set_box(box(3), ibeg,           na,              max(na+1,jbeg), min(ny-na,jend), kbeg,      kend,   offset) 
+            call set_box(box(4), nx-na+1,        iend,            max(na+1,jbeg), min(ny-na,jend), kbeg,      kend,   offset) 
+            call set_box(box(5), max(na+1,ibeg), min(nx-na,iend), max(na+1,jbeg), min(ny-na,jend), kbeg,      na,     offset)
+            call set_box(box(6), max(na+1,ibeg), min(nx-na,iend), max(na+1,jbeg), min(ny-na,jend), kend-na+1, kend,   offset)
+        else
+            call set_box(box(1), ibeg,           iend,            jbeg,           na,              kbeg,      kend,   offset)
+            call set_box(box(2), ibeg,           iend,            ny-na+1,        jend,            kbeg,      kend,   offset)
+            call set_box(box(3), ibeg,           na,              max(na+1,jbeg), min(ny-na,jend), kbeg,      kend,   offset) 
+            call set_box(box(4), nx-na+1,        iend,            max(na+1,jbeg), min(ny-na,jend), kbeg,      kend,   offset) 
+            call set_box(box(5), max(na+1,ibeg), min(nx-na,iend), max(na+1,jbeg), min(ny-na,jend), kbeg,      kbeg-1, offset)
+            call set_box(box(6), max(na+1,ibeg), min(nx-na,iend), max(na+1,jbeg), min(ny-na,jend), kend-na+1, kend,   offset)
+        end if
+        n_sponge_cell = offset - 1        
+
+
         !$acc enter data copyin(&
         !$acc       sbuf_ip, sbuf_im, &
         !$acc       rbuf_ip, rbuf_im, &
         !$acc       sbuf_jp, sbuf_jm, &
         !$acc       rbuf_jp, rbuf_jm, &
-        !$acc       itbl(-1:nproc_x, -1:nproc_y))
+        !$acc       itbl(-1:nproc_x, -1:nproc_y), &
+        !$acc       box)
  
 
         call pwatch__off("global__setup2") ! measure from here
@@ -681,5 +686,30 @@ contains
         end do
 
     end subroutine global__getnode
+
+    subroutine set_box(box1, ib, ie, jb, je, kb, ke, offset)
+
+        type(t_box), intent(inout) :: box1
+        integer, intent(in) :: ib, ie
+        integer, intent(in) :: jb, je
+        integer, intent(in) :: kb, ke
+        integer, intent(inout) :: offset
+
+
+        box1%ib = ib
+        box1%ie = ie
+        box1%jb = jb
+        box1%je = je        
+        box1%kb = kb
+        box1%ke = ke
+        box1%nx = max(ie - ib + 1, 0)
+        box1%ny = max(je - jb + 1, 0)
+        box1%nz = max(ke - kb + 1, 0)
+        box1%ncell = box1%nx * box1%ny * box1%nz
+        box1%offset = offset
+        offset = offset + box1%ncell 
+
+    end subroutine set_box    
+
 end module m_global
 ! ------------------------------------------------------------------------------------------------------------------------------ !!
