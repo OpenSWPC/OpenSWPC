@@ -375,9 +375,9 @@ contains
 
         !! memory allocation
 
-        allocate (Vx(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
-        allocate (Vy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
-        allocate (Vz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
+        allocate (Vx(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+        allocate (Vy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+        allocate (Vz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
         allocate (Sxx(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
         allocate (Syy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
         allocate (Szz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
