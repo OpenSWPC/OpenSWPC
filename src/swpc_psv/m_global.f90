@@ -95,8 +95,8 @@ module m_global
 
     real(MP), private, allocatable :: sbuf_S_ip(:), sbuf_S_im(:)        !< mpi send buffer for x-dir
     real(MP), private, allocatable :: rbuf_S_ip(:), rbuf_S_im(:)        !< mpi recv buffer for x-dir
-    real(MP), private, allocatable :: sbuf_V_ip(:), sbuf_V_im(:)        !< mpi send buffer for x-dir
-    real(MP), private, allocatable :: rbuf_V_ip(:), rbuf_V_im(:)        !< mpi recv buffer for x-dir
+    real(SP), private, allocatable :: sbuf_V_ip(:), sbuf_V_im(:)        !< mpi send buffer for x-dir
+    real(SP), private, allocatable :: rbuf_V_ip(:), rbuf_V_im(:)        !< mpi recv buffer for x-dir
     integer, private :: mpi_precision
 
     logical, public :: fullspace_mode
