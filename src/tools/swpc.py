@@ -181,8 +181,8 @@ def prm_print(prm, io=sys.stdout):
 
     """ export control parameters in OpenSWPC's format
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     prm: dict
         A dictionary which contains control parameters    
     io: file handler (Optional)
@@ -213,6 +213,23 @@ def prm_print(prm, io=sys.stdout):
                 print(f"{k.ljust(18)} =   .false.", file=io)
         else:
             print(f"{k.ljust(18)} =   {v}", file=io)
+
+
+def prm_save(prm, filename): 
+
+    """ save control parameters of OpenSWPC into file
+
+    Parameters
+    ----------
+    prm: dict
+        A dictionary which contains control parameters    
+    filename: str
+        Output filename    
+    """
+
+    with open(filename, 'w') as f:
+        prm_print(prm, io=f)
+
 
 
 ### Architecture Dependent Function
