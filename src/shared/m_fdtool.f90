@@ -171,7 +171,7 @@ contains
 
         ! byte per mesh
         b_med = 5 * SP         ! rho, lam, mu, taup, taus
-        b_vel = 3 * DP         ! Vx, Vy, Vz
+        b_vel = 3 * SP         ! Vx, Vy, Vz
         b_stress = 6 * DP      ! Sxx, Syy, Szz, Syz, Sxz, Sxy
         b_mem = 6 * nm * SP    ! Rij
 
@@ -216,7 +216,7 @@ contains
 
         !! byte per mesh
         b_med = 5 * SP
-        b_vel = 1 * DP
+        b_vel = 1 * SP
         b_stress = 2 * DP
         b_mem = 2 * nm * SP
 
@@ -262,7 +262,7 @@ contains
 
         ! byte per mesh
         b_med = 5 * SP
-        b_vel = 2 * DP
+        b_vel = 2 * SP
         b_stress = 4 * DP
         b_mem = 4 * nm * SP
 
