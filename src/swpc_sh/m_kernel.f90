@@ -239,7 +239,7 @@ contains
 
         !! memory allocation
 
-        allocate (Vy(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
+        allocate (Vy(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
         allocate (Syz(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
         allocate (Sxy(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
 

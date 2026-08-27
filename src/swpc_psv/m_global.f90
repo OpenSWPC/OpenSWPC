@@ -31,7 +31,7 @@ module m_global
     integer, parameter, public :: NM = 3                                 !< Number of memory variables
     integer, parameter, public :: NBD = 9                                !< Number of boundary depths to be memorized
 
-    real(MP), allocatable, public :: Vx(:,:), Vz(:,:)                    !< velocity components
+    real(SP), allocatable, public :: Vx(:,:), Vz(:,:)                    !< velocity components
     real(MP), allocatable, public :: Sxx(:,:), Szz(:,:), Sxz(:,:)        !< normal stress components
     real(SP), allocatable, public :: Rxx(:,:,:), Rzz(:,:,:), Rxz(:,:,:)  !< memory variables: normal components
     real(SP), allocatable, public :: rho(:,:), lam(:,:), mu(:,:)         !< density, relaxed moduli
@@ -93,8 +93,10 @@ module m_global
     real(SP), public :: otim
     real(SP), public :: sx0, sy0
 
-    real(MP), private, allocatable :: sbuf_ip(:), sbuf_im(:)             !< mpi send buffer for x-dir
-    real(MP), private, allocatable :: rbuf_ip(:), rbuf_im(:)             !< mpi recv buffer for x-dir
+    real(MP), private, allocatable :: sbuf_S_ip(:), sbuf_S_im(:)        !< mpi send buffer for x-dir
+    real(MP), private, allocatable :: rbuf_S_ip(:), rbuf_S_im(:)        !< mpi recv buffer for x-dir
+    real(MP), private, allocatable :: sbuf_V_ip(:), sbuf_V_im(:)        !< mpi send buffer for x-dir
+    real(MP), private, allocatable :: rbuf_V_ip(:), rbuf_V_im(:)        !< mpi recv buffer for x-dir
     integer, private :: mpi_precision
 
     logical, public :: fullspace_mode
@@ -236,8 +238,10 @@ contains
 
         ! MPI coordinate
         allocate (itbl(-1:nproc_x))
-        allocate (sbuf_ip(3 * nz), sbuf_im(3 * nz))
-        allocate (rbuf_ip(3 * nz), rbuf_im(3 * nz))
+        allocate (sbuf_V_ip(3 * nz), sbuf_V_im(3 * nz))
+        allocate (rbuf_V_ip(3 * nz), rbuf_V_im(3 * nz))
+        allocate (sbuf_S_ip(3 * nz), sbuf_S_im(3 * nz))
+        allocate (rbuf_S_ip(3 * nz), rbuf_S_im(3 * nz))
 
         ! MPI communication table
         call set_mpi_table
@@ -320,8 +324,8 @@ contains
         end if
         n_sponge_cell = offset  - 1        
 
-        !$acc enter data copyin(&
-        !$acc sbuf_ip, sbuf_im, rbuf_ip, rbuf_im, itbl, box)
+        !$acc enter data copyin(sbuf_S_ip, sbuf_S_im, rbuf_S_ip, rbuf_S_im, &
+        !$acc                   sbuf_V_ip, sbuf_V_im, rbuf_V_ip, rbuf_V_im, itbl, box)
 
         call pwatch__off("global__setup2") ! measure from here
 
@@ -342,41 +346,41 @@ contains
 
         call pwatch__on("global__comm_vel")
 
-        !$acc host_data use_device(rbuf_ip, rbuf_im)
-        call mpi_irecv(rbuf_ip, 3 * nz, mpi_precision, itbl(idx + 1), 1, mpi_comm_world, req(1), err)
-        call mpi_irecv(rbuf_im, 3 * nz, mpi_precision, itbl(idx - 1), 2, mpi_comm_world, req(2), err)
+        !$acc host_data use_device(rbuf_V_ip, rbuf_V_im)
+        call mpi_irecv(rbuf_V_ip, 3 * nz, mpi_real, itbl(idx + 1), 1, mpi_comm_world, req(1), err)
+        call mpi_irecv(rbuf_V_im, 3 * nz, mpi_real, itbl(idx - 1), 2, mpi_comm_world, req(2), err)
         !$acc end host_data
 
-        !$acc kernels present(Vx, Vz, sbuf_ip, sbuf_im) 
+        !$acc kernels present(Vx, Vz, sbuf_V_ip, sbuf_V_im) 
         !$acc loop independent
         do k=1, nz
-            sbuf_ip(     k) = Vx(k,iend-1)
-            sbuf_ip(  nz+k) = Vx(k,iend  )
-            sbuf_ip(2*nz+k) = Vz(k,iend  )
-            sbuf_im(     k) = Vx(k,ibeg  )
-            sbuf_im(  nz+k) = Vz(k,ibeg  )
-            sbuf_im(2*nz+k) = Vz(k,ibeg+1)
+            sbuf_V_ip(     k) = Vx(k,iend-1)
+            sbuf_V_ip(  nz+k) = Vx(k,iend  )
+            sbuf_V_ip(2*nz+k) = Vz(k,iend  )
+            sbuf_V_im(     k) = Vx(k,ibeg  )
+            sbuf_V_im(  nz+k) = Vz(k,ibeg  )
+            sbuf_V_im(2*nz+k) = Vz(k,ibeg+1)
         end do
         !$acc end kernels
 
-        !$acc host_data use_device(sbuf_ip, sbuf_im)
-        call mpi_isend(sbuf_ip, 3 * nz, mpi_precision, itbl(idx + 1), 2, mpi_comm_world, req(3), err)
-        call mpi_isend(sbuf_im, 3 * nz, mpi_precision, itbl(idx - 1), 1, mpi_comm_world, req(4), err)
+        !$acc host_data use_device(sbuf_V_ip, sbuf_V_im)
+        call mpi_isend(sbuf_V_ip, 3 * nz, mpi_real, itbl(idx + 1), 2, mpi_comm_world, req(3), err)
+        call mpi_isend(sbuf_V_im, 3 * nz, mpi_real, itbl(idx - 1), 1, mpi_comm_world, req(4), err)
         !$acc end host_data
 
         ! Terminate mpi data communication
         call mpi_waitall(4, req, istatus, err)
 
         ! restore the data
-        !$acc kernels present(Vx, Vz, rbuf_im, rbuf_ip) 
+        !$acc kernels present(Vx, Vz, rbuf_V_im, rbuf_V_ip) 
         !$acc loop independent
         do k=1, nz
-            Vx(k,ibeg-2) = rbuf_im(k)
-            Vx(k,ibeg-1) = rbuf_im(nz+k)
-            Vz(k,ibeg-1) = rbuf_im(2*nz+k)
-            Vx(k,iend+1) = rbuf_ip(k)
-            Vz(k,iend+1) = rbuf_ip(nz+k)
-            Vz(k,iend+2) = rbuf_ip(2*nz+k)
+            Vx(k,ibeg-2) = rbuf_V_im(k)
+            Vx(k,ibeg-1) = rbuf_V_im(nz+k)
+            Vz(k,ibeg-1) = rbuf_V_im(2*nz+k)
+            Vx(k,iend+1) = rbuf_V_ip(k)
+            Vz(k,iend+1) = rbuf_V_ip(nz+k)
+            Vz(k,iend+2) = rbuf_V_ip(2*nz+k)
         end do
         !$acc end kernels
 
@@ -396,40 +400,40 @@ contains
 
         call pwatch__on("global__comm_stress")
 
-        !$acc host_data use_device(rbuf_ip, rbuf_im)
-        call mpi_irecv(rbuf_ip, 3 * nz, mpi_precision, itbl(idx + 1), 3, mpi_comm_world, req(1), err)
-        call mpi_irecv(rbuf_im, 3 * nz, mpi_precision, itbl(idx - 1), 4, mpi_comm_world, req(2), err)
+        !$acc host_data use_device(rbuf_S_ip, rbuf_S_im)
+        call mpi_irecv(rbuf_S_ip, 3 * nz, mpi_precision, itbl(idx + 1), 3, mpi_comm_world, req(1), err)
+        call mpi_irecv(rbuf_S_im, 3 * nz, mpi_precision, itbl(idx - 1), 4, mpi_comm_world, req(2), err)
         !$acc end host_data
 
-        !$acc kernels present(Sxx, Sxz, sbuf_ip, sbuf_im)
+        !$acc kernels present(Sxx, Sxz, sbuf_S_ip, sbuf_S_im)
         !$acc loop independent
         do k=1, nz
-            sbuf_ip(     k) = Sxx(k,iend)
-            sbuf_ip(  nz+k) = Sxz(k,iend-1)
-            sbuf_ip(2*nz+k) = Sxz(k,iend)
-            sbuf_im(     k) = Sxx(k,ibeg)
-            sbuf_im(  nz+k) = Sxx(k,ibeg+1)
-            sbuf_im(2*nz+k) = Sxz(k,ibeg)
+            sbuf_S_ip(     k) = Sxx(k,iend)
+            sbuf_S_ip(  nz+k) = Sxz(k,iend-1)
+            sbuf_S_ip(2*nz+k) = Sxz(k,iend)
+            sbuf_S_im(     k) = Sxx(k,ibeg)
+            sbuf_S_im(  nz+k) = Sxx(k,ibeg+1)
+            sbuf_S_im(2*nz+k) = Sxz(k,ibeg)
         end do
         !$acc end kernels
 
-        !$acc host_data use_device(sbuf_ip, sbuf_im)
-        call mpi_isend(sbuf_ip, 3 * nz, mpi_precision, itbl(idx + 1), 4, mpi_comm_world, req(3), err)
-        call mpi_isend(sbuf_im, 3 * nz, mpi_precision, itbl(idx - 1), 3, mpi_comm_world, req(4), err)
+        !$acc host_data use_device(sbuf_S_ip, sbuf_S_im)
+        call mpi_isend(sbuf_S_ip, 3 * nz, mpi_precision, itbl(idx + 1), 4, mpi_comm_world, req(3), err)
+        call mpi_isend(sbuf_S_im, 3 * nz, mpi_precision, itbl(idx - 1), 3, mpi_comm_world, req(4), err)
         !$acc end host_data
         
         call mpi_waitall(4, req, istatus, err)
 
         ! Resore the data
-        !$acc kernels present(Sxx, Sxz, rbuf_im, rbuf_ip)
+        !$acc kernels present(Sxx, Sxz, rbuf_S_im, rbuf_S_ip)
         !$acc loop independent
         do k=1, nz
-            Sxx(k,ibeg-1) = rbuf_im(k)
-            Sxz(k,ibeg-2) = rbuf_im(nz+k)
-            Sxz(k,ibeg-1) = rbuf_im(2*nz+k)
-            Sxx(k,iend+1) = rbuf_ip(k)
-            Sxx(k,iend+2) = rbuf_ip(nz+k)
-            Sxz(k,iend+1) = rbuf_ip(2*nz+k)
+            Sxx(k,ibeg-1) = rbuf_S_im(k)
+            Sxz(k,ibeg-2) = rbuf_S_im(nz+k)
+            Sxz(k,ibeg-1) = rbuf_S_im(2*nz+k)
+            Sxx(k,iend+1) = rbuf_S_ip(k)
+            Sxx(k,iend+2) = rbuf_S_ip(nz+k)
+            Sxz(k,iend+1) = rbuf_S_ip(2*nz+k)
         end do
         !$acc end kernels
 

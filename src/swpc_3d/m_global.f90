@@ -422,10 +422,10 @@ contains
         jsize = nxp*nz
 
         !$acc host_data use_device(rbuf_V_ip, rbuf_V_im, rbuf_V_jp, rbuf_V_jm)
-        call mpi_irecv(rbuf_V_ip, 5*isize, mpi_precision, itbl(idx+1, idy), 1, mpi_comm_world, req_i(1), err)
-        call mpi_irecv(rbuf_V_im, 4*isize, mpi_precision, itbl(idx-1, idy), 2, mpi_comm_world, req_i(2), err)
-        call mpi_irecv(rbuf_V_jp, 5*jsize, mpi_precision, itbl(idx, idy+1), 3, mpi_comm_world, req_j(1), err)
-        call mpi_irecv(rbuf_V_jm, 4*jsize, mpi_precision, itbl(idx, idy-1), 4, mpi_comm_world, req_j(2), err)
+        call mpi_irecv(rbuf_V_ip, 5*isize, mpi_real, itbl(idx+1, idy), 1, mpi_comm_world, req_i(1), err)
+        call mpi_irecv(rbuf_V_im, 4*isize, mpi_real, itbl(idx-1, idy), 2, mpi_comm_world, req_i(2), err)
+        call mpi_irecv(rbuf_V_jp, 5*jsize, mpi_real, itbl(idx, idy+1), 3, mpi_comm_world, req_j(1), err)
+        call mpi_irecv(rbuf_V_jm, 4*jsize, mpi_real, itbl(idx, idy-1), 4, mpi_comm_world, req_j(2), err)
         !$acc end host_data
 
         !$acc kernels present(Vx, Vy, Vz, sbuf_V_ip, sbuf_V_im) async(1)
