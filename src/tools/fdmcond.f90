@@ -21,17 +21,18 @@ program fdmcond
     call getopt('-version', is_opt2)
     if (is_opt1 .or. is_opt2) call version__display('fdmcond')
 
-    call term_cls()
     write (*, *)
     write (*, '(A)') "----------------------------------------------------------------------"
     write (*, '(A)') "                           FDM CONDITION                              "
     write (*, '(A)') "----------------------------------------------------------------------"
 
-    call fdline(3)
+    write(*,*)
+    write (*, '(A)') " Select Model Dimension"
+    write(*,*)
     write (*, '(A)') "   2) 2D"
     write (*, '(A)') "   3) 3D"
-    call bkline(3)
-    write (*, '(A)', advance="no") " Model Dimension ? --> "
+    write(*,*)
+    write (*, '(A)', advance="no") " --> "
     read (*, *) dim
 
     if (dim /= 2 .and. dim /= 3) then
@@ -41,12 +42,15 @@ program fdmcond
 
     allocate (dh(dim))
 
-    call fdline(5)
+    write(*,*)
+    write(*,*)
+    write (*, '(A)') " Select Source Time Function"
+    write(*,*)
     write (*, '(A)') "   1) Triangle"
     write (*, '(A)') "   2) Herrmann"
     write (*, '(A)') "   3) Kupper"
-    call bkline(4)
-    write (*, '(A)', advance='no') " Source Type ? --> "
+    write(*,*)
+    write (*, '(A)', advance='no') " --> "
 
     read (*, *) stype
 
@@ -57,11 +61,14 @@ program fdmcond
     else if (stype == 3) then
         ef = 2.3
     else
-        write (*, *) "Invalid Source Type. Quit."
+        write (*, *) "Invalid Source Time Function. Quit."
         stop
     end if
 
-    call fdline(6)
+    write(*,*)
+    write(*,*)
+    write (*, '(A)') " Select Parameter Combination"
+    write(*,*)
 
     write (*, '(A)') "   1) dh   (space grid),  fmax (max freq.),  vmax (max vel.)"
     write (*, '(A)') "   2) dh   (space grid),  Tr   (rise time),  vmax (max vel.)"
@@ -73,10 +80,10 @@ program fdmcond
     write (*, '(A)') "   8) Tr   (rise time) ,  vmax (max vel.),   dt (time grid)"
     write (*, '(A)') "   9) vmin (min vel.)  ,  vmax (max vel.),   dt (time grid)"
 
-    call bkline(10)
-    write (*, '(A)', advance='no') " Parameter Combination ? --> "
+    write(*,*)
+    write (*, '(A)', advance='no') " --> "
     read (*, *) inq
-    call fdline(11)
+    write(*,*)
 
     write (*, '(A)') " Assumed Parameters: "
     select case (inq)
@@ -148,22 +155,6 @@ contains
         write (*, '(A)', advance='no') '   '//query1//'  =   '
         read (*, *) getv
     end function getv
-
-    subroutine fdline(n)
-        integer, intent(in) :: n
-        integer :: i
-        do i = 1, n
-            write (*, *)
-        end do
-    end subroutine fdline
-
-    subroutine bkline(n)
-        integer, intent(in) :: n
-        integer :: i
-        do i = 1, n
-            write (*, '(1X,A)') char(27)//'[2A'
-        end do
-    end subroutine bkline
 
     subroutine cond_1(dh, fmax, vmax)
         real, intent(in) :: dh(:), fmax, vmax
@@ -337,12 +328,5 @@ contains
             dh(3) = getv('dz')
         end if
     end subroutine get_dh
-
-    subroutine term_cls
-
-        write (*, '(1X,A)') char(27)//'[2J'
-        write (*, '(1X,A)') char(27)//'[500A' ! let the cursor the top of the screen
-
-    end subroutine term_cls
 
 end program fdmcond
