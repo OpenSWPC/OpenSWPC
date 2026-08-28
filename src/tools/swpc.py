@@ -73,6 +73,7 @@ def prm_new():
         'sw_wav_stress'   : False,
         'sw_wav_strain'   : False,
         'ntdec_w'         : 5,
+        'ntdec_w_prg'     : 0, 
         'st_format'       : 'xy',
         'fn_stloc'        : './example/stloc.xy',
         'wav_format'      : 'sac',
