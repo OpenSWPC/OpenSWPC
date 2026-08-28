@@ -467,6 +467,29 @@ contains
 
     end function herrmann
 
+    !$acc routine(asymcos)
+    real(SP) pure function asymcos(t, ts, tr1, tr2)
+
+        !! Asymmetric cosine function
+        !! See Ji+(2003 JGR) Figure 3 (doi:10.1029/2002JB001764)
+
+        real(SP), intent(in) :: t    !! time
+        real(SP), intent(in) :: ts   !! rupture start time
+        real(SP), intent(in) :: tr1  !! starting-phase time: duration from ts to the maximum
+        real(SP), intent(in) :: tr2  !! end-phase time: duration from the maximum to the end
+
+        real(SP) :: tr !! total rise time
+        
+        tr = tr1 + tr2
+        if (ts <= t .and. t <= ts + tr1) then
+            asymcos = (1.0 - cos(pi * (t - ts) / tr1)) / tr
+        else if (ts + tr1 < t .and. t <= ts + tr1 + tr2) then
+            asymcos = (1.0 + cos(pi * (t - ts - tr1) / tr2)) / tr
+        else
+            asymcos = 0.0
+        end if
+
+    end function asymcos
 
     !$acc routine(momentrate)
     real(SP) pure function momentrate(t, stftype, nprm, srcprm)
@@ -479,19 +502,50 @@ contains
         real(SP), intent(in) :: srcprm(1:nprm)
 
         real(SP) :: tbeg
-        real(SP) :: trise
-
-        tbeg = srcprm(1)
-        trise = srcprm(2)
+        real(SP) :: trise, trise2
 
         select case (stftype)
-        case ('boxcar');   momentrate = boxcar(t, tbeg, trise)
-        case ('triangle'); momentrate = triangle(t, tbeg, trise)
-        case ('herrmann'); momentrate = herrmann(t, tbeg, trise)
-        case ('kupper');   momentrate = kupper(t, tbeg, trise)
-        case ('cosine');   momentrate = cosine(t, tbeg, trise)
-        case ('texp');     momentrate = texp(t, tbeg, trise)
-        case default;      momentrate = kupper(t, tbeg, trise)
+
+        case ('boxcar')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = boxcar(t, tbeg, trise)
+
+        case ('triangle')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = triangle(t, tbeg, trise)
+
+        case ('herrmann')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = herrmann(t, tbeg, trise)
+
+        case ('kupper')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = kupper(t, tbeg, trise)
+
+        case ('cosine')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = cosine(t, tbeg, trise)
+
+        case ('texp')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = texp(t, tbeg, trise)
+
+        case ('asymcos')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            trise2 = srcprm(3)
+            momentrate = asymcos(t, tbeg, trise, trise2)
+
+        case default
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = kupper(t, tbeg, trise)
         end select
 
     end function momentrate

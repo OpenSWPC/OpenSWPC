@@ -96,7 +96,7 @@ contains
 
     subroutine set_stress_boundary()
 
-        integer :: i, k
+        integer :: k
 
         if (idx == 0) then
 #ifdef _OPENACC
@@ -211,7 +211,7 @@ contains
 
     subroutine set_vel_boundary()
 
-        integer :: i, k
+        integer :: k
 
         if (idx == 0) then
 #ifdef _OPENACC

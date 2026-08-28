@@ -138,6 +138,11 @@ contains
             end if
 
             !! chose layer
+            rho1 = 0.001
+            vp1 = 0.0
+            vs1 = 0.0
+            qp1 = 10
+            qs1 = 10
             do l = 1, nlayer
                 if (zs(k) >= depth(l)) then
                     rho1 = rho0(l)

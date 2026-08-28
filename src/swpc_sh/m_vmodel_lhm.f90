@@ -118,6 +118,12 @@ contains
                 end if
 
             else    
+                rho1 = 0.001
+                vp1  = 0.0
+                vs1  = 0.0
+                qp1  = 10.0 
+                qs1  = 10.0
+
                 !! choose layer
                 do l = 1, nlayer
                     if (zs(k) >= depth(l)) then

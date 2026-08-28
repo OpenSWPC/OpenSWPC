@@ -167,7 +167,14 @@ contains
             end if
 
             do i = i0, i1
-            !! chose layer
+
+                rho1 = 0.001
+                vp1  = 0.0
+                vs1  = 0.0
+                qp1  = 10.0 
+                qs1  = 10.0
+
+                !! chose layer
                 do l = 1, nlayer
                     if (zs(k) >= depth(l)) then
                         rho1 = Cv(k)**(-5) * rho0(l) * (1 + 0.8 * xi(k, i, tbl_rmed(l)))

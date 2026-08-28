@@ -981,7 +981,7 @@ contains
     subroutine wbuf_yz_ps(it)
 
         integer, intent(in) :: it
-        integer :: i, j, k, l
+        integer :: i, j, k
         integer :: jj, kk
         real(SP) :: div, rot_x, rot_y, rot_z
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
@@ -1075,7 +1075,7 @@ contains
 
         integer, intent(in) :: it
         integer :: ii, kk
-        integer :: i, j, k, l
+        integer :: i, j, k
         real(SP) :: div, rot_x, rot_y, rot_z
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
         integer, save :: req
@@ -1167,7 +1167,7 @@ contains
     subroutine wbuf_xy_ps(it)
 
         integer, intent(in) :: it
-        integer :: i, j, k, l
+        integer :: i, j, k
         integer :: ii, jj
         real(SP) :: div, rot_x, rot_y, rot_z
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)

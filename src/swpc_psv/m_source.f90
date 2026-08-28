@@ -96,6 +96,7 @@ contains
         case ('kupper'); n_stfprm = 2
         case ('cosine'); n_stfprm = 2
         case ('texp'); n_stfprm = 2
+        case ('asymcos'); n_stfprm = 3
         end select
 
         !! fixed source parameter for benchmarking: no source grid file used
@@ -323,12 +324,15 @@ contains
             select case (stf_format)
 
             case ('xym0ij')
-                read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1, i), sprm(2, i), &
+                read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1:n_stfprm,i), &
                     mo(i), mxx(i), rdum1, mzz(i), rdum1, mxz(i), rdum2
+                    write(*,*) "NSPRM", n_stfprm
+                    write(*,*) "SPRM", sprm(:,i)
+                    write(*,*) "STFTYPE", stftype
                 call assert(ierr == 0)
 
             case ('xym0dc')
-                read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1, i), sprm(2, i), mo(i), strike, dip, rake
+                read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1:n_stfprm,i), mo(i), strike, dip, rake
                 call assert(ierr == 0)
                 call assert(-360. <= strike .and. strike <= 360.)
                 call assert(-90. <= dip .and. dip <= 90.)
@@ -337,7 +341,7 @@ contains
                 call sdr2moment(strike - phi, dip, rake, mxx(i), rdum1, mzz(i), rdum2, mxz(i), rdum3)
 
             case ('llm0ij')
-                read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1, i), sprm(2, i), &
+                read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1:n_stfprm,i), &
                     mo(i), mxx(i), rdum1, mzz(i), rdum1, mxz(i), rdum2
                 call assert(ierr == 0)
                 call assert(-360. <= lon .and. lon <= 360)
@@ -345,7 +349,7 @@ contains
                 call geomap__g2c(lon, lat, clon, clat, phi, sx(i), sy(i))
 
             case ('llm0dc')
-                read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1, i), sprm(2, i), mo(i), strike, dip, rake
+                read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1:n_stfprm,i), mo(i), strike, dip, rake
                 call assert(ierr == 0)
                 call assert(-360. <= lon .and. lon <= 360)
                 call assert(-90. <= lat .and. lat <= 90)
@@ -353,14 +357,14 @@ contains
                 call geomap__g2c(lon, lat, clon, clat, phi, sx(i), sy(i))
 
             case ('xymwij')
-                read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1, i), sprm(2, i), &
+                read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1:n_stfprm,i), &
                     mw, mxx(i), rdum1, mzz(i), rdum2, mxz(i), rdum3
                 call assert(ierr == 0)
                 call assert(mw <= 11.) !! magnitude
                 mo(i) = seismic_moment(mw)
 
             case ('xymwdc')
-                read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1, i), sprm(2, i), mw, strike, dip, rake
+                read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1:n_stfprm,i), mw, strike, dip, rake
                 call assert(ierr == 0)
                 call assert(-360. <= strike .and. strike <= 360.)
                 call assert(-90. <= dip .and. dip <= 90.)
@@ -371,7 +375,7 @@ contains
                 call sdr2moment(strike - phi, dip, rake, mxx(i), rdum1, mzz(i), rdum2, mxz(i), rdum3)
 
             case ('llmwij')
-                read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1, i), sprm(2, i), mw, mxx(i), rdum1, mzz(i), rdum2, mxz(i), rdum3
+                read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1:n_stfprm,i), mw, mxx(i), rdum1, mzz(i), rdum2, mxz(i), rdum3
                 call assert(ierr == 0)
                 call assert(-360. <= lon .and. lon <= 360)
                 call assert(-90. <= lat .and. lat <= 90)
@@ -380,7 +384,7 @@ contains
                 call geomap__g2c(lon, lat, clon, clat, phi, sx(i), sy(i))
 
             case ('llmwdc')
-                read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1, i), sprm(2, i), mw, strike, dip, rake
+                read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1:n_stfprm,i), mw, strike, dip, rake
                 call assert(ierr == 0)
                 call assert(-360. <= lon .and. lon <= 360)
                 call assert(-90. <= lat .and. lat <= 90)
@@ -393,7 +397,7 @@ contains
                 call geomap__g2c(lon, lat, clon, clat, phi, sx(i), sy(i))
 
             case ('xydsdc')
-                read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1, i), sprm(2, i), D, S, strike, dip, rake
+                read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1:n_stfprm,i), D, S, strike, dip, rake
                 call assert(ierr == 0)
                 call assert(-360. <= strike .and. strike <= 360.)
                 call assert(-90. <= dip .and. dip <= 90.)
@@ -415,7 +419,7 @@ contains
                 end if
 
             case ('lldsdc')
-                read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1, i), sprm(2, i), D, S, strike, dip, rake
+                read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1:n_stfprm,i), D, S, strike, dip, rake
                 call assert(ierr == 0)
                 call assert(-360. <= lon .and. lon <= 360)
                 call assert(-90. <= lat .and. lat <= 90)
@@ -538,11 +542,11 @@ contains
             select case (stf_coord)
 
             case ('xy')
-                read (adum, *, iostat=ierr) sx(i), rdum, sz(i), sprm(1, i), sprm(2, i), fx(i), rdum, fz(i)
+                read (adum, *, iostat=ierr) sx(i), rdum, sz(i), sprm(1:n_stfprm,i), fx(i), rdum, fz(i)
                 call assert(ierr == 0)
 
             case ('ll')
-                read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1, i), sprm(2, i), fx(i), rdum, fz(i)
+                read (adum, *, iostat=ierr) lon, lat, sz(i), sprm(1:n_stfprm,i), fx(i), rdum, fz(i)
                 call assert(ierr == 0)
                 call assert(-360. <= lon .and. lon <= 360)
                 call assert(-90. <= lat .and. lat <= 90)
@@ -557,7 +561,7 @@ contains
             if (i == 1) then
                 call geomap__c2g(sx(i), 0.0, clon, clat, phi, evlo, evla)
                 evdp = sz(i)
-                otim = sprm(1, i)
+                otim = sprm(1,i)
                 fx0 = fx(i)
                 fy0 = -12345.0
                 fz0 = fz(i)

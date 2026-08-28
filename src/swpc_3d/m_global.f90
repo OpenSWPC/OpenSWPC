@@ -388,7 +388,7 @@ contains
             call set_box(box(5), max(na+1,ibeg), min(nx-na,iend), max(na+1,jbeg), min(ny-na,jend), kbeg,      kbeg-1, offset)
             call set_box(box(6), max(na+1,ibeg), min(nx-na,iend), max(na+1,jbeg), min(ny-na,jend), kend-na+1, kend,   offset)
         end if
-        n_sponge_cell = offset - 1        
+        n_sponge_cell = offset        
 
 
         !$acc enter data copyin(&

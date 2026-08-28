@@ -362,6 +362,7 @@ contains
                     ! skip ocean and air
                     if (vs < epsilon(1.0)) cycle
 
+                    gamma = sqrt(3.0)
                     if (vs < vmin_pml) then
                         vs = vmin_pml
                         vp = vs * gamma

@@ -322,7 +322,7 @@ contains
             call set_box(box(3), max(na+1, ibeg), min(nx-na, iend),      kbeg, kbeg-1, offset)
             call set_box(box(4), max(na+1, ibeg), min(nx-na, iend), kend-na+1,   kend, offset) 
         end if
-        n_sponge_cell = offset  - 1        
+        n_sponge_cell = offset      
 
         !$acc enter data copyin(sbuf_S_ip, sbuf_S_im, rbuf_S_ip, rbuf_S_im, &
         !$acc                   sbuf_V_ip, sbuf_V_im, rbuf_V_ip, rbuf_V_im, itbl, box)

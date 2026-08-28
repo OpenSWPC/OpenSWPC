@@ -63,10 +63,15 @@ ifeq ($(arch),apple)
   NETCDF  := $(shell nf-config --flibs)
 
   ifeq ($(debug),true)
-    FFLAGS  = -Wall -pedantic -fbounds-check -O -Wuninitialized \
-              -Wno-conversion -ffixed-line-length-132 \
-	            -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 \
-	            -D_DEBUG -cpp -std=f2018
+     FFLAGS = -g -Og \
+              -Wall -pedantic \
+              -fcheck=all \
+              -Wuninitialized \
+              -Wno-conversion \
+              -ffixed-line-length-132 \
+              -ffpe-trap=invalid,zero,overflow \
+              -fno-backtrace \
+              -cpp -std=f2018 -D_DEBUG
   endif
 
 endif

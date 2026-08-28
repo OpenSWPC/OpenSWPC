@@ -352,7 +352,6 @@ contains
         real(SP), intent(out) :: xmax, ymax, zmax
         integer :: i, j
         integer, parameter :: margin = 5
-        real(SP) :: xmax_local, ymax_local, zmax_local
 
         !! avoid nearby the absorbing boundary
         !$acc kernels present(Vx, Vy, Vz, kob) copyout(xmax, ymax, zmax)

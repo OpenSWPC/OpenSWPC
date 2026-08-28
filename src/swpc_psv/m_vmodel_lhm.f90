@@ -97,6 +97,12 @@ contains
         !! defne topography shape here
         bd(i0:i1, 0) = depth(1)
 
+        rho1 = 0.001
+        vp1  = 0.0
+        vs1  = 0.0
+        qp1  = 10.0   ! give artificially strong attenuation in air-column
+        qs1  = 10.0
+
         do k = k0, k1
 
             !! air/ocean column
