@@ -165,7 +165,7 @@ contains
         vmin = fmax * ng * maxval(dh)
 
         write (*, *)
-        write (*, '(A)') " Derivaed Parameters: "
+        write (*, '(A)') " Derived Parameters: "
         write (*, '(A,F9.5)') "   Tr     = ", tr
         write (*, '(A,F9.5)') "   dt    <= ", dt
         write (*, '(A,F9.5)') "   vmin  >= ", vmin
