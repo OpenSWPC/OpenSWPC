@@ -4,8 +4,6 @@
 
 Corresponding Author: Takuto Maeda
 
-[![DOI](https://zenodo.org/badge/58844976.svg)](https://zenodo.org/doi/10.5281/zenodo.3712649)
-
 ## Description
 
 ![gif](https://openswpc.github.io/latest/fig/swpc-demo.gif)
