@@ -27,7 +27,6 @@ program read_snp
     logical       :: is_exist
     integer :: nx, ny
     integer :: iskip
-    character(6) :: snp_type
     character(8) :: tname
     integer :: nt
     integer :: ierr
@@ -53,7 +52,7 @@ program read_snp
     end if
 
     !! existence check
-    call fdsnap__open(fn_snp, io_snp, is_exist, snp_type)
+    call fdsnap__open(fn_snp, io_snp, is_exist)
     if (.not. is_exist) then
         write (error_unit, '(A)') "ERROR [read_snp]: file "//trim(fn_snp)//" does not exist"
         write (error_unit, *)
@@ -61,17 +60,16 @@ program read_snp
     end if
 
     !! Read Header Part
-    call fdsnap__readhdr(fn_snp, io_snp, snp_type, hdr)
+    call fdsnap__readhdr(io_snp, hdr)
     nx = hdr%ns1
     ny = hdr%ns2
-    if (snp_type == 'netcdf') then
-        allocate (vid(hdr%nsnp))
-        do i = 1, hdr%nsnp
-            call nc_chk(nf90_inquire_variable(io_snp, 3 + hdr%nmed + i, vname))
-            call nc_chk(nf90_inq_varid(io_snp, vname, vid(i)))
-            call nc_chk(nf90_inquire_dimension(io_snp, 3, tname, nt))
-        end do
-    end if
+
+    allocate (vid(hdr%nsnp))
+    do i = 1, hdr%nsnp
+        call nc_chk(nf90_inquire_variable(io_snp, 3 + hdr%nmed + i, vname))
+        call nc_chk(nf90_inq_varid(io_snp, vname, vid(i)))
+        call nc_chk(nf90_inquire_dimension(io_snp, 3, tname, nt))
+    end do
 
     !! header output mode
     call getopt('h', is_exist)
@@ -92,11 +90,7 @@ program read_snp
     call getopt('bin', is_exist)
     if (is_exist) call dat_output('bin')
 
-    if (snp_type == 'native') then
-        close (io_snp)
-    else
-        ierr = nf90_close(io_snp)
-    end if
+    ierr = nf90_close(io_snp)
 
 contains
 
@@ -143,7 +137,6 @@ contains
         real(SP) :: xx(nx), yy(ny)
         integer :: it
         integer :: i, j
-        integer :: ierr
         real    :: t
         character(80) :: odir = D_ODIR
         character(6)  :: cit    ! time grid number
@@ -187,16 +180,12 @@ contains
         end if
 
         !! Medium structure
-        if (snp_type == 'native') then
-            read (io_snp) den, lam, rig
-        else
-            call nc_chk(nf90_inq_varid(io_snp, 'rho', vid_rho))
-            call nc_chk(nf90_inq_varid(io_snp, 'lambda', vid_lambda))
-            call nc_chk(nf90_inq_varid(io_snp, 'mu', vid_mu))
-            call nc_chk(nf90_get_var(io_snp, vid_rho, den))
-            call nc_chk(nf90_get_var(io_snp, vid_lambda, lam))
-            call nc_chk(nf90_get_var(io_snp, vid_mu, rig))
-        end if
+        call nc_chk(nf90_inq_varid(io_snp, 'rho', vid_rho))
+        call nc_chk(nf90_inq_varid(io_snp, 'lambda', vid_lambda))
+        call nc_chk(nf90_inq_varid(io_snp, 'mu', vid_mu))
+        call nc_chk(nf90_get_var(io_snp, vid_rho, den))
+        call nc_chk(nf90_get_var(io_snp, vid_lambda, lam))
+        call nc_chk(nf90_get_var(io_snp, vid_mu, rig))
 
         do j = 1, ny
             do i = 1, nx
@@ -246,27 +235,15 @@ contains
         do
             t = (it + iskip) * hdr%dt
 
-            if (snp_type == 'native') then
-                do i = 1, hdr%nsnp
-                    read (io_snp, iostat=ierr) amp(i, :, :)
-                    if (ierr /= 0) then
-                        write (error_unit, *) "EOF detected"
-                        is_eof = .true.
-                        exit
-                    end if
-                end do
-                if (is_eof) exit
-            else
-                count = (/nx, ny, 1/)
-                start = (/1, 1, it + iskip + 1/)
-                do i = 1, hdr%nsnp
-                    call nc_chk(nf90_get_var(io_snp, vid(i), amp(i, :, :), start=start, count=count))
-                end do
+            count = (/nx, ny, 1/)
+            start = (/1, 1, it + iskip + 1/)
+            do i = 1, hdr%nsnp
+                call nc_chk(nf90_get_var(io_snp, vid(i), amp(i, :, :), start=start, count=count))
+            end do
 
-                if (it == nt) then
-                    is_eof = .true.
-                    exit
-                end if
+            if (it == nt) then
+                is_eof = .true.
+                exit
             end if
 
             if (it >= 0) then
@@ -337,7 +314,6 @@ contains
         integer :: it
         integer :: i, j
         integer :: ii, jj
-        integer :: ierr
         logical :: is_exist
         logical :: is_eof
         logical :: is_abs
@@ -460,16 +436,12 @@ contains
         call getopt('q', quiet_mode)
 
         !! Medium structure
-        if (snp_type == 'native') then
-            read (io_snp) den, lam, rig
-        else
-            call nc_chk(nf90_inq_varid(io_snp, 'rho', vid_rho))
-            call nc_chk(nf90_inq_varid(io_snp, 'lambda', vid_lambda))
-            call nc_chk(nf90_inq_varid(io_snp, 'mu', vid_mu))
-            call nc_chk(nf90_get_var(io_snp, vid_rho, den))
-            call nc_chk(nf90_get_var(io_snp, vid_lambda, lam))
-            call nc_chk(nf90_get_var(io_snp, vid_mu, rig))
-        end if
+        call nc_chk(nf90_inq_varid(io_snp, 'rho', vid_rho))
+        call nc_chk(nf90_inq_varid(io_snp, 'lambda', vid_lambda))
+        call nc_chk(nf90_inq_varid(io_snp, 'mu', vid_mu))
+        call nc_chk(nf90_get_var(io_snp, vid_rho, den))
+        call nc_chk(nf90_get_var(io_snp, vid_lambda, lam))
+        call nc_chk(nf90_get_var(io_snp, vid_mu, rig))
 
         do j = 1, ny
             do i = 1, nx
@@ -479,12 +451,8 @@ contains
         end do
         !! horizontal case: read topography
         if (hdr%coordinate == 'fs' .or. hdr%coordinate == 'ob' .or. hdr%coordinate == 'xy') then
-            if (snp_type == 'native') then
-                read (io_snp) topo
-            else
-                call nc_chk(nf90_inq_varid(io_snp, 'topo', vid_topo))
-                call nc_chk(nf90_get_var(io_snp, vid_topo, topo))
-            end if
+            call nc_chk(nf90_inq_varid(io_snp, 'topo', vid_topo))
+            call nc_chk(nf90_get_var(io_snp, vid_topo, topo))
         end if
 
         !! Background Coloring
@@ -581,29 +549,16 @@ contains
         do
             t = (it + iskip) * hdr%dt
 
-            if (snp_type == 'native') then
-                do i = 1, hdr%nsnp
-                    read (io_snp, iostat=ierr) amp(i, :, :)
-                    if (ierr /= 0) then
-                        write (error_unit, *) "EOF detected"
-                        is_eof = .true.
-                        exit
-                    end if
-
-                end do
-                if (is_eof) exit
-            else
-                if (it == nt) then
-                    is_eof = .true.
-                    exit
-                end if
-                count = (/nx, ny, 1/)
-                start = (/1, 1, it + iskip + 1/)
-                do i = 1, hdr%nsnp
-                    call nc_chk(nf90_get_var(io_snp, vid(i), amp(i, :, :), start=start, count=count))
-                end do
+            if (it == nt) then
+                is_eof = .true.
+                exit
             end if
-
+            count = (/nx, ny, 1/)
+            start = (/1, 1, it + iskip + 1/)
+            do i = 1, hdr%nsnp
+                call nc_chk(nf90_get_var(io_snp, vid(i), amp(i, :, :), start=start, count=count))
+            end do
+ 
             if (it < 0) then
                 it = it + 1
                 cycle
