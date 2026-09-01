@@ -8,7 +8,7 @@ module m_version
     implicit none
     public
 
-    character(80), private :: version = 'dev (post 25.05.2)'    !! Do not modify this unless version up
+    character(80), private :: VERSION = '26.09'  
 
 contains
 
