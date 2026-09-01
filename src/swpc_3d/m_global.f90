@@ -2,7 +2,7 @@
 module m_global
 
     ! global control parameters, shared arrays and MPI communication
-    ! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    ! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -26,12 +26,12 @@ module m_global
     public :: global__comm_stress
     public :: global__getnode
 
-    real(SP), public :: UC = 10.0**(-15)                                        !< Conventional -> SI unit 
+    real(SP), public :: UC = 10.0**(-15)                                       !< Conventional -> SI unit 
     integer, parameter, public :: MP = DP                                      !< DP for mixed, SP for single precisions
     integer, parameter, public :: NM = 3                                       !< Number of memory variables
     integer, parameter, public :: NBD = 9                                      !< Number of boundary depths to be memorized
 
-    real(MP), allocatable, public :: Vx(:,:,:), Vy(:,:,:), Vz(:,:,:)           !< velocity components
+    real(SP), allocatable, public :: Vx(:,:,:), Vy(:,:,:), Vz(:,:,:)           !< velocity components
     real(MP), allocatable, public :: Sxx(:,:,:), Syy(:,:,:), Szz(:,:,:)        !< normal stress components
     real(MP), allocatable, public :: Syz(:,:,:), Sxz(:,:,:), Sxy(:,:,:)        !< shear  stress components
     real(SP), allocatable, public :: Rxx(:,:,:,:), Ryy(:,:,:,:), Rzz(:,:,:,:)  !< memory variables: normal components
@@ -44,7 +44,7 @@ module m_global
     logical, public :: pw_mode                                                 !< Plane wave mode
     logical, public :: bf_mode                                                 !< Body force soruce mode
     logical, public :: green_mode                                              !< Green's function computaiton with reciprocity
-    !logical, public :: fullspace_mode
+    logical, public :: fullspace_mode
 
     character(80), public :: title                                             !< execution title, used in filename and headers
     integer, public :: exedate                                                 !< date and time by seconds from 1970/1/1 0:0:0
@@ -83,7 +83,6 @@ module m_global
     integer, public :: ibeg_k, iend_k                                          !< i- kernel integration area w/o absorption band
     integer, public :: jbeg_k, jend_k                                          !< j- kernel integration area w/o absorption band
     integer, public :: kbeg_k, kend_k                                          !< k- kernel integration area w/o absorption band
-    integer, allocatable, public :: kbeg_a(:,:)                                !< k>=kbeg_a(i,j) is in absorber region
     character(16), public :: abc_type
 
     real(SP), public :: M0                                                     !< total moment
@@ -109,15 +108,35 @@ module m_global
     real(SP), public :: otim
     real(SP), public :: sx0, sy0
 
-    real(MP), private, allocatable :: sbuf_ip(:), sbuf_im(:)                   !< mpi send buffer for x-dir
-    real(MP), private, allocatable :: sbuf_jp(:), sbuf_jm(:)                   !< mpi send buffer for y-dir
-    real(MP), private, allocatable :: rbuf_ip(:), rbuf_im(:)                   !< mpi recv buffer for x-dir
-    real(MP), private, allocatable :: rbuf_jp(:), rbuf_jm(:)                   !< mpi recv buffer for y-dir
+    real(SP), private, allocatable :: sbuf_V_ip(:), sbuf_V_im(:)               !< mpi send buffer for x-dir
+    real(SP), private, allocatable :: sbuf_V_jp(:), sbuf_V_jm(:)               !< mpi send buffer for y-dir
+    real(SP), private, allocatable :: rbuf_V_ip(:), rbuf_V_im(:)               !< mpi recv buffer for x-dir
+    real(SP), private, allocatable :: rbuf_V_jp(:), rbuf_V_jm(:)               !< mpi recv buffer for y-dir
+    real(MP), private, allocatable :: sbuf_S_ip(:), sbuf_S_im(:)               !< mpi send buffer for x-dir
+    real(MP), private, allocatable :: sbuf_S_jp(:), sbuf_S_jm(:)               !< mpi send buffer for y-dir
+    real(MP), private, allocatable :: rbuf_S_ip(:), rbuf_S_im(:)               !< mpi recv buffer for x-dir
+    real(MP), private, allocatable :: rbuf_S_jp(:), rbuf_S_jm(:)               !< mpi recv buffer for y-dir
 
     integer, private :: mpi_precision
 
     private :: inside_node
     private :: set_mpi_table
+
+    type t_box
+        integer :: ib, ie, nx
+        integer :: jb, je, ny
+        integer :: kb, ke, nz
+        integer :: ncell
+        integer :: offset
+    end type
+
+    type(t_box), public :: box(6)
+    integer, public :: n_sponge_cell
+
+    public :: t_box    
+
+    real(SP), allocatable, public :: c1(:), c2(:), d1(:)
+    real(SP), public :: d2
 
 contains
 
@@ -155,7 +174,7 @@ contains
             clat = 35.7182
             phi = 0.0
             abc_type = 'pml'
-!      fullspace_mode = .false.
+        fullspace_mode = .false.
         else ! or read from file for regular run
             call readini(io_prm, 'dx', dx, 0.5_mp)
             call readini(io_prm, 'dy', dy, 0.5_mp)
@@ -170,7 +189,7 @@ contains
             call readini(io_prm, 'clat', clat, 35.7182)
             call readini(io_prm, 'phi', phi, 0.0)
             call readini(io_prm, 'abc_type', abc_type, 'pml')
-!      call readini( io_prm, 'fullspace_mode', fullspace_mode, .false. )
+            call readini( io_prm, 'fullspace_mode', fullspace_mode, .false. )
 
         end if
 
@@ -224,6 +243,7 @@ contains
         integer :: mx, my
         integer :: proc_x, proc_y
         character(256) :: command
+        integer :: offset
 
         call pwatch__on("global__setup2") ! measure from here
 
@@ -248,14 +268,22 @@ contains
 
         ! MPI coordinate
         allocate (itbl(-1:nproc_x, -1:nproc_y))
-        allocate (sbuf_ip(5*nyp*nz), source=0.0_mp)
-        allocate (sbuf_im(5*nyp*nz), source=0.0_mp)
-        allocate (rbuf_ip(5*nyp*nz), source=0.0_mp)
-        allocate (rbuf_im(5*nyp*nz), source=0.0_mp)
-        allocate (sbuf_jp(5*nxp*nz), source=0.0_mp)
-        allocate (sbuf_jm(5*nxp*nz), source=0.0_mp)
-        allocate (rbuf_jp(5*nxp*nz), source=0.0_mp)
-        allocate (rbuf_jm(5*nxp*nz), source=0.0_mp)
+        allocate (sbuf_S_ip(5*nyp*nz), source=0.0_MP)
+        allocate (sbuf_S_im(5*nyp*nz), source=0.0_MP)
+        allocate (rbuf_S_ip(5*nyp*nz), source=0.0_MP)
+        allocate (rbuf_S_im(5*nyp*nz), source=0.0_MP)
+        allocate (sbuf_S_jp(5*nxp*nz), source=0.0_MP)
+        allocate (sbuf_S_jm(5*nxp*nz), source=0.0_MP)
+        allocate (rbuf_S_jp(5*nxp*nz), source=0.0_MP)
+        allocate (rbuf_S_jm(5*nxp*nz), source=0.0_MP)
+        allocate (sbuf_V_ip(5*nyp*nz), source=0.0_SP)
+        allocate (sbuf_V_im(5*nyp*nz), source=0.0_SP)
+        allocate (rbuf_V_ip(5*nyp*nz), source=0.0_SP)
+        allocate (rbuf_V_im(5*nyp*nz), source=0.0_SP)
+        allocate (sbuf_V_jp(5*nxp*nz), source=0.0_SP)
+        allocate (sbuf_V_jm(5*nxp*nz), source=0.0_SP)
+        allocate (rbuf_V_jp(5*nxp*nz), source=0.0_SP)
+        allocate (rbuf_V_jm(5*nxp*nz), source=0.0_SP)
 
         ! MPI communication table
         call set_mpi_table
@@ -312,38 +340,7 @@ contains
             zc(k) = k2z(k, zbeg, real(dz))
         end do
 
-        ! absorbing boundary region                     -+---> i,j(x,y)
-        !                                                 |
-        !  +-----+--------------------------+-----+      |
-        !  |     |                          |     |      v k(z)
-        !  |     |                          |     |
-        !  |     |                          |     |
-        !  |     |                          |     |
-        !  |     |  interior region         |     |
-        !  |     |  eveluated by m_kernel   |     |
-        !  |     |                          |     |
-        !  |     |                          |     |
-        !  |     |                          |     |
-        !  |     +--------------------------+     |
-        !  |         exterior region              |
-        !  |         evaluated by m_absorb        |
-        !  +-----+--------------------------+-----+
-        !  1      na                        nx-na+1  nx
-        !  <- na ->
-
-        allocate (kbeg_a(ibeg_m:iend_m, jbeg_m:jend_m))
-        do j = jbeg_m, jend_m
-            do i = ibeg_m, iend_m
-                if (i <= na .or. nx-na+1 <= i .or. j <= na .or. ny-na+1 <= j) then
-                    kbeg_a(i, j) = kbeg
-                else
-                    kbeg_a(i, j) = kend-na+1
-                end if
-            end do
-        end do
-
         ! Interior Kernel region
-
         ! initial value
         ibeg_k = ibeg
         iend_k = iend
@@ -354,7 +351,7 @@ contains
 
         if (abc_type == 'pml') then
 
-!      if( fullspace_mode ) kbeg_k = na + 1
+            if( fullspace_mode ) kbeg_k = na + 1
 
             if (iend <= na) then; ibeg_k = iend+1; ! no kernel integration
             else if (ibeg <= na) then; ibeg_k = na+1; ! pertial kernel
@@ -375,12 +372,32 @@ contains
 
         end if
 
+        offset = 1
+        if( fullspace_mode ) then
+            call set_box(box(1), ibeg,           iend,            jbeg,           na,              kbeg,      kend,   offset)
+            call set_box(box(2), ibeg,           iend,            ny-na+1,        jend,            kbeg,      kend,   offset)
+            call set_box(box(3), ibeg,           na,              max(na+1,jbeg), min(ny-na,jend), kbeg,      kend,   offset) 
+            call set_box(box(4), nx-na+1,        iend,            max(na+1,jbeg), min(ny-na,jend), kbeg,      kend,   offset) 
+            call set_box(box(5), max(na+1,ibeg), min(nx-na,iend), max(na+1,jbeg), min(ny-na,jend), kbeg,      na,     offset)
+            call set_box(box(6), max(na+1,ibeg), min(nx-na,iend), max(na+1,jbeg), min(ny-na,jend), kend-na+1, kend,   offset)
+        else
+            call set_box(box(1), ibeg,           iend,            jbeg,           na,              kbeg,      kend,   offset)
+            call set_box(box(2), ibeg,           iend,            ny-na+1,        jend,            kbeg,      kend,   offset)
+            call set_box(box(3), ibeg,           na,              max(na+1,jbeg), min(ny-na,jend), kbeg,      kend,   offset) 
+            call set_box(box(4), nx-na+1,        iend,            max(na+1,jbeg), min(ny-na,jend), kbeg,      kend,   offset) 
+            call set_box(box(5), max(na+1,ibeg), min(nx-na,iend), max(na+1,jbeg), min(ny-na,jend), kbeg,      kbeg-1, offset)
+            call set_box(box(6), max(na+1,ibeg), min(nx-na,iend), max(na+1,jbeg), min(ny-na,jend), kend-na+1, kend,   offset)
+        end if
+        n_sponge_cell = offset        
+
+
         !$acc enter data copyin(&
-        !$acc       sbuf_ip, sbuf_im, &
-        !$acc       rbuf_ip, rbuf_im, &
-        !$acc       sbuf_jp, sbuf_jm, &
-        !$acc       rbuf_jp, rbuf_jm, &
-        !$acc       itbl(-1:nproc_x, -1:nproc_y))
+        !$acc       sbuf_V_ip, sbuf_V_im, sbuf_S_ip, sbuf_S_im, &
+        !$acc       rbuf_V_ip, rbuf_V_im, rbuf_S_ip, rbuf_S_im, &
+        !$acc       sbuf_V_jp, sbuf_V_jm, sbuf_S_jp, sbuf_S_jm, &
+        !$acc       rbuf_V_jp, rbuf_V_jm, rbuf_S_jp, rbuf_S_jm, &
+        !$acc       itbl(-1:nproc_x, -1:nproc_y), &
+        !$acc       box)
  
 
         call pwatch__off("global__setup2") ! measure from here
@@ -404,86 +421,86 @@ contains
         isize = nyp*nz
         jsize = nxp*nz
 
-        !$acc host_data use_device(rbuf_ip, rbuf_im, rbuf_jp, rbuf_jm)
-        call mpi_irecv(rbuf_ip, 5*isize, mpi_precision, itbl(idx+1, idy), 1, mpi_comm_world, req_i(1), err)
-        call mpi_irecv(rbuf_im, 4*isize, mpi_precision, itbl(idx-1, idy), 2, mpi_comm_world, req_i(2), err)
-        call mpi_irecv(rbuf_jp, 5*jsize, mpi_precision, itbl(idx, idy+1), 3, mpi_comm_world, req_j(1), err)
-        call mpi_irecv(rbuf_jm, 4*jsize, mpi_precision, itbl(idx, idy-1), 4, mpi_comm_world, req_j(2), err)
+        !$acc host_data use_device(rbuf_V_ip, rbuf_V_im, rbuf_V_jp, rbuf_V_jm)
+        call mpi_irecv(rbuf_V_ip, 5*isize, mpi_real, itbl(idx+1, idy), 1, mpi_comm_world, req_i(1), err)
+        call mpi_irecv(rbuf_V_im, 4*isize, mpi_real, itbl(idx-1, idy), 2, mpi_comm_world, req_i(2), err)
+        call mpi_irecv(rbuf_V_jp, 5*jsize, mpi_real, itbl(idx, idy+1), 3, mpi_comm_world, req_j(1), err)
+        call mpi_irecv(rbuf_V_jm, 4*jsize, mpi_real, itbl(idx, idy-1), 4, mpi_comm_world, req_j(2), err)
         !$acc end host_data
 
-        !$acc kernels present(Vx, Vy, Vz, sbuf_ip, sbuf_im) async(1)
+        !$acc kernels present(Vx, Vy, Vz, sbuf_V_ip, sbuf_V_im) async(1)
         !$acc loop independent
         do j=jbeg, jend
-            sbuf_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Vx(1:nz,iend-1,j)
-            sbuf_ip(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz) = Vx(1:nz,iend  ,j)
-            sbuf_ip(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz) = Vy(1:nz,iend  ,j)
-            sbuf_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Vz(1:nz,iend  ,j)
+            sbuf_V_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Vx(1:nz,iend-1,j)
+            sbuf_V_ip(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz) = Vx(1:nz,iend  ,j)
+            sbuf_V_ip(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz) = Vy(1:nz,iend  ,j)
+            sbuf_V_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Vz(1:nz,iend  ,j)
             
-            sbuf_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Vx(1:nz,ibeg  ,j)
-            sbuf_im(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz) = Vy(1:nz,ibeg  ,j)
-            sbuf_im(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz) = Vy(1:nz,ibeg+1,j)
-            sbuf_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Vz(1:nz,ibeg  ,j)
-            sbuf_im(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz) = Vz(1:nz,ibeg+1,j)
+            sbuf_V_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Vx(1:nz,ibeg  ,j)
+            sbuf_V_im(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz) = Vy(1:nz,ibeg  ,j)
+            sbuf_V_im(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz) = Vy(1:nz,ibeg+1,j)
+            sbuf_V_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Vz(1:nz,ibeg  ,j)
+            sbuf_V_im(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz) = Vz(1:nz,ibeg+1,j)
         end do
         !$acc end kernels
 
-        !$acc kernels present(Vx, Vy, Vz, sbuf_jp, sbuf_jm) async(2)
+        !$acc kernels present(Vx, Vy, Vz, sbuf_V_jp, sbuf_V_jm) async(2)
         !$acc loop independent
         do i=ibeg, iend
-            sbuf_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Vx(1:nz,i,jend  )
-            sbuf_jp(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz) = Vy(1:nz,i,jend-1)
-            sbuf_jp(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz) = Vy(1:nz,i,jend  )
-            sbuf_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Vz(1:nz,i,jend  )
+            sbuf_V_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Vx(1:nz,i,jend  )
+            sbuf_V_jp(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz) = Vy(1:nz,i,jend-1)
+            sbuf_V_jp(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz) = Vy(1:nz,i,jend  )
+            sbuf_V_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Vz(1:nz,i,jend  )
 
-            sbuf_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Vx(1:nz,i,jbeg  )
-            sbuf_jm(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz) = Vx(1:nz,i,jbeg+1)
-            sbuf_jm(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz) = Vy(1:nz,i,jbeg  )
-            sbuf_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Vz(1:nz,i,jbeg  )
-            sbuf_jm(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz) = Vz(1:nz,i,jbeg+1)
+            sbuf_V_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Vx(1:nz,i,jbeg  )
+            sbuf_V_jm(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz) = Vx(1:nz,i,jbeg+1)
+            sbuf_V_jm(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz) = Vy(1:nz,i,jbeg  )
+            sbuf_V_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Vz(1:nz,i,jbeg  )
+            sbuf_V_jm(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz) = Vz(1:nz,i,jbeg+1)
         end do
         !$acc end kernels
 
         !$acc wait
 
-        !$acc host_data use_device(sbuf_ip, sbuf_im, sbuf_jp, sbuf_jm)
-        call mpi_isend(sbuf_ip, 4*isize, mpi_precision, itbl(idx+1, idy), 2, mpi_comm_world, req_i(3), err)
-        call mpi_isend(sbuf_im, 5*isize, mpi_precision, itbl(idx-1, idy), 1, mpi_comm_world, req_i(4), err)
-        call mpi_isend(sbuf_jp, 4*jsize, mpi_precision, itbl(idx, idy+1), 4, mpi_comm_world, req_j(3), err)
-        call mpi_isend(sbuf_jm, 5*jsize, mpi_precision, itbl(idx, idy-1), 3, mpi_comm_world, req_j(4), err)
+        !$acc host_data use_device(sbuf_V_ip, sbuf_V_im, sbuf_V_jp, sbuf_V_jm)
+        call mpi_isend(sbuf_V_ip, 4*isize, mpi_real, itbl(idx+1, idy), 2, mpi_comm_world, req_i(3), err)
+        call mpi_isend(sbuf_V_im, 5*isize, mpi_real, itbl(idx-1, idy), 1, mpi_comm_world, req_i(4), err)
+        call mpi_isend(sbuf_V_jp, 4*jsize, mpi_real, itbl(idx, idy+1), 4, mpi_comm_world, req_j(3), err)
+        call mpi_isend(sbuf_V_jm, 5*jsize, mpi_real, itbl(idx, idy-1), 3, mpi_comm_world, req_j(4), err)
         !$acc end host_data
 
         call mpi_waitall(4, req_i, istatus, err)
         call mpi_waitall(4, req_j, istatus, err)
 
-        !$acc kernels present(Vx, Vy, Vz, rbuf_ip, rbuf_im) async(1)
+        !$acc kernels present(Vx, Vy, Vz, rbuf_V_ip, rbuf_V_im) async(1)
         !$acc loop independent
         do j=jbeg, jend
-            Vx(1:nz,ibeg-2,j) = rbuf_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
-            Vx(1:nz,ibeg-1,j) = rbuf_im(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz)
-            Vy(1:nz,ibeg-1,j) = rbuf_im(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz)
-            Vz(1:nz,ibeg-1,j) = rbuf_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
+            Vx(1:nz,ibeg-2,j) = rbuf_V_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
+            Vx(1:nz,ibeg-1,j) = rbuf_V_im(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz)
+            Vy(1:nz,ibeg-1,j) = rbuf_V_im(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz)
+            Vz(1:nz,ibeg-1,j) = rbuf_V_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
 
-            Vx(1:nz,iend+1,j) = rbuf_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
-            Vy(1:nz,iend+1,j) = rbuf_ip(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz)
-            Vy(1:nz,iend+2,j) = rbuf_ip(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz)
-            Vz(1:nz,iend+1,j) = rbuf_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
-            Vz(1:nz,iend+2,j) = rbuf_ip(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz)
+            Vx(1:nz,iend+1,j) = rbuf_V_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
+            Vy(1:nz,iend+1,j) = rbuf_V_ip(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz)
+            Vy(1:nz,iend+2,j) = rbuf_V_ip(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz)
+            Vz(1:nz,iend+1,j) = rbuf_V_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
+            Vz(1:nz,iend+2,j) = rbuf_V_ip(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz)
         end do
         !$acc end kernels
 
-        !$acc kernels present(Vx, Vy, Vz, rbuf_jp, rbuf_jm) async(2)
+        !$acc kernels present(Vx, Vy, Vz, rbuf_V_jp, rbuf_V_jm) async(2)
         !$acc loop independent
         do i=ibeg, iend
-            Vx(1:nz,i,jbeg-1) = rbuf_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
-            Vy(1:nz,i,jbeg-2) = rbuf_jm(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz)
-            Vy(1:nz,i,jbeg-1) = rbuf_jm(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz)
-            Vz(1:nz,i,jbeg-1) = rbuf_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
+            Vx(1:nz,i,jbeg-1) = rbuf_V_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
+            Vy(1:nz,i,jbeg-2) = rbuf_V_jm(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz)
+            Vy(1:nz,i,jbeg-1) = rbuf_V_jm(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz)
+            Vz(1:nz,i,jbeg-1) = rbuf_V_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
 
-            Vx(1:nz,i,jend+1) = rbuf_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
-            Vx(1:nz,i,jend+2) = rbuf_jp(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz)
-            Vy(1:nz,i,jend+1) = rbuf_jp(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz)
-            Vz(1:nz,i,jend+1) = rbuf_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
-            Vz(1:nz,i,jend+2) = rbuf_jp(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz)
+            Vx(1:nz,i,jend+1) = rbuf_V_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
+            Vx(1:nz,i,jend+2) = rbuf_V_jp(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz)
+            Vy(1:nz,i,jend+1) = rbuf_V_jp(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz)
+            Vz(1:nz,i,jend+1) = rbuf_V_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
+            Vz(1:nz,i,jend+2) = rbuf_V_jp(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz)
         end do
         !$acc end kernels
 
@@ -513,90 +530,90 @@ contains
         isize = nyp*nz
         jsize = nxp*nz
 
-        !$acc host_data use_device(rbuf_ip, rbuf_jp, rbuf_im, rbuf_jm)
-        call mpi_irecv(rbuf_ip, 4*isize, mpi_precision, itbl(idx+1, idy), 5, mpi_comm_world, req_i(1), err)
-        call mpi_irecv(rbuf_im, 5*isize, mpi_precision, itbl(idx-1, idy), 6, mpi_comm_world, req_i(2), err)
-        call mpi_irecv(rbuf_jp, 4*jsize, mpi_precision, itbl(idx, idy+1), 7, mpi_comm_world, req_j(1), err)
-        call mpi_irecv(rbuf_jm, 5*jsize, mpi_precision, itbl(idx, idy-1), 8, mpi_comm_world, req_j(2), err)
+        !$acc host_data use_device(rbuf_S_ip, rbuf_S_jp, rbuf_S_im, rbuf_S_jm)
+        call mpi_irecv(rbuf_S_ip, 4*isize, mpi_precision, itbl(idx+1, idy), 5, mpi_comm_world, req_i(1), err)
+        call mpi_irecv(rbuf_S_im, 5*isize, mpi_precision, itbl(idx-1, idy), 6, mpi_comm_world, req_i(2), err)
+        call mpi_irecv(rbuf_S_jp, 4*jsize, mpi_precision, itbl(idx, idy+1), 7, mpi_comm_world, req_j(1), err)
+        call mpi_irecv(rbuf_S_jm, 5*jsize, mpi_precision, itbl(idx, idy-1), 8, mpi_comm_world, req_j(2), err)
         !$acc end host_data
 
         !$acc kernels async(1) &
-        !$acc present(Sxx, Sxy, Sxz, sbuf_ip, sbuf_im) 
+        !$acc present(Sxx, Sxy, Sxz, sbuf_S_ip, sbuf_S_im) 
         !$acc loop independent 
         do j=jbeg, jend
-            sbuf_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Sxx(1:nz,iend  ,j)
-            sbuf_ip(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz) = Sxy(1:nz,iend-1,j)
-            sbuf_ip(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz) = Sxy(1:nz,iend  ,j)
-            sbuf_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Sxz(1:nz,iend-1,j)
-            sbuf_ip(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz) = Sxz(1:nz,iend  ,j)
+            sbuf_S_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Sxx(1:nz,iend  ,j)
+            sbuf_S_ip(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz) = Sxy(1:nz,iend-1,j)
+            sbuf_S_ip(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz) = Sxy(1:nz,iend  ,j)
+            sbuf_S_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Sxz(1:nz,iend-1,j)
+            sbuf_S_ip(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz) = Sxz(1:nz,iend  ,j)
 
-            sbuf_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Sxx(1:nz,ibeg  ,j)
-            sbuf_im(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz) = Sxx(1:nz,ibeg+1,j)
-            sbuf_im(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz) = Sxy(1:nz,ibeg  ,j)
-            sbuf_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Sxz(1:nz,ibeg  ,j)
+            sbuf_S_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz) = Sxx(1:nz,ibeg  ,j)
+            sbuf_S_im(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz) = Sxx(1:nz,ibeg+1,j)
+            sbuf_S_im(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz) = Sxy(1:nz,ibeg  ,j)
+            sbuf_S_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz) = Sxz(1:nz,ibeg  ,j)
         end do
         !$acc end kernels
 
         !$acc kernels async(2) &
-        !$acc present(Syy, Sxy, Syz, sbuf_jp, sbuf_jm) 
+        !$acc present(Syy, Sxy, Syz, sbuf_S_jp, sbuf_S_jm) 
         !$acc loop independent
         do i=ibeg, iend
-            sbuf_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Syy(1:nz,i,jend  )
-            sbuf_jp(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz) = Sxy(1:nz,i,jend-1)
-            sbuf_jp(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz) = Sxy(1:nz,i,jend  )
-            sbuf_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Syz(1:nz,i,jend-1)
-            sbuf_jp(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz) = Syz(1:nz,i,jend  )
+            sbuf_S_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Syy(1:nz,i,jend  )
+            sbuf_S_jp(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz) = Sxy(1:nz,i,jend-1)
+            sbuf_S_jp(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz) = Sxy(1:nz,i,jend  )
+            sbuf_S_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Syz(1:nz,i,jend-1)
+            sbuf_S_jp(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz) = Syz(1:nz,i,jend  )
 
-            sbuf_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Syy(1:nz,i,jbeg  )
-            sbuf_jm(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz) = Syy(1:nz,i,jbeg+1)
-            sbuf_jm(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz) = Sxy(1:nz,i,jbeg  )
-            sbuf_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Syz(1:nz,i,jbeg  )
+            sbuf_S_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz) = Syy(1:nz,i,jbeg  )
+            sbuf_S_jm(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz) = Syy(1:nz,i,jbeg+1)
+            sbuf_S_jm(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz) = Sxy(1:nz,i,jbeg  )
+            sbuf_S_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz) = Syz(1:nz,i,jbeg  )
         end do
         !$acc end kernels
 
         !$acc wait
 
-        !$acc host_data use_device(sbuf_ip, sbuf_jp, sbuf_im, sbuf_jm)
-        call mpi_isend(sbuf_ip, 5*isize, mpi_precision, itbl(idx+1, idy), 6, mpi_comm_world, req_i(3), err)
-        call mpi_isend(sbuf_im, 4*isize, mpi_precision, itbl(idx-1, idy), 5, mpi_comm_world, req_i(4), err)
-        call mpi_isend(sbuf_jp, 5*jsize, mpi_precision, itbl(idx, idy+1), 8, mpi_comm_world, req_j(3), err)
-        call mpi_isend(sbuf_jm, 4*jsize, mpi_precision, itbl(idx, idy-1), 7, mpi_comm_world, req_j(4), err)
+        !$acc host_data use_device(sbuf_S_ip, sbuf_S_jp, sbuf_S_im, sbuf_S_jm)
+        call mpi_isend(sbuf_S_ip, 5*isize, mpi_precision, itbl(idx+1, idy), 6, mpi_comm_world, req_i(3), err)
+        call mpi_isend(sbuf_S_im, 4*isize, mpi_precision, itbl(idx-1, idy), 5, mpi_comm_world, req_i(4), err)
+        call mpi_isend(sbuf_S_jp, 5*jsize, mpi_precision, itbl(idx, idy+1), 8, mpi_comm_world, req_j(3), err)
+        call mpi_isend(sbuf_S_jm, 4*jsize, mpi_precision, itbl(idx, idy-1), 7, mpi_comm_world, req_j(4), err)
         !$acc end host_data
 
         call mpi_waitall(4, req_i, istatus, err)
         call mpi_waitall(4, req_j, istatus, err)
 
         !$acc kernels async(1) &
-        !$acc present(Sxx, Sxy, Sxz, rbuf_ip, rbuf_im) 
+        !$acc present(Sxx, Sxy, Sxz, rbuf_S_ip, rbuf_S_im) 
         !$acc loop independent
         do j=jbeg, jend
-            Sxx(1:nz,ibeg-1,j) = rbuf_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
-            Sxy(1:nz,ibeg-2,j) = rbuf_im(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz)
-            Sxy(1:nz,ibeg-1,j) = rbuf_im(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz)
-            Sxz(1:nz,ibeg-2,j) = rbuf_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
-            Sxz(1:nz,ibeg-1,j) = rbuf_im(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz)
+            Sxx(1:nz,ibeg-1,j) = rbuf_S_im(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
+            Sxy(1:nz,ibeg-2,j) = rbuf_S_im(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz)
+            Sxy(1:nz,ibeg-1,j) = rbuf_S_im(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz)
+            Sxz(1:nz,ibeg-2,j) = rbuf_S_im(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
+            Sxz(1:nz,ibeg-1,j) = rbuf_S_im(4*isize+(j-jbeg)*nz+1:4*isize+(j-jbeg+1)*nz)
 
-            Sxx(1:nz,iend+1,j) = rbuf_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
-            Sxx(1:nz,iend+2,j) = rbuf_ip(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz)
-            Sxy(1:nz,iend+1,j) = rbuf_ip(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz)
-            Sxz(1:nz,iend+1,j) = rbuf_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
+            Sxx(1:nz,iend+1,j) = rbuf_S_ip(0*isize+(j-jbeg)*nz+1:0*isize+(j-jbeg+1)*nz)
+            Sxx(1:nz,iend+2,j) = rbuf_S_ip(1*isize+(j-jbeg)*nz+1:1*isize+(j-jbeg+1)*nz)
+            Sxy(1:nz,iend+1,j) = rbuf_S_ip(2*isize+(j-jbeg)*nz+1:2*isize+(j-jbeg+1)*nz)
+            Sxz(1:nz,iend+1,j) = rbuf_S_ip(3*isize+(j-jbeg)*nz+1:3*isize+(j-jbeg+1)*nz)
         end do
         !$acc end kernels
 
         !$acc kernels async(2) &
-        !$acc present(Syy, Sxy, Syz, rbuf_jp, rbuf_jm) 
+        !$acc present(Syy, Sxy, Syz, rbuf_S_jp, rbuf_S_jm) 
         !$acc loop independent
         do i=ibeg, iend
-            Syy(1:nz,i,jbeg-1) = rbuf_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
-            Sxy(1:nz,i,jbeg-2) = rbuf_jm(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz)
-            Sxy(1:nz,i,jbeg-1) = rbuf_jm(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz)
-            Syz(1:nz,i,jbeg-2) = rbuf_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
-            Syz(1:nz,i,jbeg-1) = rbuf_jm(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz)
+            Syy(1:nz,i,jbeg-1) = rbuf_S_jm(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
+            Sxy(1:nz,i,jbeg-2) = rbuf_S_jm(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz)
+            Sxy(1:nz,i,jbeg-1) = rbuf_S_jm(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz)
+            Syz(1:nz,i,jbeg-2) = rbuf_S_jm(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
+            Syz(1:nz,i,jbeg-1) = rbuf_S_jm(4*jsize+(i-ibeg)*nz+1:4*jsize+(i-ibeg+1)*nz)
 
-            Syy(1:nz,i,jend+1) = rbuf_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
-            Syy(1:nz,i,jend+2) = rbuf_jp(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz)
-            Sxy(1:nz,i,jend+1) = rbuf_jp(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz)
-            Syz(1:nz,i,jend+1) = rbuf_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
+            Syy(1:nz,i,jend+1) = rbuf_S_jp(0*jsize+(i-ibeg)*nz+1:0*jsize+(i-ibeg+1)*nz)
+            Syy(1:nz,i,jend+2) = rbuf_S_jp(1*jsize+(i-ibeg)*nz+1:1*jsize+(i-ibeg+1)*nz)
+            Sxy(1:nz,i,jend+1) = rbuf_S_jp(2*jsize+(i-ibeg)*nz+1:2*jsize+(i-ibeg+1)*nz)
+            Syz(1:nz,i,jend+1) = rbuf_S_jp(3*jsize+(i-ibeg)*nz+1:3*jsize+(i-ibeg+1)*nz)
         end do
         !$acc end kernels
 
@@ -681,5 +698,30 @@ contains
         end do
 
     end subroutine global__getnode
+
+    subroutine set_box(box1, ib, ie, jb, je, kb, ke, offset)
+
+        type(t_box), intent(inout) :: box1
+        integer, intent(in) :: ib, ie
+        integer, intent(in) :: jb, je
+        integer, intent(in) :: kb, ke
+        integer, intent(inout) :: offset
+
+
+        box1%ib = ib
+        box1%ie = ie
+        box1%jb = jb
+        box1%je = je        
+        box1%kb = kb
+        box1%ke = ke
+        box1%nx = max(ie - ib + 1, 0)
+        box1%ny = max(je - jb + 1, 0)
+        box1%nz = max(ke - kb + 1, 0)
+        box1%ncell = box1%nx * box1%ny * box1%nz
+        box1%offset = offset
+        offset = offset + box1%ncell 
+
+    end subroutine set_box    
+
 end module m_global
 ! ------------------------------------------------------------------------------------------------------------------------------ !!

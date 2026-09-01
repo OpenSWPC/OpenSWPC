@@ -3,7 +3,7 @@ module m_vmodel_lhm_rmed
 
     !! 1D velocity structure with random media
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -182,6 +182,11 @@ contains
                 do i = i0, i1
 
                     !! chose layer
+                    rho1 = 0.001
+                    vp1 = 0.0
+                    vs1 = 0.0
+                    qp1 = 10
+                    qs1 = 10                    
                     do l = 1, nlayer
                         if (zs(k) >= depth(l)) then
                             rho1 = rho0(l) * (1 + 0.8 * xi(k, i, j, tbl_rmed(l)))

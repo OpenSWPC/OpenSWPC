@@ -3,7 +3,7 @@ module m_kernel
 
     !! Computation kernel for FDM numerical simulation
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -20,8 +20,6 @@ module m_kernel
     public :: kernel__update_stress
     public :: kernel__vmax
 
-    real(SP), allocatable :: c1(:), c2(:), d1(:)
-    real(SP) :: d2
     real(MP) :: rc40x, rc41x, rc40z, rc41z
     real(MP) :: rd40x, rd41x, rd40z, rd41z
 
@@ -327,16 +325,16 @@ contains
 
         !! memory allocation
 
-        allocate (Vx(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
-        allocate (Vz(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
+        allocate (Vx(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
+        allocate (Vz(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
         allocate (Sxx(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
         allocate (Szz(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
         allocate (Sxz(kbeg_m:kend_m, ibeg_m:iend_m), source=0.0_MP)
 
         if (nm > 0) then
-            allocate (Rxx(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
-            allocate (Rzz(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
-            allocate (Rxz(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), source=0.0)
+            allocate (Rxx(1:nm, kbeg:kend, ibeg:iend), source=0.0)
+            allocate (Rzz(1:nm, kbeg:kend, ibeg:iend), source=0.0)
+            allocate (Rxz(1:nm, kbeg:kend, ibeg:iend), source=0.0)
             allocate (c1(1:nm), c2(1:nm), d1(1:nm))
         end if
 

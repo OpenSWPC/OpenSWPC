@@ -2,7 +2,7 @@ module m_fdtool
 
     !! Utility subroutines / functions working without global-variables/parameters
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     implicit none
@@ -134,7 +134,7 @@ contains
     end subroutine fdm_cond_wavelength
 
 
-    subroutine memory_size_3d(nproc_x, nproc_y, nx, ny, nz, nm, na, memsize_all, memsize_node)
+    subroutine memory_size_3d(nproc_x, nproc_y, nx, ny, nz, nm, nsponge, memsize_all, memsize_node)
 
         !! Memory-size rough estimate of FDM simulation
 
@@ -144,14 +144,14 @@ contains
         integer, intent(in)  :: ny
         integer, intent(in)  :: nz
         integer, intent(in)  :: nm
-        integer, intent(in)  :: na
+        integer, intent(in)  :: nsponge
         real(SP), intent(out) :: memsize_all  !! total memory size in GB
         real(SP), intent(out) :: memsize_node !! average in-node memory size in GB
 
-        real(SP) :: rn_int, rn_abc
+        real(SP) :: rn_mem, rn_abc
         real(SP) :: b_med, b_vel, b_stress, b_mem, b_abc
         integer :: nproc
-        real(SP) :: ba_int, ba_abc, ba_com
+        real(SP) :: ba_mem, ba_abc, ba_com
         integer :: nxpm, nypm, nzpm, nxp, nyp
         real(SP) :: rn_com
 
@@ -166,41 +166,41 @@ contains
 
         ! mesh number ( in real, for avoiding integer overflow )
         rn_com = real(nxpm * nproc_x) * real(nypm * nproc_y) * nzpm
-        rn_int = real(nx - 2 * na) * real(ny - 2 * na) * real(nz - na)
-        rn_abc = real(nx) * real(ny) * real(nz) - real(nx - 2 * nxp) * real(ny - 2 * nyp) * real(nz - na)
+        rn_abc = real(nsponge)
+        rn_mem = real(nx) * real(ny) * real(nz) 
 
         ! byte per mesh
         b_med = 5 * SP         ! rho, lam, mu, taup, taus
-        b_vel = 3 * DP         ! Vx, Vy, Vz
+        b_vel = 3 * SP         ! Vx, Vy, Vz
         b_stress = 6 * DP      ! Sxx, Syy, Szz, Syz, Sxz, Sxy
         b_mem = 6 * nm * SP    ! Rij
 
         b_abc = 18 * SP
 
         ba_com = (b_med + b_vel + b_stress) * rn_com
-        ba_int = (b_mem) * rn_int
+        ba_mem = (b_mem) * rn_mem
         ba_abc = (b_abc) * rn_abc
 
-        memsize_all = (ba_com + ba_int + ba_abc) / (1024.)**3
+        memsize_all = (ba_com + ba_mem + ba_abc) / (1024.)**3
         memsize_node = memsize_all / nproc
 
     end subroutine memory_size_3d
 
 
-    subroutine memory_size_sh(nproc, nx, nz, nm, na, memsize_all, memsize_node)
+    subroutine memory_size_sh(nproc, nx, nz, nm, nsponge, memsize_all, memsize_node)
         !! Memory-size estimate of FDM simulation
 
         integer, intent(in)  :: nproc
         integer, intent(in)  :: nx
         integer, intent(in)  :: nz
         integer, intent(in)  :: nm
-        integer, intent(in)  :: na
+        integer, intent(in)  :: nsponge
         real(SP), intent(out) :: memsize_all  !! total memory size in GB
         real(SP), intent(out) :: memsize_node !! average in-node memory size in GB
 
-        real(SP) :: rn_int, rn_abc
+        real(SP) :: rn_mem, rn_abc
         real(SP) :: b_med, b_vel, b_stress, b_mem, b_abc
-        real(SP) :: ba_int, ba_abc, ba_com
+        real(SP) :: ba_mem, ba_abc, ba_com
         integer  :: nxpm, nzpm, nxp
         real(SP) :: rn_com
 
@@ -211,28 +211,28 @@ contains
 
         !! mesh number ( in real, for avoiding integer overflow )
         rn_com = real(nxpm * nproc) * nzpm
-        rn_int = real(nx - 2 * na) * real(nz - na)
-        rn_abc = real(nx) * real(nz) - real(nx - 2 * nxp) * real(nz - na)
+        rn_mem = real(nx) * real(nz)
+        rn_abc = real(nsponge)
 
         !! byte per mesh
         b_med = 5 * SP
-        b_vel = 1 * DP
+        b_vel = 1 * SP
         b_stress = 2 * DP
         b_mem = 2 * nm * SP
 
         b_abc = 4 * SP
 
         ba_com = (b_med + b_vel + b_stress) * rn_com
-        ba_int = (b_mem) * rn_int
+        ba_mem = (b_mem) * rn_mem
         ba_abc = (b_abc) * rn_abc
 
-        memsize_all = (ba_com + ba_int + ba_abc) / (1024.)**3
+        memsize_all = (ba_com + ba_mem + ba_abc) / (1024.)**3
         memsize_node = memsize_all / nproc
 
     end subroutine memory_size_sh
 
 
-    subroutine memory_size_psv(nproc, nx, nz, nm, na, memsize_all, memsize_node)
+    subroutine memory_size_psv(nproc, nx, nz, nm, nsponge, memsize_all, memsize_node)
 
         !! Memory-size estimate of FDM simulation
 
@@ -240,13 +240,13 @@ contains
         integer, intent(in)  :: nx
         integer, intent(in)  :: nz
         integer, intent(in)  :: nm
-        integer, intent(in)  :: na
+        integer, intent(in)  :: nsponge
         real(SP), intent(out) :: memsize_all  !! total memory size in GB
         real(SP), intent(out) :: memsize_node !! average in-node memory size in GB
 
-        real(SP) :: rn_int, rn_abc
+        real(SP) :: rn_mem, rn_abc
         real(SP) :: b_med, b_vel, b_stress, b_mem, b_abc
-        real(SP) :: ba_int, ba_abc, ba_com
+        real(SP) :: ba_mem, ba_abc, ba_com
         integer  :: nxpm, nzpm, nxp
         real(SP) :: rn_com
 
@@ -257,22 +257,22 @@ contains
 
         ! mesh number ( in real, for avoiding integer overflow )
         rn_com = real(nxpm * nproc) * nzpm
-        rn_int = real(nx - 2 * na) * real(nz - na)
-        rn_abc = real(nx) * real(nz) - real(nx - 2 * nxp) * real(nz - na)
+        rn_mem = real(nx) * real(nz)
+        rn_abc = real(nsponge)
 
         ! byte per mesh
         b_med = 5 * SP
-        b_vel = 2 * DP
+        b_vel = 2 * SP
         b_stress = 4 * DP
         b_mem = 4 * nm * SP
 
         b_abc = 8 * SP
 
         ba_com = (b_med + b_vel + b_stress) * rn_com
-        ba_int = (b_mem) * rn_int
+        ba_mem = (b_mem) * rn_mem
         ba_abc = (b_abc) * rn_abc
 
-        memsize_all = (ba_com + ba_int + ba_abc) / (1024.)**3
+        memsize_all = (ba_com + ba_mem + ba_abc) / (1024.)**3
         memsize_node = memsize_all / nproc
 
     end subroutine memory_size_psv
@@ -467,6 +467,29 @@ contains
 
     end function herrmann
 
+    !$acc routine(asymcos)
+    real(SP) pure function asymcos(t, ts, tr1, tr2)
+
+        !! Asymmetric cosine function
+        !! See Ji+(2003 JGR) Figure 3 (doi:10.1029/2002JB001764)
+
+        real(SP), intent(in) :: t    !! time
+        real(SP), intent(in) :: ts   !! rupture start time
+        real(SP), intent(in) :: tr1  !! starting-phase time: duration from ts to the maximum
+        real(SP), intent(in) :: tr2  !! end-phase time: duration from the maximum to the end
+
+        real(SP) :: tr !! total rise time
+        
+        tr = tr1 + tr2
+        if (ts <= t .and. t <= ts + tr1) then
+            asymcos = (1.0 - cos(pi * (t - ts) / tr1)) / tr
+        else if (ts + tr1 < t .and. t <= ts + tr1 + tr2) then
+            asymcos = (1.0 + cos(pi * (t - ts - tr1) / tr2)) / tr
+        else
+            asymcos = 0.0
+        end if
+
+    end function asymcos
 
     !$acc routine(momentrate)
     real(SP) pure function momentrate(t, stftype, nprm, srcprm)
@@ -479,19 +502,50 @@ contains
         real(SP), intent(in) :: srcprm(1:nprm)
 
         real(SP) :: tbeg
-        real(SP) :: trise
-
-        tbeg = srcprm(1)
-        trise = srcprm(2)
+        real(SP) :: trise, trise2
 
         select case (stftype)
-        case ('boxcar');   momentrate = boxcar(t, tbeg, trise)
-        case ('triangle'); momentrate = triangle(t, tbeg, trise)
-        case ('herrmann'); momentrate = herrmann(t, tbeg, trise)
-        case ('kupper');   momentrate = kupper(t, tbeg, trise)
-        case ('cosine');   momentrate = cosine(t, tbeg, trise)
-        case ('texp');     momentrate = texp(t, tbeg, trise)
-        case default;      momentrate = kupper(t, tbeg, trise)
+
+        case ('boxcar')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = boxcar(t, tbeg, trise)
+
+        case ('triangle')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = triangle(t, tbeg, trise)
+
+        case ('herrmann')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = herrmann(t, tbeg, trise)
+
+        case ('kupper')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = kupper(t, tbeg, trise)
+
+        case ('cosine')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = cosine(t, tbeg, trise)
+
+        case ('texp')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = texp(t, tbeg, trise)
+
+        case ('asymcos')
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            trise2 = srcprm(3)
+            momentrate = asymcos(t, tbeg, trise, trise2)
+
+        case default
+            tbeg = srcprm(1)
+            trise = srcprm(2)
+            momentrate = kupper(t, tbeg, trise)
         end select
 
     end function momentrate
@@ -854,5 +908,5 @@ contains
 
     end subroutine independent_list
 
-    
+   
 end module m_fdtool

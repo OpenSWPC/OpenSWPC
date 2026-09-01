@@ -3,7 +3,7 @@ module m_kernel
 
     !! Computation kernel for FDM numerical simulation
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -20,8 +20,6 @@ module m_kernel
     public :: kernel__update_stress
     public :: kernel__vmax
 
-    real(SP), allocatable :: c1(:), c2(:), d1(:)
-    real(SP) :: d2
     real(MP) :: rc40x, rc41x, rc40y, rc41y, rc40z, rc41z
     real(MP) :: rd40x, rd41x, rd40y, rd41y, rd40z, rd41z
 
@@ -220,12 +218,12 @@ contains
 
                     !$acc loop seq reduction(+:Rxx_n,Ryy_n,Rzz_n)
                     do m=1, nm
-                      Rxx(m,k,i,j) = c1(m) * Rxx(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dyVy_dzVz) * dt
-                      Ryy(m,k,i,j) = c1(m) * Ryy(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dzVz) * dt
-                      Rzz(m,k,i,j) = c1(m) * Rzz(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dyVy) * dt
-                      Rxx_n = Rxx_n + d1(m) * Rxx(m,k,i,j)
-                      Ryy_n = Ryy_n + d1(m) * Ryy(m,k,i,j)
-                      Rzz_n = Rzz_n + d1(m) * Rzz(m,k,i,j)
+                        Rxx(m,k,i,j) = c1(m) * Rxx(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dyVy_dzVz) * dt
+                        Ryy(m,k,i,j) = c1(m) * Ryy(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dzVz) * dt
+                        Rzz(m,k,i,j) = c1(m) * Rzz(m,k,i,j) - c2(m) * (lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dyVy) * dt
+                        Rxx_n = Rxx_n + d1(m) * Rxx(m,k,i,j)
+                        Ryy_n = Ryy_n + d1(m) * Ryy(m,k,i,j)
+                        Rzz_n = Rzz_n + d1(m) * Rzz(m,k,i,j)
                     end do
 
                     !! update stress components
@@ -354,7 +352,6 @@ contains
         real(SP), intent(out) :: xmax, ymax, zmax
         integer :: i, j
         integer, parameter :: margin = 5
-        real(SP) :: xmax_local, ymax_local, zmax_local
 
         !! avoid nearby the absorbing boundary
         !$acc kernels present(Vx, Vy, Vz, kob) copyout(xmax, ymax, zmax)
@@ -377,9 +374,9 @@ contains
 
         !! memory allocation
 
-        allocate (Vx(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
-        allocate (Vy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
-        allocate (Vz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
+        allocate (Vx(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+        allocate (Vy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
+        allocate (Vz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0)
         allocate (Sxx(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
         allocate (Syy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
         allocate (Szz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), source=0.0_MP)
@@ -389,12 +386,12 @@ contains
 
         if (nm > 0) then
             allocate (c1(nm), c2(nm), d1(nm))
-            allocate (Rxx(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), source=0.0)
-            allocate (Ryy(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), source=0.0)
-            allocate (Rzz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), source=0.0)
-            allocate (Ryz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), source=0.0)
-            allocate (Rxz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), source=0.0)
-            allocate (Rxy(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), source=0.0)
+            allocate (Rxx(1:nm, kbeg:kend, ibeg:iend, jbeg:jend), source=0.0)
+            allocate (Ryy(1:nm, kbeg:kend, ibeg:iend, jbeg:jend), source=0.0)
+            allocate (Rzz(1:nm, kbeg:kend, ibeg:iend, jbeg:jend), source=0.0)
+            allocate (Ryz(1:nm, kbeg:kend, ibeg:iend, jbeg:jend), source=0.0)
+            allocate (Rxz(1:nm, kbeg:kend, ibeg:iend, jbeg:jend), source=0.0)
+            allocate (Rxy(1:nm, kbeg:kend, ibeg:iend, jbeg:jend), source=0.0)
         end if
 
     end subroutine memory_allocate

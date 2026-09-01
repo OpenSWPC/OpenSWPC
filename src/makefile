@@ -3,7 +3,7 @@
 ## compile all SWPC codes
 ##
 ## @copyright
-##   Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+##   Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 ##
 ## ------------------------------------------------------------------------------------------------------------------------------ ##
 
@@ -12,15 +12,35 @@ ifdef build
 arch=$(build)
 endif
 
-all:
-	cd swpc_3d;  make arch=$(arch)
-	cd swpc_sh;  make arch=$(arch)
-	cd swpc_psv; make arch=$(arch)
-	cd tools;    make arch=$(arch)
+.PHONY: all swpc_3d swpc_sh swpc_psv tools clean
+export arch
 
-clean:
-	cd swpc_3d;  make clean
-	cd swpc_sh;  make clean
-	cd swpc_psv; make clean
-	cd tools;    make clean
-	cd shared;   rm -f *.o *.mod
+all: swpc_3d swpc_sh swpc_psv tools
+
+swpc_3d: 
+	$(MAKE) -C swpc_3d arch=$(arch)
+
+swpc_psv:
+	$(MAKE) -C swpc_psv arch=$(arch)
+
+swpc_sh:
+	$(MAKE) -C swpc_sh arch=$(arch)
+
+tools:
+	$(MAKE) -C tools arch=$(arch)
+
+clean: clean_3d clean_sh clean_psv clean_tools
+	rm -f shared/*.o shared/*.mod
+
+clean_3d:
+	$(MAKE) -C swpc_3d clean
+
+clean_psv:
+	$(MAKE) -C swpc_psv clean
+
+clean_sh:
+	$(MAKE) -C swpc_sh clean
+
+
+clean_tools:
+	$(MAKE) -C tools clean

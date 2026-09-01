@@ -3,7 +3,7 @@ module m_absorb_c
 
     !! Boundary absorber module: Cerjan's Sponge
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -67,13 +67,13 @@ contains
         !$omp parallel do private(k)
         do k = kbeg, kend
             if (k <= na) then
-                ! if( fullspace_mode ) then
-                !   gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, 0.0, real(dz)) )          / Lz )**2 )
-                !   gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, 0.0, real(dz)) + real(dz)/2 ) ) / Lz )**2 )
-                ! else
-                gz_c(k) = 1.0
-                gz_b(k) = 1.0
-                ! end if
+                if( fullspace_mode ) then
+                    gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, 0.0, real(dz)) )          / Lz )**2 )
+                    gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, 0.0, real(dz)) + real(dz)/2 ) ) / Lz )**2 )
+                else
+                    gz_c(k) = 1.0
+                    gz_b(k) = 1.0
+                end if
             else if (k >= nz - na + 1) then
                 gz_c(k) = exp(-alpha * (1.0 - (k2z(k, Nz * real(dz), -real(dz)) + real(dz) / 2) / Lz)**2)
                 gz_b(k) = exp(-alpha * (1.0 - ((k2z(k, Nz * real(dz), -real(dz)))) / Lz)**2)

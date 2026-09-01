@@ -3,7 +3,7 @@ module m_medium
 
     !! Set-up medium velocity/attenuation structure
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -16,6 +16,7 @@ module m_medium
     use m_vmodel_lhm
     use m_vmodel_lgm
     use m_vmodel_user
+    use m_vmodel_ggm
     use m_vmodel_uni_rmed
     use m_vmodel_grd_rmed
     use m_vmodel_lhm_rmed
@@ -95,6 +96,9 @@ contains
             case ('grd')
                 call vmodel_grd(io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
                                 rho, lam, mu, taup, taus, bddep)
+            case ('ggm')
+                call vmodel_ggm(io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
+                                rho, lam, mu, taup, taus, bddep)
             case ('lhm')
                 call vmodel_lhm(io_prm, ibeg_m, iend_m, jbeg_m, jend_m, kbeg_m, kend_m, xc, yc, zc, vcut, &
                                 rho, lam, mu, taup, taus, bddep)
@@ -126,11 +130,11 @@ contains
             !$omp parallel do private(j,k)
             do j = jbeg_m, jend_m
                 do k = kbeg_m, kend_m
-                    rho(k, i, j) = rho(k, na + 1, j)
-                    lam(k, i, j) = lam(k, na + 1, j)
-                    mu(k, i, j) = mu(k, na + 1, j)
-                    taup(k, i, j) = taup(k, na + 1, j)
-                    taus(k, i, j) = taus(k, na + 1, j)
+                    rho (k,i,j) = rho (k,na+1,j)
+                    lam (k,i,j) = lam (k,na+1,j)
+                    mu  (k,i,j) = mu  (k,na+1,j)
+                    taup(k,i,j) = taup(k,na+1,j)
+                    taus(k,i,j) = taus(k,na+1,j)
                 end do
             end do
             !$omp end parallel do
@@ -139,11 +143,11 @@ contains
             !$omp parallel do private(j,k)
             do j = jbeg_m, jend_m
                 do k = kbeg_m, kend_m
-                    rho(k, i, j) = rho(k, nx - na, j)
-                    lam(k, i, j) = lam(k, nx - na, j)
-                    mu(k, i, j) = mu(k, nx - na, j)
-                    taup(k, i, j) = taup(k, nx - na, j)
-                    taus(k, i, j) = taus(k, nx - na, j)
+                    rho (k,i,j) = rho (k,nx-na,j)
+                    lam (k,i,j) = lam (k,nx-na,j)
+                    mu  (k,i,j) = mu  (k,nx-na,j)
+                    taup(k,i,j) = taup(k,nx-na,j)
+                    taus(k,i,j) = taus(k,nx-na,j)
                 end do
             end do
             !$omp end parallel do
@@ -274,7 +278,7 @@ contains
 
             !! Avoid low-velocity layer for stabilize PML absorber
 
-            integer :: i, j, k, k2
+            integer :: i, j, k, k2, ibox
             real :: vp, vs, gamma
             real, parameter :: V_DYNAMIC_RANGE = 0.4 ! ratio between maximum and minimum velocity
             real :: vmin_pml
@@ -282,54 +286,63 @@ contains
 
             vmin_pml = vmax * V_DYNAMIC_RANGE
 
-            do j = jbeg - 1, jend + 1
-                do i = ibeg - 1, iend + 1
-                    k = minval(kbeg_a(i - 2:i + 2, j - 2:j + 2))
-                    do while (k <= kend)
+            do ibox = 1, 6
 
-                        if (lam(k, i, j) < lam(k - 1, i, j) .or. mu(k, i, j) < mu(k - 1, i, j)) then
+                if( box(ibox)%ncell == 0 ) cycle
 
-                            do k2 = k + 1, kend
-                                if (lam(k2, i, j) > lam(k2 - 1, i, j) .or. mu(k2, i, j) > mu(k2 - 1, i, j)) exit
-                            end do
+                do j = box(ibox)%jb, box(ibox)%je
+                    do i = box(ibox)%ib, box(ibox)%ie
+                        k = box(ibox)%kb + 1
 
-                            if (k2 - k <= LV_THICK) then
+                        do while (k <= box(ibox)%ke )
 
-                                rho(k, i, j) = rho(k - 1, i, j)
-                                lam(k, i, j) = lam(k - 1, i, j)
-                                mu(k, i, j) = mu(k - 1, i, j)
-                                taup(k, i, j) = taup(k - 1, i, j)
-                                taus(k, i, j) = taus(k - 1, i, j)
-                                k = k2 - 1
+                            if (lam(k,i,j) < lam(k-1,i,j) .or. mu(k,i,j) < mu(k-1,i,j)) then
 
+                                do k2=k+1, kend
+                                    if (lam(k2,i,j) > lam(k2-1,i,j) .or. mu(k2,i,j) > mu(k2-1,i,j)) exit
+                                end do
+
+                                if (k2 - k <= LV_THICK) then
+
+                                    rho (k,i,j) = rho (k-1,i,j)
+                                    lam (k,i,j) = lam (k-1,i,j)
+                                    mu  (k,i,j) = mu  (k-1,i,j)
+                                    taup(k,i,j) = taup(k-1,i,j)
+                                    taus(k,i,j) = taus(k-1,i,j)
+                                    k = k2 - 1
+
+                                end if
                             end if
 
-                        end if
+                            k = k + 1
 
-                        k = k + 1
-
+                        end do
                     end do
                 end do
             end do
 
-            do j = jbeg - 1, jend + 1
-                do i = ibeg - 1, iend + 1
-                    do k = minval(kbeg_a(i - 2:i + 2, j - 2:j + 2)), kend
+            do ibox = 1, 6
+                if( box(ibox)%ncell == 0 ) cycle
 
-                        vp = sqrt((lam(k, i, j) + 2 * mu(k, i, j)) / rho(k, i, j))
-                        vs = sqrt(mu(k, i, j) / rho(k, i, j))
+                do j = box(ibox)%jb, box(ibox)%je
+                    do i = box(ibox)%ib, box(ibox)%ie
+                        do k = box(ibox)%kb, box(ibox)%ke
 
-                        ! skip ocean and air
-                        if (vs < epsilon(1.0)) cycle
+                            vp = sqrt((lam(k,i,j) + 2 * mu(k,i,j)) / rho(k,i,j))
+                            vs = sqrt(mu(k,i,j) / rho(k,i,j))
 
-                        gamma = sqrt(3.0)
-                        if (vs < vmin_pml) then
-                            vs = vmin_pml
-                            vp = vs * gamma
+                            ! skip ocean and air
+                            if (vs < epsilon(1.0)) cycle
 
-                            lam(k, i, j) = rho(k, i, j) * (vp**2 - 2 * vs**2)
-                            mu(k, i, j) = rho(k, i, j) * (vs**2)
-                        end if
+                            gamma = sqrt(3.0)
+                            if (vs < vmin_pml) then
+                                vs = vmin_pml
+                                vp = vs * gamma
+
+                                lam(k,i,j) = rho(k,i,j) * (vp**2 - 2 * vs**2)
+                                mu (k,i,j) = rho(k,i,j) * (vs**2)
+                            end if
+                        end do
                     end do
                 end do
             end do
@@ -386,10 +399,10 @@ contains
             end do
             !$omp end parallel do
 
-!      if( fullspace_mode ) then
-!        kfs_bot = kfs_top - 1
-!        kob_bot = kob_top - 1
-!      end if
+            if( fullspace_mode ) then
+                kfs_bot = kfs_top - 1
+                kob_bot = kob_top - 1
+            end if
 
         end subroutine surface_detection
 

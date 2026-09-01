@@ -87,12 +87,12 @@ program swpc_3d
     !$acc       Syz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
     !$acc       Sxz(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
     !$acc       Sxy(kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
-    !$acc       Rxx(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), &
-    !$acc       Ryy(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), &
-    !$acc       Rzz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), &
-    !$acc       Ryz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), &
-    !$acc       Rxz(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k), &
-    !$acc       Rxy(1:nm, kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k)  )
+    !$acc       Rxx(1:nm, kbeg:kend, ibeg:iend, jbeg:jend), &
+    !$acc       Ryy(1:nm, kbeg:kend, ibeg:iend, jbeg:jend), &
+    !$acc       Rzz(1:nm, kbeg:kend, ibeg:iend, jbeg:jend), &
+    !$acc       Ryz(1:nm, kbeg:kend, ibeg:iend, jbeg:jend), &
+    !$acc       Rxz(1:nm, kbeg:kend, ibeg:iend, jbeg:jend), &
+    !$acc       Rxy(1:nm, kbeg:kend, ibeg:iend, jbeg:jend)  )
     
     !$acc enter data copyin(&    
     !$acc       rho (kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m), &
@@ -109,8 +109,7 @@ program swpc_3d
     !$acc       kfs_bot(ibeg_m:iend_m, jbeg_m:jend_m), &
     !$acc       kob_top(ibeg_m:iend_m, jbeg_m:jend_m), &
     !$acc       kob_bot(ibeg_m:iend_m, jbeg_m:jend_m), &
-    !$acc       bddep(ibeg_m:iend_m, jbeg_m:jend_m, 0:NBD), &
-    !$acc       kbeg_a(ibeg_m:iend_m, jbeg_m:jend_m))
+    !$acc       bddep(ibeg_m:iend_m, jbeg_m:jend_m, 0:NBD))
 
     call report__setup(io_prm)
     close (io_prm)

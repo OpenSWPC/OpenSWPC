@@ -3,7 +3,7 @@ program read_snp
 
     !! Read snap files from output of swpc, and export to figure
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -27,7 +27,6 @@ program read_snp
     logical       :: is_exist
     integer :: nx, ny
     integer :: iskip
-    character(6) :: snp_type
     character(8) :: tname
     integer :: nt
     integer :: ierr
@@ -40,9 +39,7 @@ program read_snp
     call getopt('-version', is_opt2)
     if (is_opt1 .or. is_opt2) call version__display('read_snp')
 
-  !!
-  !! Check Input File
-  !!
+    !! Check Input File
     if (command_argument_count() == 0) then
         call usage_exit()
     end if
@@ -55,7 +52,7 @@ program read_snp
     end if
 
     !! existence check
-    call fdsnap__open(fn_snp, io_snp, is_exist, snp_type)
+    call fdsnap__open(fn_snp, io_snp, is_exist)
     if (.not. is_exist) then
         write (error_unit, '(A)') "ERROR [read_snp]: file "//trim(fn_snp)//" does not exist"
         write (error_unit, *)
@@ -63,17 +60,16 @@ program read_snp
     end if
 
     !! Read Header Part
-    call fdsnap__readhdr(fn_snp, io_snp, snp_type, hdr)
+    call fdsnap__readhdr(io_snp, hdr)
     nx = hdr%ns1
     ny = hdr%ns2
-    if (snp_type == 'netcdf') then
-        allocate (vid(hdr%nsnp))
-        do i = 1, hdr%nsnp
-            call nc_chk(nf90_inquire_variable(io_snp, 3 + hdr%nmed + i, vname))
-            call nc_chk(nf90_inq_varid(io_snp, vname, vid(i)))
-            call nc_chk(nf90_inquire_dimension(io_snp, 3, tname, nt))
-        end do
-    end if
+
+    allocate (vid(hdr%nsnp))
+    do i = 1, hdr%nsnp
+        call nc_chk(nf90_inquire_variable(io_snp, 3 + hdr%nmed + i, vname))
+        call nc_chk(nf90_inq_varid(io_snp, vname, vid(i)))
+        call nc_chk(nf90_inquire_dimension(io_snp, 3, tname, nt))
+    end do
 
     !! header output mode
     call getopt('h', is_exist)
@@ -94,11 +90,7 @@ program read_snp
     call getopt('bin', is_exist)
     if (is_exist) call dat_output('bin')
 
-    if (snp_type == 'native') then
-        close (io_snp)
-    else
-        ierr = nf90_close(io_snp)
-    end if
+    ierr = nf90_close(io_snp)
 
 contains
 
@@ -107,7 +99,8 @@ contains
         write (error_unit, *)
         write (error_unit, '(A)') ' read_snp.x -i snapshot [-h] '
         write (error_unit, '(A)') '      [-ppm|-bmp] [-pall] [-mul var | -mul1 var -mul2 var ...] '
-        write (error_unit, '(A)') '      [-abs] [-bin|-asc] [-skip n] [-lpf ng] [-notim]'
+        write (error_unit, '(A)') '      [-abs] [-bin|-asc] [-skip n] [-lpf ng] [-notim] '
+        write (error_unit, '(A)') '      [-color legacy|cud] [-bgsat n] [-q]'
         write (error_unit, *)
         write (error_unit, '(A)') '  -h: display header information to terminal output'
         write (error_unit, '(A)') '  -bmp: output bmp-formatted snapshot figures'
@@ -121,6 +114,9 @@ contains
         write (error_unit, '(A)') '  -skip n: skip first n snapshots for export'
         write (error_unit, '(A)') '  -notim: do not plot elapsed time on the snapshort figures'
         write (error_unit, '(A)') '  -lpf ng: apply spatial low-pass filter with corner grid-width of ng before figure output' 
+        write (error_unit, '(A)') '  -color mode: color scheme for wavefield; legacy (default) or cud (color universal design)'
+        write (error_unit, '(A)') '  -bgsat n: background color saturation (0=grayscale, 100=original; default=100)'
+        write (error_unit, '(A)') '  -q: quiet mode'
         write (error_unit, *)
 
         stop
@@ -141,7 +137,6 @@ contains
         real(SP) :: xx(nx), yy(ny)
         integer :: it
         integer :: i, j
-        integer :: ierr
         real    :: t
         character(80) :: odir = D_ODIR
         character(6)  :: cit    ! time grid number
@@ -185,16 +180,12 @@ contains
         end if
 
         !! Medium structure
-        if (snp_type == 'native') then
-            read (io_snp) den, lam, rig
-        else
-            call nc_chk(nf90_inq_varid(io_snp, 'rho', vid_rho))
-            call nc_chk(nf90_inq_varid(io_snp, 'lambda', vid_lambda))
-            call nc_chk(nf90_inq_varid(io_snp, 'mu', vid_mu))
-            call nc_chk(nf90_get_var(io_snp, vid_rho, den))
-            call nc_chk(nf90_get_var(io_snp, vid_lambda, lam))
-            call nc_chk(nf90_get_var(io_snp, vid_mu, rig))
-        end if
+        call nc_chk(nf90_inq_varid(io_snp, 'rho', vid_rho))
+        call nc_chk(nf90_inq_varid(io_snp, 'lambda', vid_lambda))
+        call nc_chk(nf90_inq_varid(io_snp, 'mu', vid_mu))
+        call nc_chk(nf90_get_var(io_snp, vid_rho, den))
+        call nc_chk(nf90_get_var(io_snp, vid_lambda, lam))
+        call nc_chk(nf90_get_var(io_snp, vid_mu, rig))
 
         do j = 1, ny
             do i = 1, nx
@@ -244,27 +235,15 @@ contains
         do
             t = (it + iskip) * hdr%dt
 
-            if (snp_type == 'native') then
-                do i = 1, hdr%nsnp
-                    read (io_snp, iostat=ierr) amp(i, :, :)
-                    if (ierr /= 0) then
-                        write (error_unit, *) "EOF detected"
-                        is_eof = .true.
-                        exit
-                    end if
-                end do
-                if (is_eof) exit
-            else
-                count = (/nx, ny, 1/)
-                start = (/1, 1, it + iskip + 1/)
-                do i = 1, hdr%nsnp
-                    call nc_chk(nf90_get_var(io_snp, vid(i), amp(i, :, :), start=start, count=count))
-                end do
+            count = (/nx, ny, 1/)
+            start = (/1, 1, it + iskip + 1/)
+            do i = 1, hdr%nsnp
+                call nc_chk(nf90_get_var(io_snp, vid(i), amp(i, :, :), start=start, count=count))
+            end do
 
-                if (it == nt) then
-                    is_eof = .true.
-                    exit
-                end if
+            if (it == nt) then
+                is_eof = .true.
+                exit
             end if
 
             if (it >= 0) then
@@ -335,7 +314,6 @@ contains
         integer :: it
         integer :: i, j
         integer :: ii, jj
-        integer :: ierr
         logical :: is_exist
         logical :: is_eof
         logical :: is_abs
@@ -359,6 +337,15 @@ contains
         integer :: start(3), count(3)
         logical :: no_timemark
         character(3) :: codetype
+        character(8) :: color_mode ! legacy/cud
+!        integer, parameter :: CUD_SUB1(3) = (/  0, 35, 180/)
+!        integer, parameter :: CUD_SUB2(3) = (/130, 20,  0/)
+        integer, parameter :: CUD_SUB1(3) = (/  25, 96, 255 /)
+        integer, parameter :: CUD_SUB2(3) = (/ 169, 75,  22 /)        
+        integer :: bgsat ! background color saturation
+        integer :: gray
+        real :: sat
+        logical :: quiet_mode
         !--
 
         !! Memory allocation
@@ -429,17 +416,32 @@ contains
             is_transpose = .false.
         end if
 
-        !! Medium structure
-        if (snp_type == 'native') then
-            read (io_snp) den, lam, rig
-        else
-            call nc_chk(nf90_inq_varid(io_snp, 'rho', vid_rho))
-            call nc_chk(nf90_inq_varid(io_snp, 'lambda', vid_lambda))
-            call nc_chk(nf90_inq_varid(io_snp, 'mu', vid_mu))
-            call nc_chk(nf90_get_var(io_snp, vid_rho, den))
-            call nc_chk(nf90_get_var(io_snp, vid_lambda, lam))
-            call nc_chk(nf90_get_var(io_snp, vid_mu, rig))
+        !! color mode
+        call getopt('color', is_exist, color_mode, 'legacy')
+
+        if( trim(color_mode) /= 'legacy' .and. trim(color_mode) /= 'cud' ) then
+            write(error_unit, '(A)') 'WARNING [read_snp]: unknown color scheme ' &
+                // trim(color_mode) // ' was specified. Use legacy mode instead. '
+            color_mode = 'legacy'
         end if
+
+        !! background color saturation
+        call getopt('bgsat', is_exist, bgsat, 100)
+        if (bgsat < 0 .or. bgsat > 100) then
+            write(error_unit, '(A)') 'WARNING [read_snp]: -bgsat option must be between 0 and 100. '
+            bgsat = max(0, min(100, bgsat))
+        end if
+
+        !! quiet_mode
+        call getopt('q', quiet_mode)
+
+        !! Medium structure
+        call nc_chk(nf90_inq_varid(io_snp, 'rho', vid_rho))
+        call nc_chk(nf90_inq_varid(io_snp, 'lambda', vid_lambda))
+        call nc_chk(nf90_inq_varid(io_snp, 'mu', vid_mu))
+        call nc_chk(nf90_get_var(io_snp, vid_rho, den))
+        call nc_chk(nf90_get_var(io_snp, vid_lambda, lam))
+        call nc_chk(nf90_get_var(io_snp, vid_mu, rig))
 
         do j = 1, ny
             do i = 1, nx
@@ -449,12 +451,8 @@ contains
         end do
         !! horizontal case: read topography
         if (hdr%coordinate == 'fs' .or. hdr%coordinate == 'ob' .or. hdr%coordinate == 'xy') then
-            if (snp_type == 'native') then
-                read (io_snp) topo
-            else
-                call nc_chk(nf90_inq_varid(io_snp, 'topo', vid_topo))
-                call nc_chk(nf90_get_var(io_snp, vid_topo, topo))
-            end if
+            call nc_chk(nf90_inq_varid(io_snp, 'topo', vid_topo))
+            call nc_chk(nf90_get_var(io_snp, vid_topo, topo))
         end if
 
         !! Background Coloring
@@ -518,6 +516,22 @@ contains
 
         end if
 
+        !! background color saturation
+        if( bgsat < 100 ) then
+            sat = real(bgsat) / 100.
+            do j=1, ny
+                do i=1, nx
+                    ! RGB -> Gray
+                    gray = nint( 0.2126 * cmed(1,i,j) &
+                               + 0.7152 * cmed(2,i,j) &
+                               + 0.0722 * cmed(3,i,j) )
+
+                    ! linear interp. between RGB and Gray
+                    cmed(:,i,j) = nint( (1 - sat) * gray + sat * cmed(:,i,j) )
+                end do 
+            end do
+        end if
+
         allocate (amp(hdr%nsnp, nx, ny))
         if (is_transpose) then
             allocate (img(3, nys, nxs))
@@ -535,29 +549,16 @@ contains
         do
             t = (it + iskip) * hdr%dt
 
-            if (snp_type == 'native') then
-                do i = 1, hdr%nsnp
-                    read (io_snp, iostat=ierr) amp(i, :, :)
-                    if (ierr /= 0) then
-                        write (error_unit, *) "EOF detected"
-                        is_eof = .true.
-                        exit
-                    end if
-
-                end do
-                if (is_eof) exit
-            else
-                if (it == nt) then
-                    is_eof = .true.
-                    exit
-                end if
-                count = (/nx, ny, 1/)
-                start = (/1, 1, it + iskip + 1/)
-                do i = 1, hdr%nsnp
-                    call nc_chk(nf90_get_var(io_snp, vid(i), amp(i, :, :), start=start, count=count))
-                end do
+            if (it == nt) then
+                is_eof = .true.
+                exit
             end if
-
+            count = (/nx, ny, 1/)
+            start = (/1, 1, it + iskip + 1/)
+            do i = 1, hdr%nsnp
+                call nc_chk(nf90_get_var(io_snp, vid(i), amp(i, :, :), start=start, count=count))
+            end do
+ 
             if (it < 0) then
                 it = it + 1
                 cycle
@@ -579,7 +580,9 @@ contains
                     //trim(hdr%datatype)//'.'&
                     //cit//'.'//typ
 
-            write (error_unit, *) trim(fn_snp)
+            if (.not. quiet_mode) then
+                write (error_unit, *) trim(fn_snp)
+            end if
 
             do i = 1, hdr%nsnp
                 amp(i, :, :) = mul(i) * abs(amp(i, :, :))
@@ -604,9 +607,16 @@ contains
                         div = abs(amp(1, i, j))
                         rot = sqrt(sum(amp(2:hdr%nsnp, i, j)**2)) ! include psv and 3D
 
-                        img(1, ii, jj) = cmed(1, i, j) - int(255 * rot) / 4
-                        img(2, ii, jj) = cmed(2, i, j) - int(255 * div) / 2
-                        img(3, ii, jj) = cmed(3, i, j) - int(255 * (div + rot)) / 3
+                        if (trim(color_mode) == 'cud') then
+                            img(:, ii, jj) = cmed(:, i, j) &
+                                           - int(div * CUD_SUB1(:)) &
+                                           - int(rot * CUD_SUB2(:))
+                        else
+                            !! color_mode = 'legacy' (default)
+                            img(1, ii, jj) = cmed(1, i, j) - int(255 * rot) / 4
+                            img(2, ii, jj) = cmed(2, i, j) - int(255 * div) / 2
+                            img(3, ii, jj) = cmed(3, i, j) - int(255 * (div + rot)) / 3
+                        end if
 
                     else if (hdr%datatype == "v3" .or. hdr%datatype == "u3") then
 
@@ -625,10 +635,16 @@ contains
                             ud = abs(amp(3, i, j))
                             horiz = sqrt(amp(1, i, j)**2 + amp(2, i, j)**2)
 
-                            img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
-                            img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
-                            img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
-
+                            if (trim(color_mode) == 'cud') then
+                                img(:, ii, jj) = cmed(:, i, j) &
+                                            - int(ud    * CUD_SUB1(:)) &
+                                            - int(horiz * CUD_SUB2(:))
+                            else
+                                !! color_mode = 'legacy' (default)
+                                img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
+                                img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
+                                img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
+                            end if
                         end if
 
                     else if (hdr%datatype == "v2" .or. hdr%datatype == "u2") then
@@ -648,10 +664,16 @@ contains
                             ud = abs(amp(2, i, j))
                             horiz = abs(amp(1, i, j))
 
-                            img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
-                            img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
-                            img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
-
+                            if (color_mode == 'cud') then
+                                img(:, ii, jj) = cmed(:, i, j) &
+                                            - int(ud    * CUD_SUB1(:)) &
+                                            - int(horiz * CUD_SUB2(:))
+                            else
+                                !! color_mode = 'legacy' (default)
+                                img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
+                                img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
+                                img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
+                            end if
                         end if
 
                     else if (hdr%datatype == "vy" .or. hdr%datatype == "uy") then
@@ -659,10 +681,16 @@ contains
                         ud = 0
                         horiz = abs(amp(1, i, j))
 
-                        img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
-                        img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
-                        img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
-
+                            if (color_mode == 'cud') then
+                                img(:, ii, jj) = cmed(:, i, j) &
+                                            - int(ud    * CUD_SUB1(:)) &
+                                            - int(horiz * CUD_SUB2(:))
+                            else
+                                !! color_mode = 'legacy' (default)
+                                img(1, ii, jj) = cmed(1, i, j) - int(255 * horiz) / 4
+                                img(2, ii, jj) = cmed(2, i, j) - int(255 * ud) / 2
+                                img(3, ii, jj) = cmed(3, i, j) - int(255 * (ud + horiz)) / 3
+                            end if
                     end if
 
                     ! normalize

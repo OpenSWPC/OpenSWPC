@@ -3,7 +3,7 @@ module m_snap
 
     !! Snapshot output
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -77,9 +77,6 @@ module m_snap
     ! derivative coefficient
     real(MP) :: r20x, r20y, r20z
 
-    ! snapshot data format
-    character(6) :: snp_format ! native or netcdf
-
     ! displacement snapshot buffer
     real(SP), allocatable :: buf_yz_u(:,:,:), buf_xz_u(:,:,:), buf_xy_u(:,:,:), buf_fs_u(:,:,:), buf_ob_u(:,:,:)
     real(SP), allocatable :: max_ob_v(:,:,:), max_ob_u(:,:,:), max_fs_v(:,:,:), max_fs_u(:,:,:)
@@ -124,7 +121,6 @@ contains
         call readini(io_prm, 'jdec', jdec, 1)
         call readini(io_prm, 'kdec', kdec, 1)
         call readini(io_prm, 'ntdec_s', ntdec_s, 10)
-        call readini(io_prm, 'snp_format', snp_format, 'native')
 
         !! snapshot size#2013-0440
         nxs = (nx + (idec / 2)) / idec
@@ -252,47 +248,25 @@ contains
         ob_ps%coordinate = 'ob'; ob_v%coordinate = 'ob'; ob_u%coordinate = 'ob'; 
         fs_ps%coordinate = 'fs'; fs_v%coordinate = 'fs'; fs_u%coordinate = 'fs'; 
         !! output settings
-        if (snp_format == 'native') then
 
-            if (yz_ps%sw) call newfile_yz(trim(odir)//'/'//trim(title)//'.3d.yz.ps.snp', yz_ps)
-            if (xz_ps%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.3d.xz.ps.snp', xz_ps)
-            if (xy_ps%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.xy.ps.snp', xy_ps)
-            if (fs_ps%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.fs.ps.snp', fs_ps)
-            if (ob_ps%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.ob.ps.snp', ob_ps)
+        if (yz_ps%sw) call newfile_yz_nc(trim(odir)//'/'//trim(title)//'.3d.yz.ps.nc', yz_ps)
+        if (xz_ps%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.3d.xz.ps.nc', xz_ps)
+        if (xy_ps%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.xy.ps.nc', xy_ps)
+        if (fs_ps%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.fs.ps.nc', fs_ps)
+        if (ob_ps%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.ob.ps.nc', ob_ps)
 
-            if (yz_v%sw) call newfile_yz(trim(odir)//'/'//trim(title)//'.3d.yz.v.snp', yz_v)
-            if (xz_v%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.3d.xz.v.snp', xz_v)
-            if (xy_v%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.xy.v.snp', xy_v)
-            if (fs_v%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.fs.v.snp', fs_v)
-            if (ob_v%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.ob.v.snp', ob_v)
+        if (yz_v%sw) call newfile_yz_nc(trim(odir)//'/'//trim(title)//'.3d.yz.v.nc', yz_v)
+        if (xz_v%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.3d.xz.v.nc', xz_v)
+        if (xy_v%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.xy.v.nc', xy_v)
+        if (fs_v%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.fs.v.nc', fs_v)
+        if (ob_v%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.ob.v.nc', ob_v)
 
-            if (yz_u%sw) call newfile_yz(trim(odir)//'/'//trim(title)//'.3d.yz.u.snp', yz_u)
-            if (xz_u%sw) call newfile_xz(trim(odir)//'/'//trim(title)//'.3d.xz.u.snp', xz_u)
-            if (xy_u%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.xy.u.snp', xy_u)
-            if (fs_u%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.fs.u.snp', fs_u)
-            if (ob_u%sw) call newfile_xy(trim(odir)//'/'//trim(title)//'.3d.ob.u.snp', ob_u)
+        if (yz_u%sw) call newfile_yz_nc(trim(odir)//'/'//trim(title)//'.3d.yz.u.nc', yz_u)
+        if (xz_u%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.3d.xz.u.nc', xz_u)
+        if (xy_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.xy.u.nc', xy_u)
+        if (fs_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.fs.u.nc', fs_u)
+        if (ob_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.ob.u.nc', ob_u)
 
-        else
-
-            if (yz_ps%sw) call newfile_yz_nc(trim(odir)//'/'//trim(title)//'.3d.yz.ps.nc', yz_ps)
-            if (xz_ps%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.3d.xz.ps.nc', xz_ps)
-            if (xy_ps%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.xy.ps.nc', xy_ps)
-            if (fs_ps%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.fs.ps.nc', fs_ps)
-            if (ob_ps%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.ob.ps.nc', ob_ps)
-
-            if (yz_v%sw) call newfile_yz_nc(trim(odir)//'/'//trim(title)//'.3d.yz.v.nc', yz_v)
-            if (xz_v%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.3d.xz.v.nc', xz_v)
-            if (xy_v%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.xy.v.nc', xy_v)
-            if (fs_v%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.fs.v.nc', fs_v)
-            if (ob_v%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.ob.v.nc', ob_v)
-
-            if (yz_u%sw) call newfile_yz_nc(trim(odir)//'/'//trim(title)//'.3d.yz.u.nc', yz_u)
-            if (xz_u%sw) call newfile_xz_nc(trim(odir)//'/'//trim(title)//'.3d.xz.u.nc', xz_u)
-            if (xy_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.xy.u.nc', xy_u)
-            if (fs_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.fs.u.nc', fs_u)
-            if (ob_u%sw) call newfile_xy_nc(trim(odir)//'/'//trim(title)//'.3d.ob.u.nc', ob_u)
-
-        end if
 
         !! for taking derivatives
         r20x = 1.0_MP / dx
@@ -981,7 +955,7 @@ contains
     subroutine wbuf_yz_ps(it)
 
         integer, intent(in) :: it
-        integer :: i, j, k, l
+        integer :: i, j, k
         integer :: jj, kk
         real(SP) :: div, rot_x, rot_y, rot_z
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
@@ -1024,10 +998,10 @@ contains
                                 - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
             
                     !! masking
-                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
-                    rot_x = rot_x * abs(Syz(k,i,j)) / abs(Syz(k,i,j) + epsilon(1.0))
-                    rot_y = rot_y * abs(Sxz(k,i,j)) / abs(Sxz(k,i,j) + epsilon(1.0))
-                    rot_z = rot_z * abs(Sxy(k,i,j)) / abs(Sxy(k,i,j) + epsilon(1.0))
+                    div = div * lam(k,i,j) / (abs(lam(k,i,j)) + epsilon(1.0))
+                    rot_x = rot_x * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0))
+                    rot_y = rot_y * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0))
+                    rot_z = rot_z * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0))
 
                     !! dx, dy, dz have km unit. correction for 1e3 factor.
                     buf(jj,kk,1) = div   * UC * M0 * 1e-3
@@ -1043,28 +1017,21 @@ contains
             !$omp end parallel do
 #endif
 
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 1))
-                call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 2))
-                call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 3))
-                call write_reduce_array2d_r(nys, nzs, yz_ps%ionode, yz_ps%io, buf(:, :, 4))
+            if (.not. allocated(sbuf)) then
+                allocate( sbuf(nys * nzs * 4), source=0.0 )
+                allocate( rbuf(nys * nzs * 4), source=0.0 )
+                !$acc enter data copyin(sbuf)
             else
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nys * nzs * 4), source=0.0 )
-                    allocate( rbuf(nys * nzs * 4), source=0.0 )
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == yz_ps%ionode) call wbuf_nc(yz_ps, 4, nys, nzs, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nys, nzs, 4, buf, sbuf)
+                call mpi_wait(req, stat, err)
+                if (myid == yz_ps%ionode) call wbuf_nc(yz_ps, 4, nys, nzs, it0, rbuf)
+            end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nys, nzs, 4, buf, sbuf)
 
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nys * nzs * 4, mpi_real, mpi_sum, yz_ps%ionode_local, mpi_comm_yz, req, err)
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nys * nzs * 4, mpi_real, mpi_sum, yz_ps%ionode_local, mpi_comm_yz, req, err)
 
-                    it0 = it ! remember
-                end if
+                it0 = it ! remember
             end if
 
         end if
@@ -1075,7 +1042,7 @@ contains
 
         integer, intent(in) :: it
         integer :: ii, kk
-        integer :: i, j, k, l
+        integer :: i, j, k
         real(SP) :: div, rot_x, rot_y, rot_z
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
         integer, save :: req
@@ -1117,7 +1084,7 @@ contains
                                 - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
 
                     !! masking
-                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                    div = div * lam(k,i,j) / (abs(lam(k,i,j)) + epsilon(1.0))
                     rot_x = rot_x * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0))
                     rot_y = rot_y * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0))
                     rot_z = rot_z * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0))
@@ -1136,30 +1103,23 @@ contains
             !$omp end parallel do
 #endif
 
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nxs, nzs, xz_ps%ionode, xz_ps%io, buf(:, :, 1))
-                call write_reduce_array2d_r(nxs, nzs, xz_ps%ionode, xz_ps%io, buf(:, :, 2))
-                call write_reduce_array2d_r(nxs, nzs, xz_ps%ionode, xz_ps%io, buf(:, :, 3))
-                call write_reduce_array2d_r(nxs, nzs, xz_ps%ionode, xz_ps%io, buf(:, :, 4))
+            if (.not. allocated(sbuf)) then
+                allocate( sbuf(nxs * nzs * 4), source=0.0)
+                allocate( rbuf(nxs * nzs * 4), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
-
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nxs * nzs * 4), source=0.0)
-                    allocate( rbuf(nxs * nzs * 4), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == xz_ps%ionode)  call wbuf_nc(xz_ps, 4, nxs, nzs, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nxs, nzs, 4, buf, sbuf)
-
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nxs * nzs * 4, mpi_real, mpi_sum, xz_ps%ionode_local, mpi_comm_xz, req, err)
-
-                    it0 = it ! remember
-                end if
+                call mpi_wait(req, stat, err)
+                if (myid == xz_ps%ionode)  call wbuf_nc(xz_ps, 4, nxs, nzs, it0, rbuf)
             end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nxs, nzs, 4, buf, sbuf)
+
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nxs * nzs * 4, mpi_real, mpi_sum, xz_ps%ionode_local, mpi_comm_xz, req, err)
+
+                it0 = it ! remember
+            end if
+
         end if
 
     end subroutine wbuf_xz_ps
@@ -1167,7 +1127,7 @@ contains
     subroutine wbuf_xy_ps(it)
 
         integer, intent(in) :: it
-        integer :: i, j, k, l
+        integer :: i, j, k
         integer :: ii, jj
         real(SP) :: div, rot_x, rot_y, rot_z
         real, allocatable, save :: buf(:, :, :), sbuf(:), rbuf(:)
@@ -1207,7 +1167,7 @@ contains
                                 - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
 
                     !! masking
-                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                    div = div * lam(k,i,j) / (abs(lam(k,i,j)) + epsilon(1.0))
                     rot_x = rot_x * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0))
                     rot_y = rot_y * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0))
                     rot_z = rot_z * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0))
@@ -1226,30 +1186,21 @@ contains
             !$omp end parallel do
 #endif
 
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nxs, nys, xy_ps%ionode, xy_ps%io, buf(:, :, 1))
-                call write_reduce_array2d_r(nxs, nys, xy_ps%ionode, xy_ps%io, buf(:, :, 2))
-                call write_reduce_array2d_r(nxs, nys, xy_ps%ionode, xy_ps%io, buf(:, :, 3))
-                call write_reduce_array2d_r(nxs, nys, xy_ps%ionode, xy_ps%io, buf(:, :, 4))
+            if (.not. allocated(sbuf)) then
+                allocate( sbuf(nxs * nys * 4), source=0.0)
+                allocate( rbuf(nxs * nys * 4), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
+                call mpi_wait(req, stat, err)
+                if (myid == xy_ps%ionode) call wbuf_nc(xy_ps, 4, nxs, nys, it0, rbuf)
+            end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nxs, nys, 4, buf, sbuf)
 
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nxs * nys * 4), source=0.0)
-                    allocate( rbuf(nxs * nys * 4), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == xy_ps%ionode) call wbuf_nc(xy_ps, 4, nxs, nys, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nxs, nys, 4, buf, sbuf)
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nxs * nys * 4, mpi_real, mpi_sum, xy_ps%ionode, mpi_comm_world, req, err)
 
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nxs * nys * 4, mpi_real, mpi_sum, xy_ps%ionode, mpi_comm_world, req, err)
-
-                    it0 = it ! remember
-                end if
-
+                it0 = it ! remember
             end if
 
         end if
@@ -1299,7 +1250,7 @@ contains
                                 - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
             
                     !! masking
-                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                    div = div * lam(k,i,j) / (abs(lam(k,i,j)) + epsilon(1.0))
                     rot_x = rot_x * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0))
                     rot_y = rot_y * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0))
                     rot_z = rot_z * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0))
@@ -1317,30 +1268,21 @@ contains
             !$omp end parallel do
 #endif
 
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nxs, nys, fs_ps%ionode, fs_ps%io, buf(:, :, 1))
-                call write_reduce_array2d_r(nxs, nys, fs_ps%ionode, fs_ps%io, buf(:, :, 2))
-                call write_reduce_array2d_r(nxs, nys, fs_ps%ionode, fs_ps%io, buf(:, :, 3))
-                call write_reduce_array2d_r(nxs, nys, fs_ps%ionode, fs_ps%io, buf(:, :, 4))
+            if (.not. allocated(sbuf)) then
+                allocate( sbuf(nxs * nys * 4), source=0.0)
+                allocate( rbuf(nxs * nys * 4), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
+                call mpi_wait(req, stat, err)
+                if (myid == fs_ps%ionode) call wbuf_nc(fs_ps, 4, nxs, nys, it0, rbuf)
+            end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nxs, nys, 4, buf, sbuf)
 
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nxs * nys * 4), source=0.0)
-                    allocate( rbuf(nxs * nys * 4), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == fs_ps%ionode) call wbuf_nc(fs_ps, 4, nxs, nys, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nxs, nys, 4, buf, sbuf)
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nxs * nys * 4, mpi_real, mpi_sum, fs_ps%ionode, mpi_comm_world, req, err)
 
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nxs * nys * 4, mpi_real, mpi_sum, fs_ps%ionode, mpi_comm_world, req, err)
-
-                    it0 = it ! remember
-                end if
-
+                it0 = it ! remember
             end if
 
         end if
@@ -1390,7 +1332,7 @@ contains
                                 - (Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )) * r20y )
             
                     !! masking
-                    div = div * lam(k,i,j) / abs(lam(k,i,j) + epsilon(1.0))
+                    div = div * lam(k,i,j) / (abs(lam(k,i,j)) + epsilon(1.0))
                     rot_x = rot_x * abs(Syz(k,i,j)) / (abs(Syz(k,i,j)) + epsilon(1.0))
                     rot_y = rot_y * abs(Sxz(k,i,j)) / (abs(Sxz(k,i,j)) + epsilon(1.0))
                     rot_z = rot_z * abs(Sxy(k,i,j)) / (abs(Sxy(k,i,j)) + epsilon(1.0))
@@ -1409,36 +1351,29 @@ contains
             !$omp end parallel do
 #endif
 
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nxs, nys, ob_ps%ionode, ob_ps%io, buf(:, :, 1))
-                call write_reduce_array2d_r(nxs, nys, ob_ps%ionode, ob_ps%io, buf(:, :, 2))
-                call write_reduce_array2d_r(nxs, nys, ob_ps%ionode, ob_ps%io, buf(:, :, 3))
-                call write_reduce_array2d_r(nxs, nys, ob_ps%ionode, ob_ps%io, buf(:, :, 4))
+
+            if (.not. allocated(sbuf)) then
+                allocate( sbuf(nxs * nys * 4), source=0.0)
+                allocate( rbuf(nxs * nys * 4), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
-
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nxs * nys * 4), source=0.0)
-                    allocate( rbuf(nxs * nys * 4), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == ob_ps%ionode) call wbuf_nc(ob_ps, 4, nxs, nys, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nxs, nys, 4, buf, sbuf)
-
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nxs * nys * 4, mpi_real, mpi_sum, ob_ps%ionode, mpi_comm_world, req, err)
-
-                    it0 = it ! remember
-                end if
+                call mpi_wait(req, stat, err)
+                if (myid == ob_ps%ionode) call wbuf_nc(ob_ps, 4, nxs, nys, it0, rbuf)
             end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nxs, nys, 4, buf, sbuf)
 
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nxs * nys * 4, mpi_real, mpi_sum, ob_ps%ionode, mpi_comm_world, req, err)
+
+                it0 = it ! remember
+            end if
         end if
 
     end subroutine wbuf_ob_ps
 
     subroutine wbuf_yz_v(it)
+
         integer, intent(in) :: it
         integer :: i, j, k
         integer :: jj, kk
@@ -1485,30 +1420,22 @@ contains
             !$omp end parallel do
 #endif
 
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nys, nzs, yz_v%ionode, yz_v%io, buf(:, :, 1))
-                call write_reduce_array2d_r(nys, nzs, yz_v%ionode, yz_v%io, buf(:, :, 2))
-                call write_reduce_array2d_r(nys, nzs, yz_v%ionode, yz_v%io, buf(:, :, 3))
+            if (.not. allocated(sbuf)) then
+                allocate( sbuf(nys * nzs * 3), source=0.0)
+                allocate( rbuf(nys * nzs * 3), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
-
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nys * nzs * 3), source=0.0)
-                    allocate( rbuf(nys * nzs * 3), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == yz_v%ionode) call wbuf_nc(yz_v, 3, nys, nzs, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nys, nzs, 3, buf, sbuf)
-
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nys * nzs * 3, mpi_real, mpi_sum, yz_v%ionode_local, mpi_comm_yz, req, err)
-
-                    it0 = it ! remember
-                end if
+                call mpi_wait(req, stat, err)
+                if (myid == yz_v%ionode) call wbuf_nc(yz_v, 3, nys, nzs, it0, rbuf)
             end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nys, nzs, 3, buf, sbuf)
 
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nys * nzs * 3, mpi_real, mpi_sum, yz_v%ionode_local, mpi_comm_yz, req, err)
+
+                it0 = it ! remember
+            end if
         end if
 
     end subroutine wbuf_yz_v
@@ -1559,29 +1486,24 @@ contains
             !$omp end parallel do
 #endif
 
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nxs, nzs, xz_v%ionode, xz_v%io, buf(:, :, 1))
-                call write_reduce_array2d_r(nxs, nzs, xz_v%ionode, xz_v%io, buf(:, :, 2))
-                call write_reduce_array2d_r(nxs, nzs, xz_v%ionode, xz_v%io, buf(:, :, 3))
+            if (.not. allocated(sbuf)) then
+                allocate( sbuf(nxs * nzs * 3), source=0.0)
+                allocate( rbuf(nxs * nzs * 3), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nxs * nzs * 3), source=0.0)
-                    allocate( rbuf(nxs * nzs * 3), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == xz_v%ionode) call wbuf_nc(xz_v, 3, nxs, nzs, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nxs, nzs, 3, buf, sbuf)
+                call mpi_wait(req, stat, err)
+                if (myid == xz_v%ionode) call wbuf_nc(xz_v, 3, nxs, nzs, it0, rbuf)
+            end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nxs, nzs, 3, buf, sbuf)
 
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nxs * nzs * 3, mpi_real, mpi_sum, xz_v%ionode_local, mpi_comm_xz, req, err)
-                    
-                    it0 = it ! remember
-                end if
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nxs * nzs * 3, mpi_real, mpi_sum, xz_v%ionode_local, mpi_comm_xz, req, err)
+                
+                it0 = it ! remember
             end if
         end if
+
     end subroutine wbuf_xz_v
 
     subroutine wbuf_xy_v(it)
@@ -1626,27 +1548,21 @@ contains
             !$omp end parallel do
 #endif
 
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nxs, nys, xy_v%ionode, xy_v%io, buf(:, :, 1))
-                call write_reduce_array2d_r(nxs, nys, xy_v%ionode, xy_v%io, buf(:, :, 2))
-                call write_reduce_array2d_r(nxs, nys, xy_v%ionode, xy_v%io, buf(:, :, 3))
+            if (.not. allocated(sbuf)) then
+                allocate( sbuf(nxs * nys * 3), source=0.0)
+                allocate( rbuf(nxs * nys * 3), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nxs * nys * 3), source=0.0)
-                    allocate( rbuf(nxs * nys * 3), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == xy_v%ionode) call wbuf_nc(xy_v, 3, nxs, nys, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nxs, nys, 3, buf, sbuf)
+                call mpi_wait(req, stat, err)
+                if (myid == xy_v%ionode) call wbuf_nc(xy_v, 3, nxs, nys, it0, rbuf)
+            end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nxs, nys, 3, buf, sbuf)
 
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, xy_v%ionode, mpi_comm_world, req, err)
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, xy_v%ionode, mpi_comm_world, req, err)
 
-                    it0 = it ! remember
-                end if
+                it0 = it ! remember
             end if
         end if
 
@@ -1714,27 +1630,21 @@ contains
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nxs, nys, fs_v%ionode, fs_v%io, buf(:, :, 1))
-                call write_reduce_array2d_r(nxs, nys, fs_v%ionode, fs_v%io, buf(:, :, 2))
-                call write_reduce_array2d_r(nxs, nys, fs_v%ionode, fs_v%io, buf(:, :, 3))
+            if (.not. allocated(sbuf)) then
+                allocate( sbuf(nxs * nys * 3), source=0.0)
+                allocate( rbuf(nxs * nys * 3), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nxs * nys * 3), source=0.0)
-                    allocate( rbuf(nxs * nys * 3), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == fs_v%ionode) call wbuf_nc(fs_v, 3, nxs, nys, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nxs, nys, 3, buf, sbuf)
+                call mpi_wait(req, stat, err)
+                if (myid == fs_v%ionode) call wbuf_nc(fs_v, 3, nxs, nys, it0, rbuf)
+            end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nxs, nys, 3, buf, sbuf)
 
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, fs_v%ionode, mpi_comm_world, req, err)
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, fs_v%ionode, mpi_comm_world, req, err)
 
-                    it0 = it ! remember
-                end if
+                it0 = it ! remember
             end if
         end if
 
@@ -1802,27 +1712,21 @@ contains
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nxs, nys, ob_v%ionode, ob_v%io, buf(:, :, 1))
-                call write_reduce_array2d_r(nxs, nys, ob_v%ionode, ob_v%io, buf(:, :, 2))
-                call write_reduce_array2d_r(nxs, nys, ob_v%ionode, ob_v%io, buf(:, :, 3))
+            if (.not. allocated(sbuf)) then
+                allocate( sbuf(nxs * nys * 3), source=0.0)
+                allocate( rbuf(nxs * nys * 3), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nxs * nys * 3), source=0.0)
-                    allocate( rbuf(nxs * nys * 3), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == ob_v%ionode) call wbuf_nc(ob_v, 3, nxs, nys, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nxs, nys, 3, buf, sbuf)
+                call mpi_wait(req, stat, err)
+                if (myid == ob_v%ionode) call wbuf_nc(ob_v, 3, nxs, nys, it0, rbuf)
+            end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nxs, nys, 3, buf, sbuf)
 
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, ob_v%ionode, mpi_comm_world, req, err)
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, ob_v%ionode, mpi_comm_world, req, err)
 
-                    it0 = it ! remember
-                end if
+                it0 = it ! remember
             end if
         end if
 
@@ -1867,27 +1771,21 @@ contains
 #endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nys, nzs, yz_u%ionode, yz_u%io, buf_yz_u(:, :, 1))
-                call write_reduce_array2d_r(nys, nzs, yz_u%ionode, yz_u%io, buf_yz_u(:, :, 2))
-                call write_reduce_array2d_r(nys, nzs, yz_u%ionode, yz_u%io, buf_yz_u(:, :, 3))
+            if (.not. allocated(sbuf)) then
+                allocate(sbuf(nys * nzs * 3), source=0.0)
+                allocate(rbuf(nys * nzs * 3), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
-                if (.not. allocated(sbuf)) then
-                    allocate(sbuf(nys * nzs * 3), source=0.0)
-                    allocate(rbuf(nys * nzs * 3), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == yz_u%ionode) call wbuf_nc(yz_u, 3, nys, nzs, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nys, nzs, 3, buf_yz_u, sbuf)
+                call mpi_wait(req, stat, err)
+                if (myid == yz_u%ionode) call wbuf_nc(yz_u, 3, nys, nzs, it0, rbuf)
+            end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nys, nzs, 3, buf_yz_u, sbuf)
 
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nys * nzs * 3, mpi_real, mpi_sum, yz_u%ionode_local, mpi_comm_yz, req, err)
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nys * nzs * 3, mpi_real, mpi_sum, yz_u%ionode_local, mpi_comm_yz, req, err)
 
-                    it0 = it ! remember
-                end if
+                it0 = it ! remember
             end if
         end if
 
@@ -1933,29 +1831,22 @@ contains
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nxs, nzs, xz_u%ionode, xz_u%io, buf_xz_u(:, :, 1))
-                call write_reduce_array2d_r(nxs, nzs, xz_u%ionode, xz_u%io, buf_xz_u(:, :, 2))
-                call write_reduce_array2d_r(nxs, nzs, xz_u%ionode, xz_u%io, buf_xz_u(:, :, 3))
+            if (.not. allocated(sbuf)) then
+                allocate( sbuf(nxs * nzs * 3), source=0.0)
+                allocate( rbuf(nxs * nzs * 3), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nxs * nzs * 3), source=0.0)
-                    allocate( rbuf(nxs * nzs * 3), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == xz_u%ionode) call wbuf_nc(xz_u, 3, nxs, nzs, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nxs, nzs, 3, buf_xz_u, sbuf)
-
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nxs * nzs * 3, mpi_real, mpi_sum, xz_u%ionode_local, mpi_comm_xz, req, err)
-
-                    it0 = it ! remember
-                end if
+                call mpi_wait(req, stat, err)
+                if (myid == xz_u%ionode) call wbuf_nc(xz_u, 3, nxs, nzs, it0, rbuf)
             end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nxs, nzs, 3, buf_xz_u, sbuf)
 
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nxs * nzs * 3, mpi_real, mpi_sum, xz_u%ionode_local, mpi_comm_xz, req, err)
+
+                it0 = it ! remember
+            end if
         end if
 
     end subroutine wbuf_xz_u
@@ -1997,29 +1888,22 @@ contains
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
 
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nxs, nys, xy_u%ionode, xy_u%io, buf_xy_u(:, :, 1))
-                call write_reduce_array2d_r(nxs, nys, xy_u%ionode, xy_u%io, buf_xy_u(:, :, 2))
-                call write_reduce_array2d_r(nxs, nys, xy_u%ionode, xy_u%io, buf_xy_u(:, :, 3))
+            if (.not. allocated(sbuf)) then
+                allocate( sbuf(nxs * nys * 3), source=0.0)
+                allocate( rbuf(nxs * nys * 3), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nxs * nys * 3), source=0.0)
-                    allocate( rbuf(nxs * nys * 3), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == xy_u%ionode) call wbuf_nc(xy_u, 3, nxs, nys, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nxs, nys, 3, buf_xy_u, sbuf)
-
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, xy_u%ionode, mpi_comm_world, req, err)
-
-                    it0 = it ! remember
-                end if
+                call mpi_wait(req, stat, err)
+                if (myid == xy_u%ionode) call wbuf_nc(xy_u, 3, nxs, nys, it0, rbuf)
             end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nxs, nys, 3, buf_xy_u, sbuf)
 
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, xy_u%ionode, mpi_comm_world, req, err)
+
+                it0 = it ! remember
+            end if
         end if
 
     end subroutine wbuf_xy_u
@@ -2080,27 +1964,22 @@ contains
 #endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nxs, nys, fs_u%ionode, fs_u%io, buf_fs_u(:, :, 1))
-                call write_reduce_array2d_r(nxs, nys, fs_u%ionode, fs_u%io, buf_fs_u(:, :, 2))
-                call write_reduce_array2d_r(nxs, nys, fs_u%ionode, fs_u%io, buf_fs_u(:, :, 3))
+
+        if (.not. allocated(sbuf)) then
+                allocate( sbuf(nxs * nys * 3), source=0.0)
+                allocate( rbuf(nxs * nys * 3), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nxs * nys * 3), source=0.0)
-                    allocate( rbuf(nxs * nys * 3), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == fs_u%ionode) call wbuf_nc(fs_u, 3, nxs, nys, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nxs, nys, 3, buf_fs_u, sbuf)
+                call mpi_wait(req, stat, err)
+                if (myid == fs_u%ionode) call wbuf_nc(fs_u, 3, nxs, nys, it0, rbuf)
+            end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nxs, nys, 3, buf_fs_u, sbuf)
 
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, fs_u%ionode, mpi_comm_world, req, err)
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, fs_u%ionode, mpi_comm_world, req, err)
 
-                    it0 = it ! remember
-                end if
+                it0 = it ! remember
             end if
         end if
 
@@ -2162,27 +2041,22 @@ contains
 #endif
 
         if (mod(it - 1, ntdec_s) == 0 .or. (it > nt)) then
-            if (snp_format == 'native') then
-                call write_reduce_array2d_r(nxs, nys, ob_u%ionode, ob_u%io, buf_ob_u(:, :, 1))
-                call write_reduce_array2d_r(nxs, nys, ob_u%ionode, ob_u%io, buf_ob_u(:, :, 2))
-                call write_reduce_array2d_r(nxs, nys, ob_u%ionode, ob_u%io, buf_ob_u(:, :, 3))
+
+            if (.not. allocated(sbuf)) then
+                allocate( sbuf(nxs * nys * 3), source=0.0)
+                allocate( rbuf(nxs * nys * 3), source=0.0)
+                !$acc enter data copyin(sbuf)
             else
-                if (.not. allocated(sbuf)) then
-                    allocate( sbuf(nxs * nys * 3), source=0.0)
-                    allocate( rbuf(nxs * nys * 3), source=0.0)
-                    !$acc enter data copyin(sbuf)
-                else
-                    call mpi_wait(req, stat, err)
-                    if (myid == ob_u%ionode) call wbuf_nc(ob_u, 3, nxs, nys, it0, rbuf)
-                end if
-                if (it <= nt) then ! except for the last call
-                    call pack_3d(nxs, nys, 3, buf_ob_u, sbuf)
+                call mpi_wait(req, stat, err)
+                if (myid == ob_u%ionode) call wbuf_nc(ob_u, 3, nxs, nys, it0, rbuf)
+            end if
+            if (it <= nt) then ! except for the last call
+                call pack_3d(nxs, nys, 3, buf_ob_u, sbuf)
 
-                    !$acc update self(sbuf)
-                    call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, ob_u%ionode, mpi_comm_world, req, err)
+                !$acc update self(sbuf)
+                call mpi_ireduce(sbuf, rbuf, nxs * nys * 3, mpi_real, mpi_sum, ob_u%ionode, mpi_comm_world, req, err)
 
-                    it0 = it ! remember
-                end if
+                it0 = it ! remember
             end if
         end if
 
@@ -2207,86 +2081,65 @@ contains
 
         call pwatch__on('snap__closefiles')
 
-        if (snp_format == 'native') then
-            if (yz_ps%sw .and. myid == yz_ps%ionode) close (yz_ps%io)
-            if (xz_ps%sw .and. myid == xz_ps%ionode) close (xz_ps%io)
-            if (xy_ps%sw .and. myid == xy_ps%ionode) close (xy_ps%io)
-            if (fs_ps%sw .and. myid == fs_ps%ionode) close (fs_ps%io)
-            if (ob_ps%sw .and. myid == ob_ps%ionode) close (ob_ps%io)
+        if (yz_ps%sw) call wbuf_yz_ps(nt + 1)
+        if (xz_ps%sw) call wbuf_xz_ps(nt + 1)
+        if (xy_ps%sw) call wbuf_xy_ps(nt + 1)
+        if (fs_ps%sw) call wbuf_fs_ps(nt + 1)
+        if (ob_ps%sw) call wbuf_ob_ps(nt + 1)
 
-            if (yz_v%sw .and. myid == yz_v%ionode) close (yz_v%io)
-            if (xz_v%sw .and. myid == xz_v%ionode) close (xz_v%io)
-            if (xy_v%sw .and. myid == xy_v%ionode) close (xy_v%io)
-            if (fs_v%sw .and. myid == fs_v%ionode) close (fs_v%io)
-            if (ob_v%sw .and. myid == ob_v%ionode) close (ob_v%io)
+        if (yz_v%sw) call wbuf_yz_v(nt + 1)
+        if (xz_v%sw) call wbuf_xz_v(nt + 1)
+        if (xy_v%sw) call wbuf_xy_v(nt + 1)
+        if (fs_v%sw) call wbuf_fs_v(nt + 1)
+        if (ob_v%sw) call wbuf_ob_v(nt + 1)
 
-            if (yz_u%sw .and. myid == yz_u%ionode) close (yz_u%io)
-            if (xz_u%sw .and. myid == xz_u%ionode) close (xz_u%io)
-            if (xy_u%sw .and. myid == xy_u%ionode) close (xy_u%io)
-            if (fs_u%sw .and. myid == fs_u%ionode) close (fs_u%io)
-            if (ob_u%sw .and. myid == ob_u%ionode) close (ob_u%io)
-        else
+        if (yz_u%sw) call wbuf_yz_u(nt + 1)
+        if (xz_u%sw) call wbuf_xz_u(nt + 1)
+        if (xy_u%sw) call wbuf_xy_u(nt + 1)
+        if (fs_u%sw) call wbuf_fs_u(nt + 1)
+        if (ob_u%sw) call wbuf_ob_u(nt + 1)
 
-            if (yz_ps%sw) call wbuf_yz_ps(nt + 1)
-            if (xz_ps%sw) call wbuf_xz_ps(nt + 1)
-            if (xy_ps%sw) call wbuf_xy_ps(nt + 1)
-            if (fs_ps%sw) call wbuf_fs_ps(nt + 1)
-            if (ob_ps%sw) call wbuf_ob_ps(nt + 1)
-
-            if (yz_v%sw) call wbuf_yz_v(nt + 1)
-            if (xz_v%sw) call wbuf_xz_v(nt + 1)
-            if (xy_v%sw) call wbuf_xy_v(nt + 1)
-            if (fs_v%sw) call wbuf_fs_v(nt + 1)
-            if (ob_v%sw) call wbuf_ob_v(nt + 1)
-
-            if (yz_u%sw) call wbuf_yz_u(nt + 1)
-            if (xz_u%sw) call wbuf_xz_u(nt + 1)
-            if (xy_u%sw) call wbuf_xy_u(nt + 1)
-            if (fs_u%sw) call wbuf_fs_u(nt + 1)
-            if (ob_u%sw) call wbuf_ob_u(nt + 1)
-
-            if (yz_ps%sw .and. myid == yz_ps%ionode) call close_nc(yz_ps)
-            if (xz_ps%sw .and. myid == xz_ps%ionode) call close_nc(xz_ps)
-            if (xy_ps%sw .and. myid == xy_ps%ionode) call close_nc(xy_ps)
-            if (fs_ps%sw .and. myid == fs_ps%ionode) call close_nc(fs_ps)
-            if (ob_ps%sw .and. myid == ob_ps%ionode) call close_nc(ob_ps)
-            if (yz_v%sw .and. myid == yz_v%ionode) call close_nc(yz_v)
-            if (xz_v%sw .and. myid == xz_v%ionode) call close_nc(xz_v)
-            if (xy_v%sw .and. myid == xy_v%ionode) call close_nc(xy_v)
-            if (fs_v%sw) then
-                !$acc update self (max_fs_v)
-                call output__put_maxval(fs_v, max_fs_v)
-                if (myid == fs_v%ionode) then
-                    call close_nc(fs_v)
-                end if
+        if (yz_ps%sw .and. myid == yz_ps%ionode) call close_nc(yz_ps)
+        if (xz_ps%sw .and. myid == xz_ps%ionode) call close_nc(xz_ps)
+        if (xy_ps%sw .and. myid == xy_ps%ionode) call close_nc(xy_ps)
+        if (fs_ps%sw .and. myid == fs_ps%ionode) call close_nc(fs_ps)
+        if (ob_ps%sw .and. myid == ob_ps%ionode) call close_nc(ob_ps)
+        if (yz_v%sw .and. myid == yz_v%ionode) call close_nc(yz_v)
+        if (xz_v%sw .and. myid == xz_v%ionode) call close_nc(xz_v)
+        if (xy_v%sw .and. myid == xy_v%ionode) call close_nc(xy_v)
+        if (fs_v%sw) then
+            !$acc update self (max_fs_v)
+            call output__put_maxval(fs_v, max_fs_v)
+            if (myid == fs_v%ionode) then
+                call close_nc(fs_v)
             end if
-            if (ob_v%sw) then
-                !$acc update self (max_ob_v)
-                call output__put_maxval(ob_v, max_ob_v)
-                if (myid == ob_v%ionode) then
-                    call close_nc(ob_v)
-                end if
-            end if
-
-            if (yz_u%sw .and. myid == yz_u%ionode) call close_nc(yz_u)
-            if (xz_u%sw .and. myid == xz_u%ionode) call close_nc(xz_u)
-            if (xy_u%sw .and. myid == xy_u%ionode) call close_nc(xy_u)
-            if (fs_u%sw) then
-                !$acc update self (max_fs_u)
-                call output__put_maxval(fs_u, max_fs_u)
-                if (myid == fs_u%ionode) then
-                    call close_nc(fs_u)
-                end if
-            end if
-            if (ob_u%sw) then
-                !$acc update self (max_ob_u)
-                call output__put_maxval(ob_u, max_ob_u)
-                if (myid == ob_u%ionode) then
-                    call close_nc(ob_u)
-                end if
-            end if
-
         end if
+        if (ob_v%sw) then
+            !$acc update self (max_ob_v)
+            call output__put_maxval(ob_v, max_ob_v)
+            if (myid == ob_v%ionode) then
+                call close_nc(ob_v)
+            end if
+        end if
+
+        if (yz_u%sw .and. myid == yz_u%ionode) call close_nc(yz_u)
+        if (xz_u%sw .and. myid == xz_u%ionode) call close_nc(xz_u)
+        if (xy_u%sw .and. myid == xy_u%ionode) call close_nc(xy_u)
+        if (fs_u%sw) then
+            !$acc update self (max_fs_u)
+            call output__put_maxval(fs_u, max_fs_u)
+            if (myid == fs_u%ionode) then
+                call close_nc(fs_u)
+            end if
+        end if
+        if (ob_u%sw) then
+            !$acc update self (max_ob_u)
+            call output__put_maxval(ob_u, max_ob_u)
+            if (myid == ob_u%ionode) then
+                call close_nc(ob_u)
+            end if
+        end if
+
 
         call pwatch__off('snap__closefiles')
 
@@ -2305,44 +2158,39 @@ contains
         maxv = reshape(rbuf, shape(maxv))
         if (myid == hdr%ionode) then
 
-            if (snp_format == 'native') then
-        !! pass
-            else
+            call nc_chk(nf90_redef(hdr%io))
+            call nc_chk(nf90_def_var(hdr%io, 'max-V', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), vid_V))
+            call nc_chk(nf90_def_var(hdr%io, 'max-H', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), vid_H))
+            call nc_chk(nf90_def_var(hdr%io, 'max-A', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), vid_A))
+            call nc_chk(nf90_put_att(hdr%io, vid_V, 'long_name', 'Maximum amplitude of the vertical component'))
+            call nc_chk(nf90_put_att(hdr%io, vid_H, 'long_name', 'Maximum amplitude of the horizontal components'))
+            call nc_chk(nf90_put_att(hdr%io, vid_A, 'long_name', 'Maximum amplitude of the vector motion'))
+            call nc_chk(nf90_put_att(hdr%io, vid_V, 'coordinates', 'lat lon'))
+            call nc_chk(nf90_put_att(hdr%io, vid_H, 'coordinates', 'lat lon'))
+            call nc_chk(nf90_put_att(hdr%io, vid_A, 'coordinates', 'lat lon'))
 
-                call nc_chk(nf90_redef(hdr%io))
-                call nc_chk(nf90_def_var(hdr%io, 'max-V', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), vid_V))
-                call nc_chk(nf90_def_var(hdr%io, 'max-H', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), vid_H))
-                call nc_chk(nf90_def_var(hdr%io, 'max-A', NF90_REAL, (/hdr%did_x1, hdr%did_x2/), vid_A))
-                call nc_chk(nf90_put_att(hdr%io, vid_V, 'long_name', 'Maximum amplitude of the vertical component'))
-                call nc_chk(nf90_put_att(hdr%io, vid_H, 'long_name', 'Maximum amplitude of the horizontal components'))
-                call nc_chk(nf90_put_att(hdr%io, vid_A, 'long_name', 'Maximum amplitude of the vector motion'))
-                call nc_chk(nf90_put_att(hdr%io, vid_V, 'coordinates', 'lat lon'))
-                call nc_chk(nf90_put_att(hdr%io, vid_H, 'coordinates', 'lat lon'))
-                call nc_chk(nf90_put_att(hdr%io, vid_A, 'coordinates', 'lat lon'))
+            if (hdr%snaptype == 'v3') then
 
-                if (hdr%snaptype == 'v3') then
+                call nc_chk(nf90_put_att(hdr%io, vid_V, 'units', 'm/s'))
+                call nc_chk(nf90_put_att(hdr%io, vid_H, 'units', 'm/s'))
+                call nc_chk(nf90_put_att(hdr%io, vid_A, 'units', 'm/s'))
 
-                    call nc_chk(nf90_put_att(hdr%io, vid_V, 'units', 'm/s'))
-                    call nc_chk(nf90_put_att(hdr%io, vid_H, 'units', 'm/s'))
-                    call nc_chk(nf90_put_att(hdr%io, vid_A, 'units', 'm/s'))
+            else if (hdr%snaptype == 'u3') then
 
-                else if (hdr%snaptype == 'u3') then
-
-                    call nc_chk(nf90_put_att(hdr%io, vid_V, 'units', 'm'))
-                    call nc_chk(nf90_put_att(hdr%io, vid_H, 'units', 'm'))
-                    call nc_chk(nf90_put_att(hdr%io, vid_A, 'units', 'm'))
-
-                end if
-
-                call nc_chk(nf90_put_att(hdr%io, vid_V, 'actual_range', (/minval(maxv(:, :, 1)), maxval(maxv(:, :, 1))/)))
-                call nc_chk(nf90_put_att(hdr%io, vid_H, 'actual_range', (/minval(maxv(:, :, 2)), maxval(maxv(:, :, 2))/)))
-                call nc_chk(nf90_put_att(hdr%io, vid_A, 'actual_range', (/minval(maxv(:, :, 3)), maxval(maxv(:, :, 3))/)))
-                call nc_chk(nf90_enddef(hdr%io))
-                call nc_chk(nf90_put_var(hdr%io, vid_V, maxv(:, :, 1)))
-                call nc_chk(nf90_put_var(hdr%io, vid_H, maxv(:, :, 2)))
-                call nc_chk(nf90_put_var(hdr%io, vid_A, maxv(:, :, 3)))
+                call nc_chk(nf90_put_att(hdr%io, vid_V, 'units', 'm'))
+                call nc_chk(nf90_put_att(hdr%io, vid_H, 'units', 'm'))
+                call nc_chk(nf90_put_att(hdr%io, vid_A, 'units', 'm'))
 
             end if
+
+            call nc_chk(nf90_put_att(hdr%io, vid_V, 'actual_range', (/minval(maxv(:, :, 1)), maxval(maxv(:, :, 1))/)))
+            call nc_chk(nf90_put_att(hdr%io, vid_H, 'actual_range', (/minval(maxv(:, :, 2)), maxval(maxv(:, :, 2))/)))
+            call nc_chk(nf90_put_att(hdr%io, vid_A, 'actual_range', (/minval(maxv(:, :, 3)), maxval(maxv(:, :, 3))/)))
+            call nc_chk(nf90_enddef(hdr%io))
+            call nc_chk(nf90_put_var(hdr%io, vid_V, maxv(:, :, 1)))
+            call nc_chk(nf90_put_var(hdr%io, vid_H, maxv(:, :, 2)))
+            call nc_chk(nf90_put_var(hdr%io, vid_A, maxv(:, :, 3)))
+
         end if
 
     end subroutine output__put_maxval

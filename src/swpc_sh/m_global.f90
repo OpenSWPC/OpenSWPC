@@ -2,7 +2,7 @@
 module m_global
 
     ! global control parameters, shared arrays and MPI communication
-    ! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    ! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -29,7 +29,7 @@ module m_global
     integer, parameter, public :: NM = 3                             !< Number of memory variables
     integer, parameter, public :: NBD = 9                            !< Number of boundary depths to be memorized
 
-    real(MP), allocatable, public :: Vy(:, :)                        !<  velocity components
+    real(SP), allocatable, public :: Vy(:, :)                        !<  velocity components
     real(MP), allocatable, public :: Syz(:, :), Sxy(:, :)            !<  shear  stress components
     real(SP), allocatable, public :: Ryz(:, :, :), Rxy(:, :, :)      !<  memory variables: shear  components
     real(SP), allocatable, public :: rho(:, :), lam(:, :), mu(:, :)  !<  density, relaxed moduli
@@ -64,7 +64,6 @@ module m_global
     integer, public               :: kbeg_m, kend_m                  !<  k- memory allocation area
     integer, public               :: ibeg_k, iend_k                  !<  i- kernel integration area without absorption band
     integer, public               :: kbeg_k, kend_k                  !<  k- kernel integration area without absorption band
-    integer, allocatable, public  :: kbeg_a(:)                       !<  absorbing boundary region
     integer, public               :: ipad, kpad                      !<  memory padding size for optimization
     character(16), public         :: abc_type                        !<  cerjan or pml
 
@@ -95,15 +94,31 @@ module m_global
     logical, public :: pw_mode                                       !< plane wave mode
     logical, public :: bf_mode                                       !< body force mode
 
-    real(MP), allocatable :: sbuf_ip(:), sbuf_im(:)         !<  mpi send buffer
-    real(MP), allocatable :: rbuf_ip(:), rbuf_im(:)         !<  mpi recv buffer
+    real(MP), allocatable :: sbuf_S_ip(:), sbuf_S_im(:)              !<  mpi send buffer
+    real(MP), allocatable :: rbuf_S_ip(:), rbuf_S_im(:)              !<  mpi recv buffer
+    real(SP), allocatable :: sbuf_V_ip(:), sbuf_V_im(:)              !<  mpi send buffer
+    real(SP), allocatable :: rbuf_V_ip(:), rbuf_V_im(:)              !<  mpi recv buffer
     integer, private :: mpi_precision
 
-  ! fullspace-mdoe
-!  logical :: fullspace_mode
+    logical, public :: fullspace_mode
 
     private :: inside_node
     private :: set_mpi_table
+
+    type t_box
+        integer :: ib, ie, nx
+        integer :: kb, ke, nz
+        integer :: ncell
+        integer :: offset
+    end type
+
+    type(t_box), public :: box(4)
+    integer, public :: n_sponge_cell
+
+    public :: t_box
+
+    real(SP), allocatable, public :: c1(:), c2(:), d1(:)
+    real(SP), public :: d2
 
 contains
 
@@ -133,7 +148,7 @@ contains
             clat = 35.7182
             phi = 0.0
             abc_type = 'pml'
-!      fullspace_mode = .false.
+        fullspace_mode = .false.
         else
             call readini(io_prm, 'dx', dx, 0.5_MP)
             call readini(io_prm, 'dz', dz, 0.5_MP)
@@ -146,7 +161,7 @@ contains
             call readini(io_prm, 'clat', clat, 35.7182)
             call readini(io_prm, 'phi', phi, 0.0)
             call readini(io_prm, 'abc_type', abc_type, 'pml')
-!      call readini( io_prm, 'fullspace_mode', fullspace_mode, .false.    )
+            call readini( io_prm, 'fullspace_mode', fullspace_mode, .false.    )
         end if
 
     end subroutine global__readprm
@@ -200,6 +215,7 @@ contains
         integer :: err, nproc_exe
         integer :: mx, proc_x
         character(256) :: command
+        integer :: offset
 
         call pwatch__on("global__setup2") ! measure from here
 
@@ -217,10 +233,14 @@ contains
         ! MPI coordinate
         allocate (itbl(-1:nproc_x))
 
-        allocate(sbuf_ip(2*nz), source=0.0_MP)
-        allocate(sbuf_im(2*nz), source=0.0_MP)
-        allocate(rbuf_ip(2*nz), source=0.0_MP)
-        allocate(rbuf_im(2*nz), source=0.0_MP)
+        allocate(sbuf_S_ip(2*nz), source=0.0_MP)
+        allocate(sbuf_S_im(2*nz), source=0.0_MP)
+        allocate(rbuf_S_ip(2*nz), source=0.0_MP)
+        allocate(rbuf_S_im(2*nz), source=0.0_MP)
+        allocate(sbuf_V_ip(2*nz), source=0.0)
+        allocate(sbuf_V_im(2*nz), source=0.0)
+        allocate(rbuf_V_ip(2*nz), source=0.0)
+        allocate(rbuf_V_im(2*nz), source=0.0)
 
         ! MPI communication table
         call set_mpi_table
@@ -264,23 +284,13 @@ contains
             zc(k) = k2z(k, zbeg, real(dz))
         end do
 
-        ! Absorbing region definition
-        allocate (kbeg_a(ibeg_m:iend_m))
-        do i = ibeg_m, iend_m
-            if (i <= na .or. nx - na + 1 <= i) then
-                kbeg_a(i) = kbeg
-            else
-                kbeg_a(i) = kend - na + 1
-            end if
-        end do
-
         ibeg_k = ibeg
         iend_k = iend
         kbeg_k = kbeg
         kend_k = kend
 
         if (abc_type == 'pml') then
-!      if( fullspace_mode ) kbeg_k = na+1
+            if( fullspace_mode ) kbeg_k = na+1
             if (iend <= na) then ! no kernel integration
                 ibeg_k = iend + 1
             else if (ibeg <= na) then ! pertial kernel
@@ -294,8 +304,22 @@ contains
             kend_k = nz - na
         end if
 
-        !$acc enter data copyin(&
-        !$acc sbuf_ip, sbuf_im, rbuf_ip, rbuf_im, itbl)
+        offset = 1
+        if( fullspace_mode ) then
+            call set_box(box(1),            ibeg,               na,      kbeg,   kend, offset)
+            call set_box(box(2),         nx-na+1,             iend,      kbeg,   kend, offset)
+            call set_box(box(3), max(na+1, ibeg), min(nx-na, iend),      kbeg,     na, offset) 
+            call set_box(box(4), max(na+1, ibeg), min(nx-na, iend), kend-na+1,   kend, offset)
+        else
+            call set_box(box(1),            ibeg,               na,      kbeg,   kend, offset)
+            call set_box(box(2),         nx-na+1,             iend,      kbeg,   kend, offset)
+            call set_box(box(3), max(na+1, ibeg), min(nx-na, iend),      kbeg, kbeg-1, offset)
+            call set_box(box(4), max(na+1, ibeg), min(nx-na, iend), kend-na+1,   kend, offset) 
+        end if
+        n_sponge_cell = offset   
+
+        !$acc enter data copyin(sbuf_S_ip, sbuf_S_im, rbuf_S_ip, rbuf_S_im,  &
+        !$acc                   sbuf_S_ip, sbuf_S_im, rbuf_S_ip, rbuf_S_im, itbl, box)
         
         call pwatch__off("global__setup2") ! measure from here
 
@@ -313,33 +337,33 @@ contains
 
         call pwatch__on("global__comm_vel")
 
-        !$acc host_data use_device(rbuf_ip, rbuf_im)
-        call mpi_irecv(rbuf_ip, 2 * nz, mpi_precision, itbl(idx+1), 1, mpi_comm_world, req(1), err)
-        call mpi_irecv(rbuf_im, 2 * nz, mpi_precision, itbl(idx-1), 2, mpi_comm_world, req(2), err)
+        !$acc host_data use_device(rbuf_V_ip, rbuf_V_im)
+        call mpi_irecv(rbuf_V_ip, 2 * nz, mpi_precision, itbl(idx+1), 1, mpi_comm_world, req(1), err)
+        call mpi_irecv(rbuf_V_im, 2 * nz, mpi_precision, itbl(idx-1), 2, mpi_comm_world, req(2), err)
         !$acc end host_data
 
-        !$acc kernels present(Vy, sbuf_ip, sbuf_im)
+        !$acc kernels present(Vy, sbuf_V_ip, sbuf_V_im)
         !$acc loop independent
         do k=1, nz
-            sbuf_ip(   k) = Vy(k, iend  )
-            sbuf_im(   k) = Vy(k, ibeg  )
-            sbuf_im(nz+k) = Vy(k, ibeg+1)
+            sbuf_V_ip(   k) = Vy(k, iend  )
+            sbuf_V_im(   k) = Vy(k, ibeg  )
+            sbuf_V_im(nz+k) = Vy(k, ibeg+1)
         end do
         !$acc end kernels
 
-        !$acc host_data use_device(sbuf_ip, sbuf_im)
-        call mpi_isend(sbuf_ip, 2 * nz, mpi_precision, itbl(idx+1), 2, mpi_comm_world, req(3), err)
-        call mpi_isend(sbuf_im, 2 * nz, mpi_precision, itbl(idx-1), 1, mpi_comm_world, req(4), err)
+        !$acc host_data use_device(sbuf_V_ip, sbuf_V_im)
+        call mpi_isend(sbuf_V_ip, 2 * nz, mpi_precision, itbl(idx+1), 2, mpi_comm_world, req(3), err)
+        call mpi_isend(sbuf_V_im, 2 * nz, mpi_precision, itbl(idx-1), 1, mpi_comm_world, req(4), err)
         !$acc end host_data
 
         call mpi_waitall(4, req, istatus, err)
 
-        !$acc kernels pcopyin(Vy, rbuf_im, rbuf_ip)
+        !$acc kernels pcopyin(Vy, rbuf_V_im, rbuf_V_ip)
         !$acc loop independent
         do k=1, nz
-            Vy(k,iend+1) = rbuf_ip(   k)
-            Vy(k,iend+2) = rbuf_ip(nz+k)
-            Vy(k,ibeg-1) = rbuf_im(   k)
+            Vy(k,iend+1) = rbuf_V_ip(   k)
+            Vy(k,iend+2) = rbuf_V_ip(nz+k)
+            Vy(k,ibeg-1) = rbuf_V_im(   k)
         end do
         !$acc end kernels
 
@@ -359,33 +383,33 @@ contains
 
         call pwatch__on("global__comm_stress")
 
-        !$acc host_data use_device(rbuf_ip, rbuf_im)
-        call mpi_irecv(rbuf_ip, 2 * nz, mpi_precision, itbl(idx+1), 3, mpi_comm_world, req(1), err)
-        call mpi_irecv(rbuf_im, 2 * nz, mpi_precision, itbl(idx-1), 4, mpi_comm_world, req(2), err)
+        !$acc host_data use_device(rbuf_S_ip, rbuf_S_im)
+        call mpi_irecv(rbuf_S_ip, 2 * nz, mpi_precision, itbl(idx+1), 3, mpi_comm_world, req(1), err)
+        call mpi_irecv(rbuf_S_im, 2 * nz, mpi_precision, itbl(idx-1), 4, mpi_comm_world, req(2), err)
         !$acc end host_data
 
-        !$acc kernels present(Sxy, sbuf_ip, sbuf_im)
+        !$acc kernels present(Sxy, sbuf_S_ip, sbuf_S_im)
         !$acc loop independent
         do k=1, nz
-            sbuf_ip(   k) = Sxy(k,iend-1)
-            sbuf_ip(nz+k) = Sxy(k,iend  )
-            sbuf_im(   k) = Sxy(k,ibeg  )
+            sbuf_S_ip(   k) = Sxy(k,iend-1)
+            sbuf_S_ip(nz+k) = Sxy(k,iend  )
+            sbuf_S_im(   k) = Sxy(k,ibeg  )
         end do
         !$acc end kernels
 
-        !$acc host_data use_device(sbuf_ip, sbuf_im)
-        call mpi_isend(sbuf_ip, 2*nz, mpi_precision, itbl(idx+1), 4, mpi_comm_world, req(3), err)
-        call mpi_isend(sbuf_im, 2*nz, mpi_precision, itbl(idx-1), 3, mpi_comm_world, req(4), err)
+        !$acc host_data use_device(sbuf_S_ip, sbuf_S_im)
+        call mpi_isend(sbuf_S_ip, 2*nz, mpi_precision, itbl(idx+1), 4, mpi_comm_world, req(3), err)
+        call mpi_isend(sbuf_S_im, 2*nz, mpi_precision, itbl(idx-1), 3, mpi_comm_world, req(4), err)
         !$acc end host_data
 
         call mpi_waitall(4, req, istatus, err)
 
-        !$acc kernels present(Sxy, rbuf_ip, rbuf_im)
+        !$acc kernels present(Sxy, rbuf_S_ip, rbuf_S_im)
         !$acc loop independent
         do k=1, nz
-            Sxy(k,iend+1) = rbuf_ip(k)
-            Sxy(k,ibeg-2) = rbuf_im(k)
-            Sxy(k,ibeg-1) = rbuf_im(nz+k)
+            Sxy(k,iend+1) = rbuf_S_ip(k)
+            Sxy(k,ibeg-2) = rbuf_S_im(k)
+            Sxy(k,ibeg-1) = rbuf_S_im(nz+k)
         end do
         !$acc end kernels
 
@@ -426,5 +450,25 @@ contains
         ! location of this process
         idx = mod(myid, nproc_x)
     end subroutine set_mpi_table
+
+    subroutine set_box(box1, ib, ie, kb, ke, offset)
+
+        type(t_box), intent(inout) :: box1
+        integer, intent(in) :: ib, ie
+        integer, intent(in) :: kb, ke
+        integer, intent(inout) :: offset
+
+
+        box1%ib = ib
+        box1%ie = ie
+        box1%kb = kb
+        box1%ke = ke
+        box1%nx = max(ie - ib + 1, 0)
+        box1%nz = max(ke - kb + 1, 0)
+        box1%ncell = box1%nx * box1%nz
+        box1%offset = offset
+        offset = offset + box1%ncell
+
+    end subroutine set_box    
 
 end module m_global

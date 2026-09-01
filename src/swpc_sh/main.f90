@@ -78,7 +78,7 @@ program SWPC_SH
     !$acc enter data copyin(&
     !$acc Vy(kbeg_m:kend_m, ibeg_m:iend_m), &
     !$acc Syz(kbeg_m:kend_m, ibeg_m:iend_m), Sxy(kbeg_m:kend_m, ibeg_m:iend_m), &
-    !$acc Ryz(1:nm, kbeg_m:kend_m, ibeg_m:iend_m), Rxy(1:nm, kbeg_m:kend_m, ibeg_m:iend_m),  &
+    !$acc Ryz(1:nm, kbeg:kend, ibeg:iend), Rxy(1:nm, kbeg:kend, ibeg:iend),  &
     !$acc rho(kbeg_m:kend_m, ibeg_m:iend_m),  &
     !$acc lam(kbeg_m:kend_m, ibeg_m:iend_m), &
     !$acc mu(kbeg_m:kend_m, ibeg_m:iend_m), &
@@ -86,7 +86,7 @@ program SWPC_SH
     !$acc kfs(ibeg_m:iend_m), kob(ibeg_m:iend_m), &
     !$acc kfs_top(ibeg_m:iend_m), kfs_bot(ibeg_m:iend_m), &
     !$acc kob_top(ibeg_m:iend_m), kob_bot(ibeg_m:iend_m), &
-    !$acc bddep(ibeg_m:iend_m, 0:NBD), kbeg_a(ibeg_m:iend_m))
+    !$acc bddep(ibeg_m:iend_m, 0:NBD))
 
     call report__setup(io_prm)
     close (io_prm)
@@ -108,7 +108,6 @@ program SWPC_SH
 
         call kernel__update_vel()
         call absorb__update_vel()
-
         call source__bodyforce(it)
 
         call global__comm_vel()

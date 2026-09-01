@@ -3,7 +3,7 @@ module m_green
 
     !! Green's Function Special Mode for SWPC
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -88,7 +88,6 @@ contains
         integer        :: ng0
         real(SP)       :: dd
         character(256) :: abuf
-        real(SP)       :: evlo1, evla1
         character(256) :: command
         integer        :: src_node0, src_node1
 
@@ -615,7 +614,6 @@ contains
 
         integer, intent(in) :: it
         real(SP) :: stf
-        real(SP) :: t
         real(SP) :: fx, fy, fz
 
         if (.not. green_mode) return

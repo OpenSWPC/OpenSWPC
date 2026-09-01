@@ -3,7 +3,7 @@ module m_vmodel_lhm
 
     !! 1D layered velocity structure
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -96,6 +96,12 @@ contains
 
         !! defne topography shape here
         bd(i0:i1, 0) = depth(1)
+
+        rho1 = 0.001
+        vp1  = 0.0
+        vs1  = 0.0
+        qp1  = 10.0   ! give artificially strong attenuation in air-column
+        qs1  = 10.0
 
         do k = k0, k1
 

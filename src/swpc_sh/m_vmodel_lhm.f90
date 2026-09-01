@@ -3,7 +3,7 @@ module m_vmodel_lhm
 
     !! 1D velocity structure
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use iso_fortran_env, only: error_unit
     use m_std
@@ -118,6 +118,12 @@ contains
                 end if
 
             else    
+                rho1 = 0.001
+                vp1  = 0.0
+                vs1  = 0.0
+                qp1  = 10.0 
+                qs1  = 10.0
+
                 !! choose layer
                 do l = 1, nlayer
                     if (zs(k) >= depth(l)) then

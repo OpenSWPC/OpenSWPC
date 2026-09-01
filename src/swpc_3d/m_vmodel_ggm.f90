@@ -1,5 +1,5 @@
 #include "../shared/m_debug.h"
-module m_vmodel_grd_rmed
+module m_vmodel_ggm
 
     !! Velocity/attenuation structure: GMT(netcdf) input
     !!
@@ -13,8 +13,6 @@ module m_vmodel_grd_rmed
     use m_geomap
     use m_system
     use m_readini
-    use m_fdtool
-    use m_rdrmed
     use m_seawater
     use mpi
     use netcdf
@@ -23,11 +21,11 @@ module m_vmodel_grd_rmed
     private
     save
 
-    public :: vmodel_grd_rmed
+    public :: vmodel_ggm
 
 contains
 
-    subroutine vmodel_grd_rmed(io_prm, i0, i1, j0, j1, k0, k1, xc, yc, zc, vcut, rho, lam, mu, Qp, Qs, bd)
+    subroutine vmodel_ggm(io_prm, i0, i1, j0, j1, k0, k1, xc, yc, zc, vcut, rho, lam, mu, Qp, Qs, bd)
 
         !! Define meidum velocity, density and attenuation
 
@@ -50,18 +48,17 @@ contains
         character(256) :: fn_grdlst
         character(256) :: dir_grd
         logical :: is_ocean
-        real(SP) :: rho0, vp0, vs0, qp0, qs0
+        real(SP) :: rho0, vp0, vs0, qp0, qs0, rho2, vp2, vs2, qp2, qs2
         real(SP) :: zgrd
         integer :: ngrd
         integer :: ierr
         real(DP), allocatable :: lon(:), lat(:), grddep(:, :), grdbuf(:)
-        real(DP) :: dlon, dlat
         real(SP), allocatable :: rho1(:), vp1(:), vs1(:), qp1(:), qs1(:)
         integer, allocatable :: pid(:)
         real(SP) :: glon(i0:i1, j0:j1), glat(i0:i1, j0:j1) !< grid longitude,latitude
         character(256), allocatable :: fn_grd(:)
         integer :: iolst
-        integer :: i, j, k, n, kk, l
+        integer :: i, j, k, n
         integer :: nlon, nlat
         integer :: node_grd
         real(SP) :: x_AB, x_AE, y_AB, y_AE ! absorber boundary location
@@ -69,35 +66,21 @@ contains
         logical :: is_flatten
         integer :: ktopo
         integer, allocatable :: kgrd(:, :, :)
-        character(256), allocatable :: fn_rmed(:)
-        real(SP), allocatable :: xi(:, :, :, :)
-        integer :: n_rmed
-        integer, allocatable :: tbl_rmed(:)
-        character(256), allocatable :: fn_rmed2(:)
-        character(256) :: dir_rmed
-        integer, allocatable :: reflyr(:)
-        logical :: is_exist
-        real(SP) :: rho2, vp2, vs2
-        real(SP) :: vmin, vmax, dh, cc, rhomin
-        logical  :: vmax_over, vmin_under, rhomin_under
+        real, allocatable :: zgrd0(:,:,:)
         integer :: ncid, ndim, nvar, xid, yid, zid
         character(80) :: xname, yname, zname
+        real(DP) :: dlon, dlat
         logical :: use_munk
         logical :: earth_flattening
         real(SP) :: Cv(k0:k1) ! velocity scaling coefficient for earth_flattening
+        real(SP) :: zs(k0:k1)
 
-        call readini(io_prm, 'fn_grdlst_rmed', fn_grdlst, '.')
+        call readini(io_prm, 'fn_grdlst', fn_grdlst, '.')
         call readini(io_prm, 'dir_grd', dir_grd, '.')
         call readini(io_prm, 'node_grd', node_grd, 0)
         call readini(io_prm, 'is_ocean', is_ocean, .true.)
         call readini(io_prm, 'topo_flatten', is_flatten, .false.)
-
         if (is_flatten) is_ocean = .true.
-
-        call readini(io_prm, 'dir_grd', dir_grd, '.')
-        call readini(io_prm, 'dir_rmed', dir_rmed, '.')
-
-        call readini(io_prm, 'rhomin', rhomin, 1.0)
 
         !! seawater
         call readini(io_prm, 'munk_profile', use_munk, .false.)
@@ -107,21 +90,13 @@ contains
         call readini(io_prm, 'earth_flattening', earth_flattening, .false.)
         if (earth_flattening) then
             do k = k0, k1
+                zs(k) = R_EARTH - R_EARTH * exp(- zc(k) / R_EARTH)
                 Cv(k) = exp(zc(k) / R_EARTH)
             end do
         else
+            zs(:) = zc(:)
             Cv(:) = 1.0
         end if
-
-        vmin = vcut
-
-        dh = 1./ sqrt(1./dx**2 + 1./dy**2 + 1./dz**2)
-        cc = 6./7. !! assume 4th order
-        vmax = cc * dh / dt  
-
-        vmax_over = .false.
-        vmin_under = .false.
-        rhomin_under = .false.
 
         !! first initialize whole medium by air/ocean
         do j = j0, j1
@@ -136,11 +111,11 @@ contains
                     qp0 = 1.0
                     qs0 = 1.0
 
-                    rho(k, i, j) = rho0
-                    lam(k, i, j) = rho0 * (vp0 * vp0 - 2 * vs0 * vs0)
-                    mu(k, i, j) = rho0 * vs0 * vs0
-                    qp(k, i, j) = qp0
-                    qs(k, i, j) = qs0
+                    rho(k,i,j) = rho0
+                    lam(k,i,j) = rho0 * (vp0 * vp0 - 2 * vs0 * vs0)
+                    mu(k,i,j) = rho0 * vs0 * vs0
+                    qp(k,i,j) = qp0
+                    qs(k,i,j) = qs0
 
                 end do
 
@@ -156,11 +131,11 @@ contains
                         qp0 = 1000000.0
                         qs0 = 1000000.0
 
-                        rho(k, i, j) = rho0
-                        lam(k, i, j) = rho0 * (vp0 * vp0 - 2 * vs0 * vs0)
-                        mu(k, i, j) = rho0 * vs0 * vs0
-                        qp(k, i, j) = qp0
-                        qs(k, i, j) = qs0
+                        rho(k,i,j) = rho0
+                        lam(k,i,j) = rho0 * (vp0 * vp0 - 2 * vs0 * vs0)
+                        mu(k,i,j) = rho0 * vs0 * vs0
+                        qp(k,i,j) = qp0
+                        qs(k,i,j) = qs0
 
                     end do
                 end if
@@ -189,26 +164,10 @@ contains
         open (newunit=iolst, file=trim(fn_grdlst), action='read', status='old')
         call std__countline(iolst, ngrd, '#')
         allocate (fn_grd(ngrd))
-        allocate (rho1(ngrd), vp1(ngrd), vs1(ngrd), qp1(ngrd), qs1(ngrd), pid(ngrd), fn_rmed(ngrd), reflyr(ngrd))
+        allocate (rho1(ngrd), vp1(ngrd), vs1(ngrd), qp1(ngrd), qs1(ngrd), pid(ngrd))
         do n = 1, ngrd
-            read (iolst, *) fn_grd(n), rho1(n), vp1(n), vs1(n), qp1(n), qs1(n), pid(n), fn_rmed(n), reflyr(n)
+            read (iolst, *) fn_grd(n), rho1(n), vp1(n), vs1(n), qp1(n), qs1(n), pid(n)
             fn_grd(n) = trim(adjustl(dir_grd))//'/'//trim(adjustl(fn_grd(n)))
-            fn_rmed(n) = trim(adjustl(dir_rmed))//'/'//trim(adjustl(fn_rmed(n)))
-            call assert(0 <= reflyr(n) .and. reflyr(n) <= ngrd)
-        end do
-
-        !! random media
-        allocate (tbl_rmed(ngrd), fn_rmed2(ngrd))
-        call independent_list(ngrd, fn_rmed, n_rmed, tbl_rmed, fn_rmed2)
-
-        allocate (xi(k0:k1, i0:i1, j0:j1, n_rmed))
-        do l = 1, n_rmed
-            inquire (file=trim(fn_rmed2(l)), exist=is_exist)
-            if (is_exist) then
-                call rdrmed__3d(i0, i1, j0, j1, k0, k1, fn_rmed2(l), xi(k0:k1, i0:i1, j0:j1, l))
-            else
-                xi(k0:k1, i0:i1, j0:j1, l) = 0.0
-            end if
         end do
 
         !! cut-off velocity: filled by medium velocity of the deeper layer
@@ -227,14 +186,15 @@ contains
 
         !! read file and interpolate
         allocate (kgrd(0:ngrd, i0:i1, j0:j1))
+        allocate (zgrd0(0:ngrd, i0:i1, j0:j1))
         kgrd(0, i0:i1, j0:j1) = k0 - 1
 
         ktopo = z2k(0.0 - real(dz) / 2, zbeg, real(dz))
 
         do n = 1, ngrd
             !! read grd data at id=node_grd
-
             if (myid == node_grd) then
+
                 !! netcdf file
                 call assert(nf90_open(trim(fn_grd(n)), NF90_NOWRITE, ncid) == NF90_NOERR)
                 call assert(nf90_inquire(ncid, ndim, nvar) == NF90_NOERR)
@@ -273,7 +233,6 @@ contains
                 !! set up send buffer
                 grdbuf = reshape(grddep, shape(grdbuf))
             else
-
                 !! memory is already allocated at node_grd by reading file
                 allocate (lon(nlon), lat(nlat), grddep(nlon, nlat))
             end if
@@ -305,6 +264,7 @@ contains
 
                     if (is_flatten) zgrd = zgrd - bd(i, j, 0)
 
+                    zgrd0(n,i,j) = zgrd - real(dz) / 2
                     kgrd(n, i, j) = max(z2k(zgrd - real(dz) / 2, zbeg, real(dz)), kgrd(n - 1, i, j))
 
                     !! seafloor correction: (sea column thickness)>=2
@@ -324,62 +284,51 @@ contains
 
         end do
 
-        !! set medium
         do j = j0, j1
             do i = i0, i1
-                do n = 1, ngrd
-
+                do n = 1, ngrd-1
                     !! fills deeper structure
-                    do k = kgrd(n, i, j) + 1, k1
-
-                        kk = k - kgrd(reflyr(n), i, j) + 1 !< relative depth index
-
-                        !! cyclic condition
-                        if (kk < k0) kk = kk + nz
-                        if (kk > k1) kk = kk - k1
-
-                        !! background velocity must not exceeds stability condition
-                        call assert(vp1(n) < vmax)
-                        call assert(vs1(n) < vmax)
-
-                        !! add random medium
-                        vp2 = Cv(k) * vp1(n) * (1.0 + xi(kk, i, j, tbl_rmed(n)))
-                        vs2 = Cv(k) * vs1(n) * (1.0 + xi(kk, i, j, tbl_rmed(n)))
-                        rho2 = rho1(n) * (1.0 + 0.8 * xi(kk, i, j, tbl_rmed(n)))
-
-                        if (vp1(n) > 0 .and. vs1(n) > 0) then
-                            call vcheck(vp2, vs2, rho2, xi(kk, i, j, tbl_rmed(n)), &
-                                        vmin, vmax, rhomin, vmin_under, vmax_over, rhomin_under)
-                        end if
-
-                        rho(k, i, j) = rho2
-                        lam(k, i, j) = rho2 * (vp2 * vp2 - 2 * vs2 * vs2)
-                        mu(k, i, j) = rho2 * vs2 * vs2
-                        qp(k, i, j) = qp1(n)
-                        qs(k, i, j) = qs1(n)
+                    do k = kgrd(n, i, j) + 1,kgrd(n+1, i, j)
+                        rho2 = rho1(n) + (rho1(n+1) - rho1(n)) / (kgrd(n+1,i,j) - kgrd(n,i,j) ) * (k - kgrd(n,i,j))
+                        vp2 = vp1(n)   + (vp1(n+1) - vp1(n)) / (kgrd(n+1,i,j) - kgrd(n,i,j)) * (k - kgrd(n,i,j))
+                        vs2 = vs1(n)   + (vs1(n+1) - vs1(n)) / (kgrd(n+1,i,j) - kgrd(n,i,j)) * (k - kgrd(n,i,j))
+                        qp2 = qp1(n)   + (qp1(n+1) - qp1(n)) / (kgrd(n+1,i,j) - kgrd(n,i,j)) * (k - kgrd(n,i,j))
+                        qs2 = qs1(n)   + (qs1(n+1) - qs1(n)) / (kgrd(n+1,i,j) - kgrd(n,i,j)) * (k - kgrd(n,i,j))
+                        
+                        rho(k,i,j) = rho2
+                        lam(k,i,j) = rho2 * Cv(k)**2 * (vp2 * vp2 - 2 * vs2 * vs2)
+                        mu (k,i,j) = rho2 * Cv(k)**2 * vs2 * vs2
+                        qp (k,i,j) = qp2
+                        qs (k,i,j) = qs2
                     end do
 
                 end do
-
+                
+                n = ngrd
+                do k = kgrd(n,i,j), k1
+                    rho2 = rho1(n) 
+                    vp2 = vp1(n) 
+                    vs2 = vs1(n) 
+                    qp2 = qp1(n) 
+                    qs2 = qs1(n) 
+                    
+                    rho(k,i,j) = rho2
+                    lam(k,i,j) = rho2 * Cv(k)**2 * (vp2 * vp2 - 2 * vs2 * vs2)
+                    mu (k,i,j) = rho2 * Cv(k)**2 * vs2 * vs2
+                    qp (k,i,j) = qp2
+                    qs (k,i,j) = qs2
+                end do
             end do
         end do
-
-        !! notification for velocity torelance
-        if (vmax_over) call info('Too high velocity due to random media was corrected. ')
-        if (vmin_under) call info('Too low  velocity due to random media was corrected. ')
-        if (rhomin_under) call info('Too low  density due to random media was corrected. ')
 
         !! terminate
         deallocate (fn_grd)
         deallocate (rho1, vp1, vs1, qp1, qs1)
         deallocate (pid)
-        deallocate (bcd, kgrd)
-        deallocate (fn_rmed, fn_rmed2)
-        deallocate (reflyr)
-        deallocate (tbl_rmed)
-        deallocate (xi)
+        deallocate (bcd, kgrd, zgrd0)
 
-    end subroutine vmodel_grd_rmed
+        write(*,*) myid, minval(sqrt(mu/rho)), maxval(sqrt(mu/rho)), minval(sqrt((lam+2*mu)/rho)), maxval(sqrt((lam+2*mu)/rho))
 
-end module m_vmodel_grd_rmed
+    end subroutine vmodel_ggm
 
+end module m_vmodel_ggm

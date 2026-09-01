@@ -3,7 +3,7 @@ module m_medium
 
     !! Set-up medium velocity/attenuation structure
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -239,17 +239,17 @@ contains
             do i = ibeg, iend
 
                 kfs_top(i) = max(minval(kfs(i - 2:i + 3)) - 2, kbeg)
-                kfs_top(i) = min(maxval(kfs(i - 2:i + 3)) + 2, kend)
+                kfs_bot(i) = min(maxval(kfs(i - 2:i + 3)) + 2, kend)
 
                 kob_top(i) = max(minval(kob(i - 2:i + 3)) - 2, kbeg)
                 kob_bot(i) = min(maxval(kob(i - 2:i + 3)) + 2, kend)
 
             end do
 
-            ! if( fullspace_mode ) then
-            !   kfs_bot = kfs_top - 1
-            !   kob_bot = kob_top - 1
-            ! end if
+            if( fullspace_mode ) then
+                kfs_bot = kfs_top - 1
+                kob_bot = kob_top - 1
+            end if
 
         end subroutine surface_detection
 
@@ -310,7 +310,7 @@ contains
 
         !! Avoid low-velocity layer for stabilize PML absorber
 
-        integer :: i, k, k2
+        integer :: i, k, k2, ibox
         real :: vp, vs, gamma
         real, parameter :: V_DYNAMIC_RANGE = 0.4 ! ratio between maximum and minimum velocity
         real :: vmin_pml
@@ -318,48 +318,59 @@ contains
 
         vmin_pml = vmax * V_DYNAMIC_RANGE
 
-        do i = ibeg - 1, iend + 1
-            k = minval(kbeg_a(i - 2:i + 2))
-            do while (k <= kend)
-                if (lam(k, i) < lam(k - 1, i) .or. mu(k, i) < mu(k - 1, i)) then
+        do ibox = 1, 4
+            if ( box(ibox) % ncell == 0 ) cycle
 
-                    !! detection the bottom of the low-velocity layer
-                    do k2 = k + 1, kend
-                        if (lam(k2, i) > lam(k2 - 1, i) .or. mu(k2, i) > mu(k2 - 1, i)) exit
-                    end do
+            do i = box(ibox)%ib, box(ibox)%ie
+                k = box(ibox)%kb+1
+                do while( k <= box(ibox)%ke )
+    
+                    if (lam(k, i) < lam(k - 1, i) .or. mu(k, i) < mu(k - 1, i)) then
 
-                    if (k2 - k <= LV_THICK) then
+                        !! detection the bottom of the low-velocity layer
+                        do k2 = k + 1, kend
+                            if (lam(k2, i) > lam(k2 - 1, i) .or. mu(k2, i) > mu(k2 - 1, i)) exit
+                        end do
 
-                        rho(k:k2 - 1, i) = rho(k - 1, i)
-                        lam(k:k2 - 1, i) = lam(k - 1, i)
-                        mu(k:k2 - 1, i) = mu(k - 1, i)
-                        taup(k:k2 - 1, i) = taup(k - 1, i)
-                        taus(k:k2 - 1, i) = taus(k - 1, i)
-                        k = k2 - 1
+                        if (k2 - k <= LV_THICK) then
+
+                            rho(k:k2 - 1, i) = rho(k - 1, i)
+                            lam(k:k2 - 1, i) = lam(k - 1, i)
+                            mu(k:k2 - 1, i) = mu(k - 1, i)
+                            taup(k:k2 - 1, i) = taup(k - 1, i)
+                            taus(k:k2 - 1, i) = taus(k - 1, i)
+                            k = k2 - 1
+
+                        end if
+
                     end if
+                    k = k + 1
 
-                end if
-                k = k + 1
+                end do
             end do
-        end do
+        end do 
 
-        do i = ibeg - 1, iend + 1
-            do k = minval(kbeg_a(i - 2:i + 2)), kend
 
-                vp = sqrt((lam(k, i) + 2 * mu(k, i)) / rho(k, i))
-                vs = sqrt(mu(k, i) / rho(k, i))
+        do ibox = 1, 4
+            if ( box(ibox) % ncell == 0 ) cycle
+            do i=box(ibox)%ib, box(ibox)%ie
+                do k=box(ibox)%kb, box(ibox)%ke
 
-                ! skip ocean and air
-                if (vs < epsilon(1.0)) cycle
+                    vp = sqrt((lam(k, i) + 2 * mu(k, i)) / rho(k, i))
+                    vs = sqrt(mu(k, i) / rho(k, i))
 
-                gamma = sqrt(3.0)
-                if (vs < vmin_pml) then
-                    vs = vmin_pml
-                    vp = vs * gamma
+                    ! skip ocean and air
+                    if (vs < epsilon(1.0)) cycle
 
-                    lam(k, i) = rho(k, i) * (vp**2 - 2 * vs**2)
-                    mu(k, i) = rho(k, i) * (vs**2)
-                end if
+                    gamma = sqrt(3.0)
+                    if (vs < vmin_pml) then
+                        vs = vmin_pml
+                        vp = vs * gamma
+
+                        lam(k, i) = rho(k, i) * (vp**2 - 2 * vs**2)
+                        mu(k, i) = rho(k, i) * (vs**2)
+                    end if
+                end do
             end do
         end do
 

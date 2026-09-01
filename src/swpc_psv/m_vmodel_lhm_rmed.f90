@@ -3,7 +3,7 @@ module m_vmodel_lhm_rmed
 
     !! 1D layered medium overlapped by random heterogeneity
     !!
-    !! Copyright 2013-2025 Takuto Maeda. All rights reserved. This project is released under the MIT license.
+    !! Copyright 2013-2026 Takuto Maeda. All rights reserved. This project is released under the MIT license.
 
     use m_std
     use m_debug
@@ -139,6 +139,12 @@ contains
         !! define topography shape here
         bd(i0:i1, 0) = depth(1)
 
+        rho1 = 0.001
+        vp1  = 0.0
+        vs1  = 0.0
+        qp1  = 10.0  
+        qs1  = 10.0
+        
         do k = k0, k1
 
             !! air/ocean column
