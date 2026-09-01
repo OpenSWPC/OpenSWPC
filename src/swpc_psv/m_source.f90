@@ -326,9 +326,6 @@ contains
             case ('xym0ij')
                 read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1:n_stfprm,i), &
                     mo(i), mxx(i), rdum1, mzz(i), rdum1, mxz(i), rdum2
-                    write(*,*) "NSPRM", n_stfprm
-                    write(*,*) "SPRM", sprm(:,i)
-                    write(*,*) "STFTYPE", stftype
                 call assert(ierr == 0)
 
             case ('xym0dc')
