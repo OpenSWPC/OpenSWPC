@@ -265,7 +265,7 @@ contains
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
         !$acc         axSxx, aySxy, azSxz, axSxy, aySyy, azSyz, axSxz, aySyz, azSzz, &
-        !$acc         gxc, gxe, gyc, gye, gzc, gze, bb)
+        !$acc         gxc, gxe, gyc, gye, gzc, gze, bb, order_x)
         !$acc loop independent collapse(3)
 #else
         !$omp parallel &
