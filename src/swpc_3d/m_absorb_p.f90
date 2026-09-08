@@ -34,6 +34,7 @@ module m_absorb_p
     real(MP) :: rc40x, rc41x, rc40y, rc41y, rc40z, rc41z
     real(MP) :: rd40x, rd41x, rd40y, rd41y, rd40z, rd41z
 
+    integer, allocatable :: order_x(:), order_y(:) !! boundary mask array 
 contains
 
     subroutine absorb_p__setup(io_prm)
@@ -105,9 +106,16 @@ contains
 
         idum = io_prm
 
+        allocate(order_x(ibeg:iend), source=-1)
+        allocate(order_y(jbeg:jend), source=-1)
+        if (idx == 0          ) order_x(   1: 2) = 1
+        if (idx == nproc_x - 1) order_x(nx-1:nx) = 1
+        if (idy == 0          ) order_y(   1: 2) = 1
+        if (idy == nproc_y - 1) order_y(ny-1:ny) = 1
+
         !$acc enter data copyin(axVx, ayVx, azVx, axVy, ayVy, azVy, axVz, ayVz, azVz, &
         !$acc                   axSxx, aySxy, azSxz, axSxy, aySyy, azSyz, axSxz, aySyz, azSzz, &
-        !$acc                   gxc, gxe, gyc, gye, gzc, gze)
+        !$acc                   gxc, gxe, gyc, gye, gzc, gze, order_x, order_y)
 
     end subroutine absorb_p__setup
 
@@ -274,8 +282,9 @@ contains
 
                     p = bb%offset + (j - bb%jb) * bb%nx * bb%nz + (i-bb%ib) * bb%nz + (k - bb%kb + 1)
 
-                    isign = sign(1, max((k - kfs_top(i,j)) * (kfs_bot(i,j) - k), &
-                                        (k - kob_top(i,j)) * (kob_bot(i,j) - k)))
+                    isign = max( sign(1, max((k - kfs_top(i,j)) * (kfs_bot(i,j) - k), &
+                                             (k - kob_top(i,j)) * (kob_bot(i,j) - k))), &
+                                 order_x(i), order_y(j))
 
                     re40x = rc40x + isign * rd40x
                     re41x = rc41x + isign * rd41x
@@ -338,7 +347,7 @@ contains
 
         integer :: ibox
 
-        !! Horizontal zero-derivative boundary (for plane wave mode)
+        !! Horizontal boundary treatment for plane wave mode
         if (pw_mode) call set_vel_boundary()
 
         !! Time-marching
@@ -385,9 +394,9 @@ contains
 #endif
             do j = jbeg, jend
                 do k = 1, nz
-                    Vx(k, nx + 1, j) = 2 * Vx(k, nx, j) - Vx(k, nx - 1, j)
-                    Vy(k, nx + 1, j) = 2 * Vy(k, nx, j) - Vy(k, nx - 1, j)
-                    Vz(k, nx + 1, j) = 2 * Vz(k, nx, j) - Vz(k, nx - 1, j)
+                    Vx(k, nx+1, j) = 2 * Vx(k, nx, j) - Vx(k, nx-1, j)
+                    Vy(k, nx+1, j) = 2 * Vy(k, nx, j) - Vy(k, nx-1, j)
+                    Vz(k, nx+1, j) = 2 * Vz(k, nx, j) - Vz(k, nx-1, j)
                 end do
             end do
 #ifdef _OPENACC
@@ -497,8 +506,9 @@ contains
 
                     p = bb%offset + (j - bb%jb) * bb%nx * bb%nz + (i-bb%ib) * bb%nz + (k - bb%kb + 1)
 
-                    isign = sign(1, max((k - kfs_top(i,j)) * (kfs_bot(i,j) - k), &
-                                        (k - kob_top(i,j)) * (kob_bot(i,j) - k)))
+                    isign = max( sign(1, max((k - kfs_top(i,j)) * (kfs_bot(i,j) - k), &
+                                             (k - kob_top(i,j)) * (kob_bot(i,j) - k))), &
+                                 order_x(i), order_y(j))
 
                     re40x = rc40x + isign * rd40x
                     re41x = rc41x + isign * rd41x
