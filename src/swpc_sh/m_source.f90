@@ -455,6 +455,8 @@ contains
 
             if (i == 1) then
                 call geomap__c2g(sx(i), sy(i), clon, clat, phi, evlo, evla)
+                sx0 = sx(i)
+                sy0 = 0.0
                 evdp = sz(i)
                 mxx0 = -12345.0
                 myy0 = -12345.0
@@ -463,8 +465,6 @@ contains
                 mxz0 = -12345.0
                 mxy0 = mxy(i)
                 otim = sprm(1, i)
-                sx0 = sx(i)
-                sy0 = sy(i)
             end if
 
         end do
@@ -504,6 +504,7 @@ contains
         integer :: ierr
         real(SP) :: rdum
         character(2) :: stf_coord
+        real(SP) :: sy(ns)
 
         open (newunit=io, file=trim(fn_stf), action='read', status='old')
         i = 0
@@ -522,7 +523,7 @@ contains
             select case (stf_coord)
 
             case ('xy')
-                read (adum, *, iostat=ierr) sx(i), rdum, sz(i), sprm(1:n_stfprm,i), rdum, fy(i), rdum
+                read (adum, *, iostat=ierr) sx(i), sy(i), sz(i), sprm(1:n_stfprm,i), rdum, fy(i), rdum
                 call assert(ierr == 0)
 
             case ('ll')
@@ -530,7 +531,7 @@ contains
                 call assert(ierr == 0)
                 call assert(-360. <= lon .and. lon <= 360)
                 call assert(-90. <= lat .and. lat <= 90)
-                call geomap__g2c(lon, lat, clon, clat, phi, sx(i), rdum)
+                call geomap__g2c(lon, lat, clon, clat, phi, sx(i), sy(i))
 
             case default
                 write (error_unit, *) "ERROR [source__setup]: Invalid source type: "//trim(stf_format)
@@ -538,7 +539,7 @@ contains
             end select
 
             if (i == 1) then
-                call geomap__c2g(sx(i), 0.0, clon, clat, phi, evlo, evla)
+                call geomap__c2g(sx(i), sy(i), clon, clat, phi, evlo, evla)
                 sx0 = sx(i)
                 sy0 = sy(i)
                 evdp = sz(i)
