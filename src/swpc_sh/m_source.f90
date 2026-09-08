@@ -539,6 +539,8 @@ contains
 
             if (i == 1) then
                 call geomap__c2g(sx(i), 0.0, clon, clat, phi, evlo, evla)
+                sx0 = sx(i)
+                sy0 = sy(i)
                 evdp = sz(i)
                 fx0 = -12345.0
                 fy0 = fy(i)
