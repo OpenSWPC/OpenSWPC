@@ -599,8 +599,9 @@ contains
 
                     p = bb%offset + (j - bb%jb) * bb%nx * bb%nz + (i-bb%ib) * bb%nz + (k - bb%kb + 1)
 
-                    isign = sign(1, max((k - kfs_top(i,j)) * (kfs_bot(i,j) - k), &
-                                        (k - kob_top(i,j)) * (kob_bot(i,j) - k)))
+                    isign = max( sign(1, max((k - kfs_top(i,j)) * (kfs_bot(i,j) - k), &
+                                             (k - kob_top(i,j)) * (kob_bot(i,j) - k))), &
+                                 order_x(i), order_y(j))
 
                     re40x = rc40x + isign * rd40x
                     re41x = rc41x + isign * rd41x
