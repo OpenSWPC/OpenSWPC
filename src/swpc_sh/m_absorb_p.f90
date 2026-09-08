@@ -29,6 +29,8 @@ module m_absorb_p
     real(MP) :: rc40x, rc41x, rc40z, rc41z
     real(MP) :: rd40x, rd41x, rd40z, rd41z
 
+    integer, allocatable :: order_x(:) !! boundary mask array
+
 contains
 
     subroutine absorb_p__setup(io_prm)
@@ -76,7 +78,11 @@ contains
 
         idum = io_prm
 
-        !$acc enter data copyin(axVy, azVy, axSxy, azSyz, gxc, gxe, gzc, gze)
+        allocate(order_x(ibeg:iend), source=-1)
+        if (idx == 0          ) order_x(   1: 2) = 1
+        if (idx == nproc_x - 1) order_x(nx-1:nx) = 1
+
+        !$acc enter data copyin(axVy, azVy, axSxy, azSyz, gxc, gxe, gzc, gze, order_x)
 
     end subroutine absorb_p__setup
 
@@ -152,7 +158,7 @@ contains
 
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vy, Sxy, Syz, axSxy, azSyz, rho, gxc, gzc, bb, kfs_top, kfs_bot, kob_top, kob_bot) 
+        !$acc present(Vy, Sxy, Syz, axSxy, azSyz, rho, gxc, gzc, bb, kfs_top, kfs_bot, kob_top, kob_bot, order_x) 
         !$acc loop independent collapse(2)
 #else
         !$omp parallel &
@@ -162,8 +168,9 @@ contains
         do i = bb%ib, bb%ie
             do k = bb%kb, bb%ke
 
-                isign = sign(1, max((k - kfs_top(i)) * (kfs_bot(i) - k), &
-                                    (k - kob_top(i)) * (kob_bot(i) - k)))
+                isign = max( sign(1, max((k - kfs_top(i)) * (kfs_bot(i) - k), &
+                                         (k - kob_top(i)) * (kob_bot(i) - k))), &
+                             order_x(i) )
 
                 re40x = rc40x + isign * rd40x
                 re41x = rc41x + isign * rd41x
@@ -270,7 +277,8 @@ contains
 
 #ifdef _OPENACC
         !$acc kernels &
-        !$acc present(Vy, Sxy, Syz, gxc, gxe, gzc, gze, axVy, azVy, mu, bb, Ryz, Rxy, c1, c2, d1, d2, taus, kob_top, kfs_top, kob_bot, kfs_bot)
+        !$acc present(Vy, Sxy, Syz, gxc, gxe, gzc, gze, axVy, azVy, mu, bb, Ryz, Rxy, &
+        !$acc         c1, c2, d1, d2, taus, kob_top, kfs_top, kob_bot, kfs_bot, order_x)
         !$acc loop independent
 #else
         !$omp parallel &
@@ -288,8 +296,9 @@ contains
 
                 p = p0 + (k - bb%kb + 1)
 
-                isign = sign(1, max((k - kfs_top(i)) * (kfs_bot(i) - k), &
-                                    (k - kob_top(i)) * (kob_bot(i) - k)))
+                isign = max( sign(1, max((k - kfs_top(i)) * (kfs_bot(i) - k), &
+                                         (k - kob_top(i)) * (kob_bot(i) - k))), &
+                             order_x(i) )
 
                 re40x = rc40x + isign * rd40x
                 re41x = rc41x + isign * rd41x
