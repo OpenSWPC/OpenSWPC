@@ -471,7 +471,7 @@ contains
             if (i == 1) then
                 call geomap__c2g(sx(i), sy(i), clon, clat, phi, evlo, evla)
                 sx0 = sx(i)
-                sy0 = sy(i)
+                sy0 = 0
                 evdp = sz(i)
                 mxx0 = mxx(i)
                 myy0 = -12345.0
@@ -521,6 +521,7 @@ contains
         integer :: ierr
         real(SP) :: rdum
         character(2) :: stf_coord
+        real(SP) :: sy(ns)
 
         open (newunit=io, file=trim(fn_stf), action='read', status='old')
         i = 0
@@ -556,7 +557,9 @@ contains
 
             !! remember first record as hypocenter
             if (i == 1) then
-                call geomap__c2g(sx(i), 0.0, clon, clat, phi, evlo, evla)
+                call geomap__c2g(sx(i), sy(i), clon, clat, phi, evlo, evla)
+                sx0 = sx(i)
+                sy0 = 0.0
                 evdp = sz(i)
                 otim = sprm(1,i)
                 fx0 = fx(i)

@@ -8,7 +8,7 @@ module m_version
     implicit none
     public
 
-    character(80), private :: VERSION = '26.09'  
+    character(80), private :: VERSION = '26.09.1 (doi:10.5281/zenodo.22731685)'
 
 contains
 

@@ -758,9 +758,11 @@ contains
 
             end select
 
-      !! remember first record as hypocenter
+            !! remember first record as hypocenter
             if (i == 1) then
                 call geomap__c2g(sx(i), sy(i), clon, clat, phi, evlo, evla)
+                sx0 = sx(i)
+                sy0 = sy(i)
                 evdp = sz(i)
                 fx0 = fx(i)
                 fy0 = fy(i)
