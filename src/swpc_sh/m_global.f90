@@ -338,8 +338,8 @@ contains
         call pwatch__on("global__comm_vel")
 
         !$acc host_data use_device(rbuf_V_ip, rbuf_V_im)
-        call mpi_irecv(rbuf_V_ip, 2 * nz, mpi_precision, itbl(idx+1), 1, mpi_comm_world, req(1), err)
-        call mpi_irecv(rbuf_V_im, 2 * nz, mpi_precision, itbl(idx-1), 2, mpi_comm_world, req(2), err)
+        call mpi_irecv(rbuf_V_ip, 2 * nz, mpi_real, itbl(idx+1), 1, mpi_comm_world, req(1), err)
+        call mpi_irecv(rbuf_V_im, 2 * nz, mpi_real, itbl(idx-1), 2, mpi_comm_world, req(2), err)
         !$acc end host_data
 
         !$acc kernels present(Vy, sbuf_V_ip, sbuf_V_im)
@@ -352,8 +352,8 @@ contains
         !$acc end kernels
 
         !$acc host_data use_device(sbuf_V_ip, sbuf_V_im)
-        call mpi_isend(sbuf_V_ip, 2 * nz, mpi_precision, itbl(idx+1), 2, mpi_comm_world, req(3), err)
-        call mpi_isend(sbuf_V_im, 2 * nz, mpi_precision, itbl(idx-1), 1, mpi_comm_world, req(4), err)
+        call mpi_isend(sbuf_V_ip, 2 * nz, mpi_real, itbl(idx+1), 2, mpi_comm_world, req(3), err)
+        call mpi_isend(sbuf_V_im, 2 * nz, mpi_real, itbl(idx-1), 1, mpi_comm_world, req(4), err)
         !$acc end host_data
 
         call mpi_waitall(4, req, istatus, err)

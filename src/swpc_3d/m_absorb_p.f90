@@ -265,7 +265,7 @@ contains
         !$acc kernels &
         !$acc present(Vx, Vy, Vz, Sxx, Syy, Szz, Syz, Sxz, Sxy, &
         !$acc         axSxx, aySxy, azSxz, axSxy, aySyy, azSyz, axSxz, aySyz, azSzz, &
-        !$acc         gxc, gxe, gyc, gye, gzc, gze, bb)
+        !$acc         gxc, gxe, gyc, gye, gzc, gze, bb, order_x)
         !$acc loop independent collapse(3)
 #else
         !$omp parallel &
@@ -599,8 +599,9 @@ contains
 
                     p = bb%offset + (j - bb%jb) * bb%nx * bb%nz + (i-bb%ib) * bb%nz + (k - bb%kb + 1)
 
-                    isign = sign(1, max((k - kfs_top(i,j)) * (kfs_bot(i,j) - k), &
-                                        (k - kob_top(i,j)) * (kob_bot(i,j) - k)))
+                    isign = max( sign(1, max((k - kfs_top(i,j)) * (kfs_bot(i,j) - k), &
+                                             (k - kob_top(i,j)) * (kob_bot(i,j) - k))), &
+                                 order_x(i), order_y(j))
 
                     re40x = rc40x + isign * rd40x
                     re41x = rc41x + isign * rd41x
