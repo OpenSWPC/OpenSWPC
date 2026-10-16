@@ -8,7 +8,7 @@ module m_version
     implicit none
     public
 
-    character(80), private :: VERSION = '26.09.2 (doi:10.5281/zenodo.23412991)'
+    character(80), private :: VERSION = 'dev (post 26.09.2)'
 
 contains
 
