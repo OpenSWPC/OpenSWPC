@@ -41,7 +41,7 @@ contains
         integer :: crate
         real(SP) :: mem_all, mem_node
         real(SP) :: c, r
-        character(20) :: ver
+        character(256) :: ver
         character(256) :: codename
 
         call readini(io_prm, 'ntdec_r', ntdec_r, 10)
