@@ -237,10 +237,10 @@ contains
         allocate(sbuf_S_im(2*nz), source=0.0_MP)
         allocate(rbuf_S_ip(2*nz), source=0.0_MP)
         allocate(rbuf_S_im(2*nz), source=0.0_MP)
-        allocate(sbuf_V_ip(2*nz), source=0.0)
-        allocate(sbuf_V_im(2*nz), source=0.0)
-        allocate(rbuf_V_ip(2*nz), source=0.0)
-        allocate(rbuf_V_im(2*nz), source=0.0)
+        allocate(sbuf_V_ip(2*nz), source=0.0_SP)
+        allocate(sbuf_V_im(2*nz), source=0.0_SP)
+        allocate(rbuf_V_ip(2*nz), source=0.0_SP)
+        allocate(rbuf_V_im(2*nz), source=0.0_SP)
 
         ! MPI communication table
         call set_mpi_table
