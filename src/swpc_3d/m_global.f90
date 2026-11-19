@@ -42,7 +42,7 @@ module m_global
 
     logical, public :: benchmark_mode                                          !< true for fixed parameter run
     logical, public :: pw_mode                                                 !< Plane wave mode
-    logical, public :: bf_mode                                                 !< Body force soruce mode
+    logical, public :: bf_mode                                                 !< Body force source mode
     logical, public :: green_mode                                              !< Green's function computaiton with reciprocity
     logical, public :: fullspace_mode
 

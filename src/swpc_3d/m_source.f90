@@ -90,7 +90,7 @@ contains
             end if
         end if
 
-        !! obtain number of source grid points and number of parameters for specifying soruce time functions
+        !! obtain number of source grid points and number of parameters for specifying source time functions
         call readini(io_prm, 'fn_stf', fn_stf, '')
         call readini(io_prm, 'stftype', stftype, 'kupper')
 
@@ -198,7 +198,7 @@ contains
             M0 = sum(mo_g(1:nsrc_g))
         end if
 
-        !! check if the soruce grid is located inside the node
+        !! check if the source grid is located inside the node
         nsrc = 0
         do i = 1, nsrc_g
 

@@ -2,7 +2,7 @@ module m_debug
 
     !! Debug routines under MPI environment.
     !!
-    !! Use with preprocessor macro (#include "m_pdebug.h" at the top of the soruce code) will give richer information.
+    !! Use with preprocessor macro (#include "m_pdebug.h" at the top of the source code) will give richer information.
     !! The following routines must be called after mpi_init.
     !!
     !! #### Usage

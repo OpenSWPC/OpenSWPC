@@ -238,10 +238,10 @@ contains
 
         ! MPI coordinate
         allocate (itbl(-1:nproc_x))
-        allocate (sbuf_V_ip(3 * nz), sbuf_V_im(3 * nz), soruce=0.0_SP)
-        allocate (rbuf_V_ip(3 * nz), rbuf_V_im(3 * nz), soruce=0.0_SP)
-        allocate (sbuf_S_ip(3 * nz), sbuf_S_im(3 * nz), soruce=0.0_MP)
-        allocate (rbuf_S_ip(3 * nz), rbuf_S_im(3 * nz), soruce=0.0_MP)
+        allocate (sbuf_V_ip(3 * nz), sbuf_V_im(3 * nz), source=0.0_SP)
+        allocate (rbuf_V_ip(3 * nz), rbuf_V_im(3 * nz), source=0.0_SP)
+        allocate (sbuf_S_ip(3 * nz), sbuf_S_im(3 * nz), source=0.0_MP)
+        allocate (rbuf_S_ip(3 * nz), rbuf_S_im(3 * nz), source=0.0_MP)
 
         ! MPI communication table
         call set_mpi_table

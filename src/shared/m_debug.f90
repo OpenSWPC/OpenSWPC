@@ -1,7 +1,7 @@
 module m_debug
 
     !! Debug routines.
-    !! Use with preprocessor macro (#include "m_pdebug.h" at the top of the soruce code) will give richer information.
+    !! Use with preprocessor macro (#include "m_pdebug.h" at the top of the source code) will give richer information.
     !! 
     !! #### usage
     !! - call debug(var):     show variable var.
